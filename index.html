@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MTI 360 — The Complete Growth &amp; Operations Platform for Maritime Training Institutes</title>
+<meta name="description" content="MTI 360 connects admissions, academics, finance, compliance, communication, placement and AI-powered automation into one intelligent platform built for Maritime Training Institutes.">
+<meta name="theme-color" content="#06283D">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- Icon sprite: restrained, line-based, navigation-inspired icon language -->
+<svg style="display:none" aria-hidden="true">
+  <defs>
+    <symbol id="icon-compass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13 13l-4.5 2.5L11 11l4.5-2.5Z"/></symbol>
+    <symbol id="icon-route" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M5 8c0 6 14 2 14 8"/></symbol>
+    <symbol id="icon-anchor-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="5" r="2"/><path d="M12 7v13M7 12H4a8 8 0 0 0 8 8 8 8 0 0 0 8-8h-3"/></symbol>
+    <symbol id="icon-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20V10M11 20V4M18 20v-7"/><path d="M2 20h20"/></symbol>
+    <symbol id="icon-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3Z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="icon-coin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 15.2c.5.7 1.4 1.1 2.5 1.1 1.7 0 2.8-.8 2.8-2 0-1.4-1.3-1.8-2.8-2.1-1.6-.3-2.8-.8-2.8-2.1 0-1.2 1.1-2 2.8-2 1.1 0 2 .4 2.5 1.1M12 7.5v9"/></symbol>
+    <symbol id="icon-briefcase" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></symbol>
+    <symbol id="icon-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h16v11H8l-4 4V5Z"/></symbol>
+    <symbol id="icon-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 6 8 7 8-7"/></symbol>
+    <symbol id="icon-sms" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="5" width="16" height="12" rx="2"/><path d="M8 20l3-3M13 9h4M7 9h2M7 12h6"/></symbol>
+    <symbol id="icon-voice" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 10v3a6 6 0 0 0 12 0v-3M12 19v3M9 3h6a1 1 0 0 1 1 1v7a4 4 0 0 1-8 0V4a1 1 0 0 1 1-1Z"/></symbol>
+    <symbol id="icon-spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m5 13 4 4L19 7"/></symbol>
+    <symbol id="icon-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="icon-arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
+    <symbol id="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></symbol>
+    <symbol id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></symbol>
+    <symbol id="icon-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.3"/><path d="M15.5 14.2c2.4.5 4.5 2.6 4.5 5.8"/></symbol>
+    <symbol id="icon-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></symbol>
+    <symbol id="icon-cap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 4 2 9l10 5 10-5-10-5Z"/><path d="M6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/></symbol>
+    <symbol id="icon-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="icon-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 10a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 14 6 10Z"/><path d="M10 19a2 2 0 0 0 4 0"/></symbol>
+  </defs>
+</svg>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header" id="top">
+  <div class="container header-inner">
+    <a href="#top" class="logo" aria-label="MTI 360 home">
+      <svg class="logo-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13 13l-4.5 2.5L11 11l4.5-2.5Z"/></svg>
+      <span class="logo-word">MTI <strong>360</strong></span>
+    </a>
+
+    <nav class="primary-nav" aria-label="Primary">
+      <ul>
+        <li><a href="#pillars">Platform</a></li>
+        <li><a href="#admissions">Solutions</a></li>
+        <li><a href="#ai">AI</a></li>
+        <li><a href="#resources">Resources</a></li>
+        <li><a href="#cta">Pricing</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark theme" aria-pressed="false">
+        <svg class="icon icon-sun" aria-hidden="true"><use href="#icon-sun"/></svg>
+        <svg class="icon icon-moon" aria-hidden="true"><use href="#icon-moon"/></svg>
+      </button>
+      <a class="nav-login" href="#login">Login</a>
+      <a class="btn btn-primary btn-sm" href="#demo">Book a Demo</a>
+      <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-drawer">
+        <svg class="icon" aria-hidden="true"><use href="#icon-menu"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-drawer" id="mobile-drawer" aria-hidden="true">
+  <nav aria-label="Mobile">
+    <ul>
+      <li><a href="#pillars">Platform</a></li>
+      <li><a href="#admissions">Solutions</a></li>
+      <li><a href="#ai">AI</a></li>
+      <li><a href="#resources">Resources</a></li>
+      <li><a href="#cta">Pricing</a></li>
+      <li><a href="#login">Login</a></li>
+    </ul>
+    <a class="btn btn-primary btn-block" href="#demo">Book a Demo</a>
+  </nav>
+</div>
+
+<main id="main">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero" aria-labelledby="hero-heading">
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow">Growth &amp; Operations Platform for Maritime Training Institutes</p>
+        <h1 id="hero-heading">Maritime Training,<br>Reimagined.</h1>
+        <p class="hero-lede">MTI 360 brings admissions, academics, finance, compliance, communication, placement and AI-powered automation into one connected platform.</p>
+        <p class="hero-tagline">Acquire students. Simplify operations. Grow your institute — from one intelligent platform.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary btn-lg" href="#demo">Book a Demo</a>
+          <a class="btn btn-secondary btn-lg" href="#pillars">Explore MTI 360</a>
+          <a class="btn btn-ghost" href="#lifecycle">See How It Works <svg class="icon icon-sm" aria-hidden="true"><use href="#icon-arrow-right"/></svg></a>
+        </div>
+        <p class="hero-micro">One platform. Every part of your institute.</p>
+        <ul class="hero-tags" role="list">
+          <li>GROW</li><li>ADMIT</li><li>RUN</li><li>COMPLY</li><li>AUTOMATE</li>
+        </ul>
+      </div>
+
+      <div class="hero-visual" aria-hidden="true">
+        <div class="dash-frame">
+          <div class="dash-titlebar">
+            <span class="dash-dot"></span><span class="dash-dot"></span><span class="dash-dot"></span>
+            <span class="dash-title">MTI 360 — Institute Overview</span>
+          </div>
+          <div class="dash-stats">
+            <div class="stat-tile"><span class="stat-label">New Leads</span><span class="stat-value">248</span><span class="stat-delta up">+12%</span></div>
+            <div class="stat-tile"><span class="stat-label">Active Students</span><span class="stat-value">684</span><span class="stat-delta up">+4%</span></div>
+            <div class="stat-tile"><span class="stat-label">Revenue (MTD)</span><span class="stat-value">₹24.8L</span><span class="stat-delta up">+8%</span></div>
+            <div class="stat-tile"><span class="stat-label">Placement Rate</span><span class="stat-value">82%</span><span class="stat-delta up">+3%</span></div>
+          </div>
+          <div class="dash-panels">
+            <div class="dash-panel">
+              <p class="panel-label">Admission Funnel</p>
+              <div class="funnel-mini">
+                <div class="funnel-row"><span>Leads</span><i style="--w:100%"></i><b>248</b></div>
+                <div class="funnel-row"><span>Applications</span><i style="--w:70%"></i><b>86</b></div>
+                <div class="funnel-row"><span>Admissions</span><i style="--w:34%"></i><b>42</b></div>
+              </div>
+            </div>
+            <div class="dash-panel">
+              <p class="panel-label">Upcoming Batches</p>
+              <ul class="mini-list">
+                <li><span>GMDSS — Batch 14</span><em>Mon, 09:00</em></li>
+                <li><span>STCW Basic Safety</span><em>Tue, 14:00</em></li>
+                <li><span>ECDIS Refresher</span><em>Wed, 11:00</em></li>
+              </ul>
+            </div>
+            <div class="dash-panel dash-panel-alert">
+              <p class="panel-label">Compliance Alerts</p>
+              <ul class="mini-list">
+                <li><span>2 documents expiring this week</span></li>
+                <li><span>1 inspection due in 9 days</span></li>
+              </ul>
+            </div>
+            <div class="dash-panel">
+              <p class="panel-label">AI Actions Today</p>
+              <ul class="mini-list">
+                <li><span>16 follow-ups sent</span></li>
+                <li><span>5 documents verified</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="orbit-node node-grow">GROW</div>
+        <div class="orbit-node node-admit">ADMIT</div>
+        <div class="orbit-node node-finance">FINANCE</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TRUST / CAPABILITY STRIP ============ -->
+  <section class="capability-strip" aria-labelledby="capability-heading">
+    <div class="container">
+      <h2 id="capability-heading" class="section-kicker">Built for the way Maritime Training Institutes actually operate.</h2>
+      <ul class="badge-row" role="list">
+        <li>Admissions</li><li>Academics</li><li>Finance</li><li>Compliance</li>
+        <li>Placement</li><li>Communication</li><li>AI</li><li>Analytics</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ PROBLEM ============ -->
+  <section class="problem" aria-labelledby="problem-heading">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="problem-heading">Your institute shouldn't run across ten different systems.</h2>
+        <p class="section-sub">Website leads in one place. WhatsApp replies in another. Fees tracked in Excel. Compliance documents in a folder somewhere. None of it talks to each other.</p>
+      </div>
+
+      <div class="problem-diagram">
+        <ul class="scatter-chips" role="list">
+          <li>Website</li><li>WhatsApp</li><li>Excel</li><li>Email</li>
+          <li>ERP</li><li>Payment Gateway</li><li>Documents</li><li>Reports</li>
+        </ul>
+        <div class="problem-arrow" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#icon-arrow-down"/></svg></div>
+        <ul class="consequence-row" role="list">
+          <li>Disconnected Data</li><li>Slow Follow-ups</li><li>Manual Work</li>
+          <li>Missed Leads</li><li>Poor Visibility</li><li>Operational Complexity</li>
+        </ul>
+        <div class="problem-arrow" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#icon-arrow-down"/></svg></div>
+        <div class="problem-resolution">
+          <span class="resolution-badge">MTI 360</span>
+          <p>One Connected Platform</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LIFECYCLE (signature section) ============ -->
+  <section class="lifecycle" id="lifecycle" aria-labelledby="lifecycle-heading">
+    <div class="container">
+      <div class="section-head light-on-dark">
+        <h2 id="lifecycle-heading">One platform. Every stage of the journey.</h2>
+        <p class="section-sub">From first enquiry to final placement, MTI 360 connects every stage of your institute.</p>
+      </div>
+
+      <ol class="lifecycle-path" role="list">
+        <li><span class="lc-index">01</span><span class="lc-label">Acquire</span></li>
+        <li><span class="lc-index">02</span><span class="lc-label">Convert</span></li>
+        <li><span class="lc-index">03</span><span class="lc-label">Admit</span></li>
+        <li><span class="lc-index">04</span><span class="lc-label">Train</span></li>
+        <li><span class="lc-index">05</span><span class="lc-label">Collect</span></li>
+        <li><span class="lc-index">06</span><span class="lc-label">Communicate</span></li>
+        <li><span class="lc-index">07</span><span class="lc-label">Comply</span></li>
+        <li><span class="lc-index">08</span><span class="lc-label">Place</span></li>
+        <li><span class="lc-index">09</span><span class="lc-label">Grow</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ FIVE PILLARS ============ -->
+  <section class="pillars" id="pillars" aria-labelledby="pillars-heading">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="pillars-heading">Everything your institute needs. Connected.</h2>
+      </div>
+
+      <div class="pillar-grid">
+        <article class="pillar-card reveal">
+          <span class="pillar-tag tag-grow">GROW</span>
+          <h3>Acquire and convert more students.</h3>
+          <ul role="list"><li>Website</li><li>Campaigns</li><li>Leads</li><li>CRM</li><li>Marketing</li><li>Analytics</li></ul>
+        </article>
+        <article class="pillar-card reveal">
+          <span class="pillar-tag tag-admit">ADMIT</span>
+          <h3>Turn enquiries into admissions.</h3>
+          <ul role="list"><li>Counselling</li><li>Applications</li><li>Documents</li><li>Student 360</li><li>Admission automation</li></ul>
+        </article>
+        <article class="pillar-card reveal">
+          <span class="pillar-tag tag-run">RUN</span>
+          <h3>Operate your institute efficiently.</h3>
+          <ul role="list"><li>Courses</li><li>Batches</li><li>Timetable</li><li>Attendance</li><li>Faculty</li><li>Exams</li><li>Certificates</li><li>Finance</li></ul>
+        </article>
+        <article class="pillar-card reveal">
+          <span class="pillar-tag tag-comply">COMPLY</span>
+          <h3>Stay prepared and audit-ready.</h3>
+          <ul role="list"><li>Compliance</li><li>Documents</li><li>Inspections</li><li>Corrective Actions</li><li>Audit</li></ul>
+        </article>
+        <article class="pillar-card reveal">
+          <span class="pillar-tag tag-automate">AUTOMATE</span>
+          <h3>Let AI and workflows handle repetitive work.</h3>
+          <ul role="list"><li>AI Agents</li><li>WhatsApp</li><li>Email</li><li>Voice</li><li>SMS</li><li>Workflows</li><li>AI Assistant</li></ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ADMISSIONS ============ -->
+  <section class="admissions" id="admissions" aria-labelledby="admissions-heading">
+    <div class="container split-section">
+      <div class="split-copy">
+        <p class="eyebrow">Solutions · Admissions</p>
+        <h2 id="admissions-heading">From first enquiry to confirmed admission.</h2>
+        <p class="section-sub">Every lead moves through a clear, trackable pipeline — with nothing falling through the cracks.</p>
+
+        <ol class="pipeline-steps" role="list">
+          <li>Lead</li><li>Counselling</li><li>Application</li><li>Documents</li><li>Verification</li><li>Admission</li>
+        </ol>
+
+        <a class="btn btn-secondary" href="#demo">See Admissions <svg class="icon icon-sm" aria-hidden="true"><use href="#icon-arrow-right"/></svg></a>
+      </div>
+
+      <div class="split-visual">
+        <div class="panel-stack">
+          <div class="dash-panel">
+            <p class="panel-label">Lead Profile</p>
+            <div class="profile-row"><span class="avatar">RK</span><div><strong>Rohan Kadam</strong><small>DG Shipping · GP Rating</small></div></div>
+            <ul class="mini-list"><li><span>Source</span><em>Instagram Ad</em></li><li><span>Stage</span><em>Counselling</em></li></ul>
+          </div>
+          <div class="dash-panel">
+            <p class="panel-label">Counsellor Activity</p>
+            <ul class="mini-list"><li><span>Priya S.</span><em>18 calls today</em></li><li><span>Arjun M.</span><em>12 calls today</em></li></ul>
+          </div>
+          <div class="dash-panel">
+            <p class="panel-label">Application Progress</p>
+            <div class="progress-bar"><i style="--w:66%"></i></div>
+            <small class="muted">4 of 6 steps complete</small>
+          </div>
+          <div class="dash-panel dash-panel-alert">
+            <p class="panel-label">Follow-up Reminder</p>
+            <p class="reminder-text">Call Rohan Kadam — document upload pending 2 days</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ AI ============ -->
+  <section class="ai-section" id="ai" aria-labelledby="ai-heading">
+    <div class="container">
+      <div class="section-head light-on-dark">
+        <p class="eyebrow eyebrow-brass">Governed AI</p>
+        <h2 id="ai-heading">AI that works with your team — not around it.</h2>
+        <p class="section-sub">MTI 360 uses governed AI to assist staff, students and management — every action is authorized, logged and auditable.</p>
+      </div>
+
+      <div class="ai-flow" role="list" aria-label="AI governance flow">
+        <span>AI Agent</span>
+        <svg class="icon" aria-hidden="true"><use href="#icon-arrow-right"/></svg>
+        <span>Authorized Tool</span>
+        <svg class="icon" aria-hidden="true"><use href="#icon-arrow-right"/></svg>
+        <span>Business Service</span>
+        <svg class="icon" aria-hidden="true"><use href="#icon-arrow-right"/></svg>
+        <span>Tenant Data</span>
+        <svg class="icon" aria-hidden="true"><use href="#icon-arrow-right"/></svg>
+        <span>Audit</span>
+      </div>
+
+      <div class="ai-agents-grid">
+        <div class="ai-agent-chip"><svg class="icon" aria-hidden="true"><use href="#icon-cap"/></svg>AI Admission Agent</div>
+        <div class="ai-agent-chip"><svg class="icon" aria-hidden="true"><use href="#icon-chat"/></svg>WhatsApp Agent</div>
+        <div class="ai-agent-chip"><svg class="icon" aria-hidden="true"><use href="#icon-mail"/></svg>Email Agent</div>
+        <div class="ai-agent-chip"><svg class="icon" aria-hidden="true"><use href="#icon-voice"/></svg>Voice Agent</div>
+        <div class="ai-agent-chip"><svg class="icon" aria-hidden="true"><use href="#icon-spark"/></svg>AI Business Assistant</div>
+        <div class="ai-agent-chip"><svg class="icon" aria-hidden="true"><use href="#icon-chart"/></svg>SQL / Data Agent</div>
+        <div class="ai-agent-chip"><svg class="icon" aria-hidden="true"><use href="#icon-route"/></svg>Workflow Automation</div>
+      </div>
+
+      <div class="ai-demo">
+        <div class="ai-demo-head">
+          <svg class="icon" aria-hidden="true"><use href="#icon-spark"/></svg>
+          <span>AI Business Assistant</span>
+        </div>
+        <p class="ai-question">"Which applications need attention today?"</p>
+        <div class="ai-answer">
+          <p><strong>12</strong> applications are waiting for document verification.</p>
+          <p><strong>4</strong> high-value leads have not been contacted in the last 24 hours.</p>
+          <p><strong>3</strong> fee payments are overdue.</p>
+          <p><strong>2</strong> compliance documents expire this week.</p>
+          <button class="btn btn-brass btn-sm" type="button">View Actions</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ COMMUNICATION ============ -->
+  <section class="communication" aria-labelledby="comms-heading">
+    <div class="container split-section reverse">
+      <div class="split-visual">
+        <div class="dash-panel comms-panel">
+          <p class="panel-label">Unified Conversation — Rohan Kadam</p>
+          <div class="chat-thread">
+            <div class="chat-bubble in"><svg class="icon icon-sm" aria-hidden="true"><use href="#icon-chat"/></svg>Hi, I wanted to ask about the GMDSS batch dates.</div>
+            <div class="chat-bubble out">Batch 14 starts Monday 9:00 AM. Shall I reserve your seat?</div>
+            <div class="chat-bubble in"><svg class="icon icon-sm" aria-hidden="true"><use href="#icon-mail"/></svg>Yes please, and send the fee structure by email.</div>
+            <div class="chat-bubble system">AI Agent sent fee structure via Email · handed to Priya S.</div>
+          </div>
+        </div>
+      </div>
+      <div class="split-copy">
+        <p class="eyebrow">Communication</p>
+        <h2 id="comms-heading">Every conversation. One connected experience.</h2>
+        <p class="section-sub">WhatsApp, Email, SMS and Voice — connected to every lead, student, application, payment, batch and support ticket, with templates, automation, AI assistance and human handover.</p>
+        <ul class="channel-row" role="list">
+          <li><svg class="icon" aria-hidden="true"><use href="#icon-chat"/></svg>WhatsApp</li>
+          <li><svg class="icon" aria-hidden="true"><use href="#icon-mail"/></svg>Email</li>
+          <li><svg class="icon" aria-hidden="true"><use href="#icon-sms"/></svg>SMS</li>
+          <li><svg class="icon" aria-hidden="true"><use href="#icon-voice"/></svg>Voice</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ OPERATIONS ============ -->
+  <section class="operations" aria-labelledby="ops-heading">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Solutions · Academics</p>
+        <h2 id="ops-heading">Run the institute from one place.</h2>
+      </div>
+      <div class="ops-grid">
+        <div class="dash-panel">
+          <p class="panel-label">Today's Classes</p>
+          <ul class="mini-list"><li><span>GMDSS — Batch 14</span><em>09:00 · Room A</em></li><li><span>STCW Basic Safety</span><em>14:00 · Room C</em></li></ul>
+        </div>
+        <div class="dash-panel">
+          <p class="panel-label">Attendance</p>
+          <div class="donut" style="--pct:91"><span>91%</span></div>
+        </div>
+        <div class="dash-panel">
+          <p class="panel-label">Faculty on Duty</p>
+          <ul class="mini-list"><li><span>Capt. Mehta</span><em>GMDSS</em></li><li><span>Cdr. Iyer (Retd.)</span><em>STCW</em></li></ul>
+        </div>
+        <div class="dash-panel">
+          <p class="panel-label">Active Batches</p>
+          <span class="stat-value stat-value-sm">18</span>
+        </div>
+        <div class="dash-panel">
+          <p class="panel-label">Examinations</p>
+          <ul class="mini-list"><li><span>ECDIS Written</span><em>Thu, 10:00</em></li><li><span>Fire Fighting Practical</span><em>Fri, 09:00</em></li></ul>
+        </div>
+        <div class="dash-panel">
+          <p class="panel-label">Certificates Issued (MTD)</p>
+          <span class="stat-value stat-value-sm">57</span>
+        </div>
+        <div class="dash-panel">
+          <p class="panel-label">Fees Due Today</p>
+          <span class="stat-value stat-value-sm">₹1.4L</span>
+        </div>
+        <div class="dash-panel dash-panel-alert">
+          <p class="panel-label">Alerts</p>
+          <ul class="mini-list"><li><span>Room C double-booked Thursday</span></li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ COMPLIANCE ============ -->
+  <section class="compliance" aria-labelledby="compliance-heading">
+    <div class="container split-section">
+      <div class="split-copy">
+        <p class="eyebrow">Solutions · Compliance</p>
+        <h2 id="compliance-heading">Stay ready. Stay organized.</h2>
+        <p class="section-sub">A single compliance cockpit for document expiry, inspection readiness, corrective actions, evidence and audit trail.</p>
+        <ul class="check-list" role="list">
+          <li><svg class="icon icon-sm" aria-hidden="true"><use href="#icon-check"/></svg>Document expiry tracking</li>
+          <li><svg class="icon icon-sm" aria-hidden="true"><use href="#icon-check"/></svg>Inspection readiness</li>
+          <li><svg class="icon icon-sm" aria-hidden="true"><use href="#icon-check"/></svg>Corrective action tracking</li>
+          <li><svg class="icon icon-sm" aria-hidden="true"><use href="#icon-check"/></svg>Evidence &amp; audit trail</li>
+        </ul>
+      </div>
+      <div class="split-visual">
+        <div class="dash-panel">
+          <p class="panel-label">Compliance Dashboard</p>
+          <ul class="mini-list">
+            <li><span>Document Validity</span><em class="ok">96% current</em></li>
+            <li><span>Documents Expiring (30d)</span><em class="warn">6</em></li>
+            <li><span>Open Corrective Actions</span><em class="warn">3</em></li>
+            <li><span>Next Inspection</span><em>9 days</em></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FINANCE ============ -->
+  <section class="finance" aria-labelledby="finance-heading">
+    <div class="container split-section reverse">
+      <div class="split-visual">
+        <div class="dash-panel">
+          <p class="panel-label">Revenue by Course</p>
+          <div class="bar-chart">
+            <div class="bar-row"><span>GMDSS</span><i style="--w:88%"></i><b>₹8.1L</b></div>
+            <div class="bar-row"><span>STCW</span><i style="--w:64%"></i><b>₹5.9L</b></div>
+            <div class="bar-row"><span>ECDIS</span><i style="--w:52%"></i><b>₹4.8L</b></div>
+            <div class="bar-row"><span>Fire Fighting</span><i style="--w:38%"></i><b>₹3.5L</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="split-copy">
+        <p class="eyebrow">Solutions · Finance</p>
+        <h2 id="finance-heading">Know where your money stands.</h2>
+        <div class="stat-mini-row">
+          <div><span class="stat-value stat-value-sm">₹24.8L</span><small>Collected (MTD)</small></div>
+          <div><span class="stat-value stat-value-sm">₹6.2L</span><small>Outstanding</small></div>
+          <div><span class="stat-value stat-value-sm">₹18k</span><small>Refunds (MTD)</small></div>
+        </div>
+        <p class="section-sub">Fee collection, outstanding balances, invoices, payments, refunds and course-wise revenue — always current.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PLACEMENT ============ -->
+  <section class="placement" id="placement" aria-labelledby="placement-heading">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Solutions · Placement</p>
+        <h2 id="placement-heading">From classroom to career.</h2>
+      </div>
+      <ol class="pipeline-steps pipeline-steps-wide" role="list">
+        <li>Student</li><li>Readiness</li><li>Opportunity</li><li>Interview</li><li>Selection</li><li>Placement</li>
+      </ol>
+      <div class="stat-mini-row centered">
+        <div><span class="stat-value stat-value-sm">312</span><small>Placement-ready students</small></div>
+        <div><span class="stat-value stat-value-sm">47</span><small>Open opportunities</small></div>
+        <div><span class="stat-value stat-value-sm">82%</span><small>Placement rate</small></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STUDENT PORTAL ============ -->
+  <section class="student-portal" aria-labelledby="portal-heading">
+    <div class="container split-section">
+      <div class="split-copy">
+        <p class="eyebrow">Student Experience</p>
+        <h2 id="portal-heading">Give students one place to stay connected.</h2>
+        <p class="section-sub">Timetable, attendance, fees, documents, examinations, certificates, announcements and placement — clean, mobile-first, always up to date.</p>
+      </div>
+      <div class="split-visual">
+        <div class="phone-mockup">
+          <div class="phone-screen">
+            <p class="phone-title">Hi, Rohan</p>
+            <div class="phone-card"><span>Next Class</span><strong>GMDSS · 09:00 · Room A</strong></div>
+            <div class="phone-card"><span>Attendance</span><strong>92%</strong></div>
+            <div class="phone-card"><span>Fees Due</span><strong>₹12,000 · 5 Oct</strong></div>
+            <div class="phone-card"><span>Certificate</span><strong>STCW Basic Safety · Ready</strong></div>
+            <div class="phone-nav" role="list">
+              <span><svg class="icon icon-sm" aria-hidden="true"><use href="#icon-cap"/></svg></span>
+              <span><svg class="icon icon-sm" aria-hidden="true"><use href="#icon-doc"/></svg></span>
+              <span><svg class="icon icon-sm" aria-hidden="true"><use href="#icon-coin"/></svg></span>
+              <span><svg class="icon icon-sm" aria-hidden="true"><use href="#icon-bell"/></svg></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ANALYTICS ============ -->
+  <section class="analytics" id="resources" aria-labelledby="analytics-heading">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Executive Analytics</p>
+        <h2 id="analytics-heading">Turn institute data into decisions.</h2>
+      </div>
+      <div class="analytics-grid">
+        <div class="dash-panel">
+          <p class="panel-label">Admission Funnel</p>
+          <div class="funnel-mini">
+            <div class="funnel-row"><span>Leads</span><i style="--w:100%"></i><b>248</b></div>
+            <div class="funnel-row"><span>Applications</span><i style="--w:70%"></i><b>86</b></div>
+            <div class="funnel-row"><span>Admissions</span><i style="--w:34%"></i><b>42</b></div>
+          </div>
+        </div>
+        <div class="dash-panel">
+          <p class="panel-label">Lead Sources</p>
+          <div class="bar-chart">
+            <div class="bar-row"><span>Instagram</span><i style="--w:80%"></i><b>32%</b></div>
+            <div class="bar-row"><span>Referral</span><i style="--w:65%"></i><b>26%</b></div>
+            <div class="bar-row"><span>Website</span><i style="--w:50%"></i><b>20%</b></div>
+            <div class="bar-row"><span>Walk-in</span><i style="--w:35%"></i><b>14%</b></div>
+          </div>
+        </div>
+        <div class="dash-panel">
+          <p class="panel-label">Attendance Trend</p>
+          <svg class="sparkline" viewBox="0 0 120 40" preserveAspectRatio="none" aria-hidden="true">
+            <polyline points="0,28 20,22 40,25 60,14 80,18 100,9 120,12" fill="none" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="dash-panel">
+          <p class="panel-label">Compliance Status</p>
+          <div class="donut" style="--pct:96"><span>96%</span></div>
+        </div>
+        <div class="dash-panel">
+          <p class="panel-label">Course Performance</p>
+          <ul class="mini-list"><li><span>GMDSS</span><em class="ok">98% pass rate</em></li><li><span>ECDIS</span><em class="ok">94% pass rate</em></li></ul>
+        </div>
+        <div class="dash-panel">
+          <p class="panel-label">AI Usage (MTD)</p>
+          <ul class="mini-list"><li><span>Follow-ups automated</span><em>1,240</em></li><li><span>Documents verified</span><em>318</em></li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PLATFORM ARCHITECTURE ============ -->
+  <section class="architecture" aria-labelledby="architecture-heading">
+    <div class="container">
+      <div class="section-head light-on-dark">
+        <h2 id="architecture-heading">One platform, built for the complete institute.</h2>
+      </div>
+      <div class="arch-diagram">
+        <div class="arch-root">MTI 360</div>
+        <div class="arch-row">
+          <div class="arch-node">GROW</div>
+          <div class="arch-node">ADMIT</div>
+          <div class="arch-node">RUN</div>
+        </div>
+        <div class="arch-node arch-node-wide">COMPLY + AUTOMATE</div>
+        <div class="arch-node arch-node-wide">AI + COMMUNICATION</div>
+        <div class="arch-node arch-node-wide">ANALYTICS</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PERSONAS ============ -->
+  <section class="personas" aria-labelledby="personas-heading">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="personas-heading">Who is MTI 360 for?</h2>
+      </div>
+      <div class="persona-grid">
+        <article class="persona-card reveal"><svg class="icon" aria-hidden="true"><use href="#icon-compass"/></svg><h3>Institute Owner / Director</h3><p>See the complete institute at a glance.</p></article>
+        <article class="persona-card reveal"><svg class="icon" aria-hidden="true"><use href="#icon-users"/></svg><h3>Admission Team</h3><p>Capture, qualify and convert more enquiries.</p></article>
+        <article class="persona-card reveal"><svg class="icon" aria-hidden="true"><use href="#icon-cap"/></svg><h3>Academic Team</h3><p>Manage courses, batches, attendance and training.</p></article>
+        <article class="persona-card reveal"><svg class="icon" aria-hidden="true"><use href="#icon-coin"/></svg><h3>Finance Team</h3><p>Track collections and outstanding fees.</p></article>
+        <article class="persona-card reveal"><svg class="icon" aria-hidden="true"><use href="#icon-shield"/></svg><h3>Compliance Team</h3><p>Stay organized and inspection-ready.</p></article>
+        <article class="persona-card reveal"><svg class="icon" aria-hidden="true"><use href="#icon-briefcase"/></svg><h3>Placement Team</h3><p>Track opportunities and student placement.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ WHY MTI 360 ============ -->
+  <section class="why" aria-labelledby="why-heading">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="why-heading">One source of truth. Every team, connected.</h2>
+      </div>
+      <div class="why-compare">
+        <div class="why-before">
+          <p class="why-label">Disconnected Tools</p>
+          <ul class="scatter-chips" role="list">
+            <li>Website</li><li>CRM</li><li>WhatsApp</li><li>Excel</li><li>ERP</li><li>Email</li><li>Reports</li>
+          </ul>
+        </div>
+        <svg class="icon why-arrow" aria-hidden="true"><use href="#icon-arrow-right"/></svg>
+        <div class="why-after">
+          <p class="why-label">MTI 360</p>
+          <p class="why-after-title">One Connected Platform</p>
+        </div>
+      </div>
+      <ul class="benefit-list" role="list">
+        <li><svg class="icon icon-sm" aria-hidden="true"><use href="#icon-check"/></svg>One source of truth</li>
+        <li><svg class="icon icon-sm" aria-hidden="true"><use href="#icon-check"/></svg>Connected workflows</li>
+        <li><svg class="icon icon-sm" aria-hidden="true"><use href="#icon-check"/></svg>Less manual work</li>
+        <li><svg class="icon icon-sm" aria-hidden="true"><use href="#icon-check"/></svg>Better visibility</li>
+        <li><svg class="icon icon-sm" aria-hidden="true"><use href="#icon-check"/></svg>AI assistance</li>
+        <li><svg class="icon icon-sm" aria-hidden="true"><use href="#icon-check"/></svg>Scalable architecture</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ FUTURE READY ============ -->
+  <section class="future" aria-labelledby="future-heading">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="future-heading">Built for where Maritime Training is going.</h2>
+      </div>
+      <div class="future-grid">
+        <div class="future-col reveal">
+          <p class="future-label available">Available</p>
+          <ul role="list">
+            <li>AI agents for admissions and communication</li>
+            <li>Workflow automation</li>
+            <li>WhatsApp, Email, SMS &amp; Voice communication</li>
+            <li>Executive analytics</li>
+          </ul>
+        </div>
+        <div class="future-col reveal">
+          <p class="future-label coming">Coming Next</p>
+          <ul role="list">
+            <li>Advanced predictive analytics</li>
+            <li>Deeper communication automation</li>
+            <li>Multi-campus operations</li>
+            <li>Future maritime ecosystem integrations</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SECURITY / TRUST ============ -->
+  <section class="security" aria-labelledby="security-heading">
+    <div class="container">
+      <div class="section-head light-on-dark">
+        <h2 id="security-heading">Enterprise-grade trust, by design.</h2>
+      </div>
+      <div class="security-grid">
+        <div class="security-item reveal"><svg class="icon" aria-hidden="true"><use href="#icon-lock"/></svg><h3>Multi-tenant architecture</h3></div>
+        <div class="security-item reveal"><svg class="icon" aria-hidden="true"><use href="#icon-users"/></svg><h3>Role-based access</h3></div>
+        <div class="security-item reveal"><svg class="icon" aria-hidden="true"><use href="#icon-doc"/></svg><h3>Audit trails</h3></div>
+        <div class="security-item reveal"><svg class="icon" aria-hidden="true"><use href="#icon-shield"/></svg><h3>Secure document management</h3></div>
+        <div class="security-item reveal"><svg class="icon" aria-hidden="true"><use href="#icon-spark"/></svg><h3>Controlled AI actions</h3></div>
+        <div class="security-item reveal"><svg class="icon" aria-hidden="true"><use href="#icon-route"/></svg><h3>Permission-aware tools</h3></div>
+        <div class="security-item reveal"><svg class="icon" aria-hidden="true"><use href="#icon-compass"/></svg><h3>Tenant isolation</h3></div>
+        <div class="security-item reveal"><svg class="icon" aria-hidden="true"><use href="#icon-anchor-mark"/></svg><h3>Secure integrations</h3></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FINAL CTA ============ -->
+  <section class="final-cta" id="demo" aria-labelledby="cta-heading">
+    <div class="container">
+      <h2 id="cta-heading">Ready to run your institute smarter?</h2>
+      <p>Discover how MTI 360 can connect admissions, operations, finance, compliance, communication and AI in one platform.</p>
+      <div class="cta-row centered">
+        <a class="btn btn-primary btn-lg" href="#demo-form">Book a Demo</a>
+        <a class="btn btn-secondary btn-lg" href="#login">Talk to Our Team</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site-footer" id="cta">
+  <div class="container footer-grid">
+    <div class="footer-brand">
+      <a href="#top" class="logo" aria-label="MTI 360 home">
+        <svg class="logo-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13 13l-4.5 2.5L11 11l4.5-2.5Z"/></svg>
+        <span class="logo-word">MTI <strong>360</strong></span>
+      </a>
+      <p>Acquire Students. Simplify Operations. Grow Your Institute.</p>
+    </div>
+
+    <div class="footer-col">
+      <h3>Product</h3>
+      <ul role="list">
+        <li><a href="#pillars">Platform</a></li>
+        <li><a href="#admissions">Admissions</a></li>
+        <li><a href="#">Academics</a></li>
+        <li><a href="#">Finance</a></li>
+        <li><a href="#">Compliance</a></li>
+        <li><a href="#placement">Placement</a></li>
+        <li><a href="#ai">AI</a></li>
+        <li><a href="#resources">Analytics</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h3>Resources</h3>
+      <ul role="list">
+        <li><a href="#">Product Overview</a></li>
+        <li><a href="#">Documentation</a></li>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">FAQs</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h3>Company</h3>
+      <ul role="list">
+        <li><a href="#">About</a></li>
+        <li><a href="#">Contact</a></li>
+        <li><a href="#">Careers</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h3>Legal</h3>
+      <ul role="list">
+        <li><a href="#">Privacy</a></li>
+        <li><a href="#">Terms</a></li>
+        <li><a href="#">Security</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="container footer-bottom">
+    <p>&copy; 2026 MTI 360. All rights reserved.</p>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
