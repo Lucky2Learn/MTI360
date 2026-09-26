@@ -107,7 +107,7 @@ M0 — Foundation Ready
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-09-26:** T00-01 (Repository Structure) is `COMPLETED` (reviewed, merged to `main`). T00-02 (Development Environment) is `READY_FOR_REVIEW`. Only the toolchain and a neutral page / `/health` endpoint exist — no product functionality — so product implementation completion remains 0%.
+> **2026-09-26:** T00-01 and T00-02 are `COMPLETED` (merged to `main`; T00-02 via PR #1). T00-03 (Docker Development Environment) is `READY_FOR_REVIEW`. Only the toolchain, local infrastructure and a neutral page / `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
 
 ---
 
@@ -183,7 +183,7 @@ IN_PROGRESS
 ## Phase Completion
 
 ```text
-1 / 10 tasks completed (T00-01 COMPLETED; T00-02 READY_FOR_REVIEW)
+2 / 10 tasks completed (T00-01, T00-02 COMPLETED; T00-03 READY_FOR_REVIEW)
 ```
 
 ---
@@ -238,7 +238,7 @@ Tags are local only; nothing has been pushed.
 
 ### T00-02 — Development Environment
 
-**Status:** `READY_FOR_REVIEW` (branch `feat/T00-02-development-environment`)
+**Status:** `COMPLETED` (merged to `main` via PR #1, merge commit `03b3bec`)
 
 **Implementation:**
 
@@ -290,18 +290,57 @@ an AI agent; not committed — decision pending.
 
 ### T00-03 — Docker Development Environment
 
-**Status:** `NOT_STARTED`
+**Status:** `READY_FOR_REVIEW` (branch `feat/T00-03-docker`)
 
 **Implementation:**
 
 ```text
-Not started
+compose.yaml (project "mti360"; all host ports 127.0.0.1; volumes mti360_*)
+  infra: postgres (pgvector/pgvector:0.8.6-pg18-trixie, PG 18.6, pgvector
+         not enabled), redis (redis:8.8-alpine), object-storage (SeaweedFS
+         4.47, authenticated S3 API only) + one-shot object-storage-init
+         (private bucket), mailpit (axllent/mailpit:v1.31)
+  app:   api (mti360-api:local), frontend (mti360-frontend:local) —
+         read-only rootfs, cap_drop ALL, no-new-privileges, non-root
+database/init/01-roles.sh: mti_owner / mti_app / mti_readonly
+infrastructure/object-storage/create-bucket.sh
+backend/Dockerfile + .dockerignore (uv 0.12.19, python:3.14.7-slim, uid 10001)
+frontend/Dockerfile + Dockerfile.dockerignore (node:24.21.0-trixie-slim,
+  pnpm 11.28.0, Next.js standalone, uid 1000)
+Root scripts: infra:up, infra:down, infra:reset, infra:logs, stack:up
+Deferred (D4): migrate (Alembic), worker + queue library
 ```
 
 **Verification:**
 
 ```text
-Not verified
+docker compose config: valid; missing .env -> clear "required variable" error
+pnpm infra:reset: removed only mti360 containers, network, volumes
+pnpm infra:up from empty volumes: exit 0 (~8 s), all healthy
+Roles: no SUPERUSER/CREATEDB/CREATEROLE/REPLICATION/BYPASSRLS; mti_owner owns
+  database + public schema; default privileges as designed; wrong password
+  rejected via Compose network and host port; runtime roles cannot CREATE;
+  0 tables, extensions = plpgsql only, 0 RLS policies
+Redis PONG (8.8.3); S3 bucket exists, anonymous 403, signed + presigned OK,
+  wrong secret rejected; Mailpit readyz OK, UI 200
+Native backend 127.0.0.1:8100/health 200; native frontend on 3100 served
+  (see Notes)
+pnpm stack:up: exit 0; api /health 200 (uid 10001), frontend 200 (uid 1000);
+  read-only rootfs, caps dropped; no privileged / host network / docker socket
+pnpm infra:down kept volumes; restart did not re-run role bootstrap
+pnpm check: PASS; marketing website SHA-256 unchanged
+ACRS containers/volumes/networks unchanged by MTI 360 commands
+```
+
+**Notes:**
+
+```text
+`docker compose up --wait` exits 1 when a one-shot container has exited (even
+with code 0), so infra:up / stack:up run the bucket init as a separate
+`run --rm` step. PostgreSQL's upstream image trusts connections made inside
+the container itself; all external connections require passwords.
+Native frontend verification on 3100 used a developer-started `next dev`
+(Next.js allows one dev server per project directory).
 ```
 
 ---
@@ -1156,7 +1195,8 @@ A screen is only considered implemented when its required underlying behavior is
 | Task Roadmap | `READY` |
 | Development Tracking | `READY` |
 | Repository Structure (T00-01) | `COMPLETED` |
-| Development Toolchain (T00-02) | `READY_FOR_REVIEW` |
+| Development Toolchain (T00-02) | `COMPLETED` |
+| Local Docker Infrastructure (T00-03) | `READY_FOR_REVIEW` |
 | Architecture Decision Records | `READY_FOR_REVIEW` (ADR-0001 … ADR-0006) |
 | Production Implementation | `NOT_STARTED` |
 
@@ -1345,6 +1385,18 @@ Separate platform identity; opaque server-side sessions; realm-specific cookies;
 
 ---
 
+### DEC-016 — Local Infrastructure (T00-03)
+
+Hybrid development (infrastructure in Docker, apps native). PostgreSQL 18 via `pgvector/pgvector:0.8.6-pg18-trixie` (pgvector not enabled), Redis 8.8, SeaweedFS 4.47 as the S3-compatible emulator (MinIO community edition archived), Mailpit 1.31. Compose project `mti360`, volumes `mti360_*`, ports on `127.0.0.1`. See `docs/runbooks/local-development.md`.
+
+---
+
+### DEC-017 — Migrate and Worker Deferred (T00-03 D4)
+
+The Alembic `migrate` service and the background `worker` (with the queue-library choice ADR-0001 placed in T00-03) are added by the first tasks that need them.
+
+---
+
 # 37. RECENT CHANGES
 
 | Date | Change | Impact |
@@ -1356,6 +1408,8 @@ Separate platform identity; opaque server-side sessions; realm-specific cookies;
 | 2026-09-26 | T00-01 Repository Structure implemented | `READY_FOR_REVIEW`; ADRs 0001–0006 recorded |
 | 2026-09-26 | T00-01 reviewed and merged to `main` | `COMPLETED` |
 | 2026-09-26 | T00-02 Development Environment implemented | `READY_FOR_REVIEW` on `feat/T00-02-development-environment`; toolchain pinned |
+| 2026-09-26 | T00-02 merged to `main` (PR #1, `03b3bec`) | `COMPLETED` |
+| 2026-09-26 | T00-03 Docker Development Environment implemented | `READY_FOR_REVIEW` on `feat/T00-03-docker`; local infrastructure + app images |
 
 ---
 
@@ -1583,13 +1637,70 @@ Review and merge T00-02 PR -> T00-03 Docker Development Environment
 
 ---
 
+## 2026-09-26 — T00-03 Docker Development Environment
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+Local Docker infrastructure (PostgreSQL 18, Redis 8.8, SeaweedFS 4.47 S3, Mailpit 1.31) in Compose project `mti360`, PostgreSQL role bootstrap for future RLS, production-shaped non-root api and frontend images, and root `infra:*` / `stack:up` commands. Hybrid development: infrastructure in Docker, apps native. Coexists with the separately running ACRS project without affecting it.
+
+**Files:**
+
+```text
+Created: compose.yaml, database/init/01-roles.sh,
+  infrastructure/object-storage/create-bucket.sh, backend/Dockerfile,
+  backend/.dockerignore, frontend/Dockerfile, frontend/Dockerfile.dockerignore,
+  docs/runbooks/local-development.md
+Changed: .env.example, backend/.env.example (S3 endpoint), frontend/next.config.ts,
+  package.json, README.md, infrastructure/README.md, database/README.md,
+  docs/architecture/toolchain.md, docs/architecture/repository-structure.md,
+  ARCHITECTURE.md (§55 note), TASKS.md, DEVELOPMENT-STATUS.md
+Unchanged (verified): index.html, app.js, styles.css; ACRS
+```
+
+**Database / API / UI:**
+
+```text
+Database: roles and privileges only — no tables, schemas, RLS policies,
+extensions or migrations. API / UI: unchanged (GET /health, neutral page).
+```
+
+**Tests:**
+
+```text
+No new automated tests (infrastructure task). Verification recorded under
+T00-03 above; pnpm check passes.
+```
+
+**Known Issues:**
+
+```text
+Upstream Postgres image trusts in-container loopback connections.
+`compose up --wait` treats exited one-shot containers as failures (handled
+by a separate `run --rm` init step).
+Native `pnpm dev` reads ports from the shell, not from .env.
+```
+
+**Next:**
+
+```text
+Review and merge T00-03 PR -> T00-04 Environment Configuration
+```
+
+---
+
 # 40. NEXT TASK
 
 The next step is:
 
 ```text
-Review T00-02 (READY_FOR_REVIEW) and merge its pull request into main.
-Then T00-03 — Docker Development Environment.
+Review T00-03 (READY_FOR_REVIEW) and merge its pull request into main.
+Then T00-04 — Environment Configuration.
 ```
 
 The completed-task description below is retained for reference.

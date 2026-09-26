@@ -1,6 +1,8 @@
 # database/
 
-**Status:** Reserved. No database files exist yet.
+**Status:** Role bootstrap implemented (T00-03): [init/01-roles.sh](init/01-roles.sh). No schema, tables, RLS policies, extensions or seeds yet.
+
+`init/01-roles.sh` runs automatically **only when the local Postgres volume is empty** and creates `mti_owner` (owns the database and `public` schema; future migrations), `mti_app` (DML via default privileges) and `mti_readonly` (SELECT). None has SUPERUSER, CREATEDB, CREATEROLE, REPLICATION or BYPASSRLS. Passwords come from the root `.env` only. See [docs/runbooks/local-development.md](../docs/runbooks/local-development.md) §6.
 
 ## Purpose
 
@@ -33,5 +35,5 @@ Backend engineering, with security review for anything touching database roles o
 
 | Task | Adds |
 |---|---|
-| T00-03 | `init/` role and extension bootstrap for the local Postgres container |
+| T00-03 ✅ | `init/01-roles.sh` role bootstrap for the local Postgres container (extensions are enabled later, e.g. pgvector in the AI phase) |
 | Phase 01+ | `seeds/` development fixtures as each vertical slice is built |
