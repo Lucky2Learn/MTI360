@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<template id="__bundler_thumbnail" data-bg-color="#06283D"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#06283D"></rect><circle cx="50" cy="50" r="18" fill="none" stroke="#F8FAF9" stroke-width="3"></circle><path d="M50 36 L55 50 L50 64 L45 50 Z" fill="#F8FAF9"></path><circle cx="50" cy="50" r="2.5" fill="#B88A44"></circle></svg></template>
+<title>MTI 360 — The Complete Growth &amp; Operations Platform for Maritime Training Institutes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAF9;--bg2:#EAF4F7;--sf:#FFFFFF;--sf2:#F3F8F9;--ln:#D3E1E6;--ln2:#E5EEF1;--ink:#06283D;--ink2:#33505F;--ink3:#566E7C;--sea:#168F91;--seaT:#0D6D6F;--seaS:#DDF4F2;--br:#B88A44;--brT:#7F5B24;--brS:#F5EBDD;--red:#A8412C;--redS:#F8E6E1;--ok:#1C6F47;--okS:#E1F1E7;--btn:#06283D;--btnT:#F8FAF9;--btnH:#0A4F6E;--nav:rgba(248,250,249,.86);--sh:0 1px 2px rgba(6,40,61,.05),0 18px 40px -18px rgba(6,40,61,.22);--grid:rgba(6,40,61,.05);--onSea:#F8FAF9;--seg1:#06283D;--ocean:#0A4F6E;--inLn:rgba(221,244,242,.42);color-scheme:light}
+html[data-theme=dark]{--bg:#04151F;--bg2:#061C29;--sf:#08222F;--sf2:#0D2F41;--ln:#24506A;--ln2:#173C50;--ink:#EEF4F3;--ink2:#B3C7CF;--ink3:#8CA6B2;--sea:#2AAFAE;--seaT:#62D0CB;--seaS:rgba(42,175,174,.14);--br:#C9A064;--brT:#DDBA82;--brS:rgba(201,160,100,.13);--red:#EA947E;--redS:rgba(234,148,126,.12);--ok:#7BD3A3;--okS:rgba(123,211,163,.12);--btn:#DDF4F2;--btnT:#04151F;--btnH:#BFE7E3;--nav:rgba(4,21,31,.9);--sh:0 1px 0 rgba(255,255,255,.03) inset,0 24px 48px -24px rgba(0,0,0,.7);--grid:rgba(221,244,242,.045);--onSea:#04151F;--seg1:#DDF4F2;--ocean:#9FD9D6;--inLn:rgba(221,244,242,.42);color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Plus Jakarta Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;transition:background .3s}
+a{color:inherit;text-decoration:none}
+a:hover{color:var(--seaT)}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--seaT);outline-offset:3px;border-radius:6px}
+#ai :focus-visible,#cta :focus-visible{outline-color:#9FD9D6}
+@keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+</style>
+</helmet>
+
+<a href="#main" style="position:absolute;left:-9999px;top:8px;z-index:100;background:var(--btn);color:var(--btnT);padding:10px 16px;border-radius:8px" style-focus="left:16px">Skip to content</a>
+
+<header style="position:sticky;top:0;z-index:50;background:var(--nav);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--ln2)">
+  <nav aria-label="Primary" style="max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px);height:68px;display:flex;align-items:center;gap:32px">
+    <a href="#top" aria-label="MTI 360 home" style="display:flex;align-items:center;gap:10px;color:var(--ink)">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="12.5" fill="none" stroke="currentColor" stroke-width="2"></circle><circle cx="15" cy="15" r="12.5" fill="none" stroke="#168F91" stroke-width="2" stroke-dasharray="20 100" transform="rotate(-90 15 15)"></circle><path d="M15 7 L18 15 L15 23 L12 15 Z" fill="currentColor"></path><circle cx="15" cy="15" r="1.6" fill="#B88A44"></circle></svg>
+      <span style="font-weight:800;font-size:18px;letter-spacing:-0.02em">MTI<span style="color:var(--seaT);margin-left:3px">360</span></span>
+    </a>
+    <sc-if value="{{ wide }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;gap:28px;font-size:14.5px;font-weight:500;color:var(--ink2)">
+        <a href="#platform">Platform</a>
+        <a href="#personas">Solutions</a>
+        <a href="#ai">AI</a>
+        <a href="#footer">Resources</a>
+        <a href="#cta">Pricing</a>
+      </div>
+    </sc-if>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+      <button type="button" onClick="{{ toggleTheme }}" aria-pressed="{{ isDark }}" aria-label="{{ themeLabel }}" title="{{ themeLabel }}" style="width:40px;height:40px;border-radius:10px;border:1px solid var(--ln);background:var(--sf);color:var(--ink);display:grid;place-items:center;cursor:pointer" style-hover="border-color:var(--sea)">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M8 1.5 A6.5 6.5 0 0 1 8 14.5 Z" fill="currentColor"></path></svg>
+      </button>
+      <sc-if value="{{ wide }}" hint-placeholder-val="{{ true }}">
+        <a href="#login" style="font-size:14.5px;font-weight:600;padding:0 12px;color:var(--ink)">Login</a>
+      </sc-if>
+      <sc-if value="{{ notMobile }}" hint-placeholder-val="{{ true }}">
+        <a href="#cta" style="display:inline-flex;align-items:center;height:40px;padding:0 18px;border-radius:10px;background:var(--btn);color:var(--btnT);font-weight:600;font-size:14px;white-space:nowrap;transition:background .2s,transform .2s" style-hover="background:var(--btnH);color:var(--btnT);transform:translateY(-1px)">Book a Demo</a>
+      </sc-if>
+      <sc-if value="{{ narrow }}" hint-placeholder-val="{{ false }}">
+        <button type="button" onClick="{{ openMenu }}" aria-label="Open menu" aria-expanded="{{ menu }}" style="width:40px;height:40px;border-radius:10px;border:1px solid var(--ln);background:var(--sf);color:var(--ink);display:grid;place-items:center;cursor:pointer">
+          <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h14M2 9h14M2 13h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+        </button>
+      </sc-if>
+    </div>
+  </nav>
+</header>
+
+<sc-if value="{{ menu }}" hint-placeholder-val="{{ false }}">
+  <div role="dialog" aria-modal="true" aria-label="Menu" style="position:fixed;inset:0;z-index:80;background:var(--bg);display:flex;flex-direction:column;padding:0 24px 32px">
+    <div style="height:68px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--ln2)">
+      <span style="font-weight:800;font-size:18px">MTI<span style="color:var(--seaT);margin-left:3px">360</span></span>
+      <button type="button" onClick="{{ closeMenu }}" aria-label="Close menu" style="width:44px;height:44px;border-radius:10px;border:1px solid var(--ln);background:var(--sf);color:var(--ink);font-size:20px;cursor:pointer">×</button>
+    </div>
+    <div style="display:flex;flex-direction:column;padding-top:12px">
+      <sc-for list="{{ navLinks }}" as="l" hint-placeholder-count="5">
+        <a href="{{ l.href }}" onClick="{{ closeMenu }}" style="display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:1px solid var(--ln2);font-size:22px;font-weight:600;letter-spacing:-0.01em">{{ l.label }}<span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink3)">{{ l.n }}</span></a>
+      </sc-for>
+    </div>
+    <div style="margin-top:auto;display:grid;gap:10px">
+      <a href="#cta" onClick="{{ closeMenu }}" style="display:flex;justify-content:center;align-items:center;height:52px;border-radius:12px;background:var(--btn);color:var(--btnT);font-weight:600">Book a Demo</a>
+      <a href="#login" onClick="{{ closeMenu }}" style="display:flex;justify-content:center;align-items:center;height:52px;border-radius:12px;border:1px solid var(--ln);font-weight:600">Login</a>
+    </div>
+  </div>
+</sc-if>
+
+<main id="main">
+
+<!-- HERO -->
+<section id="top" data-screen-label="01 Hero" style="position:relative;overflow:hidden;padding:clamp(56px,8vw,104px) 0 0;background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%)">
+  <div aria-hidden="true" style="position:absolute;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:72px 72px;mask-image:linear-gradient(180deg,#000 0%,transparent 70%);-webkit-mask-image:linear-gradient(180deg,#000 0%,transparent 70%)"></div>
+  <div aria-hidden="true" style="position:absolute;inset:0;pointer-events:none">{{ heroRoute }}</div>
+  <div style="position:relative;max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+    <div style="display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--seaT)">
+      <span style="width:28px;height:1px;background:var(--sea)"></span>Growth &amp; Operations OS for Maritime Training Institutes
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:clamp(24px,4vw,64px);align-items:end;margin-top:24px">
+      <div>
+        <h1 style="margin:0;font-size:clamp(36px,5.6vw,72px);line-height:1.07;letter-spacing:-0.035em;font-weight:800;color:var(--ink);text-wrap:balance">{{ h1a }}<br><span style="color:var(--seaT)">{{ h1b }}</span></h1>
+        <p style="margin:22px 0 0;font-size:clamp(18px,1.7vw,22px);line-height:1.4;font-weight:600;color:var(--ink);max-width:560px;text-wrap:pretty">The Complete Growth &amp; Operations Platform for Maritime Training Institutes.</p>
+      </div>
+      <div style="padding-bottom:6px">
+        <p style="margin:0;font-size:17px;line-height:1.65;color:var(--ink2);max-width:520px;text-wrap:pretty">Acquire students. Simplify operations. Grow your institute — from one intelligent platform. MTI 360 brings admissions, academics, finance, compliance, communication, placement and AI-powered automation together.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:28px">
+          <a href="#cta" style="display:inline-flex;align-items:center;gap:10px;height:52px;padding:0 24px;border-radius:12px;background:var(--btn);color:var(--btnT);font-weight:600;font-size:15.5px;box-shadow:0 10px 24px -12px rgba(6,40,61,.6);transition:background .2s,transform .2s" style-hover="background:var(--btnH);color:var(--btnT);transform:translateY(-1px)" style-active="transform:translateY(0)">Book a Demo<span aria-hidden="true" style="color:#B88A44">→</span></a>
+          <a href="#platform" style="display:inline-flex;align-items:center;height:52px;padding:0 22px;border-radius:12px;border:1px solid var(--ln);background:var(--sf);color:var(--ink);font-weight:600;font-size:15.5px;transition:border-color .2s" style-hover="border-color:var(--seaT);background:var(--sf2);color:var(--ink)">Explore MTI 360</a>
+          <a href="#lifecycle" style="display:inline-flex;align-items:center;gap:8px;height:52px;padding:0 8px;color:var(--ink2);font-weight:600;font-size:15px" style-hover="color:var(--seaT)"><span aria-hidden="true" style="width:22px;height:22px;border-radius:50%;border:1.5px solid currentColor;display:grid;place-items:center;font-size:9px">▶</span>See how it works</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero product visual -->
+    <div style="position:relative;margin-top:clamp(48px,6vw,72px)">
+      <sc-if value="{{ wide }}" hint-placeholder-val="{{ true }}">
+        <div aria-hidden="true" style="position:absolute;right:-18px;top:-30px;z-index:3;width:280px;background:var(--sf);border:1px solid var(--ln);border-radius:14px;box-shadow:var(--sh);padding:14px 16px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:.08em;color:var(--brT);text-transform:uppercase"><span style="width:6px;height:6px;border-radius:50%;background:var(--br)"></span>AI Admission Agent</div>
+          <div style="font-size:13.5px;font-weight:600;margin-top:8px;color:var(--ink);line-height:1.4">Drafted 4 follow-ups for GME leads not contacted in 24h</div>
+          <div style="display:flex;gap:6px;margin-top:10px"><span style="font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:7px;background:var(--btn);color:var(--btnT)">Review &amp; send</span><span style="font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:7px;border:1px solid var(--ln);color:var(--ink2)">Assign</span></div>
+        </div>
+        <div aria-hidden="true" style="position:absolute;left:-22px;bottom:70px;z-index:3;width:220px;background:var(--sf);border:1px solid var(--ln);border-radius:14px;box-shadow:var(--sh);padding:14px 16px">
+          <div style="font-size:11px;color:var(--ink3);font-weight:600">Placement · Batch DNS-24</div>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-top:4px"><span style="font-size:28px;font-weight:800;letter-spacing:-0.02em">82%</span><span style="font-size:11.5px;color:var(--ok);font-weight:600">▲ 6 pts</span></div>
+          <div style="height:6px;border-radius:4px;background:var(--ln2);margin-top:8px;overflow:hidden"><div style="width:82%;height:100%;background:var(--sea)"></div></div>
+        </div>
+      </sc-if>
+
+      <div role="img" aria-label="MTI 360 overview dashboard showing admission funnel, revenue, AI actions, upcoming batches and compliance alerts" style="position:relative;z-index:2;background:var(--sf);border:1px solid var(--ln);border-radius:18px 18px 0 0;border-bottom:0;box-shadow:0 -1px 0 var(--ln2),0 40px 80px -40px rgba(6,40,61,.45);overflow:hidden">
+        <div style="height:48px;display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid var(--ln2);background:var(--sf2)">
+          <span style="font-weight:800;font-size:13px">MTI<span style="color:var(--seaT);margin-left:2px">360</span></span>
+          <span style="width:1px;height:18px;background:var(--ln)"></span>
+          <span style="font-size:12.5px;font-weight:600;color:var(--ink2)">Coastline Maritime Academy</span>
+          <sc-if value="{{ notMobile }}" hint-placeholder-val="{{ true }}"><span style="margin-left:auto;display:flex;align-items:center;gap:8px;height:30px;padding:0 12px;border:1px solid var(--ln);border-radius:8px;font-size:12px;color:var(--ink3);width:280px;background:var(--sf)">⌕ Search students, batches, invoices…</span></sc-if>
+          <span style="margin-left:auto;width:28px;height:28px;border-radius:50%;background:var(--band,#06283D);background:#06283D;color:#DDF4F2;font-size:11px;font-weight:700;display:grid;place-items:center">AD</span>
+        </div>
+        <div style="display:flex">
+          <sc-if value="{{ wide }}" hint-placeholder-val="{{ true }}">
+            <div style="width:196px;flex:none;border-right:1px solid var(--ln2);padding:14px 10px;display:flex;flex-direction:column;gap:2px;background:var(--sf2)">
+              <sc-for list="{{ sideNav }}" as="s" hint-placeholder-count="9">
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;font-size:12.5px;font-weight:{{ s.w }};color:{{ s.c }};background:{{ s.bg }}"><span style="width:6px;height:6px;border-radius:2px;background:{{ s.dot }}"></span>{{ s.label }}</div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <div style="flex:1;min-width:0;padding:clamp(14px,2vw,22px);display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:8px">
+              <div><div style="font-size:11px;color:var(--ink3);font-weight:600">Overview · Thursday, 24 Sep</div><div style="font-size:18px;line-height:1.3;font-weight:700;letter-spacing:-0.01em;margin-top:2px">Good morning, Capt. Deshpande</div></div>
+              <div style="display:flex;gap:6px"><span style="font-size:11.5px;font-weight:600;padding:6px 10px;border-radius:7px;border:1px solid var(--ln);color:var(--ink2)">Sep 2026</span><span style="font-size:11.5px;font-weight:600;padding:6px 10px;border-radius:7px;border:1px solid var(--ln);color:var(--ink2)">All campuses</span></div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
+              <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+                <div style="border:1px solid var(--ln2);border-radius:12px;padding:12px 14px;background:var(--sf)">
+                  <div style="font-size:11.5px;color:var(--ink3);font-weight:600">{{ k.label }}</div>
+                  <div style="font-size:26px;font-weight:800;letter-spacing:-0.02em;margin-top:4px;font-variant-numeric:tabular-nums">{{ k.v }}</div>
+                  <div style="font-size:11px;color:var(--ok);font-weight:600;margin-top:2px">{{ k.d }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:10px">
+              <div style="border:1px solid var(--ln2);border-radius:12px;padding:14px">
+                <div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px;font-weight:700">Admission funnel<span style="color:var(--ink3);font-weight:500;font-size:11px;white-space:nowrap">This month</span></div>
+                <div style="display:flex;flex-direction:column;gap:7px;margin-top:12px">
+                  <sc-for list="{{ funnel }}" as="f" hint-placeholder-count="5">
+                    <div style="display:grid;grid-template-columns:78px 1fr 30px;align-items:center;gap:8px;font-size:11.5px"><span style="color:var(--ink2)">{{ f.label }}</span><span style="height:14px;border-radius:4px;background:var(--ln2);overflow:hidden"><span style="display:block;height:100%;width:{{ f.w }};background:{{ f.c }};border-radius:4px"></span></span><span style="font-weight:700;text-align:right;font-variant-numeric:tabular-nums">{{ f.v }}</span></div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="border:1px solid var(--ln2);border-radius:12px;padding:14px">
+                <div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px;font-weight:700">Fee collection<span style="color:var(--ink3);font-weight:500;font-size:11px;white-space:nowrap">Apr–Sep</span></div>
+                <div style="display:flex;gap:18px;margin-top:8px"><div><div style="font-size:11px;color:var(--ink3)">Collected</div><div style="font-size:18px;font-weight:800">{{ rev }}</div></div><div><div style="font-size:11px;color:var(--ink3)">Outstanding</div><div style="font-size:18px;font-weight:800;color:var(--brT)">₹6.2L</div></div></div>
+                <div style="display:flex;align-items:flex-end;gap:8px;height:74px;margin-top:10px;border-bottom:1px solid var(--ln2)">
+                  <div style="flex:1;height:48%;background:var(--seaS);border-radius:4px 4px 0 0"></div><div style="flex:1;height:58%;background:var(--seaS);border-radius:4px 4px 0 0"></div><div style="flex:1;height:52%;background:var(--seaS);border-radius:4px 4px 0 0"></div><div style="flex:1;height:70%;background:var(--seaS);border-radius:4px 4px 0 0"></div><div style="flex:1;height:78%;background:var(--seaS);border-radius:4px 4px 0 0"></div><div style="flex:1;height:94%;background:var(--sea);border-radius:4px 4px 0 0"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink3);margin-top:4px;font-family:'JetBrains Mono',monospace"><span>APR</span><span>MAY</span><span>JUN</span><span>JUL</span><span>AUG</span><span>SEP</span></div>
+              </div>
+              <div style="border:1px solid var(--ln2);border-radius:12px;padding:14px;background:var(--brS)">
+                <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700"><span style="width:8px;height:8px;border-radius:50%;background:var(--br)"></span>AI actions for today</div>
+                <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+                  <sc-for list="{{ aiActions }}" as="a" hint-placeholder-count="3">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 10px;border-radius:9px;background:var(--sf);border:1px solid var(--ln2);font-size:11.5px"><span style="color:var(--ink);font-weight:500;line-height:1.35">{{ a.t }}</span><span style="flex:none;font-weight:700;color:var(--seaT)">{{ a.cta }}</span></div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+            <sc-if value="{{ notMobile }}" hint-placeholder-val="{{ true }}">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:10px">
+                <div style="border:1px solid var(--ln2);border-radius:12px;padding:14px;grid-column:span 2">
+                  <div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px;font-weight:700">Upcoming batches<span style="color:var(--seaT);font-size:11px;white-space:nowrap">View all 18</span></div>
+                  <div style="margin-top:8px;font-size:11.5px">
+                    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;padding:6px 0;color:var(--ink3);font-weight:600;border-bottom:1px solid var(--ln2)"><span>Course</span><span>Starts</span><span>Seats</span><span>Status</span></div>
+                    <sc-for list="{{ batches }}" as="b" hint-placeholder-count="4">
+                      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;padding:8px 0;border-bottom:1px solid var(--ln2);align-items:center"><span style="font-weight:600">{{ b.c }}</span><span style="color:var(--ink2)">{{ b.d }}</span><span style="font-variant-numeric:tabular-nums">{{ b.s }}</span><span style="justify-self:start;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:999px;background:{{ b.bg }};color:{{ b.fg }}">{{ b.st }}</span></div>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="border:1px solid var(--ln2);border-radius:12px;padding:14px">
+                  <div style="font-size:12.5px;font-weight:700">Compliance alerts</div>
+                  <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+                    <div style="display:flex;gap:10px;font-size:11.5px;align-items:start"><span style="flex:none;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--redS);color:var(--red)">5 days</span><span>Simulator calibration certificate expires</span></div>
+                    <div style="display:flex;gap:10px;font-size:11.5px;align-items:start"><span style="flex:none;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--brS);color:var(--brT)">6 days</span><span>Fire safety NOC renewal due</span></div>
+                    <div style="display:flex;gap:10px;font-size:11.5px;align-items:start"><span style="flex:none;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--seaS);color:var(--seaT)">2 open</span><span>Corrective actions from July audit</span></div>
+                  </div>
+                  <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--ln2);display:flex;justify-content:space-between;font-size:11.5px"><span style="color:var(--ink3)">Attendance today</span><span style="font-weight:800">94.2%</span></div>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="position:relative;z-index:3;background:#06283D;color:#F8FAF9">
+    <div style="max-width:1240px;margin:0 auto;padding:22px clamp(20px,4vw,40px);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px 32px">
+      <div style="font-size:15px;font-weight:600">One platform. <span style="color:#9FD9D6">Every part of your institute.</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 28px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.2em">
+        <a href="#p-grow" style="color:#F8FAF9" style-hover="color:#9FD9D6">GROW</a><span aria-hidden="true" style="color:#B88A44">·</span><a href="#p-admit" style="color:#F8FAF9" style-hover="color:#9FD9D6">ADMIT</a><span aria-hidden="true" style="color:#B88A44">·</span><a href="#p-run" style="color:#F8FAF9" style-hover="color:#9FD9D6">RUN</a><span aria-hidden="true" style="color:#B88A44">·</span><a href="#p-comply" style="color:#F8FAF9" style-hover="color:#9FD9D6">COMPLY</a><span aria-hidden="true" style="color:#B88A44">·</span><a href="#p-automate" style="color:#F8FAF9" style-hover="color:#9FD9D6">AUTOMATE</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST -->
+<section data-screen-label="02 Capabilities" style="padding:clamp(48px,6vw,72px) 0;border-bottom:1px solid var(--ln2)">
+  <div data-reveal="" style="max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:28px 56px;align-items:center">
+    <div>
+      <h2 style="margin:0;font-size:clamp(22px,2.2vw,28px);line-height:1.25;letter-spacing:-0.02em;font-weight:700;text-wrap:balance">Built for the way Maritime Training Institutes actually operate.</h2>
+      <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:var(--ink2);max-width:460px">Pre-sea and post-sea courses, STCW batches, simulator schedules, faculty competency, inspections and placement — modelled natively, not bolted onto a generic ERP.</p>
+    </div>
+    <ul style="list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+      <sc-for list="{{ caps }}" as="c" hint-placeholder-count="8">
+        <li style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--ln);border-radius:12px;background:var(--sf);font-size:14px;font-weight:600"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--seaT)">{{ c.n }}</span>{{ c.label }}</li>
+      </sc-for>
+    </ul>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section data-screen-label="03 Problem" style="padding:clamp(72px,9vw,120px) 0">
+  <div style="max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+    <div data-reveal="" style="max-width:760px">
+      <div style="display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--brT)"><span style="width:28px;height:1px;background:var(--br)"></span>The problem</div>
+      <h2 style="margin:16px 0 0;font-size:clamp(28px,3.6vw,46px);line-height:1.1;letter-spacing:-0.03em;font-weight:800;text-wrap:balance">Your institute shouldn't run across ten different systems.</h2>
+      <p style="margin:18px 0 0;font-size:17px;line-height:1.65;color:var(--ink2);text-wrap:pretty">Enquiries arrive on the website and WhatsApp. Counsellors track them in Excel. Fees sit in a payment gateway, certificates in folders, inspection evidence in email threads. Every handover is manual — and every gap costs you students, time and visibility.</p>
+    </div>
+    <div data-reveal="" style="margin-top:48px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:20px;align-items:stretch">
+      <div style="border:1px dashed var(--ln);border-radius:16px;padding:22px;background:var(--sf2)">
+        <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.1em">Today</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;align-items:center">
+          <sc-for list="{{ tools }}" as="t" hint-placeholder-count="8">
+            <span style="display:inline-flex;align-items:center;gap:8px"><span style="padding:9px 13px;border-radius:9px;border:1px solid var(--ln);background:var(--sf);font-size:13.5px;font-weight:600;transform:rotate({{ t.r }})">{{ t.label }}</span><span aria-hidden="true" style="color:var(--ink3);font-weight:700;display:{{ t.plus }}">+</span></span>
+          </sc-for>
+        </div>
+      </div>
+      <div style="border:1px solid var(--ln);border-radius:16px;padding:22px;background:var(--sf)">
+        <div style="font-size:12px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.1em">Leads to</div>
+        <ul style="list-style:none;margin:14px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px 16px">
+          <sc-for list="{{ symptoms }}" as="s" hint-placeholder-count="6">
+            <li style="display:flex;gap:10px;align-items:center;font-size:14.5px;font-weight:600;color:var(--ink)"><span aria-hidden="true" style="width:18px;height:18px;flex:none;border-radius:5px;background:var(--redS);color:var(--red);display:grid;place-items:center;font-size:11px">✕</span>{{ s }}</li>
+          </sc-for>
+        </ul>
+      </div>
+      <div style="border-radius:16px;padding:22px;background:#06283D;color:#F8FAF9;display:flex;flex-direction:column;justify-content:space-between;gap:20px;position:relative;overflow:hidden">
+        <svg aria-hidden="true" viewBox="0 0 300 160" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;opacity:.5"><path d="M-10 130 C 80 120, 120 60, 200 70 S 290 30, 320 20" fill="none" stroke="#168F91" stroke-width="1" stroke-dasharray="2 6"></path></svg>
+        <div style="position:relative;font-size:12px;font-weight:700;color:#9FD9D6;text-transform:uppercase;letter-spacing:.1em">With MTI 360</div>
+        <div style="position:relative"><div style="font-size:30px;font-weight:800;letter-spacing:-0.02em">One Connected Platform</div><p style="margin:8px 0 0;font-size:14.5px;line-height:1.6;color:#C9DCE2">One record for every lead, student, batch, payment and document — shared by every team.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LIFECYCLE -->
+<section id="lifecycle" data-screen-label="04 Lifecycle" style="padding:clamp(72px,9vw,120px) 0;background:var(--bg2);border-block:1px solid var(--ln2);position:relative;overflow:hidden">
+  <div aria-hidden="true" style="position:absolute;top:24px;right:clamp(20px,4vw,40px);font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3);letter-spacing:.1em;white-space:nowrap">18°56′N · 72°50′E</div>
+  <div style="max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+    <div data-reveal="" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:20px 56px;align-items:end">
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--seaT)"><span style="width:28px;height:1px;background:var(--sea)"></span>The route</div>
+        <h2 style="margin:16px 0 0;font-size:clamp(28px,3.6vw,46px);line-height:1.1;letter-spacing:-0.03em;font-weight:800;text-wrap:balance">One platform. Every stage of the journey.</h2>
+      </div>
+      <p style="margin:0;font-size:17px;line-height:1.65;color:var(--ink2);text-wrap:pretty">From first enquiry to final placement, MTI 360 connects every stage of your institute. Select a waypoint to see what happens there.</p>
+    </div>
+
+    <div data-reveal="" style="margin-top:48px">
+      <sc-if value="{{ notMobile }}" hint-placeholder-val="{{ true }}">
+        <div role="tablist" aria-label="Institute lifecycle" style="position:relative;display:grid;grid-template-columns:repeat(9,minmax(0,1fr))">
+          <div aria-hidden="true" style="position:absolute;left:5.5%;right:5.5%;top:21px;height:2px;background:repeating-linear-gradient(90deg,var(--ln) 0 6px,transparent 6px 12px)"></div>
+          <div aria-hidden="true" style="position:absolute;left:5.5%;top:21px;height:2px;width:{{ progress }};background:var(--sea);transition:width .6s cubic-bezier(.2,.7,.2,1)"></div>
+          <sc-for list="{{ stages }}" as="s" hint-placeholder-count="9">
+            <button type="button" role="tab" aria-selected="{{ s.on }}" onClick="{{ s.sel }}" style="position:relative;background:none;border:0;padding:0 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:12px;color:{{ s.ink }}">
+              <span style="width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:{{ s.dot }};border:2px solid {{ s.ring }};color:{{ s.num }};font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;transition:all .3s;box-shadow:{{ s.glow }}">{{ s.n }}</span>
+              <span style="font-size:clamp(11px,1.1vw,13px);font-weight:{{ s.w }};letter-spacing:.12em;text-transform:uppercase">{{ s.k }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ mobile }}" hint-placeholder-val="{{ false }}">
+        <div role="tablist" aria-label="Institute lifecycle" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+          <sc-for list="{{ stages }}" as="s" hint-placeholder-count="9">
+            <button type="button" role="tab" aria-selected="{{ s.on }}" onClick="{{ s.sel }}" style="min-height:52px;border-radius:10px;border:1px solid {{ s.ring }};background:{{ s.mbg }};color:{{ s.mink }};font-size:11.5px;font-weight:700;letter-spacing:.08em;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;opacity:.75">{{ s.n }}</span>{{ s.k }}</button>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <div role="tabpanel" aria-live="polite" style="margin-top:36px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:1px;background:var(--ln);border:1px solid var(--ln);border-radius:16px;overflow:hidden;box-shadow:var(--sh)">
+        <div style="background:var(--sf);padding:clamp(20px,3vw,32px)">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink3);letter-spacing:.1em">WAYPOINT {{ cur.n }} / 09 · PILLAR: <span style="color:var(--seaT);font-weight:600">{{ cur.p }}</span></div>
+          <div style="font-size:clamp(26px,3vw,36px);font-weight:800;letter-spacing:-0.02em;margin-top:10px">{{ cur.k }}</div>
+          <p style="margin:10px 0 0;font-size:16px;line-height:1.6;color:var(--ink2);text-wrap:pretty">{{ cur.d }}</p>
+        </div>
+        <div style="background:var(--sf);padding:clamp(20px,3vw,32px)">
+          <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.1em">Modules at work</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
+            <sc-for list="{{ cur.m }}" as="m" hint-placeholder-count="3">
+              <span style="padding:7px 12px;border-radius:8px;background:var(--seaS);color:var(--seaT);font-size:13.5px;font-weight:600">{{ m }}</span>
+            </sc-for>
+          </div>
+        </div>
+        <div style="background:var(--sf);padding:clamp(20px,3vw,32px)">
+          <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.1em">In the dashboard</div>
+          <div style="font-size:40px;font-weight:800;letter-spacing:-0.03em;margin-top:8px;font-variant-numeric:tabular-nums">{{ cur.stat }}</div>
+          <div style="font-size:14.5px;color:var(--ink2)">{{ cur.sl }}</div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:12px">Illustrative demo data</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PILLARS -->
+<section id="platform" data-screen-label="05 Five Pillars" style="padding:clamp(72px,9vw,120px) 0">
+  <div style="max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+    <div data-reveal="" style="max-width:760px">
+      <div style="display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--seaT)"><span style="width:28px;height:1px;background:var(--sea)"></span>The platform</div>
+      <h2 style="margin:16px 0 0;font-size:clamp(28px,3.6vw,46px);line-height:1.1;letter-spacing:-0.03em;font-weight:800;text-wrap:balance">Everything your institute needs. Connected.</h2>
+      <p style="margin:18px 0 0;font-size:17px;line-height:1.65;color:var(--ink2)">Five pillars, one data model. Each works on its own — together they run the institute.</p>
+    </div>
+    <div data-reveal="" style="margin-top:48px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,216px),1fr));gap:14px">
+      <sc-for list="{{ pillars }}" as="p" hint-placeholder-count="5">
+        <article id="{{ p.id }}" style="position:relative;background:var(--sf);border:1px solid var(--ln);border-radius:16px;padding:24px 22px;display:flex;flex-direction:column;gap:14px;transition:transform .25s,box-shadow .25s,border-color .25s;overflow:hidden" style-hover="transform:translateY(-3px);box-shadow:var(--sh);border-color:var(--sea)">
+          <div aria-hidden="true" style="position:absolute;top:0;left:22px;right:22px;height:2px;background:{{ p.c }}"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3)"><span>{{ p.n }}</span><span style="white-space:nowrap">{{ p.count }}</span></div>
+          <h3 style="margin:0;font-size:20px;font-weight:800;letter-spacing:.16em">{{ p.k }}</h3>
+          <p style="margin:0;font-size:15px;line-height:1.5;color:var(--ink2);min-height:45px">{{ p.d }}</p>
+          <ul style="list-style:none;margin:0;padding:14px 0 0;border-top:1px solid var(--ln2);display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ p.items }}" as="i" hint-placeholder-count="5">
+              <li style="display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--ink)"><span aria-hidden="true" style="width:5px;height:5px;border-radius:50%;background:{{ p.c }}"></span>{{ i }}</li>
+            </sc-for>
+          </ul>
+        </article>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+<!-- ADMISSIONS -->
+<section id="admissions" data-screen-label="06 Admissions" style="padding:clamp(72px,9vw,120px) 0;background:var(--bg2);border-block:1px solid var(--ln2)">
+  <div style="max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+    <div data-reveal="" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:20px 56px;align-items:end">
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--seaT)"><span style="width:28px;height:1px;background:var(--sea)"></span>Admit</div>
+        <h2 style="margin:16px 0 0;font-size:clamp(28px,3.6vw,46px);line-height:1.1;letter-spacing:-0.03em;font-weight:800;text-wrap:balance">From first enquiry to confirmed admission.</h2>
+      </div>
+      <div>
+        <p style="margin:0;font-size:17px;line-height:1.65;color:var(--ink2)">Every lead gets an owner, a next step and a deadline. Counsellors see exactly who to call, which documents are missing and which applications are ready to confirm.</p>
+        <a href="#cta" style="display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-weight:700;font-size:15px;color:var(--seaT)" style-hover="gap:12px">See Admissions <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+
+    <div data-reveal="" style="margin-top:44px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">
+      <sc-for list="{{ pipeline }}" as="s" hint-placeholder-count="6">
+        <div style="position:relative;background:var(--sf);border:1px solid var(--ln);border-radius:12px;padding:14px 16px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink3)">{{ s.n }}</div>
+          <div style="font-size:14px;font-weight:700;margin-top:6px">{{ s.label }}</div>
+          <div style="font-size:24px;font-weight:800;letter-spacing:-0.02em;margin-top:2px;font-variant-numeric:tabular-nums">{{ s.v }}</div>
+          <div style="height:4px;border-radius:3px;background:var(--ln2);margin-top:10px;overflow:hidden"><div style="height:100%;width:{{ s.w }};background:var(--sea)"></div></div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div data-reveal="" style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px">
+      <div style="background:var(--sf);border:1px solid var(--ln);border-radius:16px;padding:20px;box-shadow:var(--sh)">
+        <div style="display:flex;gap:12px;align-items:center">
+          <span style="width:44px;height:44px;border-radius:50%;background:var(--seaS);color:var(--seaT);display:grid;place-items:center;font-weight:800">AN</span>
+          <div style="flex:1"><div style="font-weight:700">Arjun Nair</div><div style="font-size:12.5px;color:var(--ink3)">GME Pre-Sea · Kochi</div></div>
+          <span style="font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;background:var(--okS);color:var(--ok)">Hot · 86</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;font-size:12.5px">
+          <div><div style="color:var(--ink3)">Source</div><div style="font-weight:600">Website form</div></div>
+          <div><div style="color:var(--ink3)">Counsellor</div><div style="font-weight:600">Priya S.</div></div>
+          <div><div style="color:var(--ink3)">Intake</div><div style="font-weight:600">Nov 2026</div></div>
+          <div><div style="color:var(--ink3)">Channel</div><div style="font-weight:600">WhatsApp</div></div>
+        </div>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--ln2)">
+          <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em">Counsellor activity</div>
+          <ol style="list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:10px;border-left:1px dashed var(--ln);padding-left:14px">
+            <li style="font-size:12.5px;position:relative"><span style="position:absolute;left:-18px;top:4px;width:7px;height:7px;border-radius:50%;background:var(--sea)"></span><b style="font-weight:600">Counselling call · 14 min</b><div style="color:var(--ink3)">Today, 10:40 · Discussed sponsorship &amp; medicals</div></li>
+            <li style="font-size:12.5px;position:relative"><span style="position:absolute;left:-18px;top:4px;width:7px;height:7px;border-radius:50%;background:var(--ln)"></span><b style="font-weight:600">Brochure sent on WhatsApp</b><div style="color:var(--ink3)">Yesterday, 17:05 · Template: GME overview</div></li>
+          </ol>
+        </div>
+      </div>
+      <div style="background:var(--sf);border:1px solid var(--ln);border-radius:16px;padding:20px;box-shadow:var(--sh)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-weight:700">Application APP-2026-0412</div><span style="font-size:13px;font-weight:800">72%</span></div>
+        <div style="height:6px;border-radius:4px;background:var(--ln2);margin-top:10px;overflow:hidden"><div style="height:100%;width:72%;background:var(--sea)"></div></div>
+        <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em;margin-top:18px">Document verification</div>
+        <ul style="list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px">
+          <sc-for list="{{ docs }}" as="d" hint-placeholder-count="5">
+            <li style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--ln2);border-radius:9px;font-size:13px"><span>{{ d.label }}</span><span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:{{ d.bg }};color:{{ d.fg }}">{{ d.st }}</span></li>
+          </sc-for>
+        </ul>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:var(--brS);border:1px solid var(--ln);border-radius:16px;padding:20px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--brT);text-transform:uppercase;letter-spacing:.08em"><span aria-hidden="true">◷</span>Follow-up reminder</div>
+          <div style="font-size:15px;font-weight:700;margin-top:10px;line-height:1.4">Call Arjun about his medical fitness certificate</div>
+          <div style="font-size:13px;color:var(--ink2);margin-top:4px">Due today, 16:00 · Assigned to Priya S.</div>
+          <div style="display:flex;gap:8px;margin-top:14px"><span style="font-size:12.5px;font-weight:600;padding:8px 12px;border-radius:8px;background:var(--btn);color:var(--btnT)">Call now</span><span style="font-size:12.5px;font-weight:600;padding:8px 12px;border-radius:8px;border:1px solid var(--ln);background:var(--sf)">Snooze</span></div>
+        </div>
+        <div style="background:var(--sf);border:1px solid var(--ln);border-radius:16px;padding:20px;flex:1">
+          <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em">Automation</div>
+          <div style="font-size:14px;line-height:1.55;margin-top:10px;color:var(--ink)">When all documents are verified → create admission, raise first-term invoice, add to <b>GME Nov-26</b> batch and send welcome kit.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AI -->
+<section id="ai" data-screen-label="07 AI" style="padding:clamp(72px,9vw,120px) 0;background:#04151F;color:#F8FAF9;position:relative;overflow:hidden">
+  <div aria-hidden="true" style="position:absolute;inset:0;background-image:radial-gradient(rgba(221,244,242,.08) 1px,transparent 1px);background-size:28px 28px;mask-image:radial-gradient(ellipse at 70% 40%,#000,transparent 70%);-webkit-mask-image:radial-gradient(ellipse at 70% 40%,#000,transparent 70%)"></div>
+  <div style="position:relative;max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:48px 64px;align-items:start">
+      <div data-reveal="">
+        <div style="display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#D9B77F"><span style="width:28px;height:1px;background:#B88A44"></span>Automate · Governed AI</div>
+        <h2 style="margin:16px 0 0;font-size:clamp(28px,3.6vw,46px);line-height:1.1;letter-spacing:-0.03em;font-weight:800;text-wrap:balance">AI that works with your team — not around it.</h2>
+        <p style="margin:18px 0 0;font-size:17px;line-height:1.65;color:#C3D6DC;text-wrap:pretty">MTI 360 uses governed AI to assist staff, students and management. Agents never touch your database directly — they act only through authorized tools, respect every permission, and leave an audit trail.</p>
+
+        <ol aria-label="How an AI action is governed" style="list-style:none;margin:32px 0 0;padding:0;display:flex;flex-direction:column;gap:0">
+          <sc-for list="{{ chain }}" as="c" hint-placeholder-count="5">
+            <li style="display:grid;grid-template-columns:36px 1fr;gap:14px;align-items:start">
+              <div style="display:flex;flex-direction:column;align-items:center;height:100%"><span style="width:28px;height:28px;border-radius:8px;border:1px solid rgba(221,244,242,.25);display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9FD9D6;background:#06283D">{{ c.n }}</span><span style="flex:1;width:1px;min-height:14px;background:rgba(221,244,242,.18);display:{{ c.line }}"></span></div>
+              <div style="padding:3px 0 16px"><div style="font-weight:700;font-size:15px">{{ c.k }}</div><div style="font-size:13.5px;color:#A9C2CA;margin-top:2px">{{ c.d }}</div></div>
+            </li>
+          </sc-for>
+        </ol>
+      </div>
+
+      <div data-reveal="" style="display:flex;flex-direction:column;gap:16px">
+        <div style="background:#06283D;border:1px solid rgba(221,244,242,.14);border-radius:18px;overflow:hidden;box-shadow:0 40px 80px -40px rgba(0,0,0,.8)">
+          <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid rgba(221,244,242,.1)">
+            <span style="width:8px;height:8px;border-radius:50%;background:#B88A44"></span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.12em;color:#D9B77F">AI BUSINESS ASSISTANT</span>
+            <span style="margin-left:auto;font-size:11px;color:#8FB0BA">Scope: Admissions · Finance · Compliance</span>
+          </div>
+          <div style="padding:20px 18px;display:flex;flex-direction:column;gap:16px">
+            <div style="align-self:flex-end;max-width:85%;background:#0A4F6E;border-radius:14px 14px 4px 14px;padding:12px 14px;font-size:14.5px">Which applications need attention today?</div>
+            <div style="max-width:100%;background:#073B57;border:1px solid rgba(221,244,242,.1);border-radius:14px 14px 14px 4px;padding:16px">
+              <div style="font-size:13px;color:#A9C2CA">Here's what needs action today:</div>
+              <ul style="list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:10px">
+                <sc-for list="{{ aiAnswer }}" as="a" hint-placeholder-count="4">
+                  <li style="display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:12px;font-size:14px;line-height:1.4"><span style="font-size:20px;font-weight:800;color:#F8FAF9;font-variant-numeric:tabular-nums">{{ a.n }}</span><span style="color:#DCE8EB">{{ a.t }}</span><span style="font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:999px;background:rgba(221,244,242,.1);color:#9FD9D6;white-space:nowrap">{{ a.tag }}</span></li>
+                </sc-for>
+              </ul>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;align-items:center">
+                <button type="button" style="height:40px;padding:0 16px;border-radius:9px;border:0;background:#DDF4F2;color:#04151F;font-weight:700;font-size:13.5px;cursor:pointer" style-hover="background:#FFFFFF">View Actions</button>
+                <span style="font-size:11.5px;color:#8FB0BA">Sources: Admissions, Finance, Compliance · Read-only query · Logged</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">
+          <sc-for list="{{ agents }}" as="g" hint-placeholder-count="7">
+            <div style="padding:12px 14px;border-radius:12px;border:1px solid rgba(221,244,242,.12);background:rgba(7,59,87,.45);font-size:13.5px;font-weight:600;transition:border-color .2s" style-hover="border-color:#168F91">{{ g }}</div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMMUNICATION -->
+<section data-screen-label="08 Communication" style="padding:clamp(72px,9vw,120px) 0">
+  <div style="max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+    <div data-reveal="" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:20px 56px;align-items:end">
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--seaT)"><span style="width:28px;height:1px;background:var(--sea)"></span>Communication</div>
+        <h2 style="margin:16px 0 0;font-size:clamp(28px,3.6vw,46px);line-height:1.1;letter-spacing:-0.03em;font-weight:800;text-wrap:balance">Every conversation. One connected experience.</h2>
+      </div>
+      <div>
+        <p style="margin:0;font-size:17px;line-height:1.65;color:var(--ink2)">WhatsApp, email, SMS and voice land in one inbox — each conversation linked to the lead, student, application, payment or batch it's about.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px">
+          <sc-for list="{{ commFeatures }}" as="f" hint-placeholder-count="5"><span style="font-size:13px;font-weight:600;padding:6px 11px;border-radius:999px;border:1px solid var(--ln);background:var(--sf)">{{ f }}</span></sc-for>
+        </div>
+      </div>
+    </div>
+    <div data-reveal="" role="img" aria-label="Unified inbox showing a WhatsApp conversation linked to a lead and application" style="margin-top:44px;background:var(--sf);border:1px solid var(--ln);border-radius:18px;box-shadow:var(--sh);overflow:hidden;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))">
+      <div style="border-right:1px solid var(--ln2);background:var(--sf2)">
+        <div style="padding:14px 16px;font-size:13px;font-weight:700;border-bottom:1px solid var(--ln2);display:flex;justify-content:space-between">Inbox<span style="color:var(--ink3);font-weight:500">All channels</span></div>
+        <sc-for list="{{ convs }}" as="c" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:36px 1fr auto;gap:10px;padding:12px 16px;border-bottom:1px solid var(--ln2);background:{{ c.bg }}">
+            <span style="width:36px;height:36px;border-radius:50%;background:var(--seaS);color:var(--seaT);display:grid;place-items:center;font-size:12px;font-weight:700">{{ c.i }}</span>
+            <div style="min-width:0"><div style="font-size:13px;font-weight:700">{{ c.name }}</div><div style="font-size:12px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.msg }}</div></div>
+            <span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px;height:fit-content;border:1px solid var(--ln);color:var(--ink2)">{{ c.ch }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;flex-direction:column;grid-column:span 1;min-width:0">
+        <div style="padding:14px 18px;border-bottom:1px solid var(--ln2);display:flex;align-items:center;gap:10px"><b style="font-size:14px">Sneha Kulkarni</b><span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--okS);color:var(--ok)">WhatsApp</span></div>
+        <div style="padding:18px;display:flex;flex-direction:column;gap:12px;flex:1">
+          <div style="align-self:flex-start;max-width:85%;background:var(--sf2);border:1px solid var(--ln2);border-radius:12px 12px 12px 4px;padding:10px 12px;font-size:13.5px">Hi, is there a DNS batch starting in November? What are the fees?</div>
+          <div style="align-self:flex-end;max-width:85%;background:var(--seaS);border-radius:12px 12px 4px 12px;padding:10px 12px;font-size:13.5px">Yes — DNS Nov-26 starts 16 Nov with 9 seats left. I've shared the fee structure and eligibility checklist.<div style="font-size:10.5px;color:var(--seaT);margin-top:6px;font-weight:600">WhatsApp Agent · Template: DNS fees</div></div>
+          <div style="align-self:flex-start;max-width:85%;background:var(--sf2);border:1px solid var(--ln2);border-radius:12px 12px 12px 4px;padding:10px 12px;font-size:13.5px">Can I talk to someone about sponsorship?</div>
+          <div style="align-self:center;font-size:11.5px;color:var(--brT);background:var(--brS);padding:5px 12px;border-radius:999px;font-weight:600">Handed over to Priya S. · Counsellor</div>
+        </div>
+        <div style="margin:0 18px 18px;border:1px solid var(--ln);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--ink3);display:flex;justify-content:space-between;gap:10px"><span>AI suggestion: "Happy to help, Sneha — are you available for a call at 4 pm?"</span><span style="color:var(--seaT);font-weight:700;flex:none">Use</span></div>
+      </div>
+      <div style="border-left:1px solid var(--ln2);padding:16px 18px">
+        <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em">Linked records</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+          <sc-for list="{{ linked }}" as="l" hint-placeholder-count="5">
+            <div style="display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--ln2);border-radius:9px;font-size:12.5px"><span style="color:var(--ink3)">{{ l.k }}</span><span style="font-weight:600;text-align:right">{{ l.v }}</span></div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OPERATIONS -->
+<section data-screen-label="09 Operations" style="padding:clamp(72px,9vw,120px) 0;background:var(--bg2);border-block:1px solid var(--ln2)">
+  <div style="max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+    <div data-reveal="" style="max-width:760px">
+      <div style="display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--seaT)"><span style="width:28px;height:1px;background:var(--sea)"></span>Run</div>
+      <h2 style="margin:16px 0 0;font-size:clamp(28px,3.6vw,46px);line-height:1.1;letter-spacing:-0.03em;font-weight:800;text-wrap:balance">Run the institute from one place.</h2>
+      <p style="margin:18px 0 0;font-size:17px;line-height:1.65;color:var(--ink2)">Classes, simulators, faculty, exams, fees and certificates — today's picture, on one screen.</p>
+    </div>
+    <div data-reveal="" style="margin-top:44px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:14px">
+      <div style="background:var(--sf);border:1px solid var(--ln);border-radius:16px;padding:20px;grid-column:1 / -1;box-shadow:var(--sh)">
+        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline"><div style="font-weight:700;font-size:15px">Today's classes</div><span style="font-size:12px;color:var(--ink3)">Thu 24 Sep · Main campus</span></div>
+        <div style="margin-top:12px;overflow-x:auto">
+          <div style="min-width:620px;font-size:13px">
+            <div style="display:grid;grid-template-columns:70px 2.2fr 1.4fr 1fr 1fr;gap:10px;padding:8px 0;color:var(--ink3);font-weight:600;border-bottom:1px solid var(--ln2)"><span>Time</span><span>Session</span><span>Faculty</span><span>Venue</span><span>Attendance</span></div>
+            <sc-for list="{{ classes }}" as="c" hint-placeholder-count="4">
+              <div style="display:grid;grid-template-columns:70px 2.2fr 1.4fr 1fr 1fr;gap:10px;padding:11px 0;border-bottom:1px solid var(--ln2);align-items:center"><span style="font-family:'JetBrains Mono',monospace;font-size:12px">{{ c.t }}</span><span style="font-weight:600">{{ c.s }}</span><span style="color:var(--ink2)">{{ c.f }}</span><span style="color:var(--ink2)">{{ c.v }}</span><span style="display:flex;align-items:center;gap:8px"><span style="flex:1;height:5px;border-radius:3px;background:var(--ln2);overflow:hidden"><span style="display:block;height:100%;width:{{ c.a }};background:var(--sea)"></span></span><b style="font-size:12px;font-variant-numeric:tabular-nums">{{ c.a }}</b></span></div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      <sc-for list="{{ opsTiles }}" as="o" hint-placeholder-count="6">
+        <div style="background:var(--sf);border:1px solid var(--ln);border-radius:16px;padding:18px 20px">
+          <div style="font-size:12.5px;font-weight:600;color:var(--ink3)">{{ o.k }}</div>
+          <div style="font-size:28px;font-weight:800;letter-spacing:-0.02em;margin-top:4px;font-variant-numeric:tabular-nums">{{ o.v }}</div>
+          <div style="font-size:13px;color:var(--ink2);margin-top:2px">{{ o.d }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+<!-- COMPLIANCE -->
+<section data-screen-label="10 Compliance" style="padding:clamp(72px,9vw,120px) 0">
+  <div style="max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:40px 64px;align-items:center">
+    <div data-reveal="">
+      <div style="display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--brT)"><span style="width:28px;height:1px;background:var(--br)"></span>Comply</div>
+      <h2 style="margin:16px 0 0;font-size:clamp(28px,3.6vw,46px);line-height:1.1;letter-spacing:-0.03em;font-weight:800;text-wrap:balance">Stay ready. Stay organized.</h2>
+      <p style="margin:18px 0 0;font-size:17px;line-height:1.65;color:var(--ink2);text-wrap:pretty">Track approvals, certificates and faculty competencies with expiry reminders. Link evidence to every requirement, manage corrective actions to closure, and keep a complete audit trail — so inspections become a review, not a scramble.</p>
+      <ul style="list-style:none;margin:24px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px 20px">
+        <sc-for list="{{ compList }}" as="c" hint-placeholder-count="6"><li style="display:flex;gap:10px;align-items:center;font-size:14.5px;font-weight:600"><span aria-hidden="true" style="color:var(--seaT)">✓</span>{{ c }}</li></sc-for>
+      </ul>
+    </div>
+    <div data-reveal="" role="img" aria-label="Compliance cockpit with inspection readiness score, expiring documents and audit trail" style="background:var(--sf);border:1px solid var(--ln);border-radius:18px;box-shadow:var(--sh);padding:20px;display:grid;gap:14px">
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center">
+        <div style="position:relative;width:112px;height:112px">
+          <svg viewBox="0 0 112 112" width="112" height="112"><circle cx="56" cy="56" r="46" fill="none" stroke="var(--ln2)" stroke-width="10"></circle><circle cx="56" cy="56" r="46" fill="none" stroke="var(--sea)" stroke-width="10" stroke-linecap="round" stroke-dasharray="251 289" transform="rotate(-90 56 56)"></circle><g stroke="var(--ink3)" stroke-width="1"><path d="M56 2v6M56 104v6M2 56h6M104 56h6"></path></g></svg>
+          <div style="position:absolute;inset:0;display:grid;place-items:center;text-align:center"><div><div style="font-size:26px;font-weight:800">87%</div><div style="font-size:10px;color:var(--ink3);font-weight:600">READY</div></div></div>
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:15px">Inspection readiness</div>
+          <div style="font-size:13px;color:var(--ink2);margin-top:4px">Next inspection: 12 Oct · 124 of 142 requirements have current evidence</div>
+          <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap"><span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--redS);color:var(--red)">2 expiring</span><span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--brS);color:var(--brT)">3 open actions</span><span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--seaS);color:var(--seaT)">13 evidence pending</span></div>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--ln2);padding-top:12px">
+        <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em">Document expiry</div>
+        <sc-for list="{{ expiry }}" as="e" hint-placeholder-count="3">
+          <div style="display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--ln2);font-size:13px"><span>{{ e.d }}</span><span style="font-weight:700;color:{{ e.c }};white-space:nowrap">{{ e.w }}</span></div>
+        </sc-for>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em">Audit trail</div>
+        <div style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink2);display:flex;flex-direction:column;gap:6px">
+          <span>09:12  R. Menon uploaded evidence → CA-07 Fire drill log</span>
+          <span>08:47  System reminder sent → Simulator calibration (5 days)</span>
+          <span>Yesterday  S. Pillai closed CA-05 · verified by QA</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINANCE -->
+<section data-screen-label="11 Finance" style="padding:clamp(72px,9vw,120px) 0;background:var(--bg2);border-block:1px solid var(--ln2)">
+  <div style="max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:40px 64px;align-items:center">
+    <div data-reveal="" role="img" aria-label="Finance dashboard with collections, outstanding fees and course-wise revenue" style="background:var(--sf);border:1px solid var(--ln);border-radius:18px;box-shadow:var(--sh);padding:20px;display:grid;gap:16px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px">
+        <sc-for list="{{ finK }}" as="f" hint-placeholder-count="4">
+          <div style="border:1px solid var(--ln2);border-radius:12px;padding:12px"><div style="font-size:11.5px;color:var(--ink3);font-weight:600">{{ f.k }}</div><div style="font-size:21px;font-weight:800;margin-top:2px;color:{{ f.c }}">{{ f.v }}</div></div>
+        </sc-for>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700">Course-wise revenue<span style="font-weight:500;color:var(--ink3);font-size:12px">FY 26–27 YTD</span></div>
+        <div style="display:flex;flex-direction:column;gap:9px;margin-top:12px">
+          <sc-for list="{{ courseRev }}" as="c" hint-placeholder-count="5">
+            <div style="display:grid;grid-template-columns:120px 1fr 56px;gap:10px;align-items:center;font-size:12.5px"><span style="color:var(--ink2)">{{ c.k }}</span><span style="height:12px;border-radius:3px;background:var(--ln2);overflow:hidden"><span style="display:block;height:100%;width:{{ c.w }};background:{{ c.c }};border-radius:3px"></span></span><b style="text-align:right;font-variant-numeric:tabular-nums">{{ c.v }}</b></div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--ln2);padding-top:12px">
+        <div style="font-size:13px;font-weight:700">Recent payments</div>
+        <sc-for list="{{ payments }}" as="p" hint-placeholder-count="3">
+          <div style="display:grid;grid-template-columns:1fr auto auto;gap:12px;padding:9px 0;border-bottom:1px solid var(--ln2);font-size:12.5px;align-items:center"><span><b style="font-weight:600">{{ p.n }}</b> <span style="color:var(--ink3)">· {{ p.i }}</span></span><span style="font-weight:700;font-variant-numeric:tabular-nums">{{ p.a }}</span><span style="font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:999px;background:{{ p.bg }};color:{{ p.fg }}">{{ p.s }}</span></div>
+        </sc-for>
+      </div>
+    </div>
+    <div data-reveal="">
+      <div style="display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--seaT)"><span style="width:28px;height:1px;background:var(--sea)"></span>Collect</div>
+      <h2 style="margin:16px 0 0;font-size:clamp(28px,3.6vw,46px);line-height:1.1;letter-spacing:-0.03em;font-weight:800;text-wrap:balance">Know where your money stands.</h2>
+      <p style="margin:18px 0 0;font-size:17px;line-height:1.65;color:var(--ink2);text-wrap:pretty">Fee plans, invoices, online payments, refunds and reminders — tied to each admission and batch. See collections and outstanding by course, campus or intake, without reconciling spreadsheets.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PLACEMENT -->
+<section data-screen-label="12 Placement" style="padding:clamp(72px,9vw,120px) 0">
+  <div style="max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+    <div data-reveal="" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:20px 56px;align-items:end">
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--seaT)"><span style="width:28px;height:1px;background:var(--sea)"></span>Place</div>
+        <h2 style="margin:16px 0 0;font-size:clamp(28px,3.6vw,46px);line-height:1.1;letter-spacing:-0.03em;font-weight:800;text-wrap:balance">From classroom to career.</h2>
+      </div>
+      <p style="margin:0;font-size:17px;line-height:1.65;color:var(--ink2)">Track every cadet's readiness — documents, medicals, CDC, certificates — and match them to shipping company opportunities through interview and selection.</p>
+    </div>
+    <div data-reveal="" style="margin-top:44px;display:flex;flex-wrap:wrap;align-items:center;gap:6px">
+      <sc-for list="{{ placeSteps }}" as="s" hint-placeholder-count="6">
+        <span style="display:inline-flex;align-items:center;gap:6px"><span style="padding:12px 16px;border-radius:12px;background:var(--sf);border:1px solid var(--ln);display:flex;gap:10px;align-items:baseline"><b style="font-size:14px">{{ s.k }}</b><span style="font-size:13px;color:var(--ink3);font-variant-numeric:tabular-nums">{{ s.v }}</span></span><span aria-hidden="true" style="color:var(--sea);display:{{ s.arrow }}">→</span></span>
+      </sc-for>
+    </div>
+    <div data-reveal="" style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px">
+      <div style="background:#06283D;color:#F8FAF9;border-radius:16px;padding:22px">
+        <div style="font-size:13px;color:#A9C2CA;font-weight:600">Placement rate · DNS &amp; GME 2025–26</div>
+        <div style="font-size:52px;font-weight:800;letter-spacing:-0.03em;margin-top:6px">82%</div>
+        <div style="display:flex;align-items:flex-end;gap:10px;height:80px;margin-top:10px">
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;height:100%"><div style="height:62%;background:rgba(221,244,242,.18);border-radius:4px 4px 0 0"></div><span style="font-size:10px;color:#8FB0BA;font-family:'JetBrains Mono',monospace">Q1</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;height:100%"><div style="height:70%;background:rgba(221,244,242,.18);border-radius:4px 4px 0 0"></div><span style="font-size:10px;color:#8FB0BA;font-family:'JetBrains Mono',monospace">Q2</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;height:100%"><div style="height:76%;background:rgba(221,244,242,.18);border-radius:4px 4px 0 0"></div><span style="font-size:10px;color:#8FB0BA;font-family:'JetBrains Mono',monospace">Q3</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;height:100%"><div style="height:88%;background:#168F91;border-radius:4px 4px 0 0"></div><span style="font-size:10px;color:#8FB0BA;font-family:'JetBrains Mono',monospace">Q4</span></div>
+        </div>
+      </div>
+      <div style="background:var(--sf);border:1px solid var(--ln);border-radius:16px;padding:20px;grid-column:span 2">
+        <div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px">Open opportunities<span style="font-size:12px;color:var(--ink3);font-weight:500">Fictional companies</span></div>
+        <div style="margin-top:10px;overflow-x:auto"><div style="min-width:480px">
+          <sc-for list="{{ jobs }}" as="j" hint-placeholder-count="4">
+            <div style="display:grid;grid-template-columns:1.6fr 1.2fr 1fr auto;gap:12px;padding:11px 0;border-bottom:1px solid var(--ln2);font-size:13px;align-items:center"><b style="font-weight:600">{{ j.c }}</b><span style="color:var(--ink2)">{{ j.r }}</span><span style="color:var(--ink3)">{{ j.m }}</span><span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--seaS);color:var(--seaT)">{{ j.s }}</span></div>
+          </sc-for>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STUDENT PORTAL -->
+<section data-screen-label="13 Student Portal" style="padding:clamp(72px,9vw,120px) 0;background:var(--bg2);border-block:1px solid var(--ln2);overflow:hidden">
+  <div style="max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:48px 72px;align-items:center">
+    <div data-reveal="">
+      <div style="display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--seaT)"><span style="width:28px;height:1px;background:var(--sea)"></span>Student portal</div>
+      <h2 style="margin:16px 0 0;font-size:clamp(28px,3.6vw,46px);line-height:1.1;letter-spacing:-0.03em;font-weight:800;text-wrap:balance">Give students one place to stay connected.</h2>
+      <p style="margin:18px 0 0;font-size:17px;line-height:1.65;color:var(--ink2);text-wrap:pretty">A mobile-first portal for cadets and trainees — fewer calls to the front office, fewer missed notices.</p>
+      <ul style="list-style:none;margin:24px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:12px 20px">
+        <sc-for list="{{ portalItems }}" as="p" hint-placeholder-count="8"><li style="display:flex;gap:10px;align-items:center;font-size:15px;font-weight:600;padding-bottom:10px;border-bottom:1px solid var(--ln)"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--seaT)">{{ p.n }}</span>{{ p.k }}</li></sc-for>
+      </ul>
+    </div>
+    <div data-reveal="" style="display:flex;justify-content:center">
+      <div role="img" aria-label="MTI 360 student portal on a phone" style="width:300px;border-radius:44px;background:#04151F;padding:10px;box-shadow:0 50px 90px -40px rgba(6,40,61,.6)">
+        <div style="border-radius:35px;overflow:hidden;background:#F8FAF9;color:#06283D;height:600px;display:flex;flex-direction:column">
+          <div style="background:#06283D;color:#F8FAF9;padding:14px 20px 20px">
+            <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600"><span>9:41</span><span style="width:70px;height:20px;border-radius:12px;background:#04151F;margin-top:-4px"></span><span>●●●</span></div>
+            <div style="font-size:12px;color:#9FD9D6;margin-top:16px">Good morning</div>
+            <div style="font-size:19px;font-weight:700">Rahul Verma</div>
+            <div style="font-size:11.5px;color:#A9C2CA;margin-top:2px">DNS Nov-25 · Roll 24</div>
+          </div>
+          <div style="padding:14px;display:flex;flex-direction:column;gap:10px;margin-top:-10px;flex:1">
+            <div style="background:#FFFFFF;border:1px solid #E5EEF1;border-radius:14px;padding:12px 14px;box-shadow:0 6px 16px -10px rgba(6,40,61,.3)">
+              <div style="font-size:10.5px;color:#566E7C;font-weight:700;letter-spacing:.06em">NEXT CLASS · 10:30</div>
+              <div style="font-size:14px;font-weight:700;margin-top:4px">Navigation — Chartwork</div>
+              <div style="font-size:11.5px;color:#566E7C">Capt. R. Menon · Chart Room 2</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div style="background:#FFFFFF;border:1px solid #E5EEF1;border-radius:14px;padding:12px"><div style="font-size:10.5px;color:#566E7C;font-weight:700">ATTENDANCE</div><div style="font-size:22px;font-weight:800">92%</div></div>
+              <div style="background:#F5EBDD;border-radius:14px;padding:12px"><div style="font-size:10.5px;color:#7F5B24;font-weight:700">FEES DUE</div><div style="font-size:22px;font-weight:800">₹18,500</div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+              <sc-for list="{{ phoneTiles }}" as="t" hint-placeholder-count="4">
+                <div style="background:#FFFFFF;border:1px solid #E5EEF1;border-radius:12px;padding:10px 4px;text-align:center;font-size:10px;font-weight:600;color:#33505F"><div style="width:26px;height:26px;margin:0 auto 6px;border-radius:8px;background:#DDF4F2;color:#0D6D6F;display:grid;place-items:center;font-size:11px;font-weight:800">{{ t.i }}</div>{{ t.k }}</div>
+              </sc-for>
+            </div>
+            <div style="background:#FFFFFF;border:1px solid #E5EEF1;border-radius:14px;padding:12px 14px">
+              <div style="font-size:10.5px;color:#566E7C;font-weight:700;letter-spacing:.06em">ANNOUNCEMENT</div>
+              <div style="font-size:12.5px;font-weight:600;margin-top:4px;line-height:1.4">Mid-term exam timetable published. Hall tickets available from 28 Sep.</div>
+            </div>
+            <div style="background:#DDF4F2;border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center">
+              <div><div style="font-size:10.5px;color:#0D6D6F;font-weight:700;letter-spacing:.06em">PLACEMENT</div><div style="font-size:12.5px;font-weight:700;margin-top:2px">Interview · Meridian Offshore</div></div><span style="font-size:11px;font-weight:700;color:#0D6D6F">2 Oct</span>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-around;padding:10px 0 16px;border-top:1px solid #E5EEF1;font-size:10px;font-weight:600;color:#566E7C"><span style="color:#0D6D6F">Home</span><span>Timetable</span><span>Fees</span><span>Profile</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ANALYTICS -->
+<section data-screen-label="14 Analytics" style="padding:clamp(72px,9vw,120px) 0">
+  <div style="max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+    <div data-reveal="" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:20px 56px;align-items:end">
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--seaT)"><span style="width:28px;height:1px;background:var(--sea)"></span>Analytics</div>
+        <h2 style="margin:16px 0 0;font-size:clamp(28px,3.6vw,46px);line-height:1.1;letter-spacing:-0.03em;font-weight:800;text-wrap:balance">Turn institute data into decisions.</h2>
+      </div>
+      <p style="margin:0;font-size:17px;line-height:1.65;color:var(--ink2)">Every chart answers a question leadership actually asks — built on live data from every module.</p>
+    </div>
+    <div data-reveal="" style="margin-top:44px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px">
+      <div style="background:var(--sf);border:1px solid var(--ln);border-radius:16px;padding:20px">
+        <div style="font-size:15px;font-weight:700">Where are we losing applicants?</div>
+        <div style="font-size:12.5px;color:var(--ink3);margin-top:2px">Biggest drop: application → documents (−29%)</div>
+        <div style="display:flex;align-items:flex-end;gap:6px;height:120px;margin-top:16px">
+          <div style="flex:1;height:100%;background:var(--seaS);border-radius:4px"></div><div style="flex:1;height:53%;background:var(--seaS);border-radius:4px"></div><div style="flex:1;height:35%;background:var(--seaS);border-radius:4px"></div><div style="flex:1;height:25%;background:var(--br);border-radius:4px"></div><div style="flex:1;height:19%;background:var(--seaS);border-radius:4px"></div><div style="flex:1;height:17%;background:var(--sea);border-radius:4px"></div>
+        </div>
+        <div style="display:flex;gap:6px;font-size:10px;color:var(--ink3);margin-top:6px;font-family:'JetBrains Mono',monospace"><span style="flex:1">LEAD</span><span style="flex:1">COUN</span><span style="flex:1">APPL</span><span style="flex:1;color:var(--brT)">DOCS</span><span style="flex:1">VERI</span><span style="flex:1">ADM</span></div>
+      </div>
+      <div style="background:var(--sf);border:1px solid var(--ln);border-radius:16px;padding:20px">
+        <div style="font-size:15px;font-weight:700">Which lead sources convert best?</div>
+        <div style="font-size:12.5px;color:var(--ink3);margin-top:2px">Referrals convert 2.4× better than paid ads</div>
+        <div style="display:flex;flex-direction:column;gap:9px;margin-top:16px">
+          <sc-for list="{{ sources }}" as="s" hint-placeholder-count="5">
+            <div style="display:grid;grid-template-columns:92px 1fr 40px;gap:10px;align-items:center;font-size:12.5px"><span style="color:var(--ink2)">{{ s.k }}</span><span style="height:10px;border-radius:3px;background:var(--ln2);overflow:hidden"><span style="display:block;height:100%;width:{{ s.w }};background:var(--sea)"></span></span><b style="text-align:right">{{ s.v }}</b></div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="background:var(--sf);border:1px solid var(--ln);border-radius:16px;padding:20px">
+        <div style="font-size:15px;font-weight:700">Are batches attending consistently?</div>
+        <div style="font-size:12.5px;color:var(--ink3);margin-top:2px">8-week average vs 90% target</div>
+        <svg viewBox="0 0 300 120" style="width:100%;height:130px;margin-top:10px" aria-hidden="true">
+          <line x1="0" y1="38" x2="300" y2="38" stroke="var(--br)" stroke-dasharray="4 4"></line>
+          <text x="296" y="32" text-anchor="end" font-size="10" fill="var(--brT)" font-family="JetBrains Mono">90% target</text>
+          <path d="M0 60 L43 52 L86 56 L129 40 L172 44 L215 30 L258 34 L300 26 L300 120 L0 120 Z" fill="var(--seaS)"></path>
+          <path d="M0 60 L43 52 L86 56 L129 40 L172 44 L215 30 L258 34 L300 26" fill="none" stroke="var(--sea)" stroke-width="2"></path>
+          <circle cx="300" cy="26" r="4" fill="var(--sea)"></circle>
+        </svg>
+      </div>
+      <div style="background:var(--sf);border:1px solid var(--ln);border-radius:16px;padding:20px">
+        <div style="font-size:15px;font-weight:700">Which courses drive revenue?</div>
+        <div style="font-size:12.5px;color:var(--ink3);margin-top:2px">Pre-sea courses: 64% of revenue, 38% of seats</div>
+        <div style="display:flex;height:28px;border-radius:6px;overflow:hidden;margin-top:18px">
+          <div style="width:38%;background:var(--seg1)"></div><div style="width:26%;background:var(--sea)"></div><div style="width:20%;background:#9FD9D6"></div><div style="width:16%;background:var(--br)"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;font-size:12.5px">
+          <span style="display:flex;gap:8px;align-items:center"><i style="width:10px;height:10px;border-radius:2px;background:var(--seg1);border:1px solid var(--ln)"></i>GME 38%</span><span style="display:flex;gap:8px;align-items:center"><i style="width:10px;height:10px;border-radius:2px;background:var(--sea)"></i>DNS 26%</span><span style="display:flex;gap:8px;align-items:center"><i style="width:10px;height:10px;border-radius:2px;background:#9FD9D6"></i>STCW modular 20%</span><span style="display:flex;gap:8px;align-items:center"><i style="width:10px;height:10px;border-radius:2px;background:var(--br)"></i>Advanced 16%</span>
+        </div>
+      </div>
+      <div style="background:var(--sf);border:1px solid var(--ln);border-radius:16px;padding:20px">
+        <div style="font-size:15px;font-weight:700">Are we ready for the next inspection?</div>
+        <div style="font-size:12.5px;color:var(--ink3);margin-top:2px">Readiness by area</div>
+        <div style="display:flex;flex-direction:column;gap:9px;margin-top:16px">
+          <sc-for list="{{ readiness }}" as="r" hint-placeholder-count="4">
+            <div style="display:grid;grid-template-columns:92px 1fr 40px;gap:10px;align-items:center;font-size:12.5px"><span style="color:var(--ink2)">{{ r.k }}</span><span style="height:10px;border-radius:3px;background:var(--ln2);overflow:hidden"><span style="display:block;height:100%;width:{{ r.v }};background:{{ r.c }}"></span></span><b style="text-align:right">{{ r.v }}</b></div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="background:var(--sf);border:1px solid var(--ln);border-radius:16px;padding:20px">
+        <div style="font-size:15px;font-weight:700">What is AI taking off our plate?</div>
+        <div style="font-size:12.5px;color:var(--ink3);margin-top:2px">September · every action reviewable</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+          <div style="border:1px solid var(--ln2);border-radius:12px;padding:12px"><div style="font-size:24px;font-weight:800">1,240</div><div style="font-size:12px;color:var(--ink3)">Actions completed</div></div>
+          <div style="border:1px solid var(--ln2);border-radius:12px;padding:12px"><div style="font-size:24px;font-weight:800">96%</div><div style="font-size:12px;color:var(--ink3)">Approved without edits</div></div>
+          <div style="border:1px solid var(--ln2);border-radius:12px;padding:12px;grid-column:span 2;display:flex;justify-content:space-between;font-size:12.5px"><span style="color:var(--ink2)">Handed to humans</span><b>52 conversations</b></div>
+        </div>
+      </div>
+    </div>
+    <p style="margin:16px 0 0;font-size:12px;color:var(--ink3)">All figures on this page are illustrative demo data, not MTI 360 customer statistics.</p>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section data-screen-label="15 Architecture" style="padding:clamp(72px,9vw,120px) 0;background:#06283D;color:#F8FAF9;position:relative;overflow:hidden">
+  <div aria-hidden="true" style="position:absolute;inset:0;background-image:linear-gradient(rgba(221,244,242,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(221,244,242,.05) 1px,transparent 1px);background-size:56px 56px"></div>
+  <div style="position:relative;max-width:1000px;margin:0 auto;padding:0 clamp(20px,4vw,40px);text-align:center">
+    <div data-reveal="">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#9FD9D6">Platform architecture</div>
+      <h2 style="margin:16px auto 0;font-size:clamp(28px,3.6vw,46px);line-height:1.1;letter-spacing:-0.03em;font-weight:800;max-width:700px;text-wrap:balance">Not an ERP with add-ons. One operating platform.</h2>
+    </div>
+    <div data-reveal="" style="margin-top:48px;display:flex;flex-direction:column;align-items:center">
+      <div style="padding:14px 28px;border-radius:14px;background:#F8FAF9;color:#06283D;font-weight:800;font-size:20px;letter-spacing:-0.01em">MTI 360</div>
+      <div style="width:1px;height:28px;background:rgba(221,244,242,.35)"></div>
+      <div style="width:min(100%,640px);border-top:1px solid rgba(221,244,242,.35);display:grid;grid-template-columns:repeat(3,1fr)">
+        <div style="display:flex;flex-direction:column;align-items:center"><div style="width:1px;height:20px;background:rgba(221,244,242,.35)"></div><div style="padding:12px 0;width:90%;border:1px solid rgba(221,244,242,.25);border-radius:12px;font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:.16em;font-size:14px;background:#073B57">GROW</div></div>
+        <div style="display:flex;flex-direction:column;align-items:center"><div style="width:1px;height:20px;background:rgba(221,244,242,.35)"></div><div style="padding:12px 0;width:90%;border:1px solid rgba(221,244,242,.25);border-radius:12px;font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:.16em;font-size:14px;background:#073B57">ADMIT</div></div>
+        <div style="display:flex;flex-direction:column;align-items:center"><div style="width:1px;height:20px;background:rgba(221,244,242,.35)"></div><div style="padding:12px 0;width:90%;border:1px solid rgba(221,244,242,.25);border-radius:12px;font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:.16em;font-size:14px;background:#073B57">RUN</div></div>
+      </div>
+      <div style="width:1px;height:28px;background:rgba(221,244,242,.35)"></div>
+      <div style="width:min(100%,640px);padding:14px;border:1px solid rgba(184,138,68,.5);border-radius:12px;font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:.16em;font-size:14px;color:#E3C48F">COMPLY + AUTOMATE</div>
+      <div style="width:1px;height:28px;background:rgba(221,244,242,.35)"></div>
+      <div style="width:min(100%,640px);padding:14px;border:1px solid rgba(22,143,145,.6);border-radius:12px;font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:.16em;font-size:14px;color:#9FD9D6;background:rgba(22,143,145,.12)">AI + COMMUNICATION</div>
+      <div style="width:1px;height:28px;background:rgba(221,244,242,.35)"></div>
+      <div style="width:min(100%,640px);padding:14px;border-radius:12px;font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:.16em;font-size:14px;background:#04151F;border:1px solid rgba(221,244,242,.18)">ANALYTICS</div>
+      <p style="margin:24px 0 0;font-size:14px;color:#A9C2CA;max-width:520px">One tenant data model underneath — every module reads and writes the same students, batches, payments and documents.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PERSONAS -->
+<section id="personas" data-screen-label="16 Personas" style="padding:clamp(72px,9vw,120px) 0">
+  <div style="max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+    <div data-reveal="" style="max-width:760px">
+      <div style="display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--seaT)"><span style="width:28px;height:1px;background:var(--sea)"></span>Solutions</div>
+      <h2 style="margin:16px 0 0;font-size:clamp(28px,3.6vw,46px);line-height:1.1;letter-spacing:-0.03em;font-weight:800;text-wrap:balance">Who is MTI 360 for?</h2>
+    </div>
+    <div data-reveal="" style="margin-top:40px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:1px;background:var(--ln);border:1px solid var(--ln);border-radius:18px;overflow:hidden">
+      <sc-for list="{{ personas }}" as="p" hint-placeholder-count="6">
+        <a href="#cta" style="background:var(--sf);padding:26px 24px;display:flex;flex-direction:column;gap:10px;color:var(--ink);transition:background .2s" style-hover="background:var(--sf2);color:var(--ink)">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3)">{{ p.n }} · {{ p.pillar }}</span>
+          <span style="font-size:19px;font-weight:700;letter-spacing:-0.01em">{{ p.k }}</span>
+          <span style="font-size:15px;line-height:1.55;color:var(--ink2)">{{ p.d }}</span>
+          <span style="margin-top:6px;font-size:13.5px;font-weight:700;color:var(--seaT)">{{ p.cta }} →</span>
+        </a>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+<!-- WHY -->
+<section data-screen-label="17 Why MTI 360" style="padding:clamp(72px,9vw,120px) 0;background:var(--bg2);border-block:1px solid var(--ln2)">
+  <div style="max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+    <div data-reveal="" style="max-width:760px">
+      <div style="display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--seaT)"><span style="width:28px;height:1px;background:var(--sea)"></span>Why MTI 360</div>
+      <h2 style="margin:16px 0 0;font-size:clamp(28px,3.6vw,46px);line-height:1.1;letter-spacing:-0.03em;font-weight:800;text-wrap:balance">Seven tools stitched together, or one that already fits.</h2>
+    </div>
+    <div data-reveal="" style="margin-top:44px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:14px">
+      <div style="border:1px dashed var(--ln);border-radius:18px;padding:26px;background:transparent">
+        <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.1em">Disconnected tools</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-top:16px">
+          <sc-for list="{{ disconnected }}" as="d" hint-placeholder-count="7"><span style="padding:12px;border-radius:10px;border:1px solid var(--ln);background:var(--sf);font-size:14px;font-weight:600;color:var(--ink2);text-align:center">{{ d }}</span></sc-for>
+        </div>
+        <p style="margin:18px 0 0;font-size:14.5px;line-height:1.6;color:var(--ink2)">Each good at one job. Your team does the integration — by hand, every day.</p>
+      </div>
+      <div style="border-radius:18px;padding:26px;background:var(--sf);border:1px solid var(--sea);box-shadow:var(--sh)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:12px;font-weight:700;color:var(--seaT);text-transform:uppercase;letter-spacing:.1em">MTI 360</div><span style="font-size:13px;font-weight:700">One Connected Platform</span></div>
+        <ul style="list-style:none;margin:16px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
+          <sc-for list="{{ benefits }}" as="b" hint-placeholder-count="6"><li style="display:flex;gap:10px;align-items:center;padding:12px;border-radius:10px;background:var(--seaS);font-size:14.5px;font-weight:600;color:var(--ink)"><span aria-hidden="true" style="color:var(--seaT);font-weight:800">✓</span>{{ b }}</li></sc-for>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FUTURE -->
+<section data-screen-label="18 Future Ready" style="padding:clamp(72px,9vw,120px) 0">
+  <div style="max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:40px 64px;align-items:start">
+    <div data-reveal="">
+      <div style="display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--seaT)"><span style="width:28px;height:1px;background:var(--sea)"></span>Roadmap</div>
+      <h2 style="margin:16px 0 0;font-size:clamp(28px,3.6vw,46px);line-height:1.1;letter-spacing:-0.03em;font-weight:800;text-wrap:balance">Built for where Maritime Training is going.</h2>
+      <p style="margin:18px 0 0;font-size:17px;line-height:1.65;color:var(--ink2)">We're clear about what ships today and what's next.</p>
+      <div style="display:flex;gap:18px;margin-top:20px;font-size:13px;font-weight:600"><span style="display:flex;gap:8px;align-items:center"><span aria-hidden="true" style="width:10px;height:10px;border-radius:50%;background:var(--sea)"></span>Available</span><span style="display:flex;gap:8px;align-items:center"><span aria-hidden="true" style="width:10px;height:10px;border-radius:50%;border:2px solid var(--br)"></span>Coming next</span></div>
+    </div>
+    <ul data-reveal="" style="list-style:none;margin:0;padding:0;border-top:1px solid var(--ln)">
+      <sc-for list="{{ future }}" as="f" hint-placeholder-count="7">
+        <li style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;padding:18px 0;border-bottom:1px solid var(--ln)">
+          <div><div style="font-size:17px;font-weight:700">{{ f.k }}</div><div style="font-size:14px;color:var(--ink3);margin-top:2px">{{ f.d }}</div></div>
+          <span style="display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;background:{{ f.bg }};color:{{ f.fg }};white-space:nowrap"><span aria-hidden="true" style="width:8px;height:8px;border-radius:50%;background:{{ f.dot }};border:2px solid {{ f.fg }}"></span>{{ f.s }}</span>
+        </li>
+      </sc-for>
+    </ul>
+  </div>
+</section>
+
+<!-- SECURITY -->
+<section data-screen-label="19 Security" style="padding:clamp(72px,9vw,120px) 0;background:var(--bg2);border-block:1px solid var(--ln2)">
+  <div style="max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+    <div data-reveal="" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:20px 56px;align-items:end">
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--seaT)"><span style="width:28px;height:1px;background:var(--sea)"></span>Security &amp; trust</div>
+        <h2 style="margin:16px 0 0;font-size:clamp(28px,3.6vw,46px);line-height:1.1;letter-spacing:-0.03em;font-weight:800;text-wrap:balance">Your institute's data, kept in its own lane.</h2>
+      </div>
+      <p style="margin:0;font-size:17px;line-height:1.65;color:var(--ink2)">Security is part of the architecture, not a setting. Our security overview is available on request during your demo.</p>
+    </div>
+    <div data-reveal="" style="margin-top:40px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px">
+      <sc-for list="{{ security }}" as="s" hint-placeholder-count="8">
+        <div style="background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:20px">
+          <div aria-hidden="true" style="width:32px;height:32px;border-radius:9px;border:1px solid var(--ln);display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--seaT);background:var(--sf2)">{{ s.n }}</div>
+          <div style="font-size:15.5px;font-weight:700;margin-top:14px">{{ s.k }}</div>
+          <div style="font-size:14px;line-height:1.55;color:var(--ink2);margin-top:4px">{{ s.d }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta" data-screen-label="20 Final CTA" style="padding:clamp(80px,10vw,140px) 0;background:#04151F;color:#F8FAF9;position:relative;overflow:hidden">
+  <svg aria-hidden="true" viewBox="0 0 1440 500" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%"><path d="M-20 420 C 300 380, 420 180, 760 220 S 1180 360, 1460 90" fill="none" stroke="#168F91" stroke-opacity=".5" stroke-width="1.2" stroke-dasharray="2 8"></path><circle cx="760" cy="220" r="4" fill="#B88A44"></circle><circle cx="1460" cy="90" r="4" fill="#168F91"></circle></svg>
+  <div style="position:relative;max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:40px 64px;align-items:center">
+    <div data-reveal="">
+      <h2 style="margin:0;font-size:clamp(32px,4.6vw,60px);line-height:1.04;letter-spacing:-0.035em;font-weight:800;text-wrap:balance">Ready to run your institute smarter?</h2>
+      <p style="margin:20px 0 0;font-size:18px;line-height:1.6;color:#C3D6DC;max-width:540px">Discover how MTI 360 can connect admissions, operations, finance, compliance, communication and AI in one platform.</p>
+    </div>
+    <form data-reveal="" onSubmit="{{ submit }}" aria-label="Book a demo" style="background:#06283D;border:1px solid rgba(221,244,242,.14);border-radius:18px;padding:clamp(20px,3vw,28px);display:grid;gap:12px">
+      <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+          <label style="display:grid;gap:6px;font-size:13px;font-weight:600;color:#C3D6DC">Full name<input required="" name="name" autocomplete="name" style="height:46px;border-radius:10px;border:1px solid var(--inLn);background:#04151F;color:#F8FAF9;padding:0 14px;font:inherit;font-size:15px" style-focus="border-color:#168F91;outline:none"></label>
+          <label style="display:grid;gap:6px;font-size:13px;font-weight:600;color:#C3D6DC">Work email<input required="" type="email" name="email" autocomplete="email" style="height:46px;border-radius:10px;border:1px solid var(--inLn);background:#04151F;color:#F8FAF9;padding:0 14px;font:inherit;font-size:15px" style-focus="border-color:#168F91;outline:none"></label>
+        </div>
+        <label style="display:grid;gap:6px;font-size:13px;font-weight:600;color:#C3D6DC">Institute name<input required="" name="org" autocomplete="organization" style="height:46px;border-radius:10px;border:1px solid var(--inLn);background:#04151F;color:#F8FAF9;padding:0 14px;font:inherit;font-size:15px" style-focus="border-color:#168F91;outline:none"></label>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px">
+          <button type="submit" style="flex:1;min-width:180px;height:52px;border-radius:12px;border:0;background:#DDF4F2;color:#04151F;font-weight:700;font-size:15.5px;cursor:pointer;transition:background .2s" style-hover="background:#FFFFFF">Book a Demo →</button>
+          <a href="#cta" style="flex:1;min-width:160px;height:52px;border-radius:12px;border:1px solid rgba(221,244,242,.5);color:#F8FAF9;font-weight:600;font-size:15.5px;display:flex;align-items:center;justify-content:center" style-hover="border-color:#9FD9D6;color:#F8FAF9">Talk to Our Team</a>
+        </div>
+        <p style="margin:0;font-size:12px;color:#8FB0BA">A 30-minute walkthrough, tailored to your courses and campus.</p>
+      </sc-if>
+      <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
+        <div role="status" style="padding:24px 4px;text-align:center"><div style="width:48px;height:48px;border-radius:50%;margin:0 auto;background:#168F91;display:grid;place-items:center;font-size:22px">✓</div><div style="font-size:20px;font-weight:700;margin-top:14px">Request received</div><p style="margin:6px 0 0;color:#C3D6DC;font-size:14.5px">Our team will reach out within one business day to schedule your demo.</p></div>
+      </sc-if>
+    </form>
+  </div>
+</section>
+
+</main>
+
+<footer id="footer" data-screen-label="21 Footer" style="background:var(--bg);border-top:1px solid var(--ln2);padding:clamp(56px,7vw,80px) 0 32px">
+  <div style="max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:36px 32px">
+      <div style="grid-column:span 2;min-width:0">
+        <div style="display:flex;align-items:center;gap:10px"><svg width="28" height="28" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="12.5" fill="none" stroke="currentColor" stroke-width="2"></circle><circle cx="15" cy="15" r="12.5" fill="none" stroke="#168F91" stroke-width="2" stroke-dasharray="20 100" transform="rotate(-90 15 15)"></circle><path d="M15 7 L18 15 L15 23 L12 15 Z" fill="currentColor"></path><circle cx="15" cy="15" r="1.6" fill="#B88A44"></circle></svg><span style="font-weight:800;font-size:18px">MTI<span style="color:var(--seaT);margin-left:3px">360</span></span></div>
+        <p style="margin:14px 0 0;font-size:14.5px;line-height:1.6;color:var(--ink2);max-width:320px">The Complete Growth &amp; Operations Platform for Maritime Training Institutes.</p>
+        <p style="margin:10px 0 0;font-size:13px;font-weight:600;color:var(--seaT)">Acquire Students. Simplify Operations. Grow Your Institute.</p>
+      </div>
+      <sc-for list="{{ footerCols }}" as="c" hint-placeholder-count="4">
+        <nav aria-label="{{ c.k }}">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3)">{{ c.k }}</div>
+          <ul style="list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ c.items }}" as="i" hint-placeholder-count="4"><li><a href="#top" style="font-size:14.5px;color:var(--ink2)" style-hover="color:var(--seaT)">{{ i }}</a></li></sc-for>
+          </ul>
+        </nav>
+      </sc-for>
+    </div>
+    <div style="margin-top:48px;padding-top:20px;border-top:1px solid var(--ln2);display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;font-size:12.5px;color:var(--ink3)">
+      <span>© 2026 MTI 360. All rights reserved.</span>
+      <span style="font-family:'JetBrains Mono',monospace;letter-spacing:.14em">GROW · ADMIT · RUN · COMPLY · AUTOMATE</span>
+    </div>
+  </div>
+</footer>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light'|'dark'&quot;},&quot;headline&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;reimagined&quot;,&quot;smarter&quot;],&quot;default&quot;:&quot;reimagined&quot;,&quot;tsType&quot;:&quot;'reimagined'|'smarter'&quot;},&quot;autoplayLifecycle&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const C = {sea:'var(--sea)', seaT:'var(--seaT)', seaS:'var(--seaS)', br:'var(--br)', brT:'var(--brT)', brS:'var(--brS)', ok:'var(--ok)', okS:'var(--okS)', red:'var(--red)', redS:'var(--redS)', ink:'var(--ink)', ink3:'var(--ink3)', ln:'var(--ln)', sf:'var(--sf)'};
+const pad = i => String(i + 1).padStart(2, '0');
+const STAGES = [
+  {k:'Acquire',p:'GROW',d:'Capture enquiries from your website, campaigns, education fairs, walk-ins and referrals — every source tracked to the lead.',m:['Website','Campaigns','Lead capture','Source tracking'],stat:'248',sl:'new leads this month'},
+  {k:'Convert',p:'GROW',d:'Score, assign and follow up automatically so no enquiry goes cold. Counsellors see who to call next and why.',m:['CRM','Lead scoring','Counselling','WhatsApp'],stat:'< 2h',sl:'median first response'},
+  {k:'Admit',p:'ADMIT',d:'Applications, eligibility, document collection and verification in one workflow — from interest to confirmed seat.',m:['Applications','Documents','Verification','Student 360'],stat:'42',sl:'admissions confirmed'},
+  {k:'Train',p:'RUN',d:'Courses, batches, timetables, simulators, faculty, attendance and examinations — scheduled and tracked.',m:['Courses','Batches','Timetable','Attendance','Exams'],stat:'18',sl:'active batches'},
+  {k:'Collect',p:'RUN',d:'Fee plans, invoices, online payments, reminders and refunds linked to every admission.',m:['Invoices','Payments','Reminders','Refunds'],stat:'₹24.8L',sl:'collected this quarter'},
+  {k:'Communicate',p:'AUTOMATE',d:'WhatsApp, email, SMS and voice from one inbox, with templates, automation and human handover.',m:['WhatsApp','Email','SMS','Voice'],stat:'3,410',sl:'messages this month'},
+  {k:'Comply',p:'COMPLY',d:'Approvals, certificates, faculty competencies, inspection evidence and corrective actions — tracked with expiry alerts.',m:['Compliance','Inspections','Corrective actions','Audit trail'],stat:'87%',sl:'inspection readiness'},
+  {k:'Place',p:'GROW',d:'Readiness, opportunities, interviews and selections tracked from classroom to first contract.',m:['Readiness','Opportunities','Interviews','Placement'],stat:'82%',sl:'placement rate'},
+  {k:'Grow',p:'GROW',d:'Close the loop: see which sources, courses and campuses perform — and reinvest where it works.',m:['Analytics','Course performance','Revenue','AI insights'],stat:'6',sl:'decisions surfaced this week'}
+];
+const PILLARS = [
+  {id:'p-grow',k:'GROW',d:'Acquire and convert more students.',c:C.sea,items:['Website','Campaigns','Leads','CRM','Marketing','Analytics']},
+  {id:'p-admit',k:'ADMIT',d:'Turn enquiries into admissions.',c:'var(--ocean)',items:['Counselling','Applications','Documents','Student 360','Admission automation']},
+  {id:'p-run',k:'RUN',d:'Operate your institute efficiently.',c:'var(--ink)',items:['Courses','Batches','Timetable','Attendance','Faculty','Exams','Certificates','Finance']},
+  {id:'p-comply',k:'COMPLY',d:'Stay prepared and audit-ready.',c:C.br,items:['Compliance','Documents','Inspections','Corrective Actions','Audit']},
+  {id:'p-automate',k:'AUTOMATE',d:'Let AI and workflows handle repetitive work.',c:C.sea,items:['AI Agents','WhatsApp','Email','Voice','SMS','Workflows','AI Assistant']}
+];
+
+class Component extends DCLogic {
+  state = { theme: null, menu: false, w: typeof window !== 'undefined' ? window.innerWidth : 1280, stage: 0, auto: true, k: 0, sent: false };
+
+  componentDidMount() {
+    this.rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.onR = () => this.setState({ w: window.innerWidth });
+    window.addEventListener('resize', this.onR);
+    this.applyTheme();
+    if (this.rm) { this.setState({ k: 1 }); return; }
+    const t0 = performance.now();
+    const tick = now => { const p = Math.min(1, (now - t0) / 1400); this.setState({ k: 1 - Math.pow(1 - p, 3) }); if (p < 1) this.raf = requestAnimationFrame(tick); };
+    this.raf = requestAnimationFrame(tick);
+    this.iv = setInterval(() => { if (this.state.auto && this.props.autoplayLifecycle !== false) this.setState(s => ({ stage: (s.stage + 1) % 9 })); }, 3200);
+    this.anims = new Map();
+    this.io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { const a = this.anims.get(e.target); a && a.play(); this.io.unobserve(e.target); } }), { threshold: 0.1 });
+    setTimeout(() => {
+      document.querySelectorAll('[data-reveal]').forEach(el => {
+        if (el.getBoundingClientRect().top < window.innerHeight) return;
+        const a = el.animate([{ opacity: 0, transform: 'translateY(20px)' }, { opacity: 1, transform: 'none' }], { duration: 700, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'both' });
+        a.pause(); this.anims.set(el, a); this.io.observe(el);
+      });
+    }, 50);
+  }
+  componentWillUnmount() { window.removeEventListener('resize', this.onR); clearInterval(this.iv); cancelAnimationFrame(this.raf); this.io && this.io.disconnect(); }
+  componentDidUpdate(pp) { if (pp.theme !== this.props.theme && this.state.theme) this.setState({ theme: null }); this.applyTheme(); }
+  theme() { return this.state.theme || this.props.theme || 'light'; }
+  applyTheme() { document.documentElement.dataset.theme = this.theme(); }
+
+  renderVals() {
+    const { w, stage, k, menu, sent } = this.state;
+    const dark = this.theme() === 'dark';
+    const hv = this.props.headline || 'reimagined';
+    const stages = STAGES.map((s, i) => {
+      const on = i === stage, past = i < stage;
+      return { ...s, n: pad(i), on, sel: () => this.setState({ stage: i, auto: false }),
+        dot: on ? C.seaT : C.sf, ring: on || past ? C.seaT : C.ln, num: on ? 'var(--onSea)' : (past ? C.seaT : C.ink3),
+        ink: on ? C.ink : C.ink3, w: on ? '800' : '600', glow: on ? '0 0 0 6px var(--seaS)' : 'none',
+        mbg: on ? C.seaT : C.sf, mink: on ? 'var(--onSea)' : C.ink };
+    });
+    const hero = React.createElement('svg', { viewBox: '0 0 1440 700', preserveAspectRatio: 'none', style: { position: 'absolute', inset: 0, width: '100%', height: '100%' } },
+      React.createElement('path', { d: 'M-20 520 C 260 470, 380 300, 660 330 S 1080 470, 1460 170', fill: 'none', stroke: 'var(--sea)', strokeOpacity: 0.28, strokeWidth: 1, strokeDasharray: '2 7' }),
+      React.createElement('path', { d: 'M-20 520 C 260 470, 380 300, 660 330 S 1080 470, 1460 170', fill: 'none', stroke: 'var(--sea)', strokeOpacity: 0.55, strokeWidth: 1.4, pathLength: 1, strokeDasharray: 1, style: this.rm ? {} : { animation: 'draw 2.6s cubic-bezier(.4,0,.2,1) .3s both' } }),
+      React.createElement('circle', { cx: 660, cy: 330, r: 4, fill: 'var(--br)' }),
+      React.createElement('circle', { cx: 1180, cy: 330, r: 3, fill: 'var(--sea)' })
+    );
+    const b = (bg, fg) => ({ bg, fg });
+    return {
+      heroRoute: hero,
+      wide: w >= 1000, narrow: w < 1000, mobile: w < 640, notMobile: w >= 640,
+      menu, openMenu: () => this.setState({ menu: true }), closeMenu: () => this.setState({ menu: false }),
+      isDark: dark, themeLabel: dark ? 'Switch to light mode' : 'Switch to dark mode',
+      toggleTheme: () => this.setState({ theme: dark ? 'light' : 'dark' }),
+      h1a: hv === 'smarter' ? 'Run Your Maritime Training Institute.' : 'Maritime Training,',
+      h1b: hv === 'smarter' ? 'Smarter.' : 'Reimagined.',
+      navLinks: [['Platform','#platform'],['Solutions','#personas'],['AI','#ai'],['Resources','#footer'],['Pricing','#cta']].map(([label, href], i) => ({ label, href, n: pad(i) })),
+      sideNav: ['Overview','Leads','Admissions','Students','Batches','Finance','Compliance','Placement','AI Agents'].map((label, i) => ({ label, w: i === 0 ? 700 : 500, c: i === 0 ? C.ink : 'var(--ink2)', bg: i === 0 ? C.sf : 'transparent', dot: i === 0 ? C.sea : (i === 8 ? C.br : C.ln) })),
+      kpis: [
+        { label: 'New leads', v: Math.round(248 * k), d: '▲ 18% vs Aug' },
+        { label: 'Applications', v: Math.round(86 * k), d: '▲ 11%' },
+        { label: 'Admissions', v: Math.round(42 * k), d: '▲ 7 this week' },
+        { label: 'Active students', v: Math.round(684 * k), d: '18 active batches' }
+      ],
+      rev: '₹' + (24.8 * k).toFixed(1) + 'L',
+      funnel: [['Leads',248],['Counselled',132],['Applied',86],['Verified',48],['Admitted',42]].map(([label, v], i) => ({ label, v, w: (v / 248 * 100) + '%', c: i === 4 ? C.sea : 'var(--seaS)' })),
+      aiActions: [{ t: '12 applications awaiting document verification', cta: 'Review' }, { t: '3 overdue fee payments — reminders drafted', cta: 'Send' }, { t: '2 compliance documents expire this week', cta: 'Open' }],
+      batches: [
+        { c: 'GME Pre-Sea', d: '02 Nov', s: '38 / 40', st: 'Filling', ...b(C.okS, C.ok) },
+        { c: 'DNS Nov-26', d: '16 Nov', s: '31 / 40', st: 'Open', ...b(C.seaS, C.seaT) },
+        { c: 'STCW Basic Safety', d: '05 Oct', s: '24 / 24', st: 'Full', ...b('var(--ln2)', 'var(--ink2)') },
+        { c: 'Advanced Fire Fighting', d: '12 Oct', s: '9 / 20', st: 'Low fill', ...b(C.brS, C.brT) }
+      ],
+      caps: ['Admissions','Academics','Finance','Compliance','Placement','Communication','AI','Analytics'].map((label, i) => ({ label, n: pad(i) })),
+      tools: ['Website','WhatsApp','Excel','Email','ERP','Payment Gateway','Documents','Reports'].map((label, i, a) => ({ label, r: ['-1.5deg','1deg','0deg','-0.5deg','1.5deg','-1deg','0.5deg','-1.5deg'][i], plus: i === a.length - 1 ? 'none' : 'inline' })),
+      symptoms: ['Disconnected data','Slow follow-ups','Manual work','Missed leads','Poor visibility','Operational complexity'],
+      stages, cur: stages[stage], progress: (stage / 8 * 89) + '%',
+      pillars: PILLARS.map((p, i) => ({ ...p, n: pad(i), count: p.items.length + ' modules' })),
+      pipeline: [['Lead',248],['Counselling',132],['Application',86],['Documents',61],['Verification',48],['Admission',42]].map(([label, v], i) => ({ label, v, n: pad(i), w: (v / 248 * 100) + '%' })),
+      docs: [
+        { label: '10th & 12th marksheets', st: 'Verified', ...b(C.okS, C.ok) },
+        { label: 'Passport', st: 'Verified', ...b(C.okS, C.ok) },
+        { label: 'Medical fitness certificate', st: 'Pending', ...b(C.brS, C.brT) },
+        { label: 'Eyesight test report', st: 'Uploaded', ...b(C.seaS, C.seaT) },
+        { label: 'INDoS number', st: 'Missing', ...b(C.redS, C.red) }
+      ],
+      chain: [
+        ['AI Agent','Receives a request from staff, a student or a workflow'],
+        ['Authorized Tool','Only tools the role is permitted to use'],
+        ['Business Service','Same rules and validations your team follows'],
+        ['Tenant Data','Scoped to your institute — never shared across tenants'],
+        ['Audit','Every action logged: who asked, what ran, what changed']
+      ].map(([k, d], i, a) => ({ k, d, n: pad(i), line: i === a.length - 1 ? 'none' : 'block' })),
+      aiAnswer: [
+        { n: '12', t: 'applications are waiting for document verification', tag: 'Admissions' },
+        { n: '4', t: 'high-value leads have not been contacted in the last 24 hours', tag: 'Leads' },
+        { n: '3', t: 'fee payments are overdue', tag: 'Finance' },
+        { n: '2', t: 'compliance documents expire this week', tag: 'Compliance' }
+      ],
+      agents: ['AI Admission Agent','WhatsApp Agent','Email Agent','Voice Agent','AI Business Assistant','SQL / Data Agent','Workflow Automation'],
+      commFeatures: ['Templates','Automation','AI assistance','Human handover','Communication history'],
+      convs: [
+        { i: 'SK', name: 'Sneha Kulkarni', msg: 'Can I talk to someone about sponsorship?', ch: 'WA', bg: C.sf },
+        { i: 'MI', name: 'Mohammed Irfan', msg: 'Fee receipt for term 2 attached', ch: 'Email', bg: 'transparent' },
+        { i: 'JD', name: "Joel D'Souza", msg: 'Missed call · callback scheduled 15:30', ch: 'Voice', bg: 'transparent' },
+        { i: 'AN', name: 'Arjun Nair', msg: 'Uploaded medical certificate', ch: 'WA', bg: 'transparent' },
+        { i: 'BST', name: 'BST Oct-26 batch', msg: 'Reminder: reporting time 08:30', ch: 'SMS', bg: 'transparent' }
+      ],
+      linked: [{ k: 'Lead', v: 'LD-2291 · Warm' }, { k: 'Course', v: 'DNS Nov-26' }, { k: 'Application', v: 'Not started' }, { k: 'Payment', v: '—' }, { k: 'Owner', v: 'Priya S.' }],
+      classes: [
+        { t: '08:30', s: 'STCW Basic Safety — PSSR', f: 'Capt. A. Fernandes', v: 'Room 4', a: '100%' },
+        { t: '09:00', s: 'Fire Fighting — practical', f: 'Ch. Off. K. Rao', v: 'Fire ground', a: '96%' },
+        { t: '10:30', s: 'DNS — Navigation chartwork', f: 'Capt. R. Menon', v: 'Chart Room 2', a: '92%' },
+        { t: '14:00', s: 'GME — Engine room simulator', f: 'Ch. Eng. S. Pillai', v: 'ERS Lab', a: '88%' }
+      ],
+      opsTiles: [
+        { k: 'Attendance today', v: '94.2%', d: '612 of 650 present' },
+        { k: 'Faculty on duty', v: '23 / 26', d: '2 on leave · 1 at sea' },
+        { k: 'Examinations', v: '3', d: 'This week · 142 candidates' },
+        { k: 'Fees collected today', v: '₹3.4L', d: '27 payments' },
+        { k: 'Certificates', v: '58', d: 'Ready to issue · BST Sep-26' },
+        { k: 'Alerts', v: '4', d: '2 compliance · 2 attendance' }
+      ],
+      compList: ['Compliance dashboard','Document expiry','Inspection readiness','Corrective actions','Evidence library','Audit trail'],
+      expiry: [
+        { d: 'Simulator calibration certificate', w: '5 days', c: C.red },
+        { d: 'Fire safety NOC — Main campus', w: '6 days', c: C.brT },
+        { d: 'Faculty CoC — Ch. Off. K. Rao', w: '41 days', c: 'var(--ink2)' }
+      ],
+      finK: [{ k: 'Collected', v: '₹24.8L', c: C.ink }, { k: 'Outstanding', v: '₹6.2L', c: C.brT }, { k: 'Invoices', v: '312', c: C.ink }, { k: 'Refunds', v: '₹0.4L', c: C.ink }],
+      courseRev: [['GME Pre-Sea',9.4],['DNS',6.5],['STCW Basic Safety',4.1],['Advanced courses',2.9],['GP Rating',1.9]].map(([kk, v], i) => ({ k: kk, v: '₹' + v + 'L', w: (v / 9.4 * 100) + '%', c: i === 0 ? C.sea : 'var(--seaT)' })),
+      payments: [
+        { n: 'Rahul Verma', i: 'INV-1182', a: '₹45,000', s: 'Paid', ...b(C.okS, C.ok) },
+        { n: 'Irfan M.', i: 'INV-1179', a: '₹18,500', s: 'Overdue', ...b(C.redS, C.red) },
+        { n: 'Kavya Iyer', i: 'INV-1175', a: '₹60,000', s: 'Partial', ...b(C.brS, C.brT) }
+      ],
+      placeSteps: [['Student',120],['Readiness',104],['Opportunity',96],['Interview',88],['Selection',79],['Placement',74]].map(([kk, v], i, a) => ({ k: kk, v, arrow: i === a.length - 1 ? 'none' : 'inline' })),
+      jobs: [
+        { c: 'Meridian Offshore', r: 'Deck Cadet', m: '6 openings', s: 'Interviewing' },
+        { c: 'Konkan Tankers', r: 'Trainee Marine Engineer', m: '4 openings', s: 'Shortlisting' },
+        { c: 'Blue Latitude Lines', r: 'Deck Cadet', m: '3 openings', s: 'Open' },
+        { c: 'Arabian Sea Shipmanagement', r: 'OS / GP Rating', m: '10 openings', s: 'Selected 7' }
+      ],
+      portalItems: ['Timetable','Attendance','Fees','Documents','Examinations','Certificates','Announcements','Placement'].map((kk, i) => ({ k: kk, n: pad(i) })),
+      phoneTiles: [{ i: 'D', k: 'Docs' }, { i: 'E', k: 'Exams' }, { i: 'C', k: 'Certs' }, { i: 'T', k: 'Timetable' }],
+      sources: [['Referral','44%'],['Walk-in','36%'],['Website','29%'],['WhatsApp','24%'],['Paid ads','18%']].map(([kk, v]) => ({ k: kk, v, w: (parseInt(v) / 44 * 100) + '%' })),
+      readiness: [['Approvals','100%',C.sea],['Faculty','92%',C.sea],['Facilities','84%',C.sea],['Records','71%',C.br]].map(([kk, v, c]) => ({ k: kk, v, c })),
+      personas: [
+        ['Institute Owner / Director','See the complete institute at a glance.','ALL PILLARS','View leadership view'],
+        ['Admission Team','Capture, qualify and convert more enquiries.','GROW · ADMIT','See Admissions'],
+        ['Academic Team','Manage courses, batches, attendance and training.','RUN','See Academics'],
+        ['Finance Team','Track collections and outstanding fees.','RUN','See Finance'],
+        ['Compliance Team','Stay organized and inspection-ready.','COMPLY','See Compliance'],
+        ['Placement Team','Track opportunities and student placement.','GROW','See Placement']
+      ].map(([kk, d, pillar, cta], i) => ({ k: kk, d, pillar, cta, n: pad(i) })),
+      disconnected: ['Website','CRM','WhatsApp','Excel','ERP','Email','Reports'],
+      benefits: ['One source of truth','Connected workflows','Less manual work','Better visibility','AI assistance','Scalable architecture'],
+      future: [
+        ['AI agents','Admission, WhatsApp, email and business assistant agents',true],
+        ['Workflow automation','Trigger-based workflows across every module',true],
+        ['Communication automation','Templates, sequences and handover rules',true],
+        ['Advanced analytics','Forecasting and cohort analysis',false],
+        ['Integrations','Accounting, LMS and identity providers',false],
+        ['Multi-campus operations','Consolidated view across campuses',false],
+        ['Maritime ecosystem integrations','Connections to wider maritime platforms',false]
+      ].map(([kk, d, a]) => ({ k: kk, d, s: a ? 'Available' : 'Coming next', bg: a ? C.seaS : C.brS, fg: a ? C.seaT : C.brT, dot: a ? C.seaT : 'transparent' })),
+      security: [
+        ['Multi-tenant architecture','Each institute runs in its own logical tenant.'],
+        ['Tenant isolation','Data is scoped per tenant at every layer.'],
+        ['Role-based access','Staff see only what their role permits.'],
+        ['Audit trails','Every change and AI action is recorded.'],
+        ['Secure document management','Controlled access to student and compliance files.'],
+        ['Controlled AI actions','AI proposes; people approve where it matters.'],
+        ['Permission-aware tools','AI tools inherit the user\u2019s permissions.'],
+        ['Secure integrations','Scoped credentials for connected services.']
+      ].map(([kk, d], i) => ({ k: kk, d, n: pad(i) })),
+      footerCols: [
+        { k: 'Product', items: ['Platform','Admissions','Academics','Finance','Compliance','Placement','AI','Analytics'] },
+        { k: 'Resources', items: ['Product Overview','Documentation','Blog','FAQs'] },
+        { k: 'Company', items: ['About','Contact','Careers'] },
+        { k: 'Legal', items: ['Privacy','Terms','Security'] }
+      ],
+      sent, notSent: !sent,
+      submit: e => { e.preventDefault(); this.setState({ sent: true }); }
+    };
+  }
+}
+</script>
+</body>
+</html>
