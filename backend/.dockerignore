@@ -1,0 +1,33 @@
+# Build context: backend/. Only pyproject.toml, uv.lock, .python-version and
+# app/ are needed. Never send secrets, local environments or caches.
+
+# Secrets / environment files
+.env
+.env.*
+
+# Version control
+.git
+.gitignore
+
+# Local virtual environment and caches
+.venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.cache/
+
+# Tests and test artefacts (not part of the runtime image)
+tests/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+junit*.xml
+
+# Container build files and documentation
+Dockerfile
+.dockerignore
+*.md
