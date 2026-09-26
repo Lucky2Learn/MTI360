@@ -18,7 +18,11 @@ minimumReleaseAge: 10080
 # Dependency install/build scripts are blocked unless explicitly allowed here.
 # Keep this list empty unless a package demonstrably needs its script, and
 # record the justification next to the entry.
-allowBuilds: {}
+allowBuilds:
+  # Reviewed (T00-02), NOT allowed: postinstall only runs napi-postinstall to
+  # verify / fall back to downloading the native binding. The binding is already
+  # installed as a platform-specific optional dependency, so the script is unnecessary.
+  unrs-resolver: false
 strictDepBuilds: true
 
 # pnpm is deliberately pinned (packageManager in package.json); suppress

@@ -5,10 +5,13 @@ import type { ReactNode } from "react";
 // theme are introduced in T00-06; application shells in T00-08.
 export const metadata: Metadata = {
   title: "MTI 360",
-  description: "MTI 360 — Growth & Operations Platform for Maritime Training Institutes.",
+  description:
+    "MTI 360 — Growth & Operations Platform for Maritime Training Institutes.",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en">
       <body>{children}</body>

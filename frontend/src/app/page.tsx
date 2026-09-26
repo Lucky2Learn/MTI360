@@ -4,7 +4,9 @@ export default function HomePage() {
   return (
     <main>
       <h1>MTI 360</h1>
-      <p>Application foundation. Product experiences are not implemented yet.</p>
+      <p>
+        Application foundation. Product experiences are not implemented yet.
+      </p>
     </main>
   );
 }

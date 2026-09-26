@@ -1,0 +1,15 @@
+# Prettier runs inside frontend/ only (never at the repository root, so the
+# root marketing website and specification documents are never reformatted).
+.next/
+out/
+build/
+coverage/
+node_modules/
+next-env.d.ts
+*.tsbuildinfo
+
+# Documentation is not auto-formatted.
+*.md
+
+# Environment templates are not a Prettier-supported format.
+.env*
