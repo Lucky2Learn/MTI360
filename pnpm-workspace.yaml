@@ -1,0 +1,26 @@
+# MTI 360 — pnpm workspace
+#
+# Only the Next.js frontend is a pnpm package. The FastAPI backend is managed
+# by uv (backend/pyproject.toml) and is driven from the root package.json scripts.
+packages:
+  - frontend
+
+# Refuse to install when the running Node.js does not satisfy "engines".
+engineStrict: true
+
+# Save exact versions when adding dependencies (reproducibility).
+saveExact: true
+
+# Supply-chain cooldown (T00-02 decision D7): do not install package versions
+# published less than 7 days ago. Unit: minutes. 7 × 24 × 60 = 10080.
+minimumReleaseAge: 10080
+
+# Dependency install/build scripts are blocked unless explicitly allowed here.
+# Keep this list empty unless a package demonstrably needs its script, and
+# record the justification next to the entry.
+allowBuilds: {}
+strictDepBuilds: true
+
+# pnpm is deliberately pinned (packageManager in package.json); suppress
+# "update available" prompts for newer majors. Upgrades are deliberate tasks.
+updateNotifier: false

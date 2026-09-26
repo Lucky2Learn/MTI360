@@ -1,0 +1,12 @@
+{
+  "name": "mti360",
+  "private": true,
+  "description": "MTI 360 monorepo root — orchestration scripts only (no dependencies).",
+  "packageManager": "pnpm@11.28.0",
+  "engines": {
+    "node": ">=24.15.0 <25"
+  },
+  "scripts": {
+    "check:landing": "git diff --quiet marketing-site-v1 -- index.html app.js styles.css"
+  }
+}
