@@ -60,9 +60,9 @@ select = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-# assert is expected in tests; S105/S106: tests use fixed, fake secret values
-# to exercise settings validation (T00-04). Application code keeps both rules.
-"tests/**" = ["S101", "S105", "S106"]
+# assert is expected in tests; S105-S107: tests use fixed, fake secret values
+# to exercise settings validation (T00-04). Application code keeps these rules.
+"tests/**" = ["S101", "S105", "S106", "S107"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]
