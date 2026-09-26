@@ -1,0 +1,141 @@
+# =============================================================================
+# MTI 360 — local Docker environment (T00-03)
+# =============================================================================
+#
+# Hybrid development model:
+#   * profile "infra": PostgreSQL, Redis, S3-compatible object storage, Mailpit
+#     (run in Docker)                       -> pnpm infra:up
+#   * the Next.js and FastAPI apps run natively for day-to-day work
+#                                           -> pnpm dev
+#
+# ISOLATION (other local projects, e.g. ACRS, may run on the same machine):
+#   * The Compose project name is fixed to "mti360" below. Always run Compose
+#     from this repository (or via the pnpm infra:* scripts); never override
+#     the project name with -p or COMPOSE_PROJECT_NAME.
+#   * Every volume is explicitly named "mti360_*".
+#   * Every published port binds to 127.0.0.1 only. Defaults are documented;
+#     override them in the local, git-ignored .env.
+#
+# Required secrets come from the local .env (copy .env.example). Compose
+# refuses to start if any required variable is missing.
+# =============================================================================
+
+name: mti360
+
+services:
+  # --------------------------------------------------------------------------
+  # PostgreSQL 18 (pgvector build; the extension is NOT enabled yet)
+  # --------------------------------------------------------------------------
+  postgres:
+    image: pgvector/pgvector:0.8.6-pg18-trixie
+    profiles: ["infra"]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mti360}
+      POSTGRES_USER: ${POSTGRES_USER:-mti360_superuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (copy .env.example)}
+      MTI_OWNER_PASSWORD: ${MTI_OWNER_PASSWORD:?Set MTI_OWNER_PASSWORD in .env (copy .env.example)}
+      MTI_APP_PASSWORD: ${MTI_APP_PASSWORD:?Set MTI_APP_PASSWORD in .env (copy .env.example)}
+      MTI_READONLY_PASSWORD: ${MTI_READONLY_PASSWORD:?Set MTI_READONLY_PASSWORD in .env (copy .env.example)}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # PostgreSQL 18+ images keep data under /var/lib/postgresql/<major>/,
+      # so the volume is mounted at /var/lib/postgresql (not .../data).
+      - postgres_data:/var/lib/postgresql
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Redis 8.8 (cache / sessions / future queue). No application client yet.
+  # --------------------------------------------------------------------------
+  redis:
+    image: redis:8.8-alpine
+    profiles: ["infra"]
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # SeaweedFS 4.47 — S3-compatible object storage (local emulator)
+  # Only the authenticated S3 API is enabled and published. WebDAV, the admin
+  # UI, Iceberg/Lance catalogs and telemetry are disabled. The container starts
+  # as root only to fix /data ownership, then drops to the "seaweed" user.
+  # --------------------------------------------------------------------------
+  object-storage:
+    image: chrislusf/seaweedfs:4.47
+    profiles: ["infra"]
+    command:
+      - mini
+      - -dir=/data
+      - -master.telemetry=false
+      - -admin.ui=false
+      - -webdav=false
+      - -s3.port.iceberg=0
+      - -s3.port.lance=0
+    environment:
+      # S3 admin identity (anonymous access is denied when this is set).
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:?Set S3_ACCESS_KEY_ID in .env (copy .env.example)}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:?Set S3_SECRET_ACCESS_KEY in .env (copy .env.example)}
+    ports:
+      - "127.0.0.1:${S3_PORT:-8333}:8333"
+    volumes:
+      - object_storage_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8333/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+    restart: unless-stopped
+
+  # One-shot: create the private application bucket (idempotent).
+  object-storage-init:
+    image: chrislusf/seaweedfs:4.47
+    profiles: ["infra"]
+    entrypoint: ["/bin/sh", "/init/create-bucket.sh"]
+    environment:
+      S3_BUCKET: ${S3_BUCKET:-mti360-local}
+      SEAWEEDFS_HOST: object-storage
+    volumes:
+      - ./infrastructure/object-storage/create-bucket.sh:/init/create-bucket.sh:ro
+    depends_on:
+      object-storage:
+        condition: service_healthy
+    restart: "no"
+
+  # --------------------------------------------------------------------------
+  # Mailpit 1.31 — local SMTP catcher and web UI. No application email code yet.
+  # --------------------------------------------------------------------------
+  mailpit:
+    image: axllent/mailpit:v1.31
+    profiles: ["infra"]
+    ports:
+      - "127.0.0.1:${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    name: mti360_postgres_data
+  redis_data:
+    name: mti360_redis_data
+  object_storage_data:
+    name: mti360_object_storage_data
