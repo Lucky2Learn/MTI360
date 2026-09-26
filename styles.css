@@ -1,0 +1,70 @@
+:root{--bg:#F8FAF9;--bg2:#EAF4F7;--sf:#FFFFFF;--sf2:#F3F8F9;--ln:#D3E1E6;--ln2:#E5EEF1;--ink:#06283D;--ink2:#33505F;--ink3:#566E7C;--sea:#168F91;--seaT:#0D6D6F;--seaS:#DDF4F2;--br:#B88A44;--brT:#7F5B24;--brS:#F5EBDD;--red:#A8412C;--redS:#F8E6E1;--ok:#1C6F47;--okS:#E1F1E7;--btn:#06283D;--btnT:#F8FAF9;--btnH:#0A4F6E;--nav:rgba(248,250,249,.86);--sh:0 1px 2px rgba(6,40,61,.05),0 18px 40px -18px rgba(6,40,61,.22);--grid:rgba(6,40,61,.05);--onSea:#F8FAF9;--seg1:#06283D;--ocean:#0A4F6E;--inLn:rgba(221,244,242,.42);color-scheme:light}
+html[data-theme="dark"]{--bg:#04151F;--bg2:#061C29;--sf:#08222F;--sf2:#0D2F41;--ln:#24506A;--ln2:#173C50;--ink:#EEF4F3;--ink2:#B3C7CF;--ink3:#8CA6B2;--sea:#2AAFAE;--seaT:#62D0CB;--seaS:rgba(42,175,174,.14);--br:#C9A064;--brT:#DDBA82;--brS:rgba(201,160,100,.13);--red:#EA947E;--redS:rgba(234,148,126,.12);--ok:#7BD3A3;--okS:rgba(123,211,163,.12);--btn:#DDF4F2;--btnT:#04151F;--btnH:#BFE7E3;--nav:rgba(4,21,31,.9);--sh:0 1px 0 rgba(255,255,255,.03) inset,0 24px 48px -24px rgba(0,0,0,.7);--grid:rgba(221,244,242,.045);--onSea:#04151F;--seg1:#DDF4F2;--ocean:#9FD9D6;--inLn:rgba(221,244,242,.42);color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Plus Jakarta Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;transition:background .3s}
+a{color:inherit;text-decoration:none}
+a:hover{color:var(--seaT)}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--seaT);outline-offset:3px;border-radius:6px}
+#ai :focus-visible,#cta :focus-visible{outline-color:#9FD9D6}
+@keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+
+/* Hover / active / focus states (originally computed per-element by the design tool) */
+.scp0:focus{left:16px!important}
+.scp1:hover{border-color:var(--sea)!important}
+.scp2:hover{background:var(--btnH)!important;color:var(--btnT)!important;transform:translateY(-1px)!important}
+.scp3:active{transform:translateY(0)!important}
+.scp4:hover{border-color:var(--seaT)!important;background:var(--sf2)!important;color:var(--ink)!important}
+.scp5:hover{color:var(--seaT)!important}
+.scp6:hover{color:#9FD9D6!important}
+.scp7:hover{transform:translateY(-3px)!important;box-shadow:var(--sh)!important;border-color:var(--sea)!important}
+.scp8:hover{gap:12px!important}
+.scp9:hover{background:#fff!important}
+.scpa:hover{border-color:#168F91!important}
+.scpb:hover{background:var(--sf2)!important;color:var(--ink)!important}
+.scpc:focus{border-color:#168F91!important;outline:none!important}
+.scpd:hover{border-color:#9FD9D6!important;color:#F8FAF9!important}
+
+/* Header responsive nav */
+.nav-narrow{display:none}
+@media (max-width:860px){
+  .nav-wide{display:none!important}
+  .nav-narrow{display:grid!important}
+}
+
+/* Mobile nav drawer */
+#mobile-drawer{display:none}
+#mobile-drawer.open{display:flex}
+
+/* Lifecycle stepper: desktop circular tabs vs. mobile 3-column grid */
+.lc-wide{display:grid}
+.lc-narrow{display:none}
+@media (max-width:999px){
+  .lc-wide{display:none}
+  .lc-narrow{display:grid}
+}
+
+/* Scroll reveal */
+[data-reveal]{opacity:0;transform:translateY(20px)}
+[data-reveal].in-view{opacity:1;transform:none;transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+@media (prefers-reduced-motion: reduce){
+  [data-reveal]{opacity:1;transform:none}
+}
+
+/* Back-to-top */
+#back-to-top{
+  position:fixed;right:20px;bottom:20px;width:46px;height:46px;border-radius:50%;
+  background:var(--btn);color:var(--btnT);border:1px solid var(--ln);
+  display:grid;place-items:center;cursor:pointer;box-shadow:var(--sh);
+  opacity:0;pointer-events:none;transform:translateY(8px);
+  transition:opacity .25s ease,transform .25s ease,background .2s ease;
+  z-index:60;
+}
+#back-to-top.visible{opacity:1;pointer-events:auto;transform:none}
+#back-to-top:hover{background:var(--btnH)}
+@media (prefers-reduced-motion: reduce){
+  #back-to-top{transition:opacity .01s linear}
+}
