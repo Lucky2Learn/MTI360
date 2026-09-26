@@ -1,16 +1,13 @@
-"""Toolchain smoke tests for settings loading (T00-02)."""
+"""Toolchain smoke tests for settings loading (T00-02, updated for T00-04).
+
+Environment isolation is provided by the autouse fixture in ``conftest.py``.
+Per-environment rules are tested in ``test_settings_environments.py``.
+"""
 
 import pytest
 from pydantic import ValidationError
 
 from app.core.config import Settings, get_settings
-
-
-@pytest.fixture(autouse=True)
-def _isolated_environment(monkeypatch: pytest.MonkeyPatch) -> None:
-    for name in ("APP_ENV", "APP_DEBUG", "LOG_LEVEL"):
-        monkeypatch.delenv(name, raising=False)
-    get_settings.cache_clear()
 
 
 def test_defaults_are_secure() -> None:
@@ -22,12 +19,12 @@ def test_defaults_are_secure() -> None:
 
 
 def test_environment_variables_override_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("APP_DEBUG", "true")
     monkeypatch.setenv("LOG_LEVEL", "WARNING")
 
     settings = Settings(_env_file=None)
 
-    assert settings.app_env == "production"
+    assert settings.app_debug is True
     assert settings.log_level == "WARNING"
 
 

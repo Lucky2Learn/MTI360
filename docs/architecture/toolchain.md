@@ -29,7 +29,7 @@ This document records the exact toolchain versions, why each was chosen, which n
 | vitest | 4.1.11 | vite | 8.3.0 |
 | @vitejs/plugin-react | 6.1.1 | jsdom | 30.1.0 |
 | @testing-library/react | 16.3.3 | @testing-library/dom | 10.4.2 |
-| @testing-library/jest-dom | 7.0.1 | | |
+| @testing-library/jest-dom | 7.0.1 | server-only (T00-04) | 0.0.1 |
 
 ### Backend (`backend/pyproject.toml` ranges; exact in `uv.lock`, 36 packages)
 
@@ -99,7 +99,8 @@ Run from the repository root.
 | `pnpm test` | `vitest run` + `pytest` | both |
 | `pnpm format` / `pnpm format:check` | Prettier (frontend/ only) + `ruff format` (backend/ only) | both |
 | `pnpm check:landing` | Fails if `index.html`, `app.js` or `styles.css` differ from tag `marketing-site-v1` | repo |
-| `pnpm check` | `check:landing` → `format:check` → `lint` → `typecheck` → `test` → `build` | repo |
+| `pnpm check:env` | Environment template and secret hygiene (T00-04, [environments.md](environments.md)) | repo |
+| `pnpm check` | `check:landing` → `check:env` → `format:check` → `lint` → `typecheck` → `test` → `build` | repo |
 | `pnpm infra:up` / `infra:down` / `infra:reset` / `infra:logs` | Local Docker infrastructure (T00-03) — see [local-development.md](../runbooks/local-development.md) | Docker |
 | `pnpm stack:up` | Build and run infrastructure + api + frontend images (T00-03) | Docker |
 
@@ -120,7 +121,7 @@ The backend has no build step: it is not packaged, and import correctness is cov
 | Server-only, non-secret | `APP_ENV`, `APP_DEBUG`, `LOG_LEVEL`, `API_BASE_URL`, `FRONTEND_PORT`, `API_PORT` | `backend/.env`, `frontend/.env.local`, shell |
 | Secrets | session/CSRF secrets, database passwords, provider keys | local ignored files only; secret manager in staging/production |
 
-T00-02 reads only `APP_ENV`, `APP_DEBUG` (default `false`) and `LOG_LEVEL` in the backend. Tests never read `backend/.env`. `NEXT_TELEMETRY_DISABLED=1` is recommended for CI and Docker.
+Since T00-04 the backend types and validates every variable in `backend/.env.example`, and the frontend validates `APP_ENV` and `API_BASE_URL` in the server-only `src/lib/env.ts`. `backend/.env` is read only in development; tests never read it. Rules per environment: [environments.md](environments.md). `NEXT_TELEMETRY_DISABLED=1` is recommended for CI and Docker.
 
 ## 8. Update policy
 

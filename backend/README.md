@@ -1,6 +1,6 @@
 # backend/
 
-**Status:** Toolchain foundation (T00-02). Contains only the application factory (`create_app()`), minimal `Settings` and a `GET /health` liveness endpoint, plus smoke tests. No database, cache, storage, authentication, tenancy or business modules yet.
+**Status:** Toolchain foundation (T00-02) with validated per-environment settings (T00-04). Contains only the application factory (`create_app()`), typed `Settings` and a `GET /health` liveness endpoint, plus tests. No database, cache, storage, authentication, tenancy or business modules yet.
 
 ## Commands
 
@@ -15,7 +15,7 @@ Run from the repository root (`pnpm dev:backend`, `pnpm lint:backend`, …) or i
 | `uv run --locked mypy` | Strict type checking (pydantic plugin) |
 | `uv run --locked pytest` | Tests (AnyIO plugin, asyncio backend) |
 
-Settings are read from environment variables and `backend/.env` (copy `backend/.env.example`). Toolchain versions and rationale: [docs/architecture/toolchain.md](../docs/architecture/toolchain.md).
+Settings (`app/core/config.py`) are read from environment variables and, **in development only**, `backend/.env` (copy `backend/.env.example`; optional — development works with no file). Test, staging and production never read `.env`. Invalid settings stop startup with a `ConfigurationError` that names variables, never values. Rules: [docs/architecture/environments.md](../docs/architecture/environments.md). Toolchain versions and rationale: [docs/architecture/toolchain.md](../docs/architecture/toolchain.md).
 
 ## Purpose
 
@@ -58,6 +58,6 @@ Layering rule inside a module: `router → service → (domain, repository) → 
 | Task | Adds |
 |---|---|
 | T00-02 ✅ | `pyproject.toml`, `uv.lock`, FastAPI app factory, settings, `/health`, Ruff / mypy / pytest configuration (Alembic deferred to the first database task — decision D5) |
-| T00-03 | `Dockerfile` (api / worker / migrate from one image) |
-| T00-04 | Settings loading and per-environment validation |
+| T00-03 ✅ | `Dockerfile` (api image; worker / migrate deferred) |
+| T00-04 ✅ | Typed settings, per-environment validation, `.env` source policy |
 | Phase 01 | Identity, tenancy, authorization, audit modules and tenant-isolation tests |

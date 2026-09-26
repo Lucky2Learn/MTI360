@@ -31,15 +31,16 @@ MTI 360 is **one product with four experiences**:
 
 ## Current status
 
-> **No product functionality has been implemented yet.** The development toolchain (T00-02) and local Docker infrastructure (T00-03) exist; the frontend has only a neutral root page and the backend only a `/health` liveness endpoint. No database schema, authentication or tenancy exists.
+> **No product functionality has been implemented yet.** The development toolchain (T00-02), local Docker infrastructure (T00-03) and validated per-environment configuration (T00-04) exist; the frontend has only a neutral root page and the backend only a `/health` liveness endpoint. No database schema, authentication or tenancy exists.
 
 | Area | Status |
 |---|---|
 | Product and engineering specifications | Baseline complete |
 | T00-01 Repository Structure | `COMPLETED` |
 | T00-02 Development Environment | `COMPLETED` (merged, PR #1) |
-| T00-03 Docker Development Environment | `READY_FOR_REVIEW` |
-| Phase 00 Foundation (T00-04 … T00-10) | Not started |
+| T00-03 Docker Development Environment | `COMPLETED` (merged, PR #3) |
+| T00-04 Environment Configuration | `READY_FOR_REVIEW` |
+| Phase 00 Foundation (T00-05 … T00-10) | Not started |
 | Product features (screens, APIs, database, auth, tenancy) | Not started |
 
 The live tracker is [DEVELOPMENT-STATUS.md](DEVELOPMENT-STATUS.md).

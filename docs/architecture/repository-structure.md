@@ -189,7 +189,7 @@ SQLite is not used for backend tests: RLS and PostgreSQL features must be exerci
 | `.env`, `backend/.env`, `backend/.env.local`, `frontend/.env.local`, any other `.env.*` | **Never** | Real local values |
 | Staging / production configuration | **Never as files** | Injected by the secret manager / CI |
 
-`APP_ENV` is one of `development | test | staging | production`. From T00-04, production settings validation must refuse placeholder secrets, debug mode, permissive CORS and the fake AI provider. See [security.md](security.md#9-secrets-and-configuration).
+`APP_ENV` is one of `development | test | staging | production`. Since T00-04, settings are validated per environment at startup: `backend/.env` is read only in development, and staging/production refuse placeholder secrets, debug mode, permissive CORS and the fake AI provider. See [environments.md](environments.md) and [security.md](security.md#9-secrets-and-configuration).
 
 ## 6. Local infrastructure (T00-03)
 

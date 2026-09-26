@@ -1,6 +1,8 @@
 # frontend/
 
-**Status:** Toolchain foundation (T00-02). Contains only a root layout, a neutral root page and a smoke test — no product screens, design tokens or experience routes yet.
+**Status:** Toolchain foundation (T00-02) plus a server-only environment contract (`src/lib/env.ts`, T00-04). Contains only a root layout, a neutral root page and tests — no product screens, design tokens or experience routes yet.
+
+**Environment:** read configuration only through `src/lib/env.ts` (`getServerEnv()`, `getPublicEnv()`). It is marked `server-only`, so importing it from a Client Component fails the build. `NEXT_PUBLIC_APP_NAME` is the only browser-public value; never add a secret to a `NEXT_PUBLIC_*` variable. Rules: [docs/architecture/environments.md](../docs/architecture/environments.md).
 
 ## Commands
 
