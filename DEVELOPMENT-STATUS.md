@@ -84,7 +84,7 @@ Use only:
 ## Overall Status
 
 ```text
-NOT_STARTED
+IN_PROGRESS
 ```
 
 ## Current Phase
@@ -106,6 +106,8 @@ M0 — Foundation Ready
 ```
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
+
+> **2026-09-26:** T00-01 (Repository Structure) is `READY_FOR_REVIEW`, not `COMPLETED`. No application code exists yet, so implementation completion remains 0%.
 
 ---
 
@@ -149,7 +151,7 @@ Multi-Tenancy
 
 | Phase | Description | Status |
 |---|---|---|
-| 00 | Foundation | `NOT_STARTED` |
+| 00 | Foundation | `IN_PROGRESS` |
 | 01 | Authentication & Multi-Tenancy | `NOT_STARTED` |
 | 02 | Platform Control Plane | `NOT_STARTED` |
 | 03 | Tenant Foundation | `NOT_STARTED` |
@@ -175,37 +177,61 @@ Multi-Tenancy
 ## Phase Status
 
 ```text
-NOT_STARTED
+IN_PROGRESS
 ```
 
 ## Phase Completion
 
 ```text
-0 / 10 tasks
+0 / 10 tasks completed (T00-01 READY_FOR_REVIEW)
 ```
 
 ---
 
 ### T00-01 — Repository Structure
 
-**Status:** `NOT_STARTED`
+**Status:** `READY_FOR_REVIEW`
 
 **Implementation:**
 
 ```text
-Not started
+Repository hygiene: .gitignore, .gitattributes (LF), .editorconfig
+Baseline tags (local): spec-baseline-v1 -> 8f0473c, marketing-site-v1 -> 411ef3b
+Tracked top-level directories with READMEs:
+  frontend/ backend/ database/ infrastructure/ tests/ docs/ scripts/
+Environment templates (placeholders only):
+  .env.example, backend/.env.example, frontend/.env.example
+ADRs: docs/adr/0001-0006
+Architecture notes: docs/architecture/repository-structure.md,
+  tenancy.md, security.md, spec-inconsistencies.md
+README.md rewritten; targeted T00-01 notes added to ARCHITECTURE.md,
+  TASKS.md, CLAUDE.md
+No application framework, package manifest, Dockerfile, migration,
+component, endpoint or business module was created.
 ```
 
 **Verification:**
 
 ```text
-Not verified
+git add --renormalize . -> no changes
+.env / backend/.env / frontend/.env.local -> ignored (git check-ignore)
+*.example files and root landing files -> not ignored
+Marketing website SHA-256 (working tree) identical before and after:
+  index.html  26343c176523f9740b8c92731262602938cdafb3acb6954035d0112a69cee6a3
+  app.js      daab7a05898aad0c1eae622e81c59984476e4d832689a2b180e9a669e413138d
+  styles.css  46aa3641042f50d3d66bd81d0072766667bf611a2b9ccfc625481b6ba7eb5e2d
+git diff spec-baseline-v1 -- index.html app.js styles.css -> empty
+No node_modules, .venv, build output, dumps, credentials or API keys
 ```
 
 **Notes:**
 
 ```text
--
+"Repository builds successfully" (T00-01 DoD) is not applicable until
+T00-02 creates a buildable project (amended in TASKS.md).
+Awaiting review before the main-branch step (create main from the
+reviewed commit; set default branch; branch protection).
+Tags are local only; nothing has been pushed.
 ```
 
 ---
@@ -1095,6 +1121,8 @@ A screen is only considered implemented when its required underlying behavior is
 | Claude Development Rules | `READY` |
 | Task Roadmap | `READY` |
 | Development Tracking | `READY` |
+| Repository Structure (T00-01) | `READY_FOR_REVIEW` |
+| Architecture Decision Records | `READY_FOR_REVIEW` (ADR-0001 … ADR-0006) |
 | Production Implementation | `NOT_STARTED` |
 
 ---
@@ -1246,6 +1274,42 @@ Major features should be implemented end-to-end rather than as disconnected UI-o
 
 ---
 
+### DEC-010 — Technology Stack Confirmed
+
+Next.js + React + TypeScript; Python + FastAPI; PostgreSQL + SQLAlchemy + Alembic; Redis; S3-compatible storage; Docker Compose (T00-03); modular monolith. See `docs/adr/0001-stack.md`.
+
+---
+
+### DEC-011 — Monorepo Layout
+
+Single monorepo; specifications stay at the root; migrations in `backend/migrations/`; one Next.js app for four experiences. See `docs/adr/0002-monorepo-layout.md`.
+
+---
+
+### DEC-012 — Marketing Website ≠ Tenant Public Website
+
+The root landing page is the MTI 360 marketing website, not the Tenant Public Website and not part of the application. See `docs/adr/0003-marketing-vs-tenant-public-website.md`.
+
+---
+
+### DEC-013 — Tenant Isolation Layers
+
+Server-side context, tenant-scoped repositories, automatic ORM filter, PostgreSQL RLS and composite foreign keys, with a mandatory cross-tenant test gate. See `docs/adr/0004-tenant-isolation.md`.
+
+---
+
+### DEC-014 — Identity and Session Realms
+
+Separate platform identity; opaque server-side sessions; realm-specific cookies; explicit, audited support sessions. See `docs/adr/0005-identity-and-session-realms.md`.
+
+---
+
+### DEC-015 — API Prefixes
+
+`/api/v1/platform/*`, `/api/v1/*` (tenant), `/api/v1/student/*`, `/api/v1/public/*`, `/api/v1/webhooks/*`. See `docs/adr/0006-api-prefixes.md`.
+
+---
+
 # 37. RECENT CHANGES
 
 | Date | Change | Impact |
@@ -1253,6 +1317,8 @@ Major features should be implemented end-to-end rather than as disconnected UI-o
 | 2026-09-25 | `CLAUDE.md` created | Development rules established |
 | 2026-09-25 | `TASKS.md` created | Implementation roadmap established |
 | 2026-09-25 | `DEVELOPMENT-STATUS.md` created | Live tracking established |
+| 2026-09-26 | Repository audit completed | Actual repository state established (specs + static marketing website only) |
+| 2026-09-26 | T00-01 Repository Structure implemented | `READY_FOR_REVIEW`; ADRs 0001–0006 recorded |
 
 ---
 
@@ -1358,11 +1424,82 @@ No production application code has been implemented yet.
 
 ---
 
+## 2026-09-26 — T00-01 Repository Structure
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+Established the approved repository foundation without scaffolding any application code. Recorded the approved architecture decisions as ADRs and documented known specification inconsistencies without resolving them.
+
+**Files:**
+
+```text
+Created:
+  .gitignore  .gitattributes  .editorconfig
+  .env.example  backend/.env.example  frontend/.env.example
+  frontend/README.md  backend/README.md  database/README.md
+  infrastructure/README.md  tests/README.md  scripts/README.md
+  docs/README.md
+  docs/adr/0001-stack.md … 0006-api-prefixes.md
+  docs/architecture/repository-structure.md  tenancy.md  security.md
+  docs/architecture/spec-inconsistencies.md
+Changed:
+  README.md (rewritten; previously empty)
+  ARCHITECTURE.md, TASKS.md, CLAUDE.md, DEVELOPMENT-STATUS.md
+  (targeted T00-01 notes only; no requirements removed)
+Unchanged (verified by SHA-256):
+  index.html  app.js  styles.css
+```
+
+**Database / API / UI:**
+
+```text
+None (out of scope for T00-01)
+```
+
+**Tests:**
+
+```text
+No automated tests exist yet (T00-05 onwards).
+Checks performed: git renormalize dry run, git check-ignore for .env and
+*.example, git diff --check, secret-pattern scan, SHA-256 comparison of
+the marketing website files, scan for accidental scaffolding.
+```
+
+**Known Issues:**
+
+```text
+Specification inconsistencies recorded in
+docs/architecture/spec-inconsistencies.md (open, not resolved).
+Baseline tags are local only (not pushed).
+```
+
+**Next:**
+
+```text
+Review T00-01 -> main-branch step -> T00-02 Development Environment
+```
+
+---
+
 # 40. NEXT TASK
 
-The next implementation task is:
+The next step is:
 
-```text id="7m2n3k"
+```text
+Review T00-01 (READY_FOR_REVIEW), then the main-branch step:
+create main from the reviewed commit, set it as the default branch,
+add branch protection. Then T00-02 — Development Environment.
+```
+
+The completed-task description below is retained for reference.
+
+```text
 T00-01 — Repository Structure
 ```
 
@@ -1389,7 +1526,7 @@ Establish the actual MTI 360 repository structure and verify the existing projec
 
 After `T00-01`:
 
-```text id="5of3z0"
+```text
 T00-02 Development Environment
         ↓
 T00-03 Docker
@@ -1574,13 +1711,31 @@ NO
 
 This prevents prototype progress from being confused with production progress.
 
+## Current Prototypes
+
+### PROTO-01 — MTI 360 Marketing Website
+
+```text
+Files:            index.html, app.js, styles.css (repository root)
+Baseline tag:     marketing-site-v1
+Prototype:        YES
+Production Ready: NO
+```
+
+**Reason:**
+
+- The demo-request form is non-functional: it shows a success message without sending data anywhere.
+- It is a marketing prototype for MTI 360 itself — **not** the MTI 360 application and **not** the Tenant Public Website (ADR-0003).
+
+It does not count toward any product phase, screen or task completion. Changes are made only through the Marketing Website Track (`MKT-*`) in `TASKS.md`.
+
 ---
 
 # 48. SCREEN COMPLETION RULE
 
 A screen can be marked implemented only when:
 
-```text id="w9e4pz"
+```text
 [ ] Correct screen ID
 [ ] Correct route
 [ ] Correct persona
@@ -1604,7 +1759,7 @@ where applicable.
 
 A feature can be considered complete only when its major layers are complete:
 
-```text id="0xoyl9"
+```text
 Database
 +
 Backend
@@ -1645,7 +1800,7 @@ At any point, maintain this summary:
 
 MTI 360 must not be considered production-ready until:
 
-```text id="qj7t6s"
+```text
 [ ] Core workflows work
 [ ] Tenant isolation verified
 [ ] Authorization verified
@@ -1668,7 +1823,7 @@ MTI 360 must not be considered production-ready until:
 
 # 52. MASTER STATUS SUMMARY
 
-```text id="9e7wqa"
+```text
 MTI 360
 
 Specification
@@ -1717,7 +1872,7 @@ If those five questions cannot be answered from this document, update it.
 
 When MTI 360 reaches production:
 
-```text id="3f52pq"
+```text
 DEVELOPMENT-STATUS.md
         ↓
 Accurately reflects

@@ -207,7 +207,7 @@ Establish the technical foundation required for all subsequent MTI 360 developme
 ## T00-01 — Repository Structure
 
 **Priority:** P0
-**Status:** NOT_STARTED
+**Status:** READY_FOR_REVIEW
 
 ### Objective
 
@@ -238,6 +238,23 @@ Scripts
 ### Definition of Done
 
 Repository builds successfully using the documented process.
+
+### T00-01 Update (2026-09-26)
+
+Approved via the T00-01 proposal. Decisions: `docs/adr/0001`–`0006`. Structure: `docs/architecture/repository-structure.md`.
+
+**Shared code location:** frontend shared code lives in `frontend/src/design-system/`, `frontend/src/shells/` and `frontend/src/lib/`; backend shared infrastructure lives in `backend/app/core/`. There is no cross-language shared package; TypeScript API types are generated from the FastAPI OpenAPI schema.
+
+**Concrete acceptance criteria:**
+
+* `.gitignore`, `.gitattributes`, `.editorconfig` exist; `.env` files are ignored; `*.example` files are not ignored; `git add --renormalize .` produces no changes.
+* Top-level `frontend/`, `backend/`, `database/`, `infrastructure/`, `tests/`, `docs/`, `scripts/` are tracked, each with a README stating purpose, ownership, what belongs, what does not belong and which task populates it.
+* `.env.example`, `backend/.env.example`, `frontend/.env.example` contain placeholders only.
+* ADRs 0001–0006 and `docs/architecture/` notes exist; known inconsistencies are recorded in `docs/architecture/spec-inconsistencies.md`.
+* No application framework, package manifest, Dockerfile, migration, component or endpoint is created.
+* The root marketing website files (`index.html`, `app.js`, `styles.css`) are byte-identical before and after (SHA-256 verified).
+
+**Definition of Done amendment:** "Repository builds successfully" is **not applicable** to T00-01 because no buildable project exists until T00-02. The build criterion transfers to T00-02.
 
 ---
 
@@ -2226,6 +2243,11 @@ A student can access only their own authorized data.
 
 Create the MTI 360 marketing and acquisition experience.
 
+> **Clarification (T00-01, [ADR-0003](docs/adr/0003-marketing-vs-tenant-public-website.md)).**
+> Phase 14 is the **Tenant Public Website**: the tenant-branded public website of each Maritime Training Institute (courses, eligibility, fees, admissions, enquiry), served at `frontend/src/app/sites/[site]/`.
+> The **MTI 360 marketing website** (the product's own site, currently the root `index.html` / `app.js` / `styles.css`) is tracked separately in the Marketing Website Track (`MKT-*`) below.
+> The objective sentence above and some PUB-* screens (Features, Pricing, Request Demo) still describe MTI 360 marketing. This is **not yet resolved** — it is recorded as an open inconsistency in `docs/architecture/spec-inconsistencies.md` and the task list below is intentionally unchanged until that is decided.
+
 ---
 
 ## T14-01 — Public Website Foundation
@@ -2661,6 +2683,56 @@ Monitoring PASS
 Critical E2E PASS
 Documentation PASS
 ```
+
+---
+
+# MARKETING WEBSITE TRACK (outside product phases)
+
+Added in T00-01 ([ADR-0003](docs/adr/0003-marketing-vs-tenant-public-website.md)). The MTI 360 marketing website promotes MTI 360 itself. It is **not** one of the four product experiences and **not** Phase 14.
+
+Current state: root `index.html`, `app.js`, `styles.css` — **Prototype: YES, Production Ready: NO**. Baseline tag: `marketing-site-v1`.
+
+Rule: these files are changed **only** by an explicit `MKT-*` task.
+
+---
+
+## MKT-01 — Relocate Marketing Website
+
+**Priority:** P2
+**Status:** NOT_STARTED
+
+Move `index.html`, `app.js`, `styles.css` to `marketing-site/` in a **rename-only commit**.
+
+### Acceptance Criteria
+
+* Before moving, confirm whether any host deploys from the repository root and update the deploy source in the same change window.
+* `git show --stat -M` reports 100%-similarity renames; SHA-256 of the three files is unchanged.
+* The page renders identically from its new location.
+* No functional or visual changes are included.
+
+---
+
+## MKT-02 — Functional Demo Request
+
+**Priority:** P2
+**Status:** NOT_STARTED
+
+Replace the non-functional demo form (it currently shows success without sending data) with a real submission path.
+
+### Acceptance Criteria
+
+* Server-side validation, rate limiting, anti-spam and a consent/privacy notice.
+* No fake success state (TASKS.md §21).
+* Personal data handled and logged according to CLAUDE.md §67.
+
+---
+
+## MKT-03 — Marketing Website Audit Fixes
+
+**Priority:** P3
+**Status:** NOT_STARTED
+
+Address the findings recorded in the T00-01 repository audit, e.g. the dead `#login` link, the light-theme flash for dark-mode visitors, missing System theme option, content hidden when JavaScript fails, lifecycle autoplay pause control, self-hosted fonts and security headers.
 
 ---
 

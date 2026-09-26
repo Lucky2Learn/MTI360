@@ -95,6 +95,8 @@ If documents conflict:
 
 Never invent requirements simply to make implementation easier.
 
+**Architecture Decision Records.** Approved architecture decisions are recorded in `docs/adr/` (ADR-0001 … ADR-0006 from T00-01). Where an ADR refines a specification, follow the ADR. Architecture changes require a new ADR. Known inconsistencies between specifications are listed in `docs/architecture/spec-inconsistencies.md`; do not silently resolve them.
+
 ---
 
 # 3. PRODUCT UNDERSTANDING
@@ -240,6 +242,14 @@ The Public Website is:
 * mobile-first
 * conversion-oriented
 * visually connected to the tenant's branding where applicable
+
+### Tenant Public Website vs MTI 360 Marketing Website (T00-01, ADR-0003)
+
+The fourth experience is the **Tenant Public Website**: the public, tenant-branded website of each Maritime Training Institute (tenant courses, eligibility, fees, admissions, enquiry and content). Its tenant is resolved server-side from a verified domain.
+
+The **MTI 360 marketing website**, which promotes MTI 360 itself, is **not** one of the four product experiences and is not the Tenant Public Website. It currently consists of the root `index.html`, `app.js` and `styles.css`.
+
+**Rule:** never modify, move or delete the marketing website files without an explicit task that authorizes it (Marketing Website Track `MKT-*` in `TASKS.md`). Treat them as a visual and brand reference only; do not import their code, CSS or tokens into the application.
 
 ---
 

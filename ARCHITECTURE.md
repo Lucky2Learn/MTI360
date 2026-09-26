@@ -15,6 +15,16 @@
 **Initial Deployment:** Docker Compose
 **Future Deployment:** Managed Cloud / Kubernetes if required
 
+> **Architecture Decision Records (added T00-01, 2026-09-26).**
+> Approved architecture decisions are recorded in [`docs/adr/`](docs/adr/). Where an ADR refines this document, the ADR is authoritative and the affected section carries a "T00-01 update" note:
+> [ADR-0001 Stack](docs/adr/0001-stack.md) ·
+> [ADR-0002 Monorepo layout](docs/adr/0002-monorepo-layout.md) ·
+> [ADR-0003 Marketing website vs tenant public website](docs/adr/0003-marketing-vs-tenant-public-website.md) ·
+> [ADR-0004 Tenant isolation](docs/adr/0004-tenant-isolation.md) ·
+> [ADR-0005 Identity and session realms](docs/adr/0005-identity-and-session-realms.md) ·
+> [ADR-0006 API prefixes](docs/adr/0006-api-prefixes.md).
+> Design notes: [`docs/architecture/`](docs/architecture/). Known specification inconsistencies: [`spec-inconsistencies.md`](docs/architecture/spec-inconsistencies.md).
+
 ---
 
 # 1. Architecture Vision
@@ -495,6 +505,10 @@ Permissions
 
 Authorization must happen server-side.
 
+> **T00-01 update — [ADR-0005](docs/adr/0005-identity-and-session-realms.md).**
+> The "Session / JWT" choice is resolved as **opaque server-side sessions** (revocable, `HttpOnly` `Secure` `SameSite` cookies, distinct cookie per realm) rather than browser-held JWTs.
+> Identity is split into realms: **platform administrators use a separate `platform_users` identity** (PLATFORM-ADMIN.md §15); tenant staff and students use `users` + membership. The active tenant and campus are held in the server-side session.
+
 ---
 
 # 11. RBAC Architecture
@@ -585,6 +599,9 @@ backend/
 │   ├── agents/
 │   └── integrations/
 ```
+
+> **T00-01 update — [ADR-0002](docs/adr/0002-monorepo-layout.md).**
+> The approved backend layout groups these domains under `backend/app/modules/` with shared infrastructure in `backend/app/core/`, realm routers in `backend/app/api/`, provider adapters in `backend/app/integrations/`, workers in `backend/app/workers/` and Alembic migrations in `backend/migrations/`. Every domain listed above is retained; the mapping and the per-module layering (`router → service → (domain, repository) → models`) are documented in [`docs/architecture/repository-structure.md`](docs/architecture/repository-structure.md#3-backend-architecture).
 
 ---
 
@@ -1277,6 +1294,11 @@ GET /api/v1/courses
 POST /api/v1/batches
 ```
 
+> **T00-01 update — [ADR-0006](docs/adr/0006-api-prefixes.md).**
+> The examples above remain the **tenant** API. Each realm has its own prefix and realm guard:
+> `/api/v1/platform/*` (platform), `/api/v1/*` (tenant), `/api/v1/student/*` (student), `/api/v1/public/*` (tenant public website), `/api/v1/webhooks/*` (providers).
+> This supersedes the path examples in PLATFORM-ADMIN.md §91 (recorded in `docs/architecture/spec-inconsistencies.md`).
+
 ---
 
 # 36. API Response Standard
@@ -1425,6 +1447,10 @@ frontend/
 ```
 
 Organize UI primarily by feature/domain.
+
+> **T00-01 update — [ADR-0002](docs/adr/0002-monorepo-layout.md), [ADR-0003](docs/adr/0003-marketing-vs-tenant-public-website.md).**
+> The approved frontend is **one Next.js application under `frontend/src/`** serving four experiences with separate route trees and shells: `/platform/*` (Platform Control Plane), `/app/*` (Tenant Application), `/student/*` (Student Portal) and `/sites/[site]/*` (Tenant Public Website, reached via host-based rewrite). Shared code lives in `design-system/` (tokens, theme, components, templates T01–T18), `shells/`, `features/` and `lib/`. Organisation by feature/domain is retained. Details: [`docs/architecture/repository-structure.md`](docs/architecture/repository-structure.md#2-frontend-architecture).
+> The root `index.html` / `app.js` / `styles.css` is the **MTI 360 marketing website**, not part of this application.
 
 ---
 
@@ -1779,6 +1805,9 @@ monitoring
 
 Do not add infrastructure unless the application actually requires it.
 
+> **T00-01 update — planned for T00-03.**
+> Local development will use a root `compose.yaml` (the current Compose file name) with an `infra` profile (`postgres`, `redis`, an S3-compatible **object-storage emulator**, `mailpit` for local email) and an `app` profile (`migrate` one-shot Alembic service, `api`, `worker`, `frontend`). The backend `api`, `worker` and `migrate` services share one image. Ports bind to `127.0.0.1`. The emulator product and queue library are chosen in T00-03. See [`docs/architecture/repository-structure.md`](docs/architecture/repository-structure.md#6-local-infrastructure-t00-03).
+
 ---
 
 # 56. Environments
@@ -1889,6 +1918,9 @@ Use deterministic test datasets wherever possible.
 ---
 
 # 60. Development Strategy
+
+> **T00-01 note — superseded phase list.**
+> The phase list in this section predates the engineering roadmap. The authoritative implementation sequence is **`TASKS.md` Phases 00–17** (also PRD.md §77 and CLAUDE.md §81). This list is retained for reference only and is recorded in `docs/architecture/spec-inconsistencies.md`.
 
 The system should be developed in phases.
 
@@ -2439,6 +2471,11 @@ Example:
 ```text
 feat(auth): implement tenant-aware authentication
 ```
+
+> **T00-01 update — current repository state.**
+> The repository currently has a single branch, `claude/compassionate-johnson-gxdgr9`, and no `main`. T00-01 is committed there, one commit per sub-step, with baseline tags `spec-baseline-v1` and `marketing-site-v1`.
+> After T00-01 review, `main` is created from the reviewed commit, made the default branch and protected (pull request required, no force-push; required CI checks after T00-05). The existing branch is preserved.
+> Thereafter: short-lived branches (`feat/…`, `fix/…`, `docs/…`), one task per pull request, squash merge, conventional commits that include the task ID, and an ADR for every architecture change.
 
 ---
 

@@ -142,6 +142,9 @@ Files are created only when needed. Dependency direction: `router → service �
 | `ai` | agent runtime, tool registry, knowledge/RAG, executions, provider routing | platform (providers, guardrails); tenant (configuration, use) |
 | `analytics` | tenant analytics; platform aggregates | tenant; platform (aggregates only) |
 | `audit` | audit queries (writer in `core/audit`) | platform; tenant (own) |
+| `grievance` | student and staff grievances (PRD.md §64) | tenant; student |
+
+**Mapping from ARCHITECTURE.md §12:** every domain listed there is retained. `auth` + `users` → `identity`; `tenancy` → `core/tenancy` + `tenants`; `roles` → `access`; `courses`, `batches`, `timetable`, `attendance`, `faculty`, `examinations`, `certificates` → `academics` sub-packages; `leads` + `counselling` → `crm`; `applications` → `admissions`; `communications` → `communication`; `workflows` → `automation`; `agents` → `ai`; `integrations` → `app/integrations/`; `core` → `app/core/`.
 
 ### API realms (ADR-0006)
 
