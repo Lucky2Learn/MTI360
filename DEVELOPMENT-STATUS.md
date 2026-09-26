@@ -107,7 +107,7 @@ M0 — Foundation Ready
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-09-26:** T00-01 (Repository Structure) is `READY_FOR_REVIEW`, not `COMPLETED`. No application code exists yet, so implementation completion remains 0%.
+> **2026-09-26:** T00-01 (Repository Structure) is `COMPLETED` (reviewed, merged to `main`). T00-02 (Development Environment) is `READY_FOR_REVIEW`. Only the toolchain and a neutral page / `/health` endpoint exist — no product functionality — so product implementation completion remains 0%.
 
 ---
 
@@ -183,14 +183,14 @@ IN_PROGRESS
 ## Phase Completion
 
 ```text
-0 / 10 tasks completed (T00-01 READY_FOR_REVIEW)
+1 / 10 tasks completed (T00-01 COMPLETED; T00-02 READY_FOR_REVIEW)
 ```
 
 ---
 
 ### T00-01 — Repository Structure
 
-**Status:** `READY_FOR_REVIEW`
+**Status:** `COMPLETED` (reviewed; merged to `main` at `914729b`)
 
 **Implementation:**
 
@@ -238,18 +238,52 @@ Tags are local only; nothing has been pushed.
 
 ### T00-02 — Development Environment
 
-**Status:** `NOT_STARTED`
+**Status:** `READY_FOR_REVIEW` (branch `feat/T00-02-development-environment`)
 
 **Implementation:**
 
 ```text
-Not started
+Pins: .nvmrc 24.21.0; packageManager pnpm@11.28.0; engines >=24.15.0 <25;
+  backend/.python-version 3.14; uv required-version >=0.12.19,<0.13
+Workspace: pnpm-workspace.yaml (frontend only), root package.json scripts
+  (no dependencies, no orchestration tool), shellEmulator for portable scripts
+Frontend: Next.js 16.3.5, React 19.2.8, TypeScript 6.0.3, ESLint 9.39.5
+  (next core-web-vitals + typescript, type-aware rules, jsx-a11y, import
+  order), Prettier 3.9.8, Vitest 4.1.11 + jsdom + Testing Library;
+  layout.tsx + neutral page.tsx + one smoke test
+Backend: FastAPI 0.141.1, uvicorn 0.53.0, Pydantic 2.13.5,
+  pydantic-settings 2.15.0; Ruff 0.16.8, mypy 2.3.1 (strict), pytest 9.1.1
+  (AnyIO plugin); create_app(), Settings, GET /health; 7 smoke tests
+Supply chain: 7-day cooldown (pnpm minimumReleaseAge, uv exclude-newer),
+  dependency build scripts blocked (strictDepBuilds; unrs-resolver reviewed
+  and disallowed), frozen/locked installs, uv run --locked
+Not added (D5): SQLAlchemy, Alembic, asyncpg, Redis, S3 client
+Docs: docs/architecture/toolchain.md; README, frontend/backend READMEs,
+  repository-structure.md, security.md, ARCHITECTURE §5 note, TASKS
 ```
 
 **Verification:**
 
 ```text
-Not verified
+pnpm bootstrap (frozen/locked) -> OK
+pnpm check -> PASS (check:landing, format:check, lint, typecheck,
+  test [vitest 1 passed, pytest 7 passed], build)
+pnpm dev (FRONTEND_PORT=3100 API_PORT=8100) -> frontend 200, /health 200
+  {"status":"ok"}, no Server / X-Powered-By headers; process tree stopped
+  cleanly, ports released
+Marketing website files identical to marketing-site-v1 (SHA-256 unchanged)
+```
+
+**Notes:**
+
+```text
+Local Node is 24.15.0 (accepted by engines); .nvmrc pins 24.21.0 for CI and
+Docker. Ports 3000/8000 are occupied on this machine by another project's
+Docker containers, hence FRONTEND_PORT / API_PORT overrides.
+npm marks ESLint 9 as no longer supported; ESLint 10 remains blocked by
+Next.js lint plugin peer ranges (see toolchain.md §3).
+`next dev` writes frontend/AGENTS.md and frontend/CLAUDE.md when it detects
+an AI agent; not committed — decision pending.
 ```
 
 ---
@@ -1121,7 +1155,8 @@ A screen is only considered implemented when its required underlying behavior is
 | Claude Development Rules | `READY` |
 | Task Roadmap | `READY` |
 | Development Tracking | `READY` |
-| Repository Structure (T00-01) | `READY_FOR_REVIEW` |
+| Repository Structure (T00-01) | `COMPLETED` |
+| Development Toolchain (T00-02) | `READY_FOR_REVIEW` |
 | Architecture Decision Records | `READY_FOR_REVIEW` (ADR-0001 … ADR-0006) |
 | Production Implementation | `NOT_STARTED` |
 
@@ -1319,6 +1354,8 @@ Separate platform identity; opaque server-side sessions; realm-specific cookies;
 | 2026-09-25 | `DEVELOPMENT-STATUS.md` created | Live tracking established |
 | 2026-09-26 | Repository audit completed | Actual repository state established (specs + static marketing website only) |
 | 2026-09-26 | T00-01 Repository Structure implemented | `READY_FOR_REVIEW`; ADRs 0001–0006 recorded |
+| 2026-09-26 | T00-01 reviewed and merged to `main` | `COMPLETED` |
+| 2026-09-26 | T00-02 Development Environment implemented | `READY_FOR_REVIEW` on `feat/T00-02-development-environment`; toolchain pinned |
 
 ---
 
@@ -1487,14 +1524,72 @@ Review T00-01 -> main-branch step -> T00-02 Development Environment
 
 ---
 
+## 2026-09-26 — T00-02 Development Environment
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+Established the development toolchain on `feat/T00-02-development-environment`: pinned runtimes and package managers, Next.js + TypeScript and FastAPI + uv foundations, lint/format/typecheck/test tooling, supply-chain controls and a root command matrix. Details: `docs/architecture/toolchain.md`.
+
+**Files:**
+
+```text
+Created: .nvmrc, package.json, pnpm-workspace.yaml, pnpm-lock.yaml,
+  .vscode/extensions.json, docs/architecture/toolchain.md,
+  frontend/{package.json, tsconfig.json, next.config.ts, eslint.config.mjs,
+  .prettierrc.json, .prettierignore, vitest.config.mts, vitest.setup.ts,
+  src/app/layout.tsx, src/app/page.tsx, src/app/page.test.tsx},
+  backend/{pyproject.toml, uv.lock, .python-version, app/__init__.py,
+  app/main.py, app/core/__init__.py, app/core/config.py, tests/conftest.py,
+  tests/unit/test_health.py, tests/unit/test_config.py}
+Changed: README.md, frontend/README.md, backend/README.md,
+  backend/.env.example (comments only), ARCHITECTURE.md (§5 note),
+  TASKS.md, DEVELOPMENT-STATUS.md, docs/README.md,
+  docs/architecture/repository-structure.md, docs/architecture/security.md
+Unchanged (verified): index.html, app.js, styles.css
+```
+
+**Database / API / UI:**
+
+```text
+Database: none. API: GET /health (liveness only). UI: neutral root page only.
+```
+
+**Tests:**
+
+```text
+Frontend: 1 smoke test (Vitest). Backend: 7 smoke tests (pytest).
+No business, tenancy, auth or database tests (later phases).
+```
+
+**Known Issues:**
+
+```text
+ESLint 9 is out of upstream support (ESLint 10 blocked by plugin peers).
+GitHub default branch is still claude/compassionate-johnson-gxdgr9.
+Agent-generated frontend/AGENTS.md + CLAUDE.md policy undecided.
+```
+
+**Next:**
+
+```text
+Review and merge T00-02 PR -> T00-03 Docker Development Environment
+```
+
+---
+
 # 40. NEXT TASK
 
 The next step is:
 
 ```text
-Review T00-01 (READY_FOR_REVIEW), then the main-branch step:
-create main from the reviewed commit, set it as the default branch,
-add branch protection. Then T00-02 — Development Environment.
+Review T00-02 (READY_FOR_REVIEW) and merge its pull request into main.
+Then T00-03 — Docker Development Environment.
 ```
 
 The completed-task description below is retained for reference.

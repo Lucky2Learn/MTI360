@@ -1,9 +1,10 @@
 # Repository Structure
 
-- **Status:** Approved (T00-01)
+- **Status:** Approved (T00-01); updated for T00-02
 - **Decisions:** [ADR-0001](../adr/0001-stack.md), [ADR-0002](../adr/0002-monorepo-layout.md), [ADR-0003](../adr/0003-marketing-vs-tenant-public-website.md), [ADR-0006](../adr/0006-api-prefixes.md)
+- **Toolchain:** [toolchain.md](toolchain.md)
 
-This document describes the **target** repository shape. Items marked ✅ exist after T00-01. Everything else is reserved and is created only by the task noted — never as empty placeholders.
+This document describes the **target** repository shape. Items marked ✅ exist (T00-01 / T00-02). Everything else is reserved and is created only by the task noted — never as empty placeholders.
 
 ## 1. Repository tree
 
@@ -19,6 +20,10 @@ MTI360/
 │
 ├── .gitignore  .gitattributes  .editorconfig          ✅
 ├── .env.example                       ✅ Compose-level placeholders
+├── .nvmrc                             ✅ Node.js 24.21.0 (T00-02)
+├── package.json                       ✅ root commands only, no dependencies (T00-02)
+├── pnpm-workspace.yaml  pnpm-lock.yaml ✅ workspace = frontend; supply-chain settings (T00-02)
+├── .vscode/extensions.json            ✅ editor recommendations (T00-02)
 ├── compose.yaml                       T00-03
 │
 ├── docs/                              ✅
@@ -29,13 +34,16 @@ MTI360/
 │
 ├── marketing-site/                    later relocation task (MKT-01)
 │
-├── frontend/                          ✅ README + .env.example only
-│   ├── package.json  tsconfig.json  next.config.ts  eslint config     T00-02
+├── frontend/                          ✅ README, .env.example
+│   ├── package.json  tsconfig.json  next.config.ts                   ✅ T00-02
+│   ├── eslint.config.mjs  .prettierrc.json  .prettierignore          ✅ T00-02
+│   ├── vitest.config.mts  vitest.setup.ts                            ✅ T00-02
 │   ├── Dockerfile                                                     T00-03
 │   ├── public/
 │   └── src/
-│       ├── middleware.ts              host → experience rewrite, security headers, CSP nonce
-│       ├── app/
+│       ├── proxy.ts                   host → experience rewrite, security headers, CSP nonce
+│       │                              (Next.js 16 renamed Middleware → Proxy)
+│       ├── app/                       ✅ layout.tsx, neutral page.tsx, page.test.tsx (T00-02)
 │       │   ├── platform/              Platform Control Plane
 │       │   ├── (tenant-auth)/         AUTH-01 … AUTH-05
 │       │   ├── app/                   Tenant Application
@@ -51,19 +59,20 @@ MTI360/
 │       ├── lib/                       api client, session helpers, PermissionGate (UX only)
 │       └── test/                      test utilities, MSW handlers
 │
-├── backend/                           ✅ README + .env.example only
-│   ├── pyproject.toml  <lockfile>  alembic.ini                        T00-02
+├── backend/                           ✅ README, .env.example
+│   ├── pyproject.toml  uv.lock  .python-version                       ✅ T00-02
+│   ├── alembic.ini                    first database task (decision D5)
 │   ├── Dockerfile                     one image → api | worker | migrate   T00-03
 │   ├── migrations/                    Alembic, single linear history
 │   ├── app/
-│   │   ├── main.py
-│   │   ├── core/                      config, logging, errors, ids, context, db/, security/,
+│   │   ├── main.py                    ✅ create_app() + GET /health (T00-02)
+│   │   ├── core/                      ✅ config.py (T00-02); later: logging, errors, ids, context, db/, security/,
 │   │   │                              authz/, tenancy/, audit/, events/, jobs/, storage/, cache/
 │   │   ├── api/                       platform.py, tenant.py, student.py, public.py, webhooks.py
 │   │   ├── modules/                   business domains (§3)
 │   │   ├── integrations/              whatsapp, email, sms, voice, payments, llm, storage adapters
 │   │   └── workers/                   worker entrypoint, job registry
-│   └── tests/                         unit/, integration/, api/, security/
+│   └── tests/                         ✅ conftest.py, unit/ (T00-02); later integration/, api/, security/
 │
 ├── database/                          ✅ README only
 │   ├── init/                          roles (owner / app / readonly), extensions   T00-03
@@ -88,7 +97,7 @@ One Next.js App Router application; four experiences with separate route trees, 
 
 - **Route groups** separate unauthenticated pages from shell layouts inside each experience (for example `platform/(auth)/login` vs `platform/(console)/dashboard`).
 - **Layouts** are server components that read the session from the backend and redirect on the wrong realm — this is UX routing, not security.
-- **Middleware** performs host → experience rewrite, blocks direct external access to `/sites/*`, sets security headers and the CSP nonce, and redirects when no session cookie exists. It makes **no** authorization decisions and never derives a trusted tenant.
+- **Proxy** (`src/proxy.ts`; called "Middleware" / `middleware.ts` before Next.js 16) performs host → experience rewrite, blocks direct external access to `/sites/*`, sets security headers and the CSP nonce, and redirects when no session cookie exists. It makes **no** authorization decisions and never derives a trusted tenant.
 - **No tenant identifier in tenant-application URLs** (ADR-0005).
 - **Data access:** the browser calls FastAPI through a same-origin proxy (`/api/*`); server components call the backend server-side. Next.js has **no database access and no business logic**. TanStack Query for server state; Zod for form UX validation (the backend validates authoritatively). TypeScript API types are generated from FastAPI's OpenAPI schema.
 - **Import boundaries:** `app/` composes `features/` and `shells/`; `features/` may import `design-system/` and `lib/`, and other features only via their public `index.ts`; `design-system/` imports nothing from `features/`.

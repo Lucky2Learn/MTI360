@@ -1,0 +1,44 @@
+{
+  "name": "@mti360/frontend",
+  "version": "0.0.0",
+  "private": true,
+  "description": "MTI 360 web application (Next.js): Platform Control Plane, Tenant Application, Student Portal, Tenant Public Website.",
+  "type": "module",
+  "engines": {
+    "node": ">=24.15.0 <25"
+  },
+  "scripts": {
+    "dev": "next dev --hostname localhost --port ${FRONTEND_PORT:-3000}",
+    "build": "next build",
+    "start": "next start --hostname localhost --port ${FRONTEND_PORT:-3000}",
+    "typecheck": "next typegen && tsc --noEmit",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "next": "16.3.5",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "24.13.6",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "@vitejs/plugin-react": "6.1.1",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.5",
+    "eslint-plugin-jsx-a11y": "6.10.2",
+    "jsdom": "30.1.0",
+    "prettier": "3.9.8",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.70.0",
+    "vite": "8.3.0",
+    "vitest": "4.1.11"
+  }
+}

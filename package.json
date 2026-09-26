@@ -1,0 +1,29 @@
+{
+  "name": "mti360",
+  "private": true,
+  "description": "MTI 360 monorepo root — orchestration scripts only (no dependencies).",
+  "packageManager": "pnpm@11.28.0",
+  "engines": {
+    "node": ">=24.15.0 <25"
+  },
+  "scripts": {
+    "bootstrap": "pnpm install --frozen-lockfile && uv sync --locked --directory backend",
+    "dev": "pnpm run \"/^dev:/\"",
+    "dev:frontend": "pnpm --filter @mti360/frontend dev",
+    "dev:backend": "uv run --locked --directory backend uvicorn app.main:create_app --factory --reload --host 127.0.0.1 --port ${API_PORT:-8000} --no-server-header",
+    "build": "pnpm --filter @mti360/frontend build",
+    "lint": "pnpm run lint:frontend && pnpm run lint:backend",
+    "lint:frontend": "pnpm --filter @mti360/frontend lint",
+    "lint:backend": "uv run --locked --directory backend ruff check .",
+    "typecheck": "pnpm run typecheck:frontend && pnpm run typecheck:backend",
+    "typecheck:frontend": "pnpm --filter @mti360/frontend typecheck",
+    "typecheck:backend": "uv run --locked --directory backend mypy",
+    "test": "pnpm run test:frontend && pnpm run test:backend",
+    "test:frontend": "pnpm --filter @mti360/frontend test",
+    "test:backend": "uv run --locked --directory backend pytest",
+    "format": "pnpm --filter @mti360/frontend format && uv run --locked --directory backend ruff format .",
+    "format:check": "pnpm --filter @mti360/frontend format:check && uv run --locked --directory backend ruff format --check .",
+    "check:landing": "git diff --quiet marketing-site-v1 -- index.html app.js styles.css",
+    "check": "pnpm run check:landing && pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build"
+  }
+}

@@ -55,7 +55,7 @@ A platform principal never holds a tenant role; a tenant principal can never hol
 ## 6. CSRF and browser security
 
 - SameSite cookies plus a CSRF token or required custom header on unsafe methods.
-- Headers: HSTS, nonce-based CSP, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`, `frame-ancestors` — from Next.js middleware and the API.
+- Headers: HSTS, nonce-based CSP, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`, `frame-ancestors` — from the Next.js proxy (`src/proxy.ts`, formerly "middleware") and the API.
 - CORS allow-list only; never `*` with credentials.
 
 ## 7. Rate limiting
