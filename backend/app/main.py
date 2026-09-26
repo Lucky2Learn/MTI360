@@ -23,8 +23,13 @@ class HealthResponse(BaseModel):
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
-    """Build the FastAPI application."""
-    settings = settings or get_settings()
+    """Build the FastAPI application.
+
+    Settings are loaded and validated here, before the server accepts requests:
+    an invalid configuration raises ``ConfigurationError`` and the process exits
+    (fail fast, T00-04). The error names variables and rules, never values.
+    """
+    settings = settings if settings is not None else get_settings()
     is_development = settings.app_env == "development"
 
     app = FastAPI(
