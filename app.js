@@ -38,17 +38,39 @@
   var menuClose = document.getElementById("menu-close");
   var drawer = document.getElementById("mobile-drawer");
 
+  var drawerFocusables = drawer ? drawer.querySelectorAll("a, button") : [];
+  var lastFocused = null;
+
+  function trapDrawerFocus(e) {
+    if (e.key !== "Tab" || !drawerFocusables.length) return;
+    var first = drawerFocusables[0];
+    var last = drawerFocusables[drawerFocusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+
   function openDrawer() {
     if (!drawer) return;
+    lastFocused = document.activeElement;
     drawer.classList.add("open");
     drawer.setAttribute("aria-hidden", "false");
     if (menuToggle) menuToggle.setAttribute("aria-expanded", "true");
+    if (menuClose) menuClose.focus();
+    drawer.addEventListener("keydown", trapDrawerFocus);
   }
   function closeDrawer() {
     if (!drawer) return;
     drawer.classList.remove("open");
     drawer.setAttribute("aria-hidden", "true");
     if (menuToggle) menuToggle.setAttribute("aria-expanded", "false");
+    drawer.removeEventListener("keydown", trapDrawerFocus);
+    if (lastFocused && typeof lastFocused.focus === "function") lastFocused.focus();
+    else if (menuToggle) menuToggle.focus();
   }
 
   if (menuToggle) menuToggle.addEventListener("click", openDrawer);
@@ -59,7 +81,7 @@
     });
   }
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") closeDrawer();
+    if (e.key === "Escape" && drawer && drawer.classList.contains("open")) closeDrawer();
   });
 
   // ---------- Lifecycle stepper ----------
@@ -108,7 +130,7 @@
         btn.setAttribute("role", "tab");
         btn.dataset.stage = i;
         btn.style.cssText = "min-height:52px;border-radius:10px;border:1px solid var(--ln);font-size:11.5px;font-weight:700;letter-spacing:.08em;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px";
-        btn.innerHTML = '<span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;opacity:.75">' + pad(i) + '</span>' + s.k;
+        btn.innerHTML = '<span style="font-family:\'JetBrains Mono\',monospace;font-size:10px">' + pad(i) + '</span>' + s.k;
         btn.addEventListener("click", function () { setStage(i, false); });
         lcNarrow.appendChild(btn);
       });
