@@ -111,6 +111,10 @@ services:
       SEAWEEDFS_HOST: object-storage
     volumes:
       - ./infrastructure/object-storage/create-bucket.sh:/init/create-bucket.sh:ro
+    # The image declares VOLUME /data; use tmpfs so this one-shot container
+    # never creates an anonymous Docker volume.
+    tmpfs:
+      - /data
     depends_on:
       object-storage:
         condition: service_healthy
@@ -130,6 +134,48 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+    restart: unless-stopped
+
+  # ==========================================================================
+  # Application profile "app" — production-shaped images (pnpm stack:up).
+  # Day-to-day development runs the apps natively (pnpm dev) instead.
+  # Hardened: read-only root filesystem, all capabilities dropped,
+  # no privilege escalation, non-root users defined in the images.
+  # ==========================================================================
+  api:
+    build:
+      context: ./backend
+    image: mti360-api:local
+    profiles: ["app"]
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    image: mti360-frontend:local
+    profiles: ["app"]
+    environment:
+      # Server-side only (container network); not exposed to browsers.
+      API_BASE_URL: http://api:8000
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-3000}:3000"
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/frontend/.next/cache:uid=1000,gid=1000
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
     restart: unless-stopped
 
 volumes:
