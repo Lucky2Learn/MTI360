@@ -1,0 +1,181 @@
+# MTI 360 — .gitignore
+#
+# Rules:
+# - Never commit secrets, credentials, real environment files or real data.
+# - Every *.example file MUST stay tracked (see the negations at the bottom).
+# - The root marketing website (index.html, app.js, styles.css) MUST stay tracked.
+#   Do not add patterns that match root *.html / *.js / *.css files.
+# - Do NOT ignore *.sql: database/init and reviewed migrations may legitimately
+#   contain SQL. Database dumps are ignored by their dump-specific extensions below.
+
+# ---------------------------------------------------------------------------
+# Environment files and secrets
+# ---------------------------------------------------------------------------
+.env
+.env.*
+*.env
+.envrc
+secrets/
+*.secret
+*.secrets
+credentials.json
+service-account*.json
+*-credentials.json
+*.tfvars
+
+# Certificates and private keys
+*.pem
+*.key
+*.crt
+*.cer
+*.der
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa*
+id_ed25519*
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.pytype/
+.hypothesis/
+.tox/
+.nox/
+celerybeat-schedule
+celerybeat.pid
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+.python-version.local
+
+# ---------------------------------------------------------------------------
+# Node / Next.js / TypeScript
+# ---------------------------------------------------------------------------
+node_modules/
+.pnpm-store/
+.npm/
+.yarn/*
+!.yarn/releases
+.next/
+next-env.d.ts
+.turbo/
+.vercel/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---------------------------------------------------------------------------
+# Build output
+# ---------------------------------------------------------------------------
+build/
+dist/
+out/
+.cache/
+*.log
+logs/
+
+# ---------------------------------------------------------------------------
+# Tests and coverage
+# ---------------------------------------------------------------------------
+coverage/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+junit*.xml
+.nyc_output/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# ---------------------------------------------------------------------------
+# Database dumps and local data
+# ---------------------------------------------------------------------------
+*.dump
+*.backup
+*.bak
+*.sql.gz
+*.sql.zip
+*.sqlite
+*.sqlite3
+*.db
+dumps/
+backups/
+
+# ---------------------------------------------------------------------------
+# Uploaded files and local object storage
+# ---------------------------------------------------------------------------
+# Anchored to the repository root on purpose: an unanchored "storage/" would
+# also ignore source code such as backend/app/core/storage/.
+/uploads/
+/media/
+/storage/
+/backend/uploads/
+/backend/media/
+.local-storage/
+.minio/
+
+# ---------------------------------------------------------------------------
+# Docker local volumes / data directories
+# ---------------------------------------------------------------------------
+.docker-data/
+docker-data/
+.data/
+compose.override.yaml
+docker-compose.override.yml
+
+# ---------------------------------------------------------------------------
+# IDE / editor
+# ---------------------------------------------------------------------------
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+*.sublime-workspace
+.history/
+
+# ---------------------------------------------------------------------------
+# OS files
+# ---------------------------------------------------------------------------
+.DS_Store
+.AppleDouble
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ---------------------------------------------------------------------------
+# Local Claude Code settings (per-developer)
+# ---------------------------------------------------------------------------
+.claude/settings.local.json
+
+# ---------------------------------------------------------------------------
+# Always track example / template files (must stay last)
+# ---------------------------------------------------------------------------
+!*.example
+!**/*.example
+!.env.example
+!**/.env.example

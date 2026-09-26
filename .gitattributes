@@ -1,0 +1,32 @@
+# MTI 360 — .gitattributes
+#
+# Normalise text files to LF in the repository and in working trees.
+# All files already tracked at the time this file was added (including the
+# marketing website: index.html, app.js, styles.css) are stored with LF in the
+# repository, so this rule does not change any committed content.
+
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+
+# Binary files: never normalise or diff as text
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.avif  binary
+*.ico   binary
+*.pdf   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary
+*.eot   binary
+*.zip   binary
+*.gz    binary
+*.mp4   binary
+*.webm  binary
+*.mp3   binary
