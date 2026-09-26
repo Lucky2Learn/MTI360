@@ -325,6 +325,11 @@ A task queue such as ARQ/Celery/RQ may be selected after evaluating operational 
 
 The first implementation should avoid unnecessary infrastructure complexity.
 
+> **T00-02 update — [`docs/architecture/toolchain.md`](docs/architecture/toolchain.md).**
+> Exact versions are pinned there: Node.js 24 LTS, pnpm 11, Python 3.14 (uv-managed), uv 0.12, Next.js 16.3, React 19.2, TypeScript 6.0, FastAPI 0.141, Pydantic 2.13; pnpm workspace + uv, no additional monorepo orchestration.
+> Deliberate holds: **TypeScript 6.0** (typescript-eslint does not yet support TS 7) and **ESLint 9** (Next.js's lint plugins do not yet support ESLint 10); SQLAlchemy is targeted at **2.0.x** when database work starts.
+> Tailwind CSS and component primitives are still to be confirmed in T00-06/T00-07. SQLAlchemy, Alembic, asyncpg, Redis and S3 clients are added by the task that first uses them.
+
 ---
 
 # 6. AI Stack
@@ -1807,6 +1812,16 @@ Do not add infrastructure unless the application actually requires it.
 
 > **T00-01 update — planned for T00-03.**
 > Local development will use a root `compose.yaml` (the current Compose file name) with an `infra` profile (`postgres`, `redis`, an S3-compatible **object-storage emulator**, `mailpit` for local email) and an `app` profile (`migrate` one-shot Alembic service, `api`, `worker`, `frontend`). The backend `api`, `worker` and `migrate` services share one image. Ports bind to `127.0.0.1`. The emulator product and queue library are chosen in T00-03. See [`docs/architecture/repository-structure.md`](docs/architecture/repository-structure.md#6-local-infrastructure-t00-03).
+
+> **T00-03 update — implemented (2026-09-26).**
+> - Compose project name fixed to **`mti360`**; volumes `mti360_*`; every host port bound to `127.0.0.1` (defaults 3000, 8000, 5432, 6379, 8333, 1025, 8025, overridable in `.env`) so MTI 360 coexists with other local projects (e.g. ACRS).
+> - **Hybrid development:** `infra` profile in Docker (`pnpm infra:up`); Next.js and FastAPI run natively (`pnpm dev`). The `app` profile (`api`, `frontend`) runs the production-shaped images (`pnpm stack:up`).
+> - **PostgreSQL 18** (`pgvector/pgvector:0.8.6-pg18-trixie`; pgvector not enabled) with bootstrap roles `mti_owner` / `mti_app` / `mti_readonly` (no BYPASSRLS) for ADR-0004.
+> - **Redis 8.8** (`redis:8.8-alpine`).
+> - **Object storage: SeaweedFS 4.47** (Apache-2.0) instead of MinIO, whose community repository is archived and whose Docker Hub image is no longer available. Private bucket via a one-shot init service; anonymous access denied.
+> - **Mailpit 1.31** for local email.
+> - **Deferred (decision D4):** the `migrate` (Alembic) and `worker` services, and therefore the queue-library choice that ADR-0001 placed in T00-03, move to the first tasks that need them. No Alembic, migration, worker or queue library exists yet.
+> Details: [`docs/architecture/toolchain.md`](docs/architecture/toolchain.md), [`docs/runbooks/local-development.md`](docs/runbooks/local-development.md).
 
 ---
 

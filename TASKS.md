@@ -207,7 +207,7 @@ Establish the technical foundation required for all subsequent MTI 360 developme
 ## T00-01 — Repository Structure
 
 **Priority:** P0
-**Status:** READY_FOR_REVIEW
+**Status:** COMPLETED (reviewed and merged to `main` at `914729b`)
 
 ### Objective
 
@@ -276,6 +276,27 @@ Configure:
 
 A new developer can start the project using documented setup instructions.
 
+### T00-02 Update (2026-09-26)
+
+**Status:** COMPLETED (merged to `main` via PR #1, merge commit `03b3bec`)
+
+**Approved scope (T00-02 proposal, decisions D1–D8):** development toolchain only — runtime/package-manager pins, Next.js + TypeScript foundation, FastAPI + uv foundation, lint/format/typecheck/test tooling, root command matrix. Toolchain details: `docs/architecture/toolchain.md`.
+
+**Scope moved to later tasks (not dropped):** database, cache/queue, file storage and local services → T00-03 (Docker) and the first task that uses each client library (decision D5). Environment validation → T00-04.
+
+**Concrete acceptance criteria:**
+
+* Node.js, pnpm, Python and uv versions pinned (`.nvmrc`, `packageManager`, `engines`, `.python-version`, `required-version`).
+* `pnpm-lock.yaml` and `uv.lock` committed; `pnpm bootstrap` (frozen / locked installs) succeeds.
+* `pnpm dev`, `build`, `lint`, `typecheck`, `test`, `format`, `format:check`, `check:landing` and `check` exist and pass.
+* `pnpm dev` serves the neutral frontend page and `GET /health` → `{"status": "ok"}`.
+* Minimal runtime code only (D4): root layout + neutral page; `create_app()`, `Settings`, `/health`.
+* No SQLAlchemy, Alembic, asyncpg, Redis or S3 client (D5); no Dockerfile, compose file, migration, CI workflow, authentication or tenancy code.
+* 7-day supply-chain cooldown active for pnpm and uv (D7).
+* `index.html`, `app.js`, `styles.css` identical to `marketing-site-v1`.
+
+**Definition of Done:** the "repository builds successfully" criterion transferred from T00-01 is satisfied by `pnpm build` / `pnpm check`.
+
 ---
 
 ## T00-03 — Docker Development Environment
@@ -294,6 +315,25 @@ Include:
 ### Acceptance Criteria
 
 Clean environment can be started successfully.
+
+### T00-03 Update (2026-09-26)
+
+**Status:** READY_FOR_REVIEW (branch `feat/T00-03-docker`)
+
+**Approved decisions:** D1 branch from `main` after T00-02; D2 SeaweedFS 4.47; D3 Redis 8.8; D4 defer `migrate` and `worker`; D5 documented default ports with local `.env` overrides; D6 PostgreSQL 18 via `pgvector/pgvector:0.8.6-pg18-trixie` (pgvector not enabled); D7 Mailpit now.
+
+**Scope moved to later tasks (not dropped):** `migrate` (Alembic) → first database task; `worker` + queue library → first background-job task (this moves the queue-library choice ADR-0001 placed in T00-03).
+
+**Concrete acceptance criteria:**
+
+* `docker compose config` passes; Compose project name fixed to `mti360`; volumes `mti360_*`; host ports on `127.0.0.1`.
+* `pnpm infra:up` starts PostgreSQL, Redis, SeaweedFS and Mailpit from empty volumes, health-gated.
+* Roles `mti_owner` / `mti_app` / `mti_readonly` exist with no SUPERUSER, CREATEDB, CREATEROLE, REPLICATION or BYPASSRLS; passwords only from `.env`.
+* Redis answers PONG; the private bucket exists; anonymous S3 access is denied; Mailpit is ready.
+* Native `pnpm dev` works against the infrastructure; `pnpm stack:up` runs healthy non-root api and frontend containers.
+* A missing `.env` makes Compose fail with a clear message.
+* `pnpm infra:reset` removes only MTI 360 containers, network and volumes; other local projects (ACRS) are unaffected.
+* No Alembic, migration, worker, queue library, tables, RLS policies, authentication or tenancy code; `pnpm check` passes; landing page unchanged.
 
 ---
 
