@@ -31,14 +31,15 @@ MTI 360 is **one product with four experiences**:
 
 ## Current status
 
-> **No application code has been implemented yet.**
+> **No product functionality has been implemented yet.** The development toolchain exists (T00-02); the frontend has only a neutral root page and the backend only a `/health` liveness endpoint.
 
 | Area | Status |
 |---|---|
 | Product and engineering specifications | Baseline complete |
-| T00-01 Repository Structure | `READY_FOR_REVIEW` |
-| Phase 00 Foundation (T00-02 … T00-10) | Not started |
-| Application (frontend, backend, database) | Not started |
+| T00-01 Repository Structure | `COMPLETED` |
+| T00-02 Development Environment | `READY_FOR_REVIEW` |
+| Phase 00 Foundation (T00-03 … T00-10) | Not started |
+| Product features (screens, APIs, database, auth, tenancy) | Not started |
 
 The live tracker is [DEVELOPMENT-STATUS.md](DEVELOPMENT-STATUS.md).
 
@@ -63,8 +64,9 @@ Decisions are recorded as ADRs in [docs/adr/](docs/adr/). Details: [ARCHITECTURE
 MTI360/
 ├── *.md                        Product and engineering specifications (source of truth)
 ├── index.html app.js styles.css MTI 360 marketing website (see note below)
-├── frontend/                   Next.js application (from T00-02)
-├── backend/                    FastAPI modular monolith + Alembic migrations (from T00-02)
+├── package.json, pnpm-workspace.yaml   Root commands and pnpm workspace (no dependencies)
+├── frontend/                   Next.js application
+├── backend/                    FastAPI modular monolith (uv-managed)
 ├── database/                   PostgreSQL bootstrap and development seeds
 ├── infrastructure/             Local service configuration (from T00-03)
 ├── tests/                      Cross-stack E2E and accessibility suites
@@ -104,7 +106,45 @@ PHASE 00 Foundation → 01 Authentication & Multi-Tenancy → 02 Platform Contro
 
 Phase 00 order: T00-01 Repository Structure → T00-02 Development Environment → T00-03 Docker → T00-04 Environment Configuration → T00-05 CI → T00-06 Design Tokens → T00-07 Components → T00-08 Application Shell → T00-09 Responsive → T00-10 Accessibility.
 
-Setup instructions will be added in T00-02 / T00-03. There is nothing to build or run yet.
+## Getting started
+
+### Prerequisites
+
+| Tool | Version | Notes |
+|---|---|---|
+| Node.js | 24 LTS (`.nvmrc`: 24.21.0; `>=24.15.0 <25` accepted) | |
+| pnpm | 11.28.0 (from `packageManager`) | `corepack enable` (or, without admin rights on Windows: `corepack enable --install-directory "%APPDATA%\npm" pnpm`) |
+| uv | 0.12.x (≥ 0.12.19) | [Official installer](https://docs.astral.sh/uv/getting-started/installation/) |
+| Python | 3.14 | Installed and managed by uv — no system Python required |
+| Git | any recent | Tags must be present (`git fetch --tags`) for `pnpm check:landing` |
+
+Docker is not required yet (local infrastructure arrives in T00-03).
+
+### Quick start
+
+```bash
+pnpm bootstrap      # install frontend (frozen lockfile) and backend (locked) dependencies
+pnpm dev            # frontend http://localhost:3000, backend http://127.0.0.1:8000/health
+pnpm check          # everything CI will run: landing integrity, format, lint, typecheck, tests, build
+```
+
+Ports can be changed if 3000/8000 are in use: `FRONTEND_PORT=3100 API_PORT=8100 pnpm dev`.
+
+### Commands
+
+| Command | Purpose |
+|---|---|
+| `pnpm bootstrap` | Install all dependencies from the lockfiles |
+| `pnpm dev` / `pnpm dev:frontend` / `pnpm dev:backend` | Run both apps / one app |
+| `pnpm build` | Production build of the frontend |
+| `pnpm lint` | ESLint (frontend) and Ruff (backend) |
+| `pnpm typecheck` | TypeScript and mypy (strict) |
+| `pnpm test` | Vitest (frontend) and pytest (backend) |
+| `pnpm format` / `pnpm format:check` | Prettier (frontend) and Ruff format (backend) |
+| `pnpm check:landing` | Verify the marketing website files are unchanged |
+| `pnpm check` | All of the above checks in CI order |
+
+Versions, holds, supply-chain controls and update policy: [docs/architecture/toolchain.md](docs/architecture/toolchain.md).
 
 ## Marketing website note
 

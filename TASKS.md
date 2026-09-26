@@ -207,7 +207,7 @@ Establish the technical foundation required for all subsequent MTI 360 developme
 ## T00-01 — Repository Structure
 
 **Priority:** P0
-**Status:** READY_FOR_REVIEW
+**Status:** COMPLETED (reviewed and merged to `main` at `914729b`)
 
 ### Objective
 
@@ -275,6 +275,27 @@ Configure:
 ### Acceptance Criteria
 
 A new developer can start the project using documented setup instructions.
+
+### T00-02 Update (2026-09-26)
+
+**Status:** READY_FOR_REVIEW (branch `feat/T00-02-development-environment`)
+
+**Approved scope (T00-02 proposal, decisions D1–D8):** development toolchain only — runtime/package-manager pins, Next.js + TypeScript foundation, FastAPI + uv foundation, lint/format/typecheck/test tooling, root command matrix. Toolchain details: `docs/architecture/toolchain.md`.
+
+**Scope moved to later tasks (not dropped):** database, cache/queue, file storage and local services → T00-03 (Docker) and the first task that uses each client library (decision D5). Environment validation → T00-04.
+
+**Concrete acceptance criteria:**
+
+* Node.js, pnpm, Python and uv versions pinned (`.nvmrc`, `packageManager`, `engines`, `.python-version`, `required-version`).
+* `pnpm-lock.yaml` and `uv.lock` committed; `pnpm bootstrap` (frozen / locked installs) succeeds.
+* `pnpm dev`, `build`, `lint`, `typecheck`, `test`, `format`, `format:check`, `check:landing` and `check` exist and pass.
+* `pnpm dev` serves the neutral frontend page and `GET /health` → `{"status": "ok"}`.
+* Minimal runtime code only (D4): root layout + neutral page; `create_app()`, `Settings`, `/health`.
+* No SQLAlchemy, Alembic, asyncpg, Redis or S3 client (D5); no Dockerfile, compose file, migration, CI workflow, authentication or tenancy code.
+* 7-day supply-chain cooldown active for pnpm and uv (D7).
+* `index.html`, `app.js`, `styles.css` identical to `marketing-site-v1`.
+
+**Definition of Done:** the "repository builds successfully" criterion transferred from T00-01 is satisfied by `pnpm build` / `pnpm check`.
 
 ---
 

@@ -1,6 +1,21 @@
 # frontend/
 
-**Status:** Reserved. No application code exists yet.
+**Status:** Toolchain foundation (T00-02). Contains only a root layout, a neutral root page and a smoke test — no product screens, design tokens or experience routes yet.
+
+## Commands
+
+Run from the repository root (`pnpm dev:frontend`, `pnpm lint:frontend`, …) or inside `frontend/`:
+
+| Command | Purpose |
+|---|---|
+| `pnpm dev` | Next.js dev server on `localhost:${FRONTEND_PORT:-3000}` |
+| `pnpm build` / `pnpm start` | Production build / serve |
+| `pnpm lint` | ESLint (Next.js core-web-vitals + TypeScript, type-aware rules, jsx-a11y, import order), zero warnings |
+| `pnpm typecheck` | `next typegen && tsc --noEmit` |
+| `pnpm test` / `pnpm test:watch` | Vitest (jsdom + Testing Library) |
+| `pnpm format` / `pnpm format:check` | Prettier (this directory only) |
+
+Toolchain versions and rationale: [docs/architecture/toolchain.md](../docs/architecture/toolchain.md).
 
 ## Purpose
 
@@ -22,7 +37,7 @@ Frontend engineering. Design-token and component changes must follow `DESIGN-SYS
 ## What belongs here
 
 - Next.js routes (`src/app/`), kept thin — they compose shells and feature modules
-- `src/middleware.ts` — host → experience rewrite, security headers (never authorization)
+- `src/proxy.ts` — host → experience rewrite, security headers (never authorization). Next.js 16 renamed "Middleware" (`middleware.ts`) to "Proxy" (`proxy.ts`).
 - `src/design-system/` — semantic tokens, Light/Dark/System theme, core components, page templates T01–T18
 - `src/shells/` — PlatformShell, TenantShell, StudentShell, PublicSiteShell
 - `src/features/` — UI feature modules that mirror backend modules
@@ -41,7 +56,7 @@ Frontend engineering. Design-token and component changes must follow `DESIGN-SYS
 
 | Task | Adds |
 |---|---|
-| T00-02 | Next.js scaffold, `package.json`, TypeScript and lint configuration |
+| T00-02 ✅ | Next.js scaffold, `package.json`, TypeScript, ESLint, Prettier and Vitest configuration |
 | T00-03 | `Dockerfile` (optional dev container) |
 | T00-06 | Design tokens and Light/Dark/System theme |
 | T00-07 | Core component library |

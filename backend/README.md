@@ -1,6 +1,21 @@
 # backend/
 
-**Status:** Reserved. No application code exists yet.
+**Status:** Toolchain foundation (T00-02). Contains only the application factory (`create_app()`), minimal `Settings` and a `GET /health` liveness endpoint, plus smoke tests. No database, cache, storage, authentication, tenancy or business modules yet.
+
+## Commands
+
+Run from the repository root (`pnpm dev:backend`, `pnpm lint:backend`, …) or inside `backend/`:
+
+| Command | Purpose |
+|---|---|
+| `uv sync --locked` | Create `.venv` with Python 3.14 (uv-managed) from `uv.lock` |
+| `uv run --locked uvicorn app.main:create_app --factory --reload --host 127.0.0.1 --port 8000 --no-server-header` | Dev server; `GET /health` → `{"status": "ok"}`; `/docs` only when `APP_ENV=development` |
+| `uv run --locked ruff check .` | Lint (includes import sorting and bandit security rules) |
+| `uv run --locked ruff format .` | Format (`--check` in CI) |
+| `uv run --locked mypy` | Strict type checking (pydantic plugin) |
+| `uv run --locked pytest` | Tests (AnyIO plugin, asyncio backend) |
+
+Settings are read from environment variables and `backend/.env` (copy `backend/.env.example`). Toolchain versions and rationale: [docs/architecture/toolchain.md](../docs/architecture/toolchain.md).
 
 ## Purpose
 
@@ -42,7 +57,7 @@ Layering rule inside a module: `router → service → (domain, repository) → 
 
 | Task | Adds |
 |---|---|
-| T00-02 | `pyproject.toml`, lockfile, FastAPI app skeleton, Alembic configuration |
+| T00-02 ✅ | `pyproject.toml`, `uv.lock`, FastAPI app factory, settings, `/health`, Ruff / mypy / pytest configuration (Alembic deferred to the first database task — decision D5) |
 | T00-03 | `Dockerfile` (api / worker / migrate from one image) |
 | T00-04 | Settings loading and per-environment validation |
 | Phase 01 | Identity, tenancy, authorization, audit modules and tenant-isolation tests |
