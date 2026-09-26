@@ -25,6 +25,10 @@ allowBuilds:
   unrs-resolver: false
 strictDepBuilds: true
 
+# Run package scripts with pnpm's cross-platform shell so the same POSIX-style
+# syntax (e.g. ${API_PORT:-8000}) works on Windows, macOS, Linux and CI.
+shellEmulator: true
+
 # pnpm is deliberately pinned (packageManager in package.json); suppress
 # "update available" prompts for newer majors. Upgrades are deliberate tasks.
 updateNotifier: false

@@ -8,9 +8,9 @@
     "node": ">=24.15.0 <25"
   },
   "scripts": {
-    "dev": "next dev --hostname localhost --port 3000",
+    "dev": "next dev --hostname localhost --port ${FRONTEND_PORT:-3000}",
     "build": "next build",
-    "start": "next start --hostname localhost --port 3000",
+    "start": "next start --hostname localhost --port ${FRONTEND_PORT:-3000}",
     "typecheck": "next typegen && tsc --noEmit",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
