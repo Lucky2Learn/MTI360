@@ -1844,6 +1844,8 @@ Never hard-code:
 * provider credentials
 * encryption secrets
 
+> **Implementation note (T00-04, 2026-09-26):** four environments — `development`, `test`, `staging`, `production` — selected by `APP_ENV` and validated at startup (backend `Settings`, frontend server-only `env.ts`). `.env` files are read only in development; staging and production take configuration from the process environment (secret manager) only and refuse placeholder secrets, debug mode, the fake AI provider, permissive CORS and database URLs without TLS. Details: [`docs/architecture/environments.md`](docs/architecture/environments.md).
+
 ---
 
 # 57. CI/CD

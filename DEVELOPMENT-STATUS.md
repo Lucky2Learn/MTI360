@@ -107,7 +107,7 @@ M0 — Foundation Ready
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-09-26:** T00-01 and T00-02 are `COMPLETED` (merged to `main`; T00-02 via PR #1). T00-03 (Docker Development Environment) is `READY_FOR_REVIEW`. Only the toolchain, local infrastructure and a neutral page / `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
+> **2026-09-26:** T00-01, T00-02 and T00-03 are `COMPLETED` (merged to `main`; T00-02 via PR #1, T00-03 via PR #3). T00-04 (Environment Configuration) is `READY_FOR_REVIEW`. Only the toolchain, local infrastructure, validated environment configuration and a neutral page / `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
 
 ---
 
@@ -183,7 +183,7 @@ IN_PROGRESS
 ## Phase Completion
 
 ```text
-2 / 10 tasks completed (T00-01, T00-02 COMPLETED; T00-03 READY_FOR_REVIEW)
+3 / 10 tasks completed (T00-01, T00-02, T00-03 COMPLETED; T00-04 READY_FOR_REVIEW)
 ```
 
 ---
@@ -290,7 +290,7 @@ an AI agent; not committed — decision pending.
 
 ### T00-03 — Docker Development Environment
 
-**Status:** `READY_FOR_REVIEW` (branch `feat/T00-03-docker`)
+**Status:** `COMPLETED` (merged to `main` via PR #3, merge commit `c7b769b`)
 
 **Implementation:**
 
@@ -347,18 +347,45 @@ Native frontend verification on 3100 used a developer-started `next dev`
 
 ### T00-04 — Environment Configuration
 
-**Status:** `NOT_STARTED`
+**Status:** `READY_FOR_REVIEW` (branch `feat/T00-04-environment-configuration`, based on `main` at `c7b769b`)
 
 **Implementation:**
 
 ```text
-Not started
+backend/app/core/config.py: Settings types every backend/.env.example
+  variable (SecretStr for secrets; hide_input_in_errors); source policy
+  (backend/.env read only in development; APP_ENV never from .env);
+  per-environment rules raising a value-free ConfigurationError;
+  load_settings() / get_settings()
+backend/app/main.py: fail-fast contract documented (behaviour unchanged)
+frontend/src/lib/env.ts: server-only env contract (APP_ENV, API_BASE_URL;
+  NEXT_PUBLIC_APP_NAME the only public value); server-only@0.0.1 added
+scripts/check-env.mjs + `pnpm check:env` (in `pnpm check`)
+Env templates: comments only ([staging/production] markers, source policy)
+docs/architecture/environments.md: environment matrix and decisions D1-D5
+Not added (out of scope): DB engine/connection/schema/migrations, Redis/S3/
+  SMTP clients, sessions/CSRF/auth/tenancy, CORS middleware, Docker changes
 ```
 
 **Verification:**
 
 ```text
-Not verified
+Backend: 139 pytest tests pass (rule matrix per environment with passing and
+  failing cases; secret masking in errors/repr/JSON/logs; .env ignored in
+  test/staging/production; template <-> Settings consistency). Mutation
+  check: disabling the .env policy makes the isolation tests fail.
+Frontend: 18 vitest tests pass; a temporary Client Component importing
+  env.ts fails `next build` ("depends on server-only"); a temporary Server
+  Component import builds. Both probes deleted.
+pnpm check:env: passes on the repo; fails for all 8 defect fixtures (tracked
+  .env and .env.local, secret and URL password in a template, secret-like
+  NEXT_PUBLIC_ in a template and in source, drift both ways); no values printed.
+Native API, broken production env: exit 1, rules listed, 0 value leaks.
+Native API, valid production env (fake values): /health 200, /docs 404,
+  /openapi.json 404. Native API with zero configuration: /health 200, /docs 200.
+pnpm stack:up: exit 0; api (APP_ENV=development, no .env in image) /health
+  200; frontend 200. api image with APP_ENV=production and no config: exit 1.
+pnpm check: PASS. Landing page SHA-256 unchanged. ACRS unchanged.
 ```
 
 ---
@@ -1196,7 +1223,8 @@ A screen is only considered implemented when its required underlying behavior is
 | Development Tracking | `READY` |
 | Repository Structure (T00-01) | `COMPLETED` |
 | Development Toolchain (T00-02) | `COMPLETED` |
-| Local Docker Infrastructure (T00-03) | `READY_FOR_REVIEW` |
+| Local Docker Infrastructure (T00-03) | `COMPLETED` |
+| Environment Configuration (T00-04) | `READY_FOR_REVIEW` |
 | Architecture Decision Records | `READY_FOR_REVIEW` (ADR-0001 … ADR-0006) |
 | Production Implementation | `NOT_STARTED` |
 
@@ -1397,6 +1425,12 @@ The Alembic `migrate` service and the background `worker` (with the queue-librar
 
 ---
 
+### DEC-018 — Environment Configuration (T00-04 D1–D5)
+
+Four environments validated at startup. D1: database TLS (`ssl=require` or stricter) in staging/production. D2: frontend `server-only` marker package. D3: staging as strict as production except `LOG_LEVEL=DEBUG`. D4: staging/production never read `.env` files (process environment / secret manager only). D5: dependency-free `pnpm check:env` in `pnpm check`; gitleaks in T00-05. See `docs/architecture/environments.md`.
+
+---
+
 # 37. RECENT CHANGES
 
 | Date | Change | Impact |
@@ -1410,6 +1444,8 @@ The Alembic `migrate` service and the background `worker` (with the queue-librar
 | 2026-09-26 | T00-02 Development Environment implemented | `READY_FOR_REVIEW` on `feat/T00-02-development-environment`; toolchain pinned |
 | 2026-09-26 | T00-02 merged to `main` (PR #1, `03b3bec`) | `COMPLETED` |
 | 2026-09-26 | T00-03 Docker Development Environment implemented | `READY_FOR_REVIEW` on `feat/T00-03-docker`; local infrastructure + app images |
+| 2026-09-26 | T00-03 merged to `main` (PR #3, `c7b769b`) | `COMPLETED` |
+| 2026-09-26 | T00-04 Environment Configuration implemented | `READY_FOR_REVIEW` on `feat/T00-04-environment-configuration`; validated per-environment settings |
 
 ---
 
@@ -1694,13 +1730,76 @@ Review and merge T00-03 PR -> T00-04 Environment Configuration
 
 ---
 
+## 2026-09-26 — T00-04 Environment Configuration
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+Typed, validated configuration for development, test, staging and production. Backend `Settings` covers every template variable with per-environment rules and a value-free `ConfigurationError`; `backend/.env` is read only in development; staging/production use the process environment only. Frontend `env.ts` is server-only. `pnpm check:env` guards templates and tracked files. Development still needs zero configuration.
+
+**Files:**
+
+```text
+Created: docs/architecture/environments.md, scripts/check-env.mjs,
+  backend/tests/unit/test_settings_environments.py,
+  backend/tests/unit/test_env_template.py, frontend/src/lib/env.ts,
+  frontend/src/lib/env.test.ts
+Changed: backend/app/core/config.py, backend/app/main.py (docstring),
+  backend/tests/conftest.py, backend/tests/unit/test_config.py,
+  backend/pyproject.toml (ruff S105-S107 ignored in tests only),
+  .env.example, backend/.env.example, frontend/.env.example (comments only),
+  package.json, frontend/package.json, pnpm-lock.yaml, scripts/README.md,
+  README.md, backend/README.md, frontend/README.md, docs/README.md,
+  docs/architecture/{security,toolchain,repository-structure}.md,
+  ARCHITECTURE.md (§56 note), TASKS.md, DEVELOPMENT-STATUS.md
+Unchanged (verified): compose.yaml, Dockerfiles, infrastructure and database
+  scripts, ADRs, index.html, app.js, styles.css; ACRS
+```
+
+**Database / API / UI:**
+
+```text
+Database: none (connection settings validated only). API: unchanged
+(GET /health; /docs only in development). UI: unchanged.
+```
+
+**Tests:**
+
+```text
+Backend 139 passed (was 7). Frontend 18 passed (was 1). pnpm check passes.
+```
+
+**Known Issues:**
+
+```text
+Staging/production require S3 access keys and SMTP credentials (strict D-matrix
+reading); revisit if IAM roles or unauthenticated relays are chosen (Phase 17).
+Bootstrap-superuser detection uses a fixed name list (postgres,
+mti360_superuser). Unset deployed fields also report the rules their local
+defaults would break (accurate, somewhat verbose). env.ts is not yet imported
+by any page (first consumer: T00-08 shell / API proxy).
+```
+
+**Next:**
+
+```text
+Review and merge T00-04 PR -> T00-05 CI Foundation
+```
+
+---
+
 # 40. NEXT TASK
 
 The next step is:
 
 ```text
-Review T00-03 (READY_FOR_REVIEW) and merge its pull request into main.
-Then T00-04 — Environment Configuration.
+Review T00-04 (READY_FOR_REVIEW) and merge its pull request into main.
+Then T00-05 — CI Foundation.
 ```
 
 The completed-task description below is retained for reference.

@@ -70,12 +70,14 @@ Redis-backed, keyed per IP, account, tenant and endpoint class. Applies to login
 
 ## 9. Secrets and configuration
 
-- Settings loaded with pydantic-settings and validated per `APP_ENV` (T00-04). Production refuses placeholder secrets, debug mode, permissive CORS and the fake AI provider.
+- Settings loaded with pydantic-settings and validated per `APP_ENV` at startup (implemented in T00-04; matrix in [environments.md](environments.md)). Staging and production refuse placeholder or weak secrets, debug mode, wildcard or non-https CORS origins, the fake AI provider, implicit infrastructure settings and database URLs without TLS or with shared/superuser roles; production also refuses `LOG_LEVEL=DEBUG`.
+- Staging and production read the process environment only; `.env` files are read only in development. Secrets are `SecretStr`; configuration errors name variables, never values.
+- The frontend environment module is `server-only`; `NEXT_PUBLIC_APP_NAME` is its only browser-public value.
 - Only `*.example` environment files are committed; real `.env` files are git-ignored.
 - **No secret may ever appear in a `NEXT_PUBLIC_*` variable** or anywhere in frontend code.
 - Staging and production secrets are injected by the platform secret manager / CI.
 - **Must never be committed:** real `.env` files; API keys and provider tokens (WhatsApp, email, SMS, voice, payment, LLM); database passwords; session, CSRF and encryption keys; private keys and certificates; cloud credentials; database dumps or backups; uploaded files.
-- Secret scanning is added to CI in T00-05.
+- `pnpm check:env` (T00-04) blocks tracked `.env` files, non-placeholder values in templates and secret-like `NEXT_PUBLIC_*` names. Full secret scanning is added to CI in T00-05.
 
 ## 10. File access
 

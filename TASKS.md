@@ -318,7 +318,7 @@ Clean environment can be started successfully.
 
 ### T00-03 Update (2026-09-26)
 
-**Status:** READY_FOR_REVIEW (branch `feat/T00-03-docker`)
+**Status:** COMPLETED (merged to `main` via PR #3, merge commit `c7b769b`)
 
 **Approved decisions:** D1 branch from `main` after T00-02; D2 SeaweedFS 4.47; D3 Redis 8.8; D4 defer `migrate` and `worker`; D5 documented default ports with local `.env` overrides; D6 PostgreSQL 18 via `pgvector/pgvector:0.8.6-pg18-trixie` (pgvector not enabled); D7 Mailpit now.
 
@@ -351,6 +351,23 @@ Production
 ```
 
 Ensure secrets are never committed.
+
+### T00-04 Update (2026-09-26)
+
+**Status:** READY_FOR_REVIEW (branch `feat/T00-04-environment-configuration`, based on `main` at `c7b769b`)
+
+**Approved decisions:** D1 database TLS (`ssl=require` or stricter) in staging/production; D2 `server-only` package in the frontend; D3 staging as strict as production except `LOG_LEVEL=DEBUG`; D4 staging/production never read `.env` files; D5 dependency-free `pnpm check:env` in `pnpm check` (gitleaks in T00-05). Environment matrix: `docs/architecture/environments.md`.
+
+**Concrete acceptance criteria:**
+
+* `Settings` types every variable in `backend/.env.example`; a test and `pnpm check:env` prove nothing is missing or extra.
+* Development starts with no `backend/.env` (T00-03 defaults); `backend/.env` overrides when present; test uses explicit values and never reads `.env`; staging/production use the process environment only.
+* Staging and production refuse to start for each rule violation (debug, fake AI provider, placeholder/short/equal secrets, implicit infrastructure settings, database users/superusers/TLS, non-https CORS origins and S3 endpoint; production also `LOG_LEVEL=DEBUG`), each with a failing and a passing test.
+* No secret value appears in any `ConfigurationError`, `ValidationError`, `repr` or log output (tested).
+* `frontend/src/lib/env.ts` validates server env, exposes only `NEXT_PUBLIC_APP_NAME`, and is `server-only` (a Client Component import fails the build).
+* `pnpm check:env` passes on the repository and fails for each defect class.
+* The `api` container still starts under `pnpm stack:up` with `APP_ENV=development`.
+* No database engine/connection/schema/migration, no Redis/S3/SMTP clients, no auth/session/tenancy/CORS middleware, no Docker/compose changes; landing page unchanged; no secrets committed.
 
 ---
 
