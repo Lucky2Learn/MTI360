@@ -31,14 +31,15 @@ MTI 360 is **one product with four experiences**:
 
 ## Current status
 
-> **No product functionality has been implemented yet.** The development toolchain exists (T00-02); the frontend has only a neutral root page and the backend only a `/health` liveness endpoint.
+> **No product functionality has been implemented yet.** The development toolchain (T00-02) and local Docker infrastructure (T00-03) exist; the frontend has only a neutral root page and the backend only a `/health` liveness endpoint. No database schema, authentication or tenancy exists.
 
 | Area | Status |
 |---|---|
 | Product and engineering specifications | Baseline complete |
 | T00-01 Repository Structure | `COMPLETED` |
-| T00-02 Development Environment | `READY_FOR_REVIEW` |
-| Phase 00 Foundation (T00-03 … T00-10) | Not started |
+| T00-02 Development Environment | `COMPLETED` (merged, PR #1) |
+| T00-03 Docker Development Environment | `READY_FOR_REVIEW` |
+| Phase 00 Foundation (T00-04 … T00-10) | Not started |
 | Product features (screens, APIs, database, auth, tenancy) | Not started |
 
 The live tracker is [DEVELOPMENT-STATUS.md](DEVELOPMENT-STATUS.md).
@@ -52,7 +53,7 @@ The live tracker is [DEVELOPMENT-STATUS.md](DEVELOPMENT-STATUS.md).
 | Database | PostgreSQL + SQLAlchemy + Alembic |
 | Cache / queue / sessions | Redis |
 | Files | S3-compatible object storage |
-| Local development | Docker Compose (from T00-03) |
+| Local development | Hybrid: infrastructure in Docker Compose (project `mti360`), apps run natively |
 | Multi-tenancy | Shared schema with `tenant_id`; tenant context derived server-side only; enforced by repositories, an ORM filter, PostgreSQL Row-Level Security and composite foreign keys |
 | Identity | Separate platform identity; opaque server-side sessions per realm; explicit, audited support sessions |
 
@@ -65,10 +66,11 @@ MTI360/
 ├── *.md                        Product and engineering specifications (source of truth)
 ├── index.html app.js styles.css MTI 360 marketing website (see note below)
 ├── package.json, pnpm-workspace.yaml   Root commands and pnpm workspace (no dependencies)
+├── compose.yaml                Local Docker infrastructure + app images (project "mti360")
 ├── frontend/                   Next.js application
 ├── backend/                    FastAPI modular monolith (uv-managed)
 ├── database/                   PostgreSQL bootstrap and development seeds
-├── infrastructure/             Local service configuration (from T00-03)
+├── infrastructure/             Local service configuration (object-storage bucket init)
 ├── tests/                      Cross-stack E2E and accessibility suites
 ├── docs/                       ADRs and architecture notes
 └── scripts/                    Developer helper scripts
@@ -117,18 +119,19 @@ Phase 00 order: T00-01 Repository Structure → T00-02 Development Environment �
 | uv | 0.12.x (≥ 0.12.19) | [Official installer](https://docs.astral.sh/uv/getting-started/installation/) |
 | Python | 3.14 | Installed and managed by uv — no system Python required |
 | Git | any recent | Tags must be present (`git fetch --tags`) for `pnpm check:landing` |
-
-Docker is not required yet (local infrastructure arrives in T00-03).
+| Docker Desktop | Engine 29.x, Compose v2+ | Local infrastructure (PostgreSQL, Redis, S3, Mailpit) |
 
 ### Quick start
 
 ```bash
-pnpm bootstrap      # install frontend (frozen lockfile) and backend (locked) dependencies
-pnpm dev            # frontend http://localhost:3000, backend http://127.0.0.1:8000/health
-pnpm check          # everything CI will run: landing integrity, format, lint, typecheck, tests, build
+cp .env.example .env   # then replace every change-me with a long random value (never commit .env)
+pnpm bootstrap         # install frontend (frozen lockfile) and backend (locked) dependencies
+pnpm infra:up          # PostgreSQL 18, Redis 8.8, SeaweedFS S3, Mailpit in Docker (project "mti360")
+pnpm dev               # native frontend http://localhost:3000, backend http://127.0.0.1:8000/health
+pnpm check             # everything CI will run: landing integrity, format, lint, typecheck, tests, build
 ```
 
-Ports can be changed if 3000/8000 are in use: `FRONTEND_PORT=3100 API_PORT=8100 pnpm dev`.
+Ports can be changed if 3000/8000 are in use (for example by another local project): `FRONTEND_PORT=3100 API_PORT=8100 pnpm dev`, and the same variables in `.env` for containers. Full guide: [docs/runbooks/local-development.md](docs/runbooks/local-development.md).
 
 ### Commands
 
@@ -143,6 +146,10 @@ Ports can be changed if 3000/8000 are in use: `FRONTEND_PORT=3100 API_PORT=8100 
 | `pnpm format` / `pnpm format:check` | Prettier (frontend) and Ruff format (backend) |
 | `pnpm check:landing` | Verify the marketing website files are unchanged |
 | `pnpm check` | All of the above checks in CI order |
+| `pnpm infra:up` / `pnpm infra:down` | Start / stop local infrastructure (volumes kept) |
+| `pnpm infra:reset` | Delete all local MTI 360 containers, network and `mti360_*` volumes (only MTI 360) |
+| `pnpm infra:logs` | Follow container logs |
+| `pnpm stack:up` | Build and run infrastructure plus the api and frontend images |
 
 Versions, holds, supply-chain controls and update policy: [docs/architecture/toolchain.md](docs/architecture/toolchain.md).
 

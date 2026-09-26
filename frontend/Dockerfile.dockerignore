@@ -1,0 +1,25 @@
+# Ignore file for frontend/Dockerfile (build context = repository root).
+# ALLOWLIST: everything is excluded except what the frontend build needs.
+# The marketing website, specifications, backend, secrets and local state
+# never enter the build context.
+
+*
+
+# Workspace manifests and lockfile (repository root)
+!package.json
+!pnpm-workspace.yaml
+!pnpm-lock.yaml
+
+# Frontend sources and configuration
+!frontend/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/coverage/
+frontend/next-env.d.ts
+frontend/*.tsbuildinfo
+frontend/.env
+frontend/.env.*
+frontend/Dockerfile
+frontend/Dockerfile.dockerignore
+frontend/*.md

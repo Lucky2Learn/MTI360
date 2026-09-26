@@ -45,6 +45,21 @@ This document records the exact toolchain versions, why each was chosen, which n
 
 **Not installed yet (decision D5):** SQLAlchemy (target 2.0.x), Alembic, asyncpg, Redis client, S3 client. They are added by the task that first uses them.
 
+### Docker images (T00-03)
+
+| Service | Image | Notes |
+|---|---|---|
+| PostgreSQL | `pgvector/pgvector:0.8.6-pg18-trixie` (PostgreSQL 18.6) | PG 18: stable, supported to 2030, native `uuidv7()`. pgvector image avoids an image swap later; extension **not enabled**. |
+| Redis | `redis:8.8-alpine` (8.8.3) | Matches the architecture ("Redis"); local use only. |
+| Object storage | `chrislusf/seaweedfs:4.47` | Apache-2.0 S3-compatible emulator. MinIO's community repository was archived (2026) and its Docker Hub image is no longer available; RustFS 1.0 was too new; Garage is AGPL with extra setup. |
+| Mail | `axllent/mailpit:v1.31` (1.31.2) | |
+| Backend base | `python:3.14.7-slim-trixie` + `ghcr.io/astral-sh/uv:0.12.19` | Image `mti360-api:local` (~234 MB) |
+| Frontend base | `node:24.21.0-trixie-slim` (Corepack → pnpm 11.28.0) | Image `mti360-frontend:local` (~387 MB), Next.js standalone output |
+
+Verified with Docker Engine 29.8.0 and Docker Compose v5.5.1 (Docker Desktop, WSL 2). Images are pinned to patch-level tags; digest pinning is considered with CI (T00-05).
+
+**Deferred (T00-03 decision D4):** the Alembic `migrate` service and the background `worker` (with its queue library) are added by the first task that needs them. This moves the queue-library choice that ADR-0001 placed in T00-03.
+
 ## 3. Deliberate version holds
 
 | Held at | Newer available | Reason | Lift when |
@@ -85,6 +100,8 @@ Run from the repository root.
 | `pnpm format` / `pnpm format:check` | Prettier (frontend/ only) + `ruff format` (backend/ only) | both |
 | `pnpm check:landing` | Fails if `index.html`, `app.js` or `styles.css` differ from tag `marketing-site-v1` | repo |
 | `pnpm check` | `check:landing` → `format:check` → `lint` → `typecheck` → `test` → `build` | repo |
+| `pnpm infra:up` / `infra:down` / `infra:reset` / `infra:logs` | Local Docker infrastructure (T00-03) — see [local-development.md](../runbooks/local-development.md) | Docker |
+| `pnpm stack:up` | Build and run infrastructure + api + frontend images (T00-03) | Docker |
 
 **Ports:** `FRONTEND_PORT` (default 3000) and `API_PORT` (default 8000) are read from the shell environment, e.g. `FRONTEND_PORT=3100 API_PORT=8100 pnpm dev`. pnpm's `shellEmulator` makes this syntax work identically on Windows, macOS, Linux and CI. Dev servers bind to `localhost` / `127.0.0.1` only.
 

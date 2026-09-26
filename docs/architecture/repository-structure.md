@@ -24,7 +24,7 @@ MTI360/
 ├── package.json                       ✅ root commands only, no dependencies (T00-02)
 ├── pnpm-workspace.yaml  pnpm-lock.yaml ✅ workspace = frontend; supply-chain settings (T00-02)
 ├── .vscode/extensions.json            ✅ editor recommendations (T00-02)
-├── compose.yaml                       T00-03
+├── compose.yaml                       ✅ project "mti360"; profiles infra + app (T00-03)
 │
 ├── docs/                              ✅
 │   ├── README.md                      ✅ documentation index
@@ -38,7 +38,7 @@ MTI360/
 │   ├── package.json  tsconfig.json  next.config.ts                   ✅ T00-02
 │   ├── eslint.config.mjs  .prettierrc.json  .prettierignore          ✅ T00-02
 │   ├── vitest.config.mts  vitest.setup.ts                            ✅ T00-02
-│   ├── Dockerfile                                                     T00-03
+│   ├── Dockerfile  Dockerfile.dockerignore                           ✅ T00-03 (context = repo root)
 │   ├── public/
 │   └── src/
 │       ├── proxy.ts                   host → experience rewrite, security headers, CSP nonce
@@ -62,7 +62,7 @@ MTI360/
 ├── backend/                           ✅ README, .env.example
 │   ├── pyproject.toml  uv.lock  .python-version                       ✅ T00-02
 │   ├── alembic.ini                    first database task (decision D5)
-│   ├── Dockerfile                     one image → api | worker | migrate   T00-03
+│   ├── Dockerfile  .dockerignore      ✅ T00-03 api image; worker/migrate entrypoints added later (D4)
 │   ├── migrations/                    Alembic, single linear history
 │   ├── app/
 │   │   ├── main.py                    ✅ create_app() + GET /health (T00-02)
@@ -75,10 +75,10 @@ MTI360/
 │   └── tests/                         ✅ conftest.py, unit/ (T00-02); later integration/, api/, security/
 │
 ├── database/                          ✅ README only
-│   ├── init/                          roles (owner / app / readonly), extensions   T00-03
+│   ├── init/                          ✅ 01-roles.sh: owner / app / readonly roles (T00-03)
 │   └── seeds/                         realistic maritime development fixtures
 │
-├── infrastructure/                    ✅ README only
+├── infrastructure/                    ✅ README; object-storage/create-bucket.sh (T00-03)
 ├── tests/                             ✅ README only — e2e/, accessibility/
 ├── scripts/                           ✅ README only
 └── .github/workflows/                 T00-05
@@ -164,7 +164,7 @@ Files are created only when needed. Dependency direction: `router → service �
 - Each provider type has an interface, one or more adapters and a **fake adapter** for deterministic tests. Credentials are server-side only.
 - One backend image runs as `api`, `worker` or `migrate`. Every job carries `{tenant_id, actor, correlation_id, idempotency_key}`; the worker re-establishes context through the same code path as the API.
 - Domain events are written to a **transactional outbox** and enqueued only after commit (ARCHITECTURE.md §66).
-- The queue library is selected in T00-03 behind `core/jobs`.
+- The queue library is selected by the first background-job task behind `core/jobs` (moved from T00-03 by decision D4).
 
 ## 4. Testing layout
 
@@ -193,7 +193,7 @@ SQLite is not used for backend tests: RLS and PostgreSQL features must be exerci
 
 ## 6. Local infrastructure (T00-03)
 
-Root `compose.yaml` with profiles `infra` (postgres, redis, object-storage emulator, mailpit) and `app` (migrate, api, worker, frontend). Ports bound to `127.0.0.1`, health-check-gated startup, named volumes. The object-storage emulator product is chosen in T00-03. No production compose, reverse proxy or monitoring stack until required.
+Implemented in T00-03. Root `compose.yaml` (project name fixed to `mti360`) with profile `infra` (postgres — PostgreSQL 18 via `pgvector/pgvector:0.8.6-pg18-trixie`; redis 8.8; object-storage — SeaweedFS 4.47 with a one-shot private-bucket init; mailpit 1.31) and profile `app` (api, frontend — production-shaped images). Ports bound to `127.0.0.1`, health-check-gated startup, volumes named `mti360_*`. Hybrid development: infrastructure in Docker, apps native. **`migrate` and `worker` are deferred** to the first tasks that need Alembic and a queue library (decision D4). No production compose, reverse proxy or monitoring stack until required. Runbook: [local-development.md](../runbooks/local-development.md).
 
 ## 7. Git workflow
 
