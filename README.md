@@ -31,7 +31,7 @@ MTI 360 is **one product with four experiences**:
 
 ## Current status
 
-> **No product functionality has been implemented yet.** The development toolchain (T00-02), local Docker infrastructure (T00-03) and validated per-environment configuration (T00-04) exist; the frontend has only a neutral root page and the backend only a `/health` liveness endpoint. No database schema, authentication or tenancy exists.
+> **No product functionality has been implemented yet.** The development toolchain (T00-02), local Docker infrastructure (T00-03), validated per-environment configuration (T00-04) and CI (T00-05) exist; the frontend has only a neutral root page and the backend only a `/health` liveness endpoint. No database schema, authentication or tenancy exists.
 
 | Area | Status |
 |---|---|
@@ -39,8 +39,9 @@ MTI 360 is **one product with four experiences**:
 | T00-01 Repository Structure | `COMPLETED` |
 | T00-02 Development Environment | `COMPLETED` (merged, PR #1) |
 | T00-03 Docker Development Environment | `COMPLETED` (merged, PR #3) |
-| T00-04 Environment Configuration | `READY_FOR_REVIEW` |
-| Phase 00 Foundation (T00-05 … T00-10) | Not started |
+| T00-04 Environment Configuration | `COMPLETED` (merged, PR #4) |
+| T00-05 CI Foundation | `READY_FOR_REVIEW` |
+| Phase 00 Foundation (T00-06 … T00-10) | Not started |
 | Product features (screens, APIs, database, auth, tenancy) | Not started |
 
 The live tracker is [DEVELOPMENT-STATUS.md](DEVELOPMENT-STATUS.md).
@@ -129,7 +130,7 @@ cp .env.example .env   # then replace every change-me with a long random value (
 pnpm bootstrap         # install frontend (frozen lockfile) and backend (locked) dependencies
 pnpm infra:up          # PostgreSQL 18, Redis 8.8, SeaweedFS S3, Mailpit in Docker (project "mti360")
 pnpm dev               # native frontend http://localhost:3000, backend http://127.0.0.1:8000/health
-pnpm check             # everything CI will run: landing integrity, format, lint, typecheck, tests, build
+pnpm check             # CI's repo/frontend/backend checks: landing, env, lock, format, lint, typecheck, tests, build
 ```
 
 Ports can be changed if 3000/8000 are in use (for example by another local project): `FRONTEND_PORT=3100 API_PORT=8100 pnpm dev`, and the same variables in `.env` for containers. Full guide: [docs/runbooks/local-development.md](docs/runbooks/local-development.md).
@@ -146,6 +147,8 @@ Ports can be changed if 3000/8000 are in use (for example by another local proje
 | `pnpm test` | Vitest (frontend) and pytest (backend) |
 | `pnpm format` / `pnpm format:check` | Prettier (frontend) and Ruff format (backend) |
 | `pnpm check:landing` | Verify the marketing website files are unchanged |
+| `pnpm check:env` | Environment template and secret hygiene |
+| `pnpm check:lock` | Verify `backend/uv.lock` is up to date |
 | `pnpm check` | All of the above checks in CI order |
 | `pnpm infra:up` / `pnpm infra:down` | Start / stop local infrastructure (volumes kept) |
 | `pnpm infra:reset` | Delete all local MTI 360 containers, network and `mti360_*` volumes (only MTI 360) |
@@ -153,6 +156,10 @@ Ports can be changed if 3000/8000 are in use (for example by another local proje
 | `pnpm stack:up` | Build and run infrastructure plus the api and frontend images |
 
 Versions, holds, supply-chain controls and update policy: [docs/architecture/toolchain.md](docs/architecture/toolchain.md).
+
+### Continuous integration
+
+Every pull request to `main` and every push to `main` runs the CI workflow (jobs `repo`, `frontend`, `backend`, `secrets`, `docker`); the single required status is **`ci-ok`**. CodeQL and dependency audits report but are not required. Git workflow: feature branch → pull request → **Create a merge commit** → `main`. Details, local reproduction and the branch-protection configuration: [docs/architecture/ci.md](docs/architecture/ci.md).
 
 ## Marketing website note
 

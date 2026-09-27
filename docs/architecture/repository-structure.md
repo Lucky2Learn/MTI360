@@ -80,8 +80,9 @@ MTI360/
 │
 ├── infrastructure/                    ✅ README; object-storage/create-bucket.sh (T00-03)
 ├── tests/                             ✅ README only — e2e/, accessibility/
-├── scripts/                           ✅ README only
-└── .github/workflows/                 T00-05
+├── scripts/                           ✅ README; check-env.mjs (T00-04); ci/ helpers (T00-05)
+├── .gitleaks.toml                     ✅ T00-05 secret-scanning configuration
+└── .github/                           ✅ T00-05 workflows/ (ci, codeql, audit), dependabot.yml — docs/architecture/ci.md
 ```
 
 ## 2. Frontend architecture
@@ -122,7 +123,7 @@ modules/<domain>/
 └── jobs.py          Background job handlers owned by this module
 ```
 
-Files are created only when needed. Dependency direction: `router → service → (domain, repository) → models`. A module calls another module **only through its service**. `core/` depends on no module. These rules are enforced with import linting from T00-05.
+Files are created only when needed. Dependency direction: `router → service → (domain, repository) → models`. A module calls another module **only through its service**. `core/` depends on no module. These rules will be enforced with import linting once backend modules exist (deferred from T00-05).
 
 ### Modules
 
@@ -199,5 +200,5 @@ Implemented in T00-03. Root `compose.yaml` (project name fixed to `mti360`) with
 
 - T00-01 work is committed on `claude/compassionate-johnson-gxdgr9`, one commit per sub-step.
 - Baseline tags: `spec-baseline-v1` (specification baseline) and `marketing-site-v1` (marketing website baseline).
-- After T00-01 review, `main` is created from the reviewed commit and made the default branch with protection (pull request required, no force-push; required CI checks after T00-05). The existing branch is preserved.
-- Afterwards: short-lived branches (`feat/T00-02-…`, `fix/…`, `docs/…`), one task per pull request, squash merge, conventional commits including the task ID. Architecture changes require an ADR.
+- After T00-01 review, `main` is created from the reviewed commit and made the default branch. The existing branch is preserved. Branch protection (pull request required, required status `ci-ok`, merge commit only, no force-push, no deletion) is defined in [ci.md §8](ci.md#8-branch-protection-future-configuration--not-applied-in-t00-05) and applied after the first green CI run.
+- Afterwards: short-lived branches (`feat/T00-02-…`, `fix/…`, `docs/…`), one task per pull request, merged with **Create a merge commit** (feature branch → pull request → merge commit → `main`), conventional commits including the task ID. Architecture changes require an ADR.

@@ -107,7 +107,7 @@ M0 — Foundation Ready
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-09-26:** T00-01, T00-02 and T00-03 are `COMPLETED` (merged to `main`; T00-02 via PR #1, T00-03 via PR #3). T00-04 (Environment Configuration) is `READY_FOR_REVIEW`. Only the toolchain, local infrastructure, validated environment configuration and a neutral page / `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
+> **2026-09-27:** T00-01 … T00-04 are `COMPLETED` (merged to `main`; T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4). T00-05 (CI Foundation) is `READY_FOR_REVIEW`. Only the toolchain, local infrastructure, validated environment configuration, CI and a neutral page / `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
 
 ---
 
@@ -183,7 +183,7 @@ IN_PROGRESS
 ## Phase Completion
 
 ```text
-3 / 10 tasks completed (T00-01, T00-02, T00-03 COMPLETED; T00-04 READY_FOR_REVIEW)
+4 / 10 tasks completed (T00-01 … T00-04 COMPLETED; T00-05 READY_FOR_REVIEW)
 ```
 
 ---
@@ -347,7 +347,7 @@ Native frontend verification on 3100 used a developer-started `next dev`
 
 ### T00-04 — Environment Configuration
 
-**Status:** `READY_FOR_REVIEW` (branch `feat/T00-04-environment-configuration`, based on `main` at `c7b769b`)
+**Status:** `COMPLETED` (merged to `main` via PR #4, merge commit `09a7413`)
 
 **Implementation:**
 
@@ -392,18 +392,52 @@ pnpm check: PASS. Landing page SHA-256 unchanged. ACRS unchanged.
 
 ### T00-05 — CI Foundation
 
-**Status:** `NOT_STARTED`
+**Status:** `READY_FOR_REVIEW` (branch `feat/T00-05-ci-foundation`, based on `main` at `09a7413`; not pushed)
 
 **Implementation:**
 
 ```text
-Not started
+.github/workflows/ci.yml: PR/push to main + dispatch; ubuntu-24.04;
+  contents: read; no secrets; persist-credentials: false; superseded PR
+  runs cancelled. Parallel jobs calling the existing root scripts:
+  repo (check:landing, check:env, actionlint), frontend (frozen install,
+  format, lint, typecheck, tests, build), backend (uv sync --locked,
+  check:lock, ruff format/lint, mypy, pytest), secrets (gitleaks full
+  history + self-test), docker (both images built, not pushed; API smoke
+  test; production fail-fast; compose config). ci-ok = single required
+  status, passes only when all five jobs succeed.
+.github/workflows/codeql.yml, audit.yml: reporting only (not in ci-ok)
+.github/dependabot.yml: github-actions, docker, docker-compose only
+  (monthly, grouped, 7-day cooldown, no majors, holds); npm/uv not enabled
+.gitleaks.toml: default rules + one exact path AND exact value allowlist
+scripts/ci/: install-tool.sh (pinned, SHA-256 verified), gitleaks-selftest.sh,
+  docker-smoke.sh
+package.json: format:check:frontend, format:check:backend, check:lock
+docs/architecture/ci.md: architecture, security model, pins, Dependabot
+  scope, local reproduction, future branch-protection ruleset (not applied)
+Actions pinned by SHA: checkout v7.0.1, setup-node v7.0.0, setup-uv
+  v10.1.0, codeql-action v4.38.1 (all released >= 7 days before pinning)
 ```
 
 **Verification:**
 
 ```text
-Not verified
+Local only (GitHub verification after push). pnpm check: PASS
+  (18 frontend + 139 backend tests, next build). actionlint 1.7.12: clean
+  (Linux run with shellcheck 0.9.0); shellcheck 0.10.0 on scripts/ci: clean.
+  Dependabot and workflow files valid against their JSON schemas.
+gitleaks 8.30.1 full history (--all): baseline 2 findings, both the
+  documented fake TEST_CSRF_SECRET; with the allowlist: no leaks.
+  Self-test 4/4 (detected, other value in allowlisted file detected,
+  documented value elsewhere detected, documented value in its file clean).
+install-tool.sh: linux-x64 and windows-x64 checksums verified against the
+  downloaded archives; a corrupted expected hash aborts before extraction.
+Docker: both :ci images build; smoke test /health 200 {"status":"ok"},
+  HEALTHCHECK healthy; APP_ENV=production without config exits 1 with a
+  value-free ConfigurationError; compose config valid (and fails without
+  the required variables). Clean-clone rehearsal of every job: PASS.
+pnpm audit and pip-audit 2.10.1: no known vulnerabilities.
+Landing page SHA-256 unchanged. ACRS unchanged (listing comparison).
 ```
 
 ---
@@ -1224,7 +1258,8 @@ A screen is only considered implemented when its required underlying behavior is
 | Repository Structure (T00-01) | `COMPLETED` |
 | Development Toolchain (T00-02) | `COMPLETED` |
 | Local Docker Infrastructure (T00-03) | `COMPLETED` |
-| Environment Configuration (T00-04) | `READY_FOR_REVIEW` |
+| Environment Configuration (T00-04) | `COMPLETED` |
+| CI Foundation (T00-05) | `READY_FOR_REVIEW` |
 | Architecture Decision Records | `READY_FOR_REVIEW` (ADR-0001 … ADR-0006) |
 | Production Implementation | `NOT_STARTED` |
 
@@ -1431,6 +1466,12 @@ Four environments validated at startup. D1: database TLS (`ssl=require` or stric
 
 ---
 
+### DEC-019 — CI Foundation (T00-05 D1–D10)
+
+Single required status `ci-ok` over parallel jobs repo, frontend, backend, secrets, docker; CodeQL and audits reporting only. Actions pinned by commit SHA (release >= 7 days old); gitleaks/actionlint checksum-verified; no secrets in CI. Dependabot only for github-actions, docker and docker-compose (pnpm 11 and uv compatibility not established). Git workflow: feature branch → PR → Create a merge commit → `main`; the future `main` ruleset (PR, 0 approvals, conversations resolved, merge commit only, `ci-ok` up to date, no force push, no deletion) is documented in `docs/architecture/ci.md` and not yet applied.
+
+---
+
 # 37. RECENT CHANGES
 
 | Date | Change | Impact |
@@ -1446,6 +1487,8 @@ Four environments validated at startup. D1: database TLS (`ssl=require` or stric
 | 2026-09-26 | T00-03 Docker Development Environment implemented | `READY_FOR_REVIEW` on `feat/T00-03-docker`; local infrastructure + app images |
 | 2026-09-26 | T00-03 merged to `main` (PR #3, `c7b769b`) | `COMPLETED` |
 | 2026-09-26 | T00-04 Environment Configuration implemented | `READY_FOR_REVIEW` on `feat/T00-04-environment-configuration`; validated per-environment settings |
+| 2026-09-27 | T00-04 merged to `main` (PR #4, `09a7413`) | `COMPLETED` |
+| 2026-09-27 | T00-05 CI Foundation implemented | `READY_FOR_REVIEW` on `feat/T00-05-ci-foundation`; CI with required `ci-ok`, secret scanning, Docker smoke test |
 
 ---
 
@@ -1592,7 +1635,7 @@ None (out of scope for T00-01)
 **Tests:**
 
 ```text
-No automated tests exist yet (T00-05 onwards).
+No automated tests existed yet at T00-01 (added from T00-02; CI from T00-05).
 Checks performed: git renormalize dry run, git check-ignore for .env and
 *.example, git diff --check, secret-pattern scan, SHA-256 comparison of
 the marketing website files, scan for accidental scaffolding.
@@ -1793,13 +1836,72 @@ Review and merge T00-04 PR -> T00-05 CI Foundation
 
 ---
 
+## 2026-09-27 — T00-05 CI Foundation
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+GitHub Actions CI for every PR and push to `main`: parallel repo, frontend, backend, secrets and docker jobs that reuse the existing root scripts, aggregated into the single required status `ci-ok`. Least privilege, no secrets, SHA-pinned actions, checksum-verified tools, full-history gitleaks with a narrow allowlist and a detection self-test, Docker build and API smoke test. CodeQL and dependency audits report only. Dependabot for actions and images only. Future branch protection documented, not applied.
+
+**Files:**
+
+```text
+Created: .github/workflows/{ci,codeql,audit}.yml, .github/dependabot.yml,
+  .gitleaks.toml, scripts/ci/{install-tool,gitleaks-selftest,docker-smoke}.sh,
+  docs/architecture/ci.md
+Changed: package.json (scripts only), README.md, docs/README.md,
+  docs/architecture/{toolchain,security,repository-structure}.md (§7: merge
+  commit, not squash), scripts/README.md, TASKS.md, DEVELOPMENT-STATUS.md
+Unchanged (verified): application code, Dockerfiles, compose.yaml,
+  environment templates, lockfiles, ADRs, index.html, app.js, styles.css; ACRS
+```
+
+**Database / API / UI:**
+
+```text
+None.
+```
+
+**Tests:**
+
+```text
+No new application tests. pnpm check passes (18 frontend, 139 backend).
+CI scripts verified locally, including negative cases (corrupted checksum,
+self-test allowlist cases, compose without required variables).
+```
+
+**Known Issues:**
+
+```text
+GitHub-side behaviour (runner, CodeQL upload, Dependabot parsing of the
+ARG-based Dockerfile FROM lines) is verified only after the first push.
+uv 0.12.19 (T00-02 pin) is itself newer than 7 days; it is an explicit
+toolchain pin, like pnpm, not a cooldown-governed dependency.
+Dependabot for npm (pnpm 11) and uv is not enabled (compatibility).
+```
+
+**Next:**
+
+```text
+Review T00-05 -> push, PR, GitHub verification, merge commit -> apply the
+documented branch protection -> T00-06 Design Token Foundation
+```
+
+---
+
 # 40. NEXT TASK
 
 The next step is:
 
 ```text
-Review T00-04 (READY_FOR_REVIEW) and merge its pull request into main.
-Then T00-05 — CI Foundation.
+Review T00-05 (READY_FOR_REVIEW): push, open the pull request, verify CI on
+GitHub and merge with a merge commit. Then apply the documented branch
+protection and continue with T00-06 — Design Token Foundation.
 ```
 
 The completed-task description below is retained for reference.
