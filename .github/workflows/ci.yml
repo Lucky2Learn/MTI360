@@ -191,13 +191,39 @@ jobs:
         run: bash scripts/ci/gitleaks-selftest.sh
 
   # ---------------------------------------------------------------------------
+  # Docker: build both images (never pushed), API smoke test, production
+  # fail-fast, compose configuration validation.
+  # ---------------------------------------------------------------------------
+  docker:
+    name: docker
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build API image (not pushed)
+        run: docker build --tag mti360-api:ci backend
+
+      - name: Build frontend image (not pushed)
+        run: docker build --file frontend/Dockerfile --tag mti360-frontend:ci .
+
+      - name: API smoke test and production fail-fast
+        run: bash scripts/ci/docker-smoke.sh mti360-api:ci
+
+      - name: Validate compose configuration (renders only; creates nothing)
+        run: docker compose --env-file .env.example --profile infra --profile app config --quiet
+
+  # ---------------------------------------------------------------------------
   # Single required status. Passes only when every required job succeeded;
   # failure, cancellation or skipping of any job fails ci-ok.
   # ---------------------------------------------------------------------------
   ci-ok:
     name: ci-ok
     if: always()
-    needs: [repo, frontend, backend, secrets]
+    needs: [repo, frontend, backend, secrets, docker]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
