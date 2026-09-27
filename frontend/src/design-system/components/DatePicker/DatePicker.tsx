@@ -31,6 +31,7 @@ import {
   fieldSurface,
   type ErrorMessage,
 } from "@/design-system/components/Field/Field";
+import { popoverSurface } from "@/design-system/components/Overlay/overlay";
 import {
   CalendarIcon,
   ChevronLeftIcon,
@@ -176,7 +177,7 @@ export function DatePicker({
         <Popover
           placement="bottom end"
           offset={4}
-          className="z-(--z-dropdown) rounded-md border border-border-default bg-surface-elevated p-3 text-text-primary shadow-lg outline-none"
+          className={cx(popoverSurface, "p-3")}
         >
           <Dialog className="outline-none">
             <Calendar className="flex flex-col gap-2">
