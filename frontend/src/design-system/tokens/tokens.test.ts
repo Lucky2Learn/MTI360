@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-// Design-token contract (T00-06). Parses the token CSS directly, so the files
+// Design-token contract (T00-06; interaction states and component tokens T00-07). Parses the token CSS directly, so the files
 // that ship are the files that are tested.
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -14,6 +14,7 @@ const read = (relative: string): string =>
 const primitivesCss = read("./primitives.css");
 const semanticCss = read("./semantic.css");
 const tailwindCss = read("./tailwind.css");
+const componentsCss = read("./components.css");
 const designSystemMd = read("../../../../DESIGN-SYSTEM.md");
 
 // --- Parsing helpers ---------------------------------------------------------
@@ -172,6 +173,17 @@ const CONTRAST_PAIRS: [string, string, number][] = [
   ...["border-strong", "focus-ring", "accent-maritime"].flatMap((ui) =>
     BACKGROUNDS.map((bg): [string, string, number] => [ui, bg, 3]),
   ),
+  // Interaction states (T00-07)
+  ...["surface-hover", "surface-selected"].flatMap(
+    (bg): [string, string, number][] => [
+      ["text-primary", bg, 4.5],
+      ["text-secondary", bg, 4.5],
+      ["focus-ring", bg, 3],
+    ],
+  ),
+  ...["brand-primary-hover", "success-strong", "error-strong"].map(
+    (bg): [string, string, number] => ["text-inverse", bg, 4.5],
+  ),
 ];
 
 describe("primitive tokens", () => {
@@ -259,6 +271,26 @@ describe("semantic tokens", () => {
     expect(mapped.map((m) => m[1]).sort()).toEqual(colourTokens.sort());
     for (const [, name, value] of mapped) {
       expect(value).toBe(`var(--${name})`);
+    }
+  });
+
+  it("component tokens reference semantic tokens only", () => {
+    const references = [
+      ...componentsCss.matchAll(/var\(--([a-z0-9-]+)\)/g),
+    ].map((m) => m[1]!);
+    for (const reference of references) {
+      expect(primitives.has(reference), `${reference} is a primitive`).toBe(
+        false,
+      );
+      expect(
+        light.has(reference) || /^(control|focus-ring|z)-/.test(reference),
+        reference,
+      ).toBe(true);
+    }
+    for (const size of ["sm", "md", "lg"]) {
+      expect(tailwindCss).toContain(
+        `--spacing-control-${size}: var(--control-height-${size});`,
+      );
     }
   });
 

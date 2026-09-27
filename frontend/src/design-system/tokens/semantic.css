@@ -67,6 +67,13 @@
   --ai-primary: var(--ai-600);
   --ai-surface: var(--ai-100);
   --ai-border: var(--ai-300);
+  /* Interaction states and overlays (T00-07): -strong = filled action background with text-inverse (>= 4.5:1) */
+  --surface-hover: var(--pearl-100);
+  --surface-selected: var(--seaglass-100);
+  --brand-primary-hover: var(--ocean-900);
+  --success-strong: var(--success-700);
+  --error-strong: var(--error-700);
+  --overlay-scrim: color-mix(in srgb, var(--midnight-950) 45%, transparent);
 
   /* Elevation (DESIGN-SYSTEM.md §35): border + subtle shadow */
   --elevation-sm: 0 1px 2px color-mix(in srgb, var(--ocean-900) 6%, transparent);
@@ -124,6 +131,13 @@
   --ai-primary: var(--ai-400);
   --ai-surface: var(--ai-950);
   --ai-border: var(--ai-800);
+  /* Interaction states and overlays (T00-07): -strong = filled action background with text-inverse (>= 4.5:1) */
+  --surface-hover: var(--ocean-800);
+  --surface-selected: var(--seaglass-950);
+  --brand-primary-hover: var(--seaglass-400);
+  --success-strong: var(--success-400);
+  --error-strong: var(--error-400);
+  --overlay-scrim: color-mix(in srgb, var(--midnight-950) 70%, transparent);
 
   /* Elevation (DESIGN-SYSTEM.md §35): surface contrast + border; near-zero shadow */
   --elevation-sm: 0 1px 2px
@@ -185,6 +199,13 @@
     --ai-primary: var(--ai-400);
     --ai-surface: var(--ai-950);
     --ai-border: var(--ai-800);
+    /* Interaction states and overlays (T00-07): -strong = filled action background with text-inverse (>= 4.5:1) */
+    --surface-hover: var(--ocean-800);
+    --surface-selected: var(--seaglass-950);
+    --brand-primary-hover: var(--seaglass-400);
+    --success-strong: var(--success-400);
+    --error-strong: var(--error-400);
+    --overlay-scrim: color-mix(in srgb, var(--midnight-950) 70%, transparent);
 
     /* Elevation (DESIGN-SYSTEM.md §35): surface contrast + border; near-zero shadow */
     --elevation-sm: 0 1px 2px

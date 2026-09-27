@@ -119,6 +119,17 @@
   --color-ai-primary: var(--ai-primary);
   --color-ai-surface: var(--ai-surface);
   --color-ai-border: var(--ai-border);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-selected: var(--surface-selected);
+  --color-brand-primary-hover: var(--brand-primary-hover);
+  --color-success-strong: var(--success-strong);
+  --color-error-strong: var(--error-strong);
+  --color-overlay-scrim: var(--overlay-scrim);
+
+  /* Control heights — component tokens (components.css) */
+  --spacing-control-sm: var(--control-height-sm);
+  --spacing-control-md: var(--control-height-md);
+  --spacing-control-lg: var(--control-height-lg);
 
   /* Elevation — DESIGN-SYSTEM.md §35 (theme-dependent, semantic.css) */
   --shadow-sm: var(--elevation-sm);

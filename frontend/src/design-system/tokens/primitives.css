@@ -78,6 +78,10 @@
   --mist-800: #273c48; /* mix(ice-100, midnight-900, 0.14) */
   --mist-850: #3d515c; /* mix(ice-100, midnight-900, 0.24) */
 
+  /* Interaction surfaces (T00-07) */
+  --seaglass-950: #0b3943; /* mix(seaglass-700, midnight-900, 0.24) */
+  --seaglass-400: #6cc5c1; /* mix(seaglass-500, ice-100, 0.8) */
+
   /* Light-mode accessible text variants (spec colour darkened with Deep Ocean) */
   --seaglass-800: #12757c; /* mix(seaglass-700, ocean-900, 0.75) */
   --success-700: #1d7956; /* mix(success-600, ocean-900, 0.85) */
