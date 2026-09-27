@@ -328,7 +328,7 @@ The first implementation should avoid unnecessary infrastructure complexity.
 > **T00-02 update — [`docs/architecture/toolchain.md`](docs/architecture/toolchain.md).**
 > Exact versions are pinned there: Node.js 24 LTS, pnpm 11, Python 3.14 (uv-managed), uv 0.12, Next.js 16.3, React 19.2, TypeScript 6.0, FastAPI 0.141, Pydantic 2.13; pnpm workspace + uv, no additional monorepo orchestration.
 > Deliberate holds: **TypeScript 6.0** (typescript-eslint does not yet support TS 7) and **ESLint 9** (Next.js's lint plugins do not yet support ESLint 10); SQLAlchemy is targeted at **2.0.x** when database work starts.
-> Tailwind CSS and component primitives are still to be confirmed in T00-06/T00-07. SQLAlchemy, Alembic, asyncpg, Redis and S3 clients are added by the task that first uses them.
+> Tailwind CSS 4.3 with semantic design tokens is confirmed by [ADR-0007](docs/adr/0007-styling-tailwind-semantic-tokens.md) (T00-06; [design-tokens.md](docs/architecture/design-tokens.md)); headless component primitives are confirmed in T00-07. SQLAlchemy, Alembic, asyncpg, Redis and S3 clients are added by the task that first uses them.
 
 ---
 

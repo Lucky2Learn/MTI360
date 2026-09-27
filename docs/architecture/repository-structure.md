@@ -38,20 +38,22 @@ MTI360/
 │   ├── package.json  tsconfig.json  next.config.ts                   ✅ T00-02
 │   ├── eslint.config.mjs  .prettierrc.json  .prettierignore          ✅ T00-02
 │   ├── vitest.config.mts  vitest.setup.ts                            ✅ T00-02
+│   ├── postcss.config.mjs             ✅ T00-06 (Tailwind CSS v4)
 │   ├── Dockerfile  Dockerfile.dockerignore                           ✅ T00-03 (context = repo root)
 │   ├── public/
 │   └── src/
 │       ├── proxy.ts                   host → experience rewrite, security headers, CSP nonce
 │       │                              (Next.js 16 renamed Middleware → Proxy)
-│       ├── app/                       ✅ layout.tsx, neutral page.tsx, page.test.tsx (T00-02)
+│       ├── app/                       ✅ layout.tsx, neutral page.tsx, page.test.tsx (T00-02); globals.css, tokens + theme wired (T00-06)
 │       │   ├── platform/              Platform Control Plane
 │       │   ├── (tenant-auth)/         AUTH-01 … AUTH-05
 │       │   ├── app/                   Tenant Application
 │       │   ├── student/               Student Portal
 │       │   └── sites/[site]/          Tenant Public Website (rewrite target only)
-│       ├── design-system/
-│       │   ├── tokens/                semantic CSS variables, Light + Dark
-│       │   ├── theme/                 Light / Dark / System + pre-paint script
+│       ├── design-system/             ✅ README (T00-06)
+│       │   ├── tokens/                ✅ primitives, semantic Light + Dark, Tailwind @theme (T00-06)
+│       │   ├── theme/                 ✅ Light / Dark / System + pre-paint script, ThemeSelector (T00-06)
+│       │   ├── typography/            ✅ self-hosted Inter (T00-06)
 │       │   ├── components/            core components
 │       │   └── templates/             T01 … T18
 │       ├── shells/                    PlatformShell, TenantShell, StudentShell, PublicSiteShell

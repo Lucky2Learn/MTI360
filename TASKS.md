@@ -386,7 +386,7 @@ Build
 
 ### T00-05 Update (2026-09-27)
 
-**Status:** READY_FOR_REVIEW (branch `feat/T00-05-ci-foundation`, based on `main` at `09a7413`)
+**Status:** COMPLETED (merged to `main` via PR #5, merge commit `e335502`)
 
 **Approved decisions:** D1 three workflows — `ci.yml` (required via `ci-ok`), `codeql.yml` and `audit.yml` (reporting only); D2 minimal SHA-pinned action set, gitleaks/actionlint as checksum-verified binaries; D3 root scripts `format:check:frontend`, `format:check:backend`, `check:lock` (in `pnpm check`); D4 uv cache only; D5 gitleaks over all refs with `--redact`, allowlist only exact path AND exact value; D6 Docker smoke test starts the API only; D7 Dependabot for `github-actions`, `docker`, `docker-compose` only (npm/pnpm 11 and uv compatibility could not be established); D8 CodeQL and audits visible but not required; D9 ACRS confirmed by listing comparison only; D10 future branch protection — PR required, 0 approvals, conversations resolved, merge commit only, `ci-ok` required and up to date, no force push, no deletion, no linear-history rule (documented, not applied). Details: `docs/architecture/ci.md`.
 
@@ -419,6 +419,22 @@ Include:
 * semantic states
 
 No arbitrary UI colors.
+
+### T00-06 Update (2026-09-27)
+
+**Status:** READY_FOR_REVIEW (branch `feat/T00-06-design-tokens`, based on `main` at `e335502`)
+
+**Approved decisions:** D1 Tailwind CSS 4.3.3 (CSS-first `@theme`) mapped to semantic tokens, Tailwind default colours/type sizes/radii/breakpoints removed; D2 ADR-0007; D3 self-hosted Inter variable font (`@fontsource-variable/inter` 5.3.0 via `next/font/local`); D4 DESIGN-SYSTEM.md colours kept verbatim, documented derived mixes for accessible text/neutrals/dark surfaces (INC-17); D5 restrained Light shadows, near-zero Dark shadows; D6 system monospace stack (INC-12); D7 minimal accessible `ThemeSelector`; D8 headless Chromium visual verification; D9 `localStorage` `mti360.theme`, default `system`; D10 breakpoints tablet 768 / desktop 1024 / large 1440. Details: `docs/architecture/design-tokens.md`, `docs/adr/0007-styling-tailwind-semantic-tokens.md`.
+
+**Concrete acceptance criteria:**
+
+* All DESIGN-SYSTEM.md §6–§8 colours exist verbatim as primitives; every derived colour is a documented, test-recomputed mix of two palette colours.
+* Every §10 semantic token (plus `*-surface`, `*-text`, `link`, `focus-ring`, elevation) has a Light and a Dark mapping referencing primitives only; the no-JS fallback equals Dark.
+* Typography, spacing, radius, shadows and breakpoints exist as tokens/utilities; Tailwind defaults for colour, font, type size, weight, radius, shadow and breakpoint are removed.
+* WCAG 2.2 AA contrast passes in both themes (4.5:1 text, 3:1 non-text); raw colours only in `primitives.css`; no `dark:` outside the token layer.
+* Light / Dark / System selectable, persisted locally, live OS changes, cross-tab sync, safe without storage, applied before first paint, no hydration warnings.
+* `ThemeSelector` is a labelled native radio group, keyboard operable, not colour-only.
+* No backend, database, Docker, compose, environment template, CI workflow, existing ADR or landing-page changes.
 
 ---
 
