@@ -107,7 +107,7 @@ M0 — Foundation Ready
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-09-27:** T00-01 … T00-04 are `COMPLETED` (merged to `main`; T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4). T00-05 (CI Foundation) is `READY_FOR_REVIEW`. Only the toolchain, local infrastructure, validated environment configuration, CI and a neutral page / `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
+> **2026-09-27:** T00-01 … T00-05 are `COMPLETED` (merged to `main`; T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5). T00-06 (Design Token Foundation) is `READY_FOR_REVIEW`. Only the toolchain, local infrastructure, validated environment configuration, CI, design tokens with the Light/Dark/System theme and a neutral page / `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
 
 ---
 
@@ -183,7 +183,7 @@ IN_PROGRESS
 ## Phase Completion
 
 ```text
-4 / 10 tasks completed (T00-01 … T00-04 COMPLETED; T00-05 READY_FOR_REVIEW)
+5 / 10 tasks completed (T00-01 … T00-05 COMPLETED; T00-06 READY_FOR_REVIEW)
 ```
 
 ---
@@ -392,7 +392,7 @@ pnpm check: PASS. Landing page SHA-256 unchanged. ACRS unchanged.
 
 ### T00-05 — CI Foundation
 
-**Status:** `READY_FOR_REVIEW` (branch `feat/T00-05-ci-foundation`, based on `main` at `09a7413`; not pushed)
+**Status:** `COMPLETED` (merged to `main` via PR #5, merge commit `e335502`)
 
 **Implementation:**
 
@@ -444,18 +444,51 @@ Landing page SHA-256 unchanged. ACRS unchanged (listing comparison).
 
 ### T00-06 — Design Token Foundation
 
-**Status:** `NOT_STARTED`
+**Status:** `READY_FOR_REVIEW` (branch `feat/T00-06-design-tokens`, based on `main` at `e335502`; not pushed)
 
 **Implementation:**
 
 ```text
-Not started
+frontend/src/design-system/tokens/: primitives.css (DESIGN-SYSTEM.md §6-§8
+  palette verbatim + documented derived mixes; only raw colours),
+  semantic.css (§10 tokens + *-surface/*-text, link, focus-ring, elevation;
+  Light and Dark mappings; no-JS fallback), tailwind.css (Tailwind v4
+  @theme: defaults removed; semantic colour/elevation utilities; §18 type
+  scale; 4px spacing; §34 radii; tablet/desktop/large breakpoints)
+frontend/src/design-system/theme/: preference light|dark|system in
+  localStorage "mti360.theme" (default system), pre-paint <head> script,
+  ThemeProvider/useTheme (useSyncExternalStore; OS listener; cross-tab sync;
+  storage-safe), ThemeSelector (fieldset + native radios)
+frontend/src/design-system/typography/fonts.ts: self-hosted Inter variable
+  (next/font/local; latin preloaded, latin-ext on demand)
+app/layout.tsx + globals.css + neutral page.tsx wired to tokens and theme
+Dependencies: tailwindcss 4.3.3, @tailwindcss/postcss 4.3.3,
+  @fontsource-variable/inter 5.3.0 (no install scripts); postcss.config.mjs
+Docs: design-tokens.md, ADR-0007, INC-12 decided, INC-17 recorded
 ```
 
 **Verification:**
 
 ```text
-Not verified
+pnpm check: PASS (frontend 193 tests: palette fidelity, derivations,
+  Light/Dark parity, fallback == Dark, primitives-only references, Tailwind
+  mapping/reset, WCAG 2.2 AA contrast in both themes, guard, theme runtime,
+  pre-paint matrix, selector; backend 139). Guard negative check: planted
+  raw colour, dark: utility and raw semantic value all fail the tests.
+Built CSS: MTI 360 utilities only (no Tailwind default palette, sizes,
+  radii, breakpoints); Inter latin + latin-ext emitted locally.
+next start + curl: pre-paint script in <head>, font preload, no external
+  or font-CDN URLs; fonts served 200 font/woff2.
+Docker: frontend :ci image builds and runs healthy (hardened); API smoke
+  test (docker-smoke.sh) passes.
+Headless Chromium 1.63 (production image): 68/68 checks - Light and Dark
+  at 390/768/1024/1440 (token backgrounds, Inter, no overflow, no console
+  or hydration warnings, no external requests); pre-paint with app JS
+  blocked; no-JS OS fallback; live System change; keyboard Tab + arrow with
+  visible focus; cross-tab sync; reload without flash. Screenshots kept in
+  the local scratchpad only.
+Clean-clone frontend job rehearsal, gitleaks full history: PASS.
+Landing page SHA-256 unchanged. ACRS unchanged (listing comparison).
 ```
 
 ---
@@ -1259,7 +1292,8 @@ A screen is only considered implemented when its required underlying behavior is
 | Development Toolchain (T00-02) | `COMPLETED` |
 | Local Docker Infrastructure (T00-03) | `COMPLETED` |
 | Environment Configuration (T00-04) | `COMPLETED` |
-| CI Foundation (T00-05) | `READY_FOR_REVIEW` |
+| CI Foundation (T00-05) | `COMPLETED` |
+| Design Token Foundation (T00-06) | `READY_FOR_REVIEW` |
 | Architecture Decision Records | `READY_FOR_REVIEW` (ADR-0001 … ADR-0006) |
 | Production Implementation | `NOT_STARTED` |
 
@@ -1466,6 +1500,12 @@ Four environments validated at startup. D1: database TLS (`ssl=require` or stric
 
 ---
 
+### DEC-020 — Design Token Foundation (T00-06 D1–D10, ADR-0007)
+
+Tailwind CSS 4.3 (CSS-first `@theme`) over three token layers: primitives (DESIGN-SYSTEM.md palette verbatim + documented derived mixes; the only raw colours) → semantic tokens with separate Light and Dark mappings switched by `data-theme` → Tailwind utilities; Tailwind defaults removed; no `dark:` in components. Self-hosted Inter; system monospace. Theme preference `light | dark | system` in `localStorage` (`mti360.theme`, default `system`) applied by a pre-paint script; per-user persistence in Phase 01. Contrast conflicts of specification colours recorded as INC-17 (DESIGN-SYSTEM.md unchanged). See `docs/architecture/design-tokens.md`.
+
+---
+
 ### DEC-019 — CI Foundation (T00-05 D1–D10)
 
 Single required status `ci-ok` over parallel jobs repo, frontend, backend, secrets, docker; CodeQL and audits reporting only. Actions pinned by commit SHA (release >= 7 days old); gitleaks/actionlint checksum-verified; no secrets in CI. Dependabot only for github-actions, docker and docker-compose (pnpm 11 and uv compatibility not established). Git workflow: feature branch → PR → Create a merge commit → `main`; the future `main` ruleset (PR, 0 approvals, conversations resolved, merge commit only, `ci-ok` up to date, no force push, no deletion) is documented in `docs/architecture/ci.md` and not yet applied.
@@ -1489,6 +1529,8 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-09-26 | T00-04 Environment Configuration implemented | `READY_FOR_REVIEW` on `feat/T00-04-environment-configuration`; validated per-environment settings |
 | 2026-09-27 | T00-04 merged to `main` (PR #4, `09a7413`) | `COMPLETED` |
 | 2026-09-27 | T00-05 CI Foundation implemented | `READY_FOR_REVIEW` on `feat/T00-05-ci-foundation`; CI with required `ci-ok`, secret scanning, Docker smoke test |
+| 2026-09-27 | T00-05 merged to `main` (PR #5, `e335502`) | `COMPLETED` |
+| 2026-09-27 | T00-06 Design Token Foundation implemented | `READY_FOR_REVIEW` on `feat/T00-06-design-tokens`; tokens, Tailwind v4, Light/Dark/System theme |
 
 ---
 
@@ -1894,14 +1936,75 @@ documented branch protection -> T00-06 Design Token Foundation
 
 ---
 
+## 2026-09-27 — T00-06 Design Token Foundation
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+Design-token foundation for all experiences: DESIGN-SYSTEM.md palette as primitives, semantic Light and Dark mappings, Tailwind CSS v4 theme with all defaults removed, self-hosted Inter, and the Light/Dark/System theme runtime (pre-paint, OS sync, cross-tab sync, local persistence) with an accessible theme selector on the neutral page. Contrast is tested in both themes.
+
+**Files:**
+
+```text
+Created: frontend/postcss.config.mjs, frontend/src/app/globals.css,
+  frontend/src/design-system/{README.md, tokens/*, theme/*, typography/fonts.ts},
+  docs/architecture/design-tokens.md, docs/adr/0007-styling-tailwind-semantic-tokens.md
+Changed: frontend/package.json, pnpm-lock.yaml (additions only),
+  frontend/src/app/{layout.tsx, page.tsx, page.test.tsx}, frontend/README.md,
+  README.md, ARCHITECTURE.md (§5 note), docs/README.md,
+  docs/architecture/{repository-structure,toolchain,spec-inconsistencies}.md,
+  TASKS.md, DEVELOPMENT-STATUS.md
+Unchanged (verified): backend, database, Dockerfiles, compose.yaml,
+  environment templates, CI workflows, ADR-0001..0006, DESIGN-SYSTEM.md,
+  index.html, app.js, styles.css; ACRS
+```
+
+**Database / API / UI:**
+
+```text
+Database / API: none. UI: design tokens, theme runtime, ThemeSelector; the
+neutral page is token-styled (still not a product screen).
+```
+
+**Tests:**
+
+```text
+Frontend 193 passed (was 18). Backend 139 passed. pnpm check passes.
+Headless Chromium verification 68/68.
+```
+
+**Known Issues:**
+
+```text
+Several DESIGN-SYSTEM.md colours fail AA as text (INC-17): used for non-text
+only; derived text tokens used instead. Tailwind still allows arbitrary
+values and off-grid spacing (review rule; raw colours are test-blocked).
+The pre-paint script needs the CSP nonce when CSP is introduced. Theme
+preference is local only until Phase 01 identity. Responsive typography and
+layout tokens are T00-09.
+```
+
+**Next:**
+
+```text
+Review T00-06 -> push, PR, CI, merge commit -> T00-07 Core Component Library
+```
+
+---
+
 # 40. NEXT TASK
 
 The next step is:
 
 ```text
-Review T00-05 (READY_FOR_REVIEW): push, open the pull request, verify CI on
-GitHub and merge with a merge commit. Then apply the documented branch
-protection and continue with T00-06 — Design Token Foundation.
+Review T00-06 (READY_FOR_REVIEW): push, open the pull request, verify CI on
+GitHub and merge with a merge commit. Then continue with T00-07 — Core
+Component Library.
 ```
 
 The completed-task description below is retained for reference.

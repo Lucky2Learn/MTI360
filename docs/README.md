@@ -37,6 +37,7 @@ Recommended reading order (CLAUDE.md §2):
 | [0004](adr/0004-tenant-isolation.md) | Tenant isolation | Accepted |
 | [0005](adr/0005-identity-and-session-realms.md) | Identity and session realms | Accepted |
 | [0006](adr/0006-api-prefixes.md) | API prefixes | Accepted |
+| [0007](adr/0007-styling-tailwind-semantic-tokens.md) | Styling: Tailwind CSS v4 with semantic design tokens | Accepted |
 
 ADR format: Status, Context, Decision, Consequences, Alternatives considered. ADRs are immutable once accepted; a change is made by a new ADR that supersedes the old one.
 
@@ -49,6 +50,7 @@ ADR format: Status, Context, Decision, Consequences, Alternatives considered. AD
 | [security.md](architecture/security.md) | Realm boundaries, authentication, authorization, secrets, files, audit, AI tool authorization |
 | [environments.md](architecture/environments.md) | Environment matrix: configuration sources, per-environment rules, secret handling, `pnpm check:env` (T00-04) |
 | [toolchain.md](architecture/toolchain.md) | Exact runtime and dependency versions, version holds, supply-chain controls, commands, update policy (T00-02) |
+| [design-tokens.md](architecture/design-tokens.md) | Token architecture, primitive and derived colours, semantic Light/Dark mapping, type/spacing/radius/elevation/breakpoints, contrast, theme runtime, fonts (T00-06) |
 | [ci.md](architecture/ci.md) | CI workflows, required `ci-ok` status, security model, pinned versions, Dependabot scope, local reproduction, future branch protection (T00-05) |
 | [spec-inconsistencies.md](architecture/spec-inconsistencies.md) | Known inconsistencies between specifications, recorded for future resolution |
 

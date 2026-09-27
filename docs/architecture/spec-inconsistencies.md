@@ -92,7 +92,7 @@
 
 ## INC-12 — Typography
 
-- **Status:** `OPEN` (affects the marketing website only)
+- **Status:** `DECIDED-BY-ADR` for the application ([ADR-0007](../adr/0007-styling-tailwind-semantic-tokens.md), T00-06): no monospace font is added; `--font-mono` uses the system monospace stack. The marketing website remains out of scope.
 - **Where:** DESIGN-SYSTEM.md §17 (Inter preferred, Plus Jakarta Sans alternative) vs the marketing website (Plus Jakarta Sans + JetBrains Mono)
 - **Issue:** JetBrains Mono is not in the design system. The application must follow DESIGN-SYSTEM.md; the marketing site is not changed by T00-01.
 - **Proposed resolution:** Decide whether a monospace family is added to the design system (e.g. for identifiers and code) during T00-06.
@@ -124,3 +124,11 @@
 - **Status:** `CLOSED` in T00-01
 - **Where:** README.md (previously a 3-byte UTF-8 BOM)
 - **Resolution:** README.md rewritten in T00-01.
+
+## INC-17 — Specification colours below WCAG 2.2 AA text contrast
+
+- **Status:** `DECIDED-BY-ADR` ([ADR-0007](../adr/0007-styling-tailwind-semantic-tokens.md), T00-06); DESIGN-SYSTEM.md not changed
+- **Where:** DESIGN-SYSTEM.md §6–§8 (Sea Glass "primary interaction", semantic primaries on their surfaces, Brass) vs §63–§64 and CLAUDE.md §38 (WCAG 2.2 AA)
+- **Issue:** Used as text, several specification colours are below 4.5:1: Sea Glass #168F91 on white 3.91:1 (white text on #168F91 also 3.91:1), #1CA7A5 on white 2.95:1; warning #B7791F on #FFF4DD 3.33:1; success #21875A on #E5F4EC 3.95:1; error #C44545 on #FDECEC 4.29:1; info #2774A6 on #E7F2FA 4.47:1; Brass #B88A44 on white 3.11:1. The specification also defines no mid-neutrals, no dark-mode state/AI surfaces and no shadow values.
+- **Current handling:** All specification values are kept verbatim as primitives and used for non-text purposes (indicators, borders, focus ring; all ≥ 3:1). Text uses documented derived mixes of palette colours (`*-text`, `link`, neutrals), contrast-tested in Light and Dark. See [design-tokens.md](design-tokens.md).
+- **Proposed resolution:** Add the derived text/neutral steps (or equivalent) to DESIGN-SYSTEM.md in a documentation task, and state that Sea Glass #168F91/#1CA7A5 are not for body text or white-on-colour buttons.

@@ -1,0 +1,103 @@
+/*
+ * MTI 360 — primitive colour tokens (T00-06)
+ *
+ * Layer 1 of 3: primitives → semantic (semantic.css) → Tailwind theme (tailwind.css).
+ *
+ * This is the ONLY file in the frontend that may contain raw colour values
+ * (enforced by guard.test.ts). Components never use primitives directly; they
+ * use semantic tokens through Tailwind utilities.
+ *
+ * 1. Palette — copied VERBATIM from DESIGN-SYSTEM.md §6–§8 (verified by
+ *    tokens.test.ts). White is the Light-mode surface named in §11.1.
+ * 2. Derived — documented mixes of two palette colours, used where the palette
+ *    has no suitable step or a specification colour fails WCAG 2.2 AA as text
+ *    (docs/architecture/design-tokens.md, INC-17). No new hues are introduced.
+ *    Format (verified by tokens.test.ts): mix(a, b, t) = per-channel sRGB
+ *    interpolation, t × a + (1 − t) × b, rounded to the nearest integer.
+ */
+
+:root {
+  /* --- Palette: DESIGN-SYSTEM.md §6 ------------------------------------- */
+  --white: #ffffff;
+
+  /* Deep Ocean — primary navigation and brand surfaces */
+  --ocean-900: #06283d;
+  --ocean-800: #073b57;
+  --ocean-700: #0a4f6e;
+
+  /* Midnight — dark-mode backgrounds and deep surfaces */
+  --midnight-950: #04151f;
+  --midnight-900: #071e2b;
+  --midnight-800: #0b2a3a;
+
+  /* Sea Glass — interaction and maritime accent */
+  --seaglass-700: #168f91;
+  --seaglass-600: #1ca7a5;
+  --seaglass-500: #4cb9b4;
+  --seaglass-100: #ddf4f2;
+
+  /* Pearl — Light-mode surfaces */
+  --pearl-50: #f8faf9;
+  --pearl-100: #f1f5f4;
+  --pearl-200: #e5ecea;
+
+  /* Ice — secondary backgrounds and subtle maritime surfaces */
+  --ice-50: #f5fafc;
+  --ice-100: #eaf4f7;
+  --ice-200: #d9e9ee;
+
+  /* Brass — premium accent, use sparingly */
+  --brass-600: #b88a44;
+  --brass-500: #c69b5a;
+  --brass-100: #f5ebdd;
+
+  /* --- Palette: DESIGN-SYSTEM.md §7 semantic ----------------------------- */
+  --success-600: #21875a;
+  --success-100: #e5f4ec;
+  --warning-600: #b7791f;
+  --warning-100: #fff4dd;
+  --error-600: #c44545;
+  --error-100: #fdecec;
+  --info-600: #2774a6;
+  --info-100: #e7f2fa;
+
+  /* --- Palette: DESIGN-SYSTEM.md §8 AI ----------------------------------- */
+  --ai-600: #7056a8;
+  --ai-100: #f0ecf8;
+
+  /* --- Derived (documented mixes of palette colours) --------------------- */
+  /* Light neutrals: Deep Ocean ink over Pearl */
+  --ink-700: #365263; /* mix(ocean-900, pearl-50, 0.8) */
+  --ink-600: #586f7d; /* mix(ocean-900, pearl-50, 0.66) */
+  --ink-400: #7a8d97; /* mix(ocean-900, pearl-50, 0.52) */
+
+  /* Dark neutrals: "muted Ice" over Midnight */
+  --mist-300: #c6d2d6; /* mix(ice-100, midnight-900, 0.84) */
+  --mist-400: #a1b0b6; /* mix(ice-100, midnight-900, 0.68) */
+  --mist-600: #7d8d95; /* mix(ice-100, midnight-900, 0.52) */
+  --mist-800: #273c48; /* mix(ice-100, midnight-900, 0.14) */
+  --mist-850: #3d515c; /* mix(ice-100, midnight-900, 0.24) */
+
+  /* Light-mode accessible text variants (spec colour darkened with Deep Ocean) */
+  --seaglass-800: #12757c; /* mix(seaglass-700, ocean-900, 0.75) */
+  --success-700: #1d7956; /* mix(success-600, ocean-900, 0.85) */
+  --warning-700: #8b6527; /* mix(warning-600, ocean-900, 0.75) */
+  --error-700: #ad4244; /* mix(error-600, ocean-900, 0.88) */
+  --info-700: #236b99; /* mix(info-600, ocean-900, 0.88) */
+  --ai-300: #bdb0d8; /* mix(ai-600, ai-100, 0.4) */
+
+  /* Dark-mode state and AI colours (spec colour lightened with Ice) */
+  --success-400: #5da889; /* mix(success-600, ice-100, 0.7) */
+  --warning-400: #c1924a; /* mix(warning-600, ice-100, 0.8) */
+  --error-400: #cf7a7a; /* mix(error-600, ice-100, 0.7) */
+  --info-400: #659dc0; /* mix(info-600, ice-100, 0.68) */
+  --ai-400: #a398c9; /* mix(ai-600, ice-100, 0.58) */
+
+  /* Dark-mode state and AI surfaces (spec colour tinted into Midnight) */
+  --success-950: #0c3133; /* mix(success-600, midnight-900, 0.18) */
+  --warning-950: #232d29; /* mix(warning-600, midnight-900, 0.16) */
+  --error-950: #292530; /* mix(error-600, midnight-900, 0.18) */
+  --info-950: #0d2f44; /* mix(info-600, midnight-900, 0.2) */
+  --ai-950: #1c2944; /* mix(ai-600, midnight-900, 0.2) */
+  --ai-800: #363763; /* mix(ai-600, midnight-900, 0.45) */
+}

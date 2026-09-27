@@ -1,0 +1,31 @@
+/*
+ * MTI 360 — global styles (T00-06)
+ *
+ * Order: Tailwind → primitive tokens → semantic tokens (Light/Dark) → Tailwind
+ * theme mapping → minimal base layer. Everything visual comes from tokens
+ * (docs/architecture/design-tokens.md); do not add raw values here.
+ */
+
+@import "tailwindcss";
+@import "../design-system/tokens/primitives.css";
+@import "../design-system/tokens/semantic.css";
+@import "../design-system/tokens/tailwind.css";
+
+@layer base {
+  html {
+    background-color: var(--background-primary);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--background-primary);
+    color: var(--text-primary);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+  }
+}
