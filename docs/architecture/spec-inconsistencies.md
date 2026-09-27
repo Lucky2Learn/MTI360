@@ -132,3 +132,34 @@
 - **Issue:** Used as text, several specification colours are below 4.5:1: Sea Glass #168F91 on white 3.91:1 (white text on #168F91 also 3.91:1), #1CA7A5 on white 2.95:1; warning #B7791F on #FFF4DD 3.33:1; success #21875A on #E5F4EC 3.95:1; error #C44545 on #FDECEC 4.29:1; info #2774A6 on #E7F2FA 4.47:1; Brass #B88A44 on white 3.11:1. The specification also defines no mid-neutrals, no dark-mode state/AI surfaces and no shadow values.
 - **Current handling:** All specification values are kept verbatim as primitives and used for non-text purposes (indicators, borders, focus ring; all ≥ 3:1). Text uses documented derived mixes of palette colours (`*-text`, `link`, neutrals), contrast-tested in Light and Dark. See [design-tokens.md](design-tokens.md).
 - **Proposed resolution:** Add the derived text/neutral steps (or equivalent) to DESIGN-SYSTEM.md in a documentation task, and state that Sea Glass #168F91/#1CA7A5 are not for body text or white-on-colour buttons.
+- **T00-07A update:** the same rule applies to filled buttons: the specification success colour #21875A with white text is 4.49:1, so the success button uses the derived `success-strong` token.
+
+## INC-18 — Component inventory and Modal vs Dialog
+
+- **Status:** `OPEN` (handled by T00-07 decisions D9 and D12; specifications unchanged)
+- **Where:** TASKS.md T00-07 (23 components) vs DESIGN-SYSTEM.md §69 and CLAUDE.md §26 (also IconButton, TimePicker, Checkbox, Radio, Switch, Textarea, Search, PermissionGate, AccessDenied …); TASKS.md lists **Modal** and **Dialog** separately while DESIGN-SYSTEM.md §48 treats "Modals / Dialogs" as one pattern.
+- **Current handling:** T00-07 adds IconButton (07A), Textarea and Checkbox (07B) because listed components need them, and defers Radio group, Switch, TimePicker, Search input and PermissionGate/AccessDenied (D12). Modal = generic modal container (sheet on mobile); Dialog = confirmation `alertdialog` built on Modal (D9, 07C).
+- **Proposed resolution:** Align the TASKS.md and DESIGN-SYSTEM.md component lists and state the Modal/Dialog distinction in DESIGN-SYSTEM.md.
+
+## INC-19 — Chart palette and chart library undefined
+
+- **Status:** `OPEN` (T00-07 decision D11)
+- **Where:** DESIGN-SYSTEM.md §52 ("Charts should use the MTI 360 palette"), §89
+- **Issue:** No categorical or sequential chart palette and no chart library are defined.
+- **Current handling:** ChartCard (07C) is a frame only (title, legend slot, states, accessible summary and data-table alternative); no chart library or chart tokens are added in T00-07.
+- **Proposed resolution:** Define chart palette tokens (Light/Dark, contrast-checked) and choose a chart library with the first chart screen.
+
+## INC-20 — Locale, date and currency formats unspecified
+
+- **Status:** `OPEN` (T00-07 decision D10)
+- **Where:** PRD.md, UI-SCREENS.md (no formats); PLATFORM-ADMIN.md tenant settings (Timezone, Currency); product context India (DGS)
+- **Current handling:** Components accept pre-formatted values (KPI, Timeline). Date components (07B) default to locale `en-IN` (DD/MM/YYYY, Monday-first) with a `locale` prop; no timezone conversion in components.
+- **Proposed resolution:** Specify default locale, date/time and currency formatting, and how tenant Timezone/Currency settings apply (Phase 03).
+
+## INC-21 — Button "Tertiary" vs "Ghost" not defined
+
+- **Status:** `OPEN` (T00-07 decision D13)
+- **Where:** DESIGN-SYSTEM.md §41 (variants Primary, Secondary, Tertiary, Ghost, Destructive, Success, Icon)
+- **Issue:** The difference between Tertiary and Ghost is not described.
+- **Current handling:** Tertiary = text-style action (link colour, underline on hover); Ghost = transparent with a hover surface.
+- **Proposed resolution:** Describe both variants in DESIGN-SYSTEM.md §41.

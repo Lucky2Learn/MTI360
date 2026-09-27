@@ -49,6 +49,7 @@ The palette has no mid-neutrals, and several specification colours fail WCAG 2.2
 | Light text variants | `seaglass-800` = mix(seaglass-700, ocean-900, 0.75) · `success-700` = mix(success-600, ocean-900, 0.85) · `warning-700` = 0.75 · `error-700` = 0.88 · `info-700` = 0.88 · `ai-300` = mix(ai-600, ai-100, 0.4) |
 | Dark state and AI colours | `success-400` = mix(success-600, ice-100, 0.7) · `warning-400` = 0.8 · `error-400` = 0.7 · `info-400` = 0.68 · `ai-400` = 0.58 |
 | Dark state and AI surfaces | `success-950` = mix(success-600, midnight-900, 0.18) · `warning-950` = 0.16 · `error-950` = 0.18 · `info-950` = 0.2 · `ai-950` = 0.2 · `ai-800` = 0.45 |
+| Interaction surfaces (T00-07) | `seaglass-950` = mix(seaglass-700, midnight-900, 0.24) · `seaglass-400` = mix(seaglass-500, ice-100, 0.8) |
 
 ## 3. Semantic tokens
 
@@ -77,6 +78,11 @@ The palette has no mid-neutrals, and several specification colours fail WCAG 2.2
 | `*-text` | derived *-700 | derived *-400 | State text (≥ 4.5:1) |
 | `ai-primary` / `ai-surface` / `ai-border` | ai-600 / ai-100 / ai-300 | ai-400 / ai-950 / ai-800 | AI components, restrained |
 | `elevation-sm/md/lg` | Deep Ocean shadows 6% / 8% / 12% | Midnight 30% / 35% / 45% (near-invisible) | `shadow-sm/md/lg` |
+| `surface-hover` (T00-07) | pearl-100 | ocean-800 | Hover background (ghost/secondary buttons, rows) |
+| `surface-selected` (T00-07) | seaglass-100 | seaglass-950 | Pressed/selected background |
+| `brand-primary-hover` (T00-07) | ocean-900 | seaglass-400 | Hover of `brand-primary` with `text-inverse` |
+| `success-strong` / `error-strong` (T00-07) | success-700 / error-700 | success-400 / error-400 | Filled success/destructive buttons with `text-inverse` (≥ 4.5:1) |
+| `overlay-scrim` (T00-07) | Midnight 45% | Midnight 70% | Scrim behind modals and drawers (07C) |
 
 Status is never communicated by colour alone (§7): pair `*-text`/`*` with an icon, label or shape.
 
@@ -92,7 +98,9 @@ Status is never communicated by colour alone (§7): pair `*-text`/`*` with an ic
 | Elevation (§35) | theme-dependent (§3) | `shadow-sm`, `shadow-md`, `shadow-lg` |
 | Breakpoints (§21, D10) | tablet 768 · desktop 1024 · large 1440 (mobile 390–767 is the base) | `tablet:`, `desktop:`, `large:` |
 
-Body and caption line heights are not specified in §18; they follow the 4px grid. Responsive type sizes (§19), layout, grid and content-width tokens (§79–§83) are T00-09. Motion tokens and component focus styling are T00-10.
+Body and caption line heights are not specified in §18; they follow the 4px grid.
+
+**Component tokens (T00-07, `tokens/components.css`):** control heights `--control-height-sm/md/lg` = 32 / 40 / 44 px (medium becomes 44 px below `tablet`), exposed as Tailwind spacing (`h-control-md`, `size-control-lg`); `--focus-ring-width` 2px and `--focus-ring-offset` 2px (used by `focusRing` in `lib/cx.ts`); z-index layers `--z-sticky` 100, `--z-dropdown` 200, `--z-drawer` 300, `--z-modal` 400, `--z-toast` 500. Colours in this layer may reference semantic tokens only (tested). Responsive type sizes (§19), layout, grid and content-width tokens (§79–§83) are T00-09. Motion tokens and component focus styling are T00-10.
 
 **Rules:** do not use arbitrary values (`p-[17px]`, `text-[15px]`, `bg-[…]`) or off-grid spacing steps (`p-7`). Raw colours are rejected by a test; the other rules are enforced in review.
 

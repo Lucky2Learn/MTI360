@@ -31,7 +31,9 @@ This document records the exact toolchain versions, why each was chosen, which n
 | @testing-library/react | 16.3.3 | @testing-library/dom | 10.4.2 |
 | @testing-library/jest-dom | 7.0.1 | server-only (T00-04) | 0.0.1 |
 | tailwindcss (T00-06) | 4.3.3 | @tailwindcss/postcss (T00-06) | 4.3.3 |
-| @fontsource-variable/inter (T00-06) | 5.3.0 | | |
+| @fontsource-variable/inter (T00-06) | 5.3.0 | react-aria-components (T00-07) | 1.21.1 |
+| @internationalized/date (T00-07) | 3.12.4 | lucide-react (T00-07) | 1.47.0 |
+| @testing-library/user-event (T00-07) | 14.6.7 | axe-core (T00-07) | 4.13.0 |
 
 ### Backend (`backend/pyproject.toml` ranges; exact in `uv.lock`, 36 packages)
 

@@ -422,7 +422,7 @@ No arbitrary UI colors.
 
 ### T00-06 Update (2026-09-27)
 
-**Status:** READY_FOR_REVIEW (branch `feat/T00-06-design-tokens`, based on `main` at `e335502`)
+**Status:** COMPLETED (merged to `main` via PR #6, merge commit `0f4346b`)
 
 **Approved decisions:** D1 Tailwind CSS 4.3.3 (CSS-first `@theme`) mapped to semantic tokens, Tailwind default colours/type sizes/radii/breakpoints removed; D2 ADR-0007; D3 self-hosted Inter variable font (`@fontsource-variable/inter` 5.3.0 via `next/font/local`); D4 DESIGN-SYSTEM.md colours kept verbatim, documented derived mixes for accessible text/neutrals/dark surfaces (INC-17); D5 restrained Light shadows, near-zero Dark shadows; D6 system monospace stack (INC-12); D7 minimal accessible `ThemeSelector`; D8 headless Chromium visual verification; D9 `localStorage` `mti360.theme`, default `system`; D10 breakpoints tablet 768 / desktop 1024 / large 1440. Details: `docs/architecture/design-tokens.md`, `docs/adr/0007-styling-tailwind-semantic-tokens.md`.
 
@@ -469,6 +469,21 @@ EmptyState
 ErrorState
 Skeleton
 ```
+
+### T00-07 Update (2026-09-27)
+
+**Status:** IN_PROGRESS — delivered in three slices (decision D1): **07A** READY_FOR_REVIEW (branch `feat/T00-07a-components-foundation`, based on `main` at `0f4346b`); **07B** forms and **07C** overlays/data NOT_STARTED.
+
+**Approved decisions (D1–D14):** D1 three slices, each with its own PR and merge commit; D2 React Aria Components 1.21.1 (ADR-0008); D3 Lucide 1.47.0 via `design-system/icons`; D4 local `cx()` and typed variant maps; D5 semantic `surface-hover`, `surface-selected`, `brand-primary-hover`, `success-strong`, `error-strong`, `overlay-scrim` plus a component-token layer (control heights 32/40/44, focus ring, z-index); D6 guards (no arbitrary values, React Aria/Lucide boundaries, no raw HTML); D7 user-event and axe-core; D8 `/design-system` showcase for development/test only; D9 Modal = container, Dialog = confirmation on Modal; D10 default locale `en-IN`; D11 ChartCard is a frame, no chart library; D12 add IconButton/Textarea/Checkbox, defer Radio/Switch/TimePicker/Search/PermissionGate; D13 tertiary = text-style, ghost = hover surface, success uses `success-strong`; D14 Toast region mounted by T00-08. Details: `docs/architecture/components.md`, `docs/adr/0008-headless-primitives-and-icons.md`; INC-18 … INC-21.
+
+**07A acceptance criteria:**
+
+* Button, IconButton, Card, Badge, Tabs, KPI, Timeline, Alert, Skeleton, EmptyState and ErrorState exist with §73/§74 contracts, token-only styling and tests including axe.
+* Guards pass: no raw colours, no `dark:`, no arbitrary values, React Aria and Lucide only inside their boundaries, raw HTML only for the pre-paint script.
+* New semantic tokens pass Light/Dark parity, primitives-only and contrast tests.
+* Light and Dark at 390/768/1024/1440: axe (including contrast) 0 violations, no overflow, no console warnings, no external requests; keyboard and focus verified in Chromium.
+* `/design-system` renders only in development/test; 404 otherwise; `noindex`.
+* No backend, database, Docker, compose, CI, environment template, existing ADR, DESIGN-SYSTEM.md or landing-page changes.
 
 ---
 

@@ -7,14 +7,19 @@ Shared visual foundation for all four experiences. Values come from [DESIGN-SYST
 | `tokens/` | `primitives.css` (palette + derived; the only raw colours), `semantic.css` (Light / Dark mappings), `tailwind.css` (Tailwind v4 `@theme`), token and guard tests | T00-06 |
 | `theme/` | Light / Dark / System preference, pre-paint script, `ThemeProvider` / `useTheme`, `ThemeSelector` | T00-06 |
 | `typography/` | Self-hosted Inter (`next/font/local`) | T00-06 |
-| `components/` | Core components | T00-07 |
+| `components/` | Core components — 07A: Button, IconButton, Card, Badge, Tabs, Kpi, Timeline, Alert, Skeleton, EmptyState, ErrorState (07B forms, 07C overlays/data to follow) | T00-07 |
+| `icons/` | Curated Lucide icons (the only `lucide-react` import) | T00-07 |
+| `lib/` | `cx()` and the shared `focusRing` classes | T00-07 |
+| `testing/` | `expectNoA11yViolations()` (axe) for component tests | T00-07 |
 | `templates/` | Page templates T01–T18 | later |
 
 ## Rules
 
 - Style with semantic utilities only: `bg-surface-primary`, `text-text-secondary`, `border-border-default`, `text-page-title`, `rounded-md`, `shadow-sm`, `p-4`, `tablet:` / `desktop:` / `large:`.
 - No raw colours (hex, `rgb()`, `hsl()`, …) outside `tokens/primitives.css` and no `dark:` utilities — both fail `tokens/guard.test.ts`.
-- No arbitrary values (`p-[17px]`, `bg-[…]`) and no off-grid spacing (`p-7`); add a token instead.
+- No arbitrary values (`p-[17px]`, `bg-[…]`) — test-enforced since T00-07 — and no off-grid spacing (`p-7`); add a token instead. Token references such as `outline-(length:--focus-ring-width)` are allowed.
+- Screens import components from `@/design-system/components` and icons from `@/design-system/icons`; React Aria and `lucide-react` are imported only inside `components/` and `icons/` (test-enforced).
+- Every component follows its contract in [docs/architecture/components.md](../../../docs/architecture/components.md) and has tests with an axe check.
 - Text uses `text-*`, `link` or `*-text` tokens (≥ 4.5:1). `accent-maritime`, `accent-brass` and state colours (`success`, …) are for non-text indicators.
 - Never communicate status by colour alone.
 - `design-system/` imports nothing from `features/`.
