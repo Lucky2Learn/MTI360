@@ -354,7 +354,7 @@ Ensure secrets are never committed.
 
 ### T00-04 Update (2026-09-26)
 
-**Status:** READY_FOR_REVIEW (branch `feat/T00-04-environment-configuration`, based on `main` at `c7b769b`)
+**Status:** COMPLETED (merged to `main` via PR #4, merge commit `09a7413`)
 
 **Approved decisions:** D1 database TLS (`ssl=require` or stricter) in staging/production; D2 `server-only` package in the frontend; D3 staging as strict as production except `LOG_LEVEL=DEBUG`; D4 staging/production never read `.env` files; D5 dependency-free `pnpm check:env` in `pnpm check` (gitleaks in T00-05). Environment matrix: `docs/architecture/environments.md`.
 
@@ -383,6 +383,22 @@ Type Check
 Unit Tests
 Build
 ```
+
+### T00-05 Update (2026-09-27)
+
+**Status:** READY_FOR_REVIEW (branch `feat/T00-05-ci-foundation`, based on `main` at `09a7413`)
+
+**Approved decisions:** D1 three workflows — `ci.yml` (required via `ci-ok`), `codeql.yml` and `audit.yml` (reporting only); D2 minimal SHA-pinned action set, gitleaks/actionlint as checksum-verified binaries; D3 root scripts `format:check:frontend`, `format:check:backend`, `check:lock` (in `pnpm check`); D4 uv cache only; D5 gitleaks over all refs with `--redact`, allowlist only exact path AND exact value; D6 Docker smoke test starts the API only; D7 Dependabot for `github-actions`, `docker`, `docker-compose` only (npm/pnpm 11 and uv compatibility could not be established); D8 CodeQL and audits visible but not required; D9 ACRS confirmed by listing comparison only; D10 future branch protection — PR required, 0 approvals, conversations resolved, merge commit only, `ci-ok` required and up to date, no force push, no deletion, no linear-history rule (documented, not applied). Details: `docs/architecture/ci.md`.
+
+**Concrete acceptance criteria:**
+
+* `ci.yml` runs on PRs to `main`, pushes to `main` and manual dispatch on `ubuntu-24.04`, with no secrets, no `pull_request_target` and `persist-credentials: false`.
+* Jobs `repo`, `frontend`, `backend`, `secrets`, `docker` run in parallel and call the existing root scripts; `ci-ok` passes only when all five succeed.
+* Every action is pinned to a full commit SHA of a release at least 7 days old; gitleaks and actionlint are SHA-256 verified.
+* gitleaks scans the full history; the allowlist is exact path AND exact value; a self-test proves detection and narrowness.
+* Both images build (never pushed); `/health` returns 200; production without configuration fails fast; compose configuration is valid.
+* CodeQL and audits run but are not required; Dependabot covers only the approved ecosystems.
+* No application code, Dockerfile, compose, environment template, lockfile, landing-page or ADR changes.
 
 ---
 

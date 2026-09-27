@@ -56,7 +56,7 @@ This document records the exact toolchain versions, why each was chosen, which n
 | Backend base | `python:3.14.7-slim-trixie` + `ghcr.io/astral-sh/uv:0.12.19` | Image `mti360-api:local` (~234 MB) |
 | Frontend base | `node:24.21.0-trixie-slim` (Corepack → pnpm 11.28.0) | Image `mti360-frontend:local` (~387 MB), Next.js standalone output |
 
-Verified with Docker Engine 29.8.0 and Docker Compose v5.5.1 (Docker Desktop, WSL 2). Images are pinned to patch-level tags; digest pinning is considered with CI (T00-05).
+Verified with Docker Engine 29.8.0 and Docker Compose v5.5.1 (Docker Desktop, WSL 2). Images are pinned to patch-level tags; digest pinning remains out of scope (considered and deferred in T00-05). Dependabot proposes base-image updates monthly ([ci.md §6](ci.md#6-dependabot-decision-d7)).
 
 **Deferred (T00-03 decision D4):** the Alembic `migrate` service and the background `worker` (with its queue library) are added by the first task that needs them. This moves the queue-library choice that ADR-0001 placed in T00-03.
 
@@ -97,10 +97,11 @@ Run from the repository root.
 | `pnpm lint` | ESLint (`--max-warnings=0`) + `ruff check` | both |
 | `pnpm typecheck` | `next typegen && tsc --noEmit` + `mypy` (strict) | both |
 | `pnpm test` | `vitest run` + `pytest` | both |
-| `pnpm format` / `pnpm format:check` | Prettier (frontend/ only) + `ruff format` (backend/ only) | both |
+| `pnpm format` / `pnpm format:check` | Prettier (frontend/ only) + `ruff format` (backend/ only); `format:check:frontend` / `format:check:backend` run one side (T00-05) | both |
+| `pnpm check:lock` | `uv lock --check`: `uv.lock` matches `pyproject.toml` (T00-05) | backend |
 | `pnpm check:landing` | Fails if `index.html`, `app.js` or `styles.css` differ from tag `marketing-site-v1` | repo |
 | `pnpm check:env` | Environment template and secret hygiene (T00-04, [environments.md](environments.md)) | repo |
-| `pnpm check` | `check:landing` → `check:env` → `format:check` → `lint` → `typecheck` → `test` → `build` | repo |
+| `pnpm check` | `check:landing` → `check:env` → `check:lock` → `format:check` → `lint` → `typecheck` → `test` → `build` | repo |
 | `pnpm infra:up` / `infra:down` / `infra:reset` / `infra:logs` | Local Docker infrastructure (T00-03) — see [local-development.md](../runbooks/local-development.md) | Docker |
 | `pnpm stack:up` | Build and run infrastructure + api + frontend images (T00-03) | Docker |
 
@@ -128,7 +129,8 @@ Since T00-04 the backend types and validates every variable in `backend/.env.exa
 - **Security patches:** immediately.
 - **Routine updates:** monthly batch, respecting the cooldown.
 - **Major versions and lifting a hold (§3):** a dedicated task each; an ADR only if the change affects architecture.
-- Automated update PRs (Renovate / Dependabot) are decided in T00-05.
+- **Automated update PRs (T00-05, decision D7):** Dependabot for GitHub Actions, Dockerfile base images and `compose.yaml` images only — monthly, grouped, 7-day cooldown, no majors. npm (pnpm 11) and uv are **not** enabled because compatibility could not be established; frontend and backend dependencies stay on the manual monthly batch above. See [ci.md §6](ci.md#6-dependabot-decision-d7).
+- **CI (T00-05):** every PR and push to `main` runs the commands in §5 on `ubuntu-24.04`; the single required status is `ci-ok`. See [ci.md](ci.md).
 
 ## 9. Local setup notes
 

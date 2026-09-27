@@ -1,0 +1,35 @@
+# =============================================================================
+# MTI 360 — gitleaks configuration (T00-05)
+#
+# CI scans the FULL git history of every ref with the default gitleaks rules:
+#     gitleaks git --log-opts="--all" --redact --config .gitleaks.toml .
+#
+# ALLOWLIST POLICY — keep it extremely narrow:
+#   * Only documented FAKE test values, only in the exact files that use them.
+#   * Every entry requires BOTH the exact path AND the exact value
+#     (condition = "AND"). No directory globs, no disabled rules, no stopwords.
+#   * Add an entry only after a real scan flags a documented fake value, and
+#     prove it with scripts/ci/gitleaks-selftest.sh (a different value in the
+#     same file must still be detected).
+#   * A real secret is NEVER allowlisted: rotate it and purge it instead.
+# =============================================================================
+
+title = "MTI 360 gitleaks configuration"
+
+[extend]
+useDefault = true
+
+# Fake CSRF secret used by the backend settings tests (T00-04). It is a fixed,
+# non-placeholder value >= 32 characters that exercises settings validation;
+# it has never been a real secret. Flagged by rule generic-api-key.
+[[allowlists]]
+description = "T00-04 fake TEST_CSRF_SECRET in backend settings tests"
+condition = "AND"
+paths = [
+  '''^backend/tests/conftest\.py$''',
+  '''^backend/tests/unit/test_settings_environments\.py$''',
+]
+regexTarget = "secret"
+regexes = [
+  '''^mti360-test-csrf-secret-0123456789abcdef$''',
+]
