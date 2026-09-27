@@ -1,6 +1,6 @@
 # frontend/
 
-**Status:** Toolchain foundation (T00-02), a server-only environment contract (`src/lib/env.ts`, T00-04) the design-token foundation with the Light/Dark/System theme (`src/design-system/`, T00-06) and the first component slice (T00-07A: Button, IconButton, Card, Badge, Tabs, KPI, Timeline, Alert, Skeleton, EmptyState, ErrorState). Contains a root layout, a neutral token-styled root page, the development/test-only `/design-system` showcase and tests — no product screens or experience routes yet.
+**Status:** Toolchain foundation (T00-02), a server-only environment contract (`src/lib/env.ts`, T00-04) the design-token foundation with the Light/Dark/System theme (`src/design-system/`, T00-06) and the first two component slices (T00-07A: Button, IconButton, Card, Badge, Tabs, KPI, Timeline, Alert, Skeleton, EmptyState, ErrorState; T00-07B: Field/Form, Input, Textarea, Checkbox, Select, Combobox, DatePicker, FileUpload). Contains a root layout, a neutral token-styled root page, the development/test-only `/design-system` showcase and tests — no product screens or experience routes yet.
 
 **Styling:** Tailwind CSS v4 utilities mapped to MTI 360 semantic tokens only; Tailwind's default palette, sizes, radii and breakpoints are removed. Rules: [src/design-system/README.md](src/design-system/README.md), [docs/architecture/design-tokens.md](../docs/architecture/design-tokens.md), [docs/architecture/components.md](../docs/architecture/components.md).
 

@@ -107,7 +107,7 @@ M0 — Foundation Ready
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-09-27:** T00-01 … T00-06 are `COMPLETED` (merged to `main`; T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6). T00-07 (Core Component Library) is `IN_PROGRESS`: slice 07A is `READY_FOR_REVIEW`. Only the toolchain, local infrastructure, validated environment configuration, CI, design tokens with the Light/Dark/System theme, the first component slice, a development-only showcase and a neutral page / `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
+> **2026-09-27:** T00-01 … T00-06 are `COMPLETED` (merged to `main`; T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6). T00-07 (Core Component Library) is `IN_PROGRESS`: slice 07A is merged (PR #7) and slice 07B is `READY_FOR_REVIEW`. Only the toolchain, local infrastructure, validated environment configuration, CI, design tokens with the Light/Dark/System theme, two component slices, a development-only showcase and a neutral page / `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
 
 ---
 
@@ -183,7 +183,7 @@ IN_PROGRESS
 ## Phase Completion
 
 ```text
-6 / 10 tasks completed (T00-01 … T00-06 COMPLETED; T00-07 IN_PROGRESS — 07A READY_FOR_REVIEW)
+6 / 10 tasks completed (T00-01 … T00-06 COMPLETED; T00-07 IN_PROGRESS — 07A COMPLETED, 07B READY_FOR_REVIEW)
 ```
 
 ---
@@ -495,7 +495,37 @@ Landing page SHA-256 unchanged. ACRS unchanged (listing comparison).
 
 ### T00-07 — Core Component Library
 
-**Status:** `IN_PROGRESS` — **07A** `READY_FOR_REVIEW` (branch `feat/T00-07a-components-foundation`, based on `main` at `0f4346b`; not pushed); **07B** (forms) and **07C** (overlays, data) `NOT_STARTED`
+**Status:** `IN_PROGRESS` — **07A** `COMPLETED` (merged to `main` via PR #7, merge commit `8a370a4`); **07B** (forms) `READY_FOR_REVIEW` (branch `feat/T00-07b-form-components`, based on `main` at `8a370a4`; not pushed); **07C** (overlays, data) `NOT_STARTED`
+
+**Implementation (07B):**
+
+```text
+Field foundation: FieldLabel (* + programmatic required), FieldDescription,
+  FieldErrorMessage (icon + text), FieldSuccessMessage (opt-in), shared
+  control classes, Form (native validation, validationErrors for server
+  errors), shared popover/option list
+Components: Input, Textarea (character count), Checkbox (CheckboxField +
+  CheckboxButton, indeterminate), Select, Combobox (contains or manual/async,
+  loading status inside the popover), DatePicker (ISO API, en-IN DD/MM/YYYY,
+  Monday-first product default + firstDayOfWeek override, min/max/
+  unavailable), FileUpload (UX-only validation, deny list, no previews/object
+  URLs/transport)
+Showcase: form sections + Student enquiry form (simulated server errors)
+No new dependencies, no new tokens, no jsdom polyfills (probe: not needed)
+Docs: components.md contracts (3B), INC-20 updated, INC-22, INC-23
+```
+
+**Verification (07B):**
+
+```text
+pnpm check: PASS (frontend 396 tests, backend 139). Headless Chromium on
+  the production image: 129/129 (07A suite + popovers axe in Light/Dark at
+  390/1024, viewport containment, DatePicker typing/calendar/ISO/Monday
+  default/Sunday override, FileUpload rejections and no object URLs, form
+  first-invalid focus and server error mapping, 44px mobile controls,
+  reduced motion). Clean clone, gitleaks, Docker + API smoke: PASS.
+Landing page unchanged. ACRS unchanged (listing comparison).
+```
 
 **Implementation (07A):**
 
@@ -1221,16 +1251,16 @@ A screen is only considered implemented when its required underlying behavior is
 | CampusSwitcher | `NOT_STARTED` |
 | NotificationCenter | `NOT_STARTED` |
 | UserMenu | `NOT_STARTED` |
-| Button | `READY_FOR_REVIEW` (T00-07A) |
-| IconButton | `READY_FOR_REVIEW` (T00-07A) |
-| Input | `NOT_STARTED` |
-| Select | `NOT_STARTED` |
-| Combobox | `NOT_STARTED` |
-| DatePicker | `NOT_STARTED` |
-| FileUpload | `NOT_STARTED` |
-| Tabs | `READY_FOR_REVIEW` (T00-07A) |
-| Card | `READY_FOR_REVIEW` (T00-07A) |
-| Badge | `READY_FOR_REVIEW` (T00-07A) |
+| Button | `COMPLETED` (T00-07A, PR #7) |
+| IconButton | `COMPLETED` (T00-07A, PR #7) |
+| Input | `READY_FOR_REVIEW` (T00-07B) |
+| Select | `READY_FOR_REVIEW` (T00-07B) |
+| Combobox | `READY_FOR_REVIEW` (T00-07B) |
+| DatePicker | `READY_FOR_REVIEW` (T00-07B) |
+| FileUpload | `READY_FOR_REVIEW` (T00-07B) |
+| Tabs | `COMPLETED` (T00-07A, PR #7) |
+| Card | `COMPLETED` (T00-07A, PR #7) |
+| Badge | `COMPLETED` (T00-07A, PR #7) |
 | DataTable | `NOT_STARTED` |
 | FilterBar | `NOT_STARTED` |
 | Pagination | `NOT_STARTED` |
@@ -1238,13 +1268,13 @@ A screen is only considered implemented when its required underlying behavior is
 | Modal | `NOT_STARTED` |
 | Dialog | `NOT_STARTED` |
 | Toast | `NOT_STARTED` |
-| Alert | `READY_FOR_REVIEW` (T00-07A) |
-| Timeline | `READY_FOR_REVIEW` (T00-07A) |
-| KPI | `READY_FOR_REVIEW` (T00-07A) |
+| Alert | `COMPLETED` (T00-07A, PR #7) |
+| Timeline | `COMPLETED` (T00-07A, PR #7) |
+| KPI | `COMPLETED` (T00-07A, PR #7) |
 | ChartCard | `NOT_STARTED` |
-| EmptyState | `READY_FOR_REVIEW` (T00-07A) |
-| ErrorState | `READY_FOR_REVIEW` (T00-07A) |
-| Skeleton | `READY_FOR_REVIEW` (T00-07A) |
+| EmptyState | `COMPLETED` (T00-07A, PR #7) |
+| ErrorState | `COMPLETED` (T00-07A, PR #7) |
+| Skeleton | `COMPLETED` (T00-07A, PR #7) |
 | PermissionGate | `NOT_STARTED` |
 
 ---
@@ -1315,7 +1345,7 @@ A screen is only considered implemented when its required underlying behavior is
 | Environment Configuration (T00-04) | `COMPLETED` |
 | CI Foundation (T00-05) | `COMPLETED` |
 | Design Token Foundation (T00-06) | `COMPLETED` |
-| Core Component Library (T00-07) | `IN_PROGRESS` (07A `READY_FOR_REVIEW`) |
+| Core Component Library (T00-07) | `IN_PROGRESS` (07A `COMPLETED`, 07B `READY_FOR_REVIEW`) |
 | Architecture Decision Records | `READY_FOR_REVIEW` (ADR-0001 … ADR-0006) |
 | Production Implementation | `NOT_STARTED` |
 
@@ -1561,6 +1591,8 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-09-27 | T00-06 Design Token Foundation implemented | `READY_FOR_REVIEW` on `feat/T00-06-design-tokens`; tokens, Tailwind v4, Light/Dark/System theme |
 | 2026-09-27 | T00-06 merged to `main` (PR #6, `0f4346b`) | `COMPLETED` |
 | 2026-09-27 | T00-07A components foundation implemented | `READY_FOR_REVIEW` on `feat/T00-07a-components-foundation`; 11 components, React Aria, Lucide, showcase |
+| 2026-09-27 | T00-07A merged to `main` (PR #7, `8a370a4`) | `COMPLETED` |
+| 2026-09-27 | T00-07B form components implemented | `READY_FOR_REVIEW` on `feat/T00-07b-form-components`; Field/Form + 7 form components |
 
 ---
 
@@ -2091,15 +2123,79 @@ Review T00-07A -> push, PR, CI, merge commit -> T00-07B Form components
 
 ---
 
+## 2026-09-27 — T00-07B Core Component Library: form components
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+Second T00-07 slice: a shared Field foundation and Form (native validation, server-error mapping), Input, Textarea, Checkbox, Select, Combobox, DatePicker (ISO API, en-IN, Monday-first product default with override) and FileUpload (client-side UX validation only), with showcase sections and a Student enquiry sample form.
+
+**Files:**
+
+```text
+Created: frontend/src/design-system/components/{Field (Field.tsx, Listbox.tsx),
+  Input, Textarea, Checkbox, Select, Combobox, DatePicker (+ date.ts),
+  FileUpload (+ validate-files.ts)} with tests, frontend/src/app/design-system/
+  showcase-forms.tsx
+Changed: components/index.ts, icons/index.ts (form icons),
+  app/design-system/showcase.tsx and showcase.test.tsx,
+  docs/architecture/{components,spec-inconsistencies,repository-structure}.md,
+  frontend and design-system READMEs, README.md, TASKS.md,
+  DEVELOPMENT-STATUS.md
+Unchanged (verified): package.json and lockfiles, tokens, vitest.setup.ts,
+  07A components, theme runtime, root layout, neutral page, backend,
+  database, Docker/compose, CI, environment templates, ADRs, DESIGN-SYSTEM.md,
+  index.html, app.js, styles.css; ACRS
+```
+
+**Database / API / UI:**
+
+```text
+Database / API: none (FileUpload has no transport). UI: form components and
+showcase sections; no product screens.
+```
+
+**Tests:**
+
+```text
+Frontend 396 passed (was 305). Backend 139 passed. pnpm check passes.
+Headless Chromium verification 129/129.
+```
+
+**Known Issues:**
+
+```text
+While a Combobox popover is open, React Aria hides the rest of the page with
+aria-hidden (not inert); axe reports aria-hidden-focus. Tab closes the popover
+before focus moves (verified), so hidden content never receives focus.
+React Aria clears server errors when the edit is committed (blur), not per
+keystroke. Upload types/limits, required/success conventions and the first
+day of the week are not specified (INC-22, INC-23, INC-20).
+Full-screen mobile sheets for Select/DatePicker are deferred to 07C (Modal).
+```
+
+**Next:**
+
+```text
+Review T00-07B -> push, PR, CI, merge commit -> T00-07C Overlays and data components
+```
+
+---
+
 # 40. NEXT TASK
 
 The next step is:
 
 ```text
-Review T00-07A (READY_FOR_REVIEW): push, open the pull request, verify CI on
-GitHub and merge with a merge commit. Then continue with T00-07B — form
-components (Field, Input, Textarea, Checkbox, Select, Combobox, DatePicker,
-FileUpload).
+Review T00-07B (READY_FOR_REVIEW): push, open the pull request, verify CI on
+GitHub and merge with a merge commit. Then continue with T00-07C — overlays
+and data components (Modal, Dialog, Drawer, Toast, DataTable, Pagination,
+FilterBar, ChartCard).
 ```
 
 The completed-task description below is retained for reference.

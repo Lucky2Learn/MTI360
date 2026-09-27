@@ -472,7 +472,7 @@ Skeleton
 
 ### T00-07 Update (2026-09-27)
 
-**Status:** IN_PROGRESS — delivered in three slices (decision D1): **07A** READY_FOR_REVIEW (branch `feat/T00-07a-components-foundation`, based on `main` at `0f4346b`); **07B** forms and **07C** overlays/data NOT_STARTED.
+**Status:** IN_PROGRESS — delivered in three slices (decision D1): **07A** COMPLETED (merged to `main` via PR #7, merge commit `8a370a4`); **07B** forms READY_FOR_REVIEW (branch `feat/T00-07b-form-components`, based on `main` at `8a370a4`); **07C** overlays/data NOT_STARTED.
 
 **Approved decisions (D1–D14):** D1 three slices, each with its own PR and merge commit; D2 React Aria Components 1.21.1 (ADR-0008); D3 Lucide 1.47.0 via `design-system/icons`; D4 local `cx()` and typed variant maps; D5 semantic `surface-hover`, `surface-selected`, `brand-primary-hover`, `success-strong`, `error-strong`, `overlay-scrim` plus a component-token layer (control heights 32/40/44, focus ring, z-index); D6 guards (no arbitrary values, React Aria/Lucide boundaries, no raw HTML); D7 user-event and axe-core; D8 `/design-system` showcase for development/test only; D9 Modal = container, Dialog = confirmation on Modal; D10 default locale `en-IN`; D11 ChartCard is a frame, no chart library; D12 add IconButton/Textarea/Checkbox, defer Radio/Switch/TimePicker/Search/PermissionGate; D13 tertiary = text-style, ghost = hover surface, success uses `success-strong`; D14 Toast region mounted by T00-08. Details: `docs/architecture/components.md`, `docs/adr/0008-headless-primitives-and-icons.md`; INC-18 … INC-21.
 
@@ -484,6 +484,17 @@ Skeleton
 * Light and Dark at 390/768/1024/1440: axe (including contrast) 0 violations, no overflow, no console warnings, no external requests; keyboard and focus verified in Chromium.
 * `/design-system` renders only in development/test; 404 otherwise; `noindex`.
 * No backend, database, Docker, compose, CI, environment template, existing ADR, DESIGN-SYSTEM.md or landing-page changes.
+
+**07B approved decisions (D1–D12):** D1 `value`/`defaultValue`/`onChange` + React Aria-style booleans; D2 DatePicker ISO `YYYY-MM-DD` strings (`@internationalized/date` internal); D3 **Monday-first is the MTI 360 product default**, independent of the `en-IN` locale (whose CLDR default is Sunday), with a `firstDayOfWeek` override; D4 visible `*` + programmatic required; D5 native validation, `validate`, `Form validationErrors` for server errors; D6 opt-in success; D7 FileUpload client validation is UX only, server authoritative, no previews/object URLs/file reading; D8 jsdom polyfills only if proven necessary (none were); D9 popovers on all sizes (mobile sheet → 07C); D10 no new tokens or dependencies; D11 showcase sections + Student enquiry form; D12 INC-20 updated, INC-22 and INC-23 recorded.
+
+**07B acceptance criteria:**
+
+* Field foundation/Form, Input, Textarea, Checkbox, Select, Combobox, DatePicker and FileUpload exist with contracts in `components.md`; 07A public APIs unchanged.
+* Controlled and uncontrolled APIs; `name` values in `FormData`; native validation blocks submit and focuses the first invalid field; server errors map to fields.
+* Keyboard models, visible focus, 44px targets on mobile; axe 0 violations (unit tests with popovers open; browser incl. contrast) in Light and Dark.
+* DatePicker: DD/MM/YYYY for `en-IN`, ISO API, Monday-first default, `firstDayOfWeek` override, min/max/unavailable validation, no hydration warnings.
+* FileUpload: D7 rules enforced and tested; no transport, previews or object URLs.
+* No new dependencies or tokens; guards pass; no backend, database, Docker, compose, CI, environment template, ADR, DESIGN-SYSTEM.md or landing-page changes.
 
 ---
 

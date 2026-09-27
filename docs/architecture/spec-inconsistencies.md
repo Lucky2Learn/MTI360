@@ -153,8 +153,9 @@
 
 - **Status:** `OPEN` (T00-07 decision D10)
 - **Where:** PRD.md, UI-SCREENS.md (no formats); PLATFORM-ADMIN.md tenant settings (Timezone, Currency); product context India (DGS)
-- **Current handling:** Components accept pre-formatted values (KPI, Timeline). Date components (07B) default to locale `en-IN` (DD/MM/YYYY, Monday-first) with a `locale` prop; no timezone conversion in components.
-- **Proposed resolution:** Specify default locale, date/time and currency formatting, and how tenant Timezone/Currency settings apply (Phase 03).
+- **Current handling:** Components accept pre-formatted values (KPI, Timeline). DatePicker (07B) formats with locale `en-IN` (DD/MM/YYYY) by default, with a `locale` prop; no timezone conversion in components.
+- **T00-07B update — first day of the week:** locale and first day of the week are treated as **separate settings**. The MTI 360 **product default is Monday-first** (T00-07 D10, confirmed by T00-07B D3), even though the CLDR default for `en-IN` is Sunday. DatePicker therefore uses `en-IN` formatting with `firstDayOfWeek="mon"` by default and accepts an explicit `firstDayOfWeek` override. The specifications do not state a first-day convention.
+- **Proposed resolution:** Specify default locale, date/time and currency formatting, the first day of the week (and whether tenants may change it), and how tenant Timezone/Currency settings apply (Phase 03).
 
 ## INC-21 — Button "Tertiary" vs "Ghost" not defined
 
@@ -163,3 +164,19 @@
 - **Issue:** The difference between Tertiary and Ghost is not described.
 - **Current handling:** Tertiary = text-style action (link colour, underline on hover); Ghost = transparent with a hover surface.
 - **Proposed resolution:** Describe both variants in DESIGN-SYSTEM.md §41.
+
+## INC-22 — Upload file types and size limits unspecified
+
+- **Status:** `OPEN` (T00-07B decision D7)
+- **Where:** CLAUDE.md §50 and ARCHITECTURE.md §49 (server validation pipeline) and §31 (document processing); PRD/UI-SCREENS mention admission documents (CDC, passport, medical certificates) but no allowed types or limits
+- **Issue:** No specification defines which file types are accepted or the maximum sizes per document category.
+- **Current handling:** FileUpload requires explicit `accept` (MIME + extension pairs) and `maxSize` props with no defaults; a permanent deny list applies regardless. The showcase uses PDF/JPG/PNG up to 5 MB and 2 MB as examples only. Server-side validation remains authoritative.
+- **Proposed resolution:** Define accepted types and limits per document category with the document/admissions features.
+
+## INC-23 — Required-indicator and success-state conventions unspecified
+
+- **Status:** `OPEN` (T00-07B decisions D4, D6)
+- **Where:** DESIGN-SYSTEM.md §42 (controls need a "Success" state), CLAUDE.md §34 ("required indicators")
+- **Issue:** Neither the presentation of the required indicator nor when a success state is shown is defined.
+- **Current handling:** a visible `*` after the label (hidden from assistive technology) plus the programmatic required state, and a "* Required field" note on forms; success is opt-in (`successMessage`: icon + text), never automatic.
+- **Proposed resolution:** Document both conventions in DESIGN-SYSTEM.md §42.
