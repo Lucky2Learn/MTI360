@@ -8,6 +8,7 @@ import {
   type ListBoxProps,
 } from "react-aria-components";
 
+import { popoverSurface } from "@/design-system/components/Overlay/overlay";
 import { CheckIcon } from "@/design-system/icons";
 import { cx } from "@/design-system/lib/cx";
 
@@ -33,7 +34,10 @@ export function FieldPopover({ children }: { children: ReactNode }) {
     <Popover
       placement="bottom start"
       offset={4}
-      className="z-(--z-dropdown) max-h-72 w-(--trigger-width) overflow-auto rounded-md border border-border-default bg-surface-elevated p-1 text-text-primary shadow-lg outline-none"
+      className={cx(
+        popoverSurface,
+        "max-h-72 w-(--trigger-width) overflow-auto p-1",
+      )}
     >
       {children}
     </Popover>

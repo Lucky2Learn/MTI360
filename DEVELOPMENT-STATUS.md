@@ -107,7 +107,7 @@ M0 — Foundation Ready
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-09-27:** T00-01 … T00-06 are `COMPLETED` (merged to `main`; T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6). T00-07 (Core Component Library) is `IN_PROGRESS`: slice 07A is merged (PR #7) and slice 07B is `READY_FOR_REVIEW`. Only the toolchain, local infrastructure, validated environment configuration, CI, design tokens with the Light/Dark/System theme, two component slices, a development-only showcase and a neutral page / `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
+> **2026-09-27:** T00-01 … T00-06 are `COMPLETED` (merged to `main`; T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6). T00-07 (Core Component Library) is `IN_PROGRESS`: slices 07A and 07B are merged (PR #7, PR #8) and slice 07C is `READY_FOR_REVIEW`. Only the toolchain, local infrastructure, validated environment configuration, CI, design tokens with the Light/Dark/System theme, three component slices, a development-only showcase and a neutral page / `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
 
 ---
 
@@ -183,7 +183,7 @@ IN_PROGRESS
 ## Phase Completion
 
 ```text
-6 / 10 tasks completed (T00-01 … T00-06 COMPLETED; T00-07 IN_PROGRESS — 07A COMPLETED, 07B READY_FOR_REVIEW)
+6 / 10 tasks completed (T00-01 … T00-06 COMPLETED; T00-07 IN_PROGRESS — 07A and 07B COMPLETED, 07C READY_FOR_REVIEW)
 ```
 
 ---
@@ -495,7 +495,42 @@ Landing page SHA-256 unchanged. ACRS unchanged (listing comparison).
 
 ### T00-07 — Core Component Library
 
-**Status:** `IN_PROGRESS` — **07A** `COMPLETED` (merged to `main` via PR #7, merge commit `8a370a4`); **07B** (forms) `READY_FOR_REVIEW` (branch `feat/T00-07b-form-components`, based on `main` at `8a370a4`; not pushed); **07C** (overlays, data) `NOT_STARTED`
+**Status:** `IN_PROGRESS` — **07A** `COMPLETED` (merged to `main` via PR #7, merge commit `8a370a4`); **07B** (forms) `COMPLETED` (merged via PR #8, merge commit `1b8740c`); **07C** (overlays, data, interaction controls) `READY_FOR_REVIEW` (branch `feat/T00-07c-overlays-data`, based on `main` at `1b8740c`; not pushed). T00-07 stays `IN_PROGRESS` until 07C is merged; ChartCard and PermissionGate/AccessDenied are deferred (INC-19, INC-18).
+
+**Implementation (07C):**
+
+```text
+Overlay infrastructure: shared surfaces (overlay.ts) and PanelDialog layout;
+  07B Select/Combobox/DatePicker popovers use the shared surface (styling only)
+Overlays: Dialog (Modal; sm/md/lg/xl), AlertDialog (Cancel focused, scrim
+  does not dismiss), Popover, Tooltip, Drawer (left/right/top/bottom),
+  DropdownMenu, ContextMenu (right-click, Shift+F10, ContextMenu key), Toast
+  (React Aria UNSTABLE_Toast* behind the MTI 360 API; error/action toasts
+  persist)
+Data: DataTable (typed, controlled; sorting, single/multiple selection with
+  indeterminate select-all, row actions, loading/empty/error, scroll or card
+  layout on mobile), Pagination (en-IN numbers, page size, compact mobile)
+Interaction controls: FilterBar (mobile bottom Drawer), Search, RadioGroup,
+  Switch, TimePicker (ISO "HH:mm", en-IN 12-hour, no time zones)
+Showcase: 07C sections (showcase-overlays.tsx) with a showcase-only toast region
+No new dependencies, no new tokens, no 07A/07B public API changes
+Docs: components.md contracts (3C), INC-18/19/20 updated, INC-24, INC-25
+```
+
+**Verification (07C):**
+
+```text
+pnpm check: PASS (frontend 482 tests, backend 139). Headless Chromium on
+  the production image: 343/343 (07A/07B suites + Dialog, AlertDialog,
+  Drawer, menus and Toast in Light/Dark at 390/768/1024/1440 with axe 0,
+  viewport containment, focus trap/restore, Escape, no overflow, no console
+  or hydration errors; tooltip, context menu keyboard, DataTable sorting/
+  selection/actions/states, pagination, mobile FilterBar, 44px controls,
+  reduced motion). No axe exclusions added for 07C. Clean clone, gitleaks,
+  Docker + API smoke: PASS. Landing page unchanged. ACRS unchanged
+  (listing comparison). /design-system returns 404 with APP_ENV=production.
+```
+
 
 **Implementation (07B):**
 
@@ -1253,29 +1288,31 @@ A screen is only considered implemented when its required underlying behavior is
 | UserMenu | `NOT_STARTED` |
 | Button | `COMPLETED` (T00-07A, PR #7) |
 | IconButton | `COMPLETED` (T00-07A, PR #7) |
-| Input | `READY_FOR_REVIEW` (T00-07B) |
-| Select | `READY_FOR_REVIEW` (T00-07B) |
-| Combobox | `READY_FOR_REVIEW` (T00-07B) |
-| DatePicker | `READY_FOR_REVIEW` (T00-07B) |
-| FileUpload | `READY_FOR_REVIEW` (T00-07B) |
+| Input | `COMPLETED` (T00-07B, PR #8) |
+| Select | `COMPLETED` (T00-07B, PR #8) |
+| Combobox | `COMPLETED` (T00-07B, PR #8) |
+| DatePicker | `COMPLETED` (T00-07B, PR #8) |
+| FileUpload | `COMPLETED` (T00-07B, PR #8) |
 | Tabs | `COMPLETED` (T00-07A, PR #7) |
 | Card | `COMPLETED` (T00-07A, PR #7) |
 | Badge | `COMPLETED` (T00-07A, PR #7) |
-| DataTable | `NOT_STARTED` |
-| FilterBar | `NOT_STARTED` |
-| Pagination | `NOT_STARTED` |
-| Drawer | `NOT_STARTED` |
-| Modal | `NOT_STARTED` |
-| Dialog | `NOT_STARTED` |
-| Toast | `NOT_STARTED` |
+| DataTable | `READY_FOR_REVIEW` (T00-07C) |
+| FilterBar | `READY_FOR_REVIEW` (T00-07C) |
+| Pagination | `READY_FOR_REVIEW` (T00-07C) |
+| Drawer | `READY_FOR_REVIEW` (T00-07C) |
+| Modal | `READY_FOR_REVIEW` (T00-07C, `Dialog`) |
+| Dialog | `READY_FOR_REVIEW` (T00-07C, `AlertDialog`; INC-18) |
+| Toast | `READY_FOR_REVIEW` (T00-07C) |
 | Alert | `COMPLETED` (T00-07A, PR #7) |
 | Timeline | `COMPLETED` (T00-07A, PR #7) |
 | KPI | `COMPLETED` (T00-07A, PR #7) |
-| ChartCard | `NOT_STARTED` |
+| ChartCard | `NOT_STARTED` (deferred from 07C, INC-19) |
 | EmptyState | `COMPLETED` (T00-07A, PR #7) |
 | ErrorState | `COMPLETED` (T00-07A, PR #7) |
 | Skeleton | `COMPLETED` (T00-07A, PR #7) |
 | PermissionGate | `NOT_STARTED` |
+
+Also implemented outside this list: Textarea and Checkbox (T00-07B, PR #8); Popover, Tooltip, DropdownMenu, ContextMenu, Search, RadioGroup, Switch and TimePicker (T00-07C, `READY_FOR_REVIEW`).
 
 ---
 
@@ -1345,7 +1382,7 @@ A screen is only considered implemented when its required underlying behavior is
 | Environment Configuration (T00-04) | `COMPLETED` |
 | CI Foundation (T00-05) | `COMPLETED` |
 | Design Token Foundation (T00-06) | `COMPLETED` |
-| Core Component Library (T00-07) | `IN_PROGRESS` (07A `COMPLETED`, 07B `READY_FOR_REVIEW`) |
+| Core Component Library (T00-07) | `IN_PROGRESS` (07A and 07B `COMPLETED`, 07C `READY_FOR_REVIEW`) |
 | Architecture Decision Records | `READY_FOR_REVIEW` (ADR-0001 … ADR-0006) |
 | Production Implementation | `NOT_STARTED` |
 
@@ -1593,6 +1630,8 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-09-27 | T00-07A components foundation implemented | `READY_FOR_REVIEW` on `feat/T00-07a-components-foundation`; 11 components, React Aria, Lucide, showcase |
 | 2026-09-27 | T00-07A merged to `main` (PR #7, `8a370a4`) | `COMPLETED` |
 | 2026-09-27 | T00-07B form components implemented | `READY_FOR_REVIEW` on `feat/T00-07b-form-components`; Field/Form + 7 form components |
+| 2026-09-27 | T00-07B merged to `main` (PR #8, `1b8740c`) | `COMPLETED` |
+| 2026-09-27 | T00-07C overlays, data and interaction controls implemented | `READY_FOR_REVIEW` on `feat/T00-07c-overlays-data`; 15 components + overlay infrastructure |
 
 ---
 
@@ -2187,15 +2226,83 @@ Review T00-07B -> push, PR, CI, merge commit -> T00-07C Overlays and data compon
 
 ---
 
+## 2026-09-27 — T00-07C Core Component Library: overlays, data and interaction controls
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+Third T00-07 slice: shared overlay infrastructure, Dialog (Modal), AlertDialog, Popover, Tooltip, Drawer, DropdownMenu, ContextMenu and Toast; DataTable and Pagination; FilterBar, Search, RadioGroup, Switch and TimePicker — with showcase sections. ChartCard was not in the 07C scope and is deferred (INC-19).
+
+**Files:**
+
+```text
+Created: frontend/src/design-system/components/{Overlay (overlay.ts,
+  PanelDialog.tsx), Dialog (Dialog, AlertDialog), Popover, Tooltip, Drawer,
+  Menu (MenuContent, DropdownMenu, ContextMenu), Toast, DataTable,
+  Pagination, FilterBar, Search, Radio, Switch, TimePicker (+ time.ts)} with
+  tests, frontend/src/app/design-system/showcase-overlays.tsx
+Changed: components/index.ts, icons/index.ts (overlay, sort, paging, search
+  and filter icons), Field/Listbox.tsx and DatePicker.tsx (shared popover
+  surface only), Dialog/AlertDialog test hardening,
+  app/design-system/showcase.tsx and showcase.test.tsx,
+  docs/architecture/{components,spec-inconsistencies,repository-structure}.md,
+  frontend and design-system READMEs, README.md, TASKS.md,
+  DEVELOPMENT-STATUS.md
+Unchanged (verified): package.json and lockfiles, tokens, theme runtime,
+  07A/07B public APIs, root layout, neutral page, backend, database,
+  Docker/compose, CI, environment templates, ADRs, DESIGN-SYSTEM.md,
+  index.html, app.js, styles.css; ACRS
+```
+
+**Database / API / UI:**
+
+```text
+Database / API: none (DataTable and Search never fetch). UI: overlay, data and
+interaction components and showcase sections; no product screens.
+```
+
+**Tests:**
+
+```text
+Frontend 482 passed (was 396). Backend 139 passed. pnpm check passes.
+Headless Chromium verification 343/343.
+```
+
+**Known Issues:**
+
+```text
+Dark error-text on surface-elevated is 3.79:1 (INC-24): destructive menu items
+keep a text-primary label at rest (error icon; error-text on error-surface
+when focused); no token was changed. Toast uses React Aria UNSTABLE_Toast*
+exports (pinned 1.21.1) behind the MTI 360 API (INC-25). After a pointer
+press on an AlertDialog scrim, React Aria returns focus to the dialog within
+a frame. TimePicker is keyboard-first (React Aria has no time list) and
+normalises Unicode spaces in literal segments to keep server and client
+text identical. ChartCard and PermissionGate/AccessDenied remain deferred.
+```
+
+**Next:**
+
+```text
+Review T00-07C -> push, PR, CI, merge commit -> T00-07 COMPLETED -> T00-08 Application Shell
+```
+
+---
+
 # 40. NEXT TASK
 
 The next step is:
 
 ```text
-Review T00-07B (READY_FOR_REVIEW): push, open the pull request, verify CI on
-GitHub and merge with a merge commit. Then continue with T00-07C — overlays
-and data components (Modal, Dialog, Drawer, Toast, DataTable, Pagination,
-FilterBar, ChartCard).
+Review T00-07C (READY_FOR_REVIEW): push, open the pull request, verify CI on
+GitHub and merge with a merge commit; T00-07 then becomes COMPLETED (ChartCard
+and PermissionGate/AccessDenied deferred). Then continue with T00-08 —
+Application Shell.
 ```
 
 The completed-task description below is retained for reference.

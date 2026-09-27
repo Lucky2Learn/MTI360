@@ -1,9 +1,9 @@
 # Component Library
 
-- **Status:** T00-07A merged (PR #7); T00-07B (forms) implemented (2026-09-27); T00-07C (overlays and data) not started
+- **Status:** T00-07A merged (PR #7); T00-07B merged (PR #8); T00-07C (overlays, data and interaction controls) implemented (2026-09-27)
 - **Decision basis:** T00-07 proposal decisions D1–D14 (approved); [ADR-0008](../adr/0008-headless-primitives-and-icons.md) (React Aria Components, Lucide); [ADR-0007](../adr/0007-styling-tailwind-semantic-tokens.md) (tokens)
 - **Code:** `frontend/src/design-system/components/`, `icons/`, `lib/`, `testing/`; showcase `frontend/src/app/design-system/`
-- **Related:** [DESIGN-SYSTEM.md](../../DESIGN-SYSTEM.md) §41–§62, §69–§75; [design-tokens.md](design-tokens.md); [spec-inconsistencies.md](spec-inconsistencies.md) (INC-18 … INC-23)
+- **Related:** [DESIGN-SYSTEM.md](../../DESIGN-SYSTEM.md) §41–§62, §69–§75; [design-tokens.md](design-tokens.md); [spec-inconsistencies.md](spec-inconsistencies.md) (INC-18 … INC-25)
 
 ## 1. Delivery plan (decision D1)
 
@@ -12,10 +12,10 @@ T00-07 is delivered in three slices, each with its own branch, review, pull requ
 | Slice | Components | Status |
 |---|---|---|
 | **07A** Infrastructure, actions, display, states | Button, IconButton, Card, Badge, Tabs, KPI, Timeline, Alert, Skeleton, EmptyState, ErrorState, `/design-system` showcase | Merged (PR #7) |
-| **07B** Forms | Field foundation + Form, Input, Textarea, Checkbox, Select, Combobox, DatePicker, FileUpload | Implemented |
-| **07C** Overlays and data | Modal, Dialog, Drawer, Toast, DataTable, Pagination, FilterBar, ChartCard | Not started |
+| **07B** Forms | Field foundation + Form, Input, Textarea, Checkbox, Select, Combobox, DatePicker, FileUpload | Merged (PR #8) |
+| **07C** Overlays, data and interaction controls | Dialog (Modal), AlertDialog, Popover, Tooltip, Drawer, DropdownMenu, ContextMenu, Toast, DataTable, Pagination, FilterBar, Search, RadioGroup, Switch, TimePicker | Implemented |
 
-Deferred beyond T00-07 (D12): Radio group (the ThemeSelector pattern exists), Switch, TimePicker, Search input, PermissionGate / AccessDenied (ErrorState provides the permission presentation). Shell components are T00-08.
+The T00-07C implementation prompt brought Search, Radio group, Switch and TimePicker (deferred by D12) into 07C and did not include ChartCard (INC-19). Still deferred: ChartCard, PermissionGate / AccessDenied (ErrorState provides the permission presentation). Shell components are T00-08.
 
 ## 2. Architecture and rules
 
@@ -40,7 +40,7 @@ screens — import only from "@/design-system/components"
 | Motion only with `motion-safe:` or disabled by `motion-reduce:` | browser check (reduced motion) |
 | Axe on every component test (`testing/axe.ts`; contrast and landmark rules checked in the browser) | tests |
 
-Server-component compatible (no client code): Card, Badge, KPI, Timeline, Alert, Skeleton, EmptyState. Client components: Button, IconButton, Tabs, ErrorState and all form components (07B).
+Server-component compatible (no client code): Card, Badge, KPI, Timeline, Alert, Skeleton, EmptyState. Client components: Button, IconButton, Tabs, ErrorState, all form components (07B) and all 07C components.
 
 Links rendered by `Button href` are React Aria links (plain `<a href>` navigation). Client-side routing integration (`RouterProvider`) is added with the application shell (T00-08).
 
@@ -231,9 +231,132 @@ Decisions (T00-07B proposal, approved): D1 `value`/`defaultValue`/`onChange` wit
 | Security boundary | client checks are not a security control. The server remains authoritative: extension + sniffed MIME + size, filename sanitisation, content validation, malware scan, tenant-scoped storage (CLAUDE.md §50, ARCHITECTURE.md §49). No previews, no object URLs, no reading of file contents; names rendered as text only |
 | Accessibility | labelled group; "Choose file(s)" button (Enter/Space); focusable drop zone with paste support; rules text linked as a description; rejections in a polite status region; labelled "Remove {file}" buttons (44px below `tablet`) |
 
+## 3C. Overlay, data and interaction contracts (T00-07C)
+
+**Shared overlay infrastructure** (`components/Overlay/`, internal). `overlay.ts` holds the shared surfaces: `popoverSurface` (`surface-elevated`, `border-default`, `shadow-lg`, `z-(--z-dropdown)`), `modalBackdrop` (`overlay-scrim`) and `panelSurface`; entry fades use `starting:` (`@starting-style`) and are removed by `motion-reduce:transition-none`. The 07B Select, Combobox and DatePicker popovers now use `popoverSurface` (styling consolidation only; API and behaviour unchanged). `PanelDialog` is the shared header / scrolling body / actions layout for Dialog, AlertDialog and Drawer (`title` is the accessible name, `description` is linked with `aria-describedby`, optional close IconButton, `children` / `actions` may be `(close) => ReactNode`). Layering uses the existing tokens: dropdown, popover and menu 200, drawer 300, modal 400, toast and tooltip 500. No new tokens.
+
+**Common overlay behaviour.** React Aria provides focus containment and restoration, Escape, outside-interaction dismissal, scroll locking for modals, portalling, viewport containment (`containerPadding` 16px) and `aria-hidden` on content outside modals. Open state is uncontrolled with a `trigger`, or controlled with `isOpen` / `onOpenChange`.
+
+### Dialog (Modal)
+
+| Aspect | Contract |
+|---|---|
+| Purpose | Generic modal for focused tasks and short forms (§48). "Modal" in TASKS.md is this component (INC-18) |
+| Props | `title`, `description`, `children`, `actions`, `showCloseButton` (default true), `closeLabel`, `size` (`sm` / `md` default / `lg` / `xl` → `max-w-sm` / `lg` / `2xl` / `4xl` from `tablet`), `trigger`, `isOpen` / `defaultOpen` / `onOpenChange`, `isDismissable` (scrim click, default true) |
+| Behaviour | focus moves into the dialog and is trapped; Escape always closes; focus returns to the trigger; page scroll locked |
+| Responsive | full width minus the 16px gutter on mobile with a scrolling body and visible actions; size caps from `tablet` |
+
+### AlertDialog
+
+| Aspect | Contract |
+|---|---|
+| Purpose | Confirmation of a consequential action (§48, §86) |
+| Props | `title`, `description` (the consequence), `confirmLabel` (explicit, never "OK"), `cancelLabel` (default "Cancel"), `tone` (`default` / `destructive`), `onConfirm`, `onCancel`, `isPending` (keeps it open), `trigger` or `isOpen` / `defaultOpen` / `onOpenChange`, `children` |
+| Behaviour | `role="alertdialog"`; **Cancel receives initial focus** (the safest action; scoped `jsx-a11y/no-autofocus` exception); a scrim click does not dismiss; Escape cancels; no close button; confirm closes it when uncontrolled |
+
+### Popover
+
+| Aspect | Contract |
+|---|---|
+| Purpose | Anchored supplementary content or a small interactive group |
+| Props | `trigger`, `title` or `aria-label` (an accessible name is required), `children`, `placement` (default `bottom start`), `size` (`sm` 256px / `md` 320px), `isOpen` / `defaultOpen` / `onOpenChange` |
+| Behaviour | labelled dialog; flips and shifts inside the viewport; Escape and outside interaction close it; focus returns to the trigger |
+
+### Tooltip
+
+| Aspect | Contract |
+|---|---|
+| Purpose | Short visible label for icon-only or truncated controls — never essential information |
+| Props | `content` (a few words), `children` (a focusable trigger with its own accessible name), `placement`, `delay` (hover, default 600 ms), `isDisabled` |
+| Behaviour | shows on hover after the delay and immediately on keyboard focus; Escape, blur and pointer leave hide it; `aria-describedby` on the trigger; `brand-primary` surface with `text-inverse` |
+
+### Drawer
+
+| Aspect | Contract |
+|---|---|
+| Purpose | Modal side, top or bottom panel: mobile filters, contextual and detail panels, mobile navigation (T00-08) (§47) |
+| Props | as Dialog (close label default "Close panel") + `side` (`left` / `right` default / `top` / `bottom`), `size` (`sm` / `md` / `lg` width from `tablet` for left/right) |
+| Responsive | left/right: full width on mobile, token width from `tablet`; top/bottom: full width, leaving 64px of the page visible; the slide-in is removed under reduced motion |
+
+### DropdownMenu and ContextMenu
+
+| Aspect | Contract |
+|---|---|
+| Items | `MenuEntry[]`: `{ id, label, description?, icon?, isDisabled?, tone?: "default" \| "destructive" }` or `{ id, type: "separator" }`; `onAction(id)` |
+| DropdownMenu | `trigger` (a named Button or IconButton; the menu is labelled by it — menu-button pattern), `items`, `onAction`, `placement`, `isOpen` / `onOpenChange` |
+| ContextMenu | `label` (menu name), `items`, `onAction`, `children` (the region). Opens on right-click at the pointer, or with Shift+F10 / the ContextMenu key at the focused element; focus returns to the element focused before opening. A shortcut only — every action must also be reachable another way (for example a row DropdownMenu) |
+| Keyboard | arrows (wrapping), Home/End, type-ahead, Enter/Space, Escape; opening with the keyboard focuses the first item; disabled items are skipped |
+| Visuals | items 44px below `tablet`, 40px above; destructive = error-coloured icon at rest and `error-text` on `error-surface` when focused. The label stays `text-primary` at rest because Dark `error-text` on `surface-elevated` is 3.79:1 (INC-24) |
+
+### Toast
+
+| Aspect | Contract |
+|---|---|
+| API | `toast.success` / `info` / `warning` / `error(title, { description?, action?, timeout?, onClose? })`, `toast.dismiss(key)`, `showToast(content, options, queue)`, `createToastQueue()` (max 3 visible), `ToastRegion({ queue?, label = "Notifications" })` |
+| Timing (WCAG 2.2.1) | success and info 5 s, warning 8 s; **error toasts and toasts with an action persist** until dismissed; timers pause while hovered or focused |
+| Accessibility | landmark region (F6), announced on arrival, tone icon + title (not colour alone), labelled "Dismiss notification" button, focus restored when the last toast closes |
+| Layout | fixed at the bottom; full width minus gutters on mobile, 384px at the bottom end from `tablet`; `z-(--z-toast)` |
+| Notes | built on React Aria's `UNSTABLE_Toast*` exports (1.21.1 pinned); the MTI 360 API insulates screens from upstream changes (INC-25). The global region is mounted by the application shell (T00-08) |
+
+### DataTable
+
+| Aspect | Contract |
+|---|---|
+| Purpose | Typed, controlled table foundation for T02 Data List (§44). It never fetches; the application owns data, sorting, selection and paging (server-side ready) |
+| Props | `label` (caption), `columns` (`id`, `header`, `cell(row)`, `isSortable`, `align`, `isRowHeader`, `visibleFrom`), `rows`, `getRowId`, `getRowLabel`, `sort` / `onSortChange`, `selectionMode` (`none` / `single` / `multiple`), `selectedIds` / `onSelectionChange`, `rowActions(row)`, `rowActionsLabel`, `isLoading` / `loadingLabel` / `loadingRows`, `error` (`title`, `description`, `onRetry`, `reference`), `emptyState`, `footer`, `mobileLayout` (`scroll` default / `cards`) |
+| Sorting | header buttons cycle ascending → descending → unsorted; `aria-sort` + icon |
+| Selection | the shared Checkbox; "Select all rows" with an indeterminate state; per row "Select {label}" |
+| States | loading (skeleton rows, `aria-busy`, polite status), error (ErrorState + retry), empty (EmptyState) |
+| Responsive | `scroll`: the table scrolls inside a focusable, labelled region (the page never overflows) and columns can be hidden below `tablet` / `desktop`; `cards`: each row becomes a card below `tablet` |
+
+### Pagination
+
+| Aspect | Contract |
+|---|---|
+| Props | `page` (1-based), `pageSize`, `totalItems`, `onPageChange`, `pageSizeOptions` + `onPageSizeChange` (rows-per-page Select), `label` (navigation name; unique on a page), `itemLabel`, `locale` (default `en-IN` number formatting) |
+| Behaviour | first / previous / next / last and page numbers with ellipses (`pageItems`); the current page has `aria-current="page"`; "Showing a–b of n" summary; compact "Page x of y" below `tablet` |
+
+### FilterBar
+
+| Aspect | Contract |
+|---|---|
+| Props | `search`, `filters`, `activeFilterCount`, `resultCount` (pre-formatted, announced politely), `onClear`, `onApply` (explicit apply), `label` |
+| Behaviour | composition only — no filter state and no business filters. Inline from `tablet`; on mobile a "Filters (n)" button opens the filters in a bottom Drawer with Clear and Apply/Done |
+
+### Search
+
+| Aspect | Contract |
+|---|---|
+| Props | React Aria SearchField props (`value` / `defaultValue` / `onChange`, `onSubmit`, `onClear`, `name`, `isDisabled`) + `label`, `isLabelHidden`, `placeholder`, `description`, `isLoading` / `loadingLabel`, `suggestions` slot |
+| Behaviour | `type="search"` with a clear button; Escape clears, Enter submits; never searches or debounces by itself; 44px below `tablet` |
+
+### RadioGroup
+
+| Aspect | Contract |
+|---|---|
+| Props | React Aria RadioGroup props (`value` / `defaultValue` / `onChange`, `name`, `orientation`, `isRequired`, `isDisabled`, `isInvalid`, `validate`) + `label`, `options` (`value`, `label`, `description?`, `isDisabled?`), `description`, `errorMessage` |
+| Behaviour | one Tab stop; arrow keys move and select; selected = ring + dot + weight; rows 44px below `tablet`; the value is in `FormData` |
+
+### Switch
+
+| Aspect | Contract |
+|---|---|
+| Purpose | An on/off setting that applies immediately (use Checkbox for choices submitted with a form) |
+| Props | React Aria Switch props (`isSelected` / `defaultSelected` / `onChange`, `name`, `isDisabled`) + `children` (label), `description`, `isInvalid` + `errorMessage` (linked; React Aria's Switch has no validation state) |
+| Visuals | `role="switch"`; thumb position + check mark, not colour alone; 44px row below `tablet` |
+
+### TimePicker
+
+| Aspect | Contract |
+|---|---|
+| Value | ISO `"HH:mm"` strings (24-hour, minute precision; `null` = empty); `@internationalized/date` stays internal; **no dates and no time zones** (INC-20). `FormData` receives React Aria's `"HH:mm:ss"` |
+| Props | `label`, `value` / `defaultValue` / `onChange`, `minValue` / `maxValue` (ISO), `validate(iso)`, `hourCycle` (12 / 24; `en-IN` default is 12-hour with leading zeros), `locale` (default `en-IN`), `name`, `isRequired`, `isDisabled`, `description`, `errorMessage`, `successMessage` |
+| Keyboard | segments are spinbuttons (digits, Up/Down, Tab, `a` / `p`); keyboard-first — React Aria has no time list |
+| Server rendering | literal segments normalise Unicode spaces (Node's ICU emits U+202F before am/pm, browsers may emit U+0020), so server and client text match and hydration does not fail |
+
 ## 4. Showcase — `/design-system` (decision D8)
 
-- Every 07A and 07B component in its variants and states, with realistic maritime sample data and the theme selector; a Student enquiry form (two columns from `desktop`, §84 actions, simulated server validation — nothing is submitted).
+- Every 07A, 07B and 07C component in its variants and states (07C sections in `showcase-overlays.tsx`, with a showcase-only toast queue and region), with realistic maritime sample data and the theme selector; a Student enquiry form (two columns from `desktop`, §84 actions, simulated server validation — nothing is submitted).
 - Available only when `APP_ENV` is `development` or `test`; any other value or an invalid configuration returns **404** (fail closed). `robots: noindex, nofollow`. Rendered per request (`force-dynamic`), so the runtime `APP_ENV` of the container decides.
 - Residual risk: `APP_ENV` defaults to `development` when unset (T00-04), so a deployment that omits it would expose this data-free gallery; deployed environments must set `APP_ENV` (environments.md).
 
@@ -246,3 +369,8 @@ Decisions (T00-07B proposal, approved): D1 `value`/`defaultValue`/`onChange` wit
 
 - Unit tests: Field/Form (blocked submit, first invalid field focused, server errors mapped and cleared once edited), controlled/uncontrolled and `FormData` for every control, keyboard models (Select, Combobox, Checkbox, DatePicker segments and calendar), ISO helpers, `en-IN` segment order, Monday-first default and Sunday override, server-render output, `validateFiles` matrix, FileUpload accept/reject/remove and no object URLs; axe with popovers open. jsdom needed no polyfills (D8).
 - Headless Chromium on the production image (`APP_ENV=test`): the 07A suite plus Select, Combobox and calendar popovers in Light and Dark at 390 and 1024 (axe, within viewport, option min-height), DatePicker typing → ISO, calendar keyboard, Escape focus return, Sunday override, FileUpload valid/denied/double-extension/oversized and no object URLs, enquiry form (first invalid focus, server error mapping, Space on checkbox), 44px controls on mobile, reduced motion, async combobox — 129/129 checks.
+
+## 7. Verification (T00-07C)
+
+- Unit tests for every 07C component, with axe while open: Dialog sizes, focus trap and return, Escape, scrim dismissal; AlertDialog Cancel focus, non-dismissable scrim, pending; Popover and Tooltip labelling; Drawer sides and scroll lock; DropdownMenu and ContextMenu keyboard models, Shift+F10, destructive tone, focus return; Toast queue, timing defaults, persistence, dismiss; DataTable sort cycle, single and multiple selection with indeterminate select-all, row actions, loading/empty/error, card layout; Pagination items and page size; FilterBar inline and mobile Drawer; Search clear/Escape/Enter; RadioGroup, Switch, TimePicker (ISO helpers, `en-IN` segments, 24-hour override, min/max/required + `FormData`, literal normalisation).
+- Headless Chromium on the production image (`APP_ENV=test`): the 07A and 07B suites plus, in Light and Dark at 390 / 768 / 1024 / 1440, Dialog, AlertDialog, Drawer, DropdownMenu, ContextMenu and Toast within the viewport with axe 0, focus trap and restoration, Escape, no page overflow, no console errors and no hydration errors; tooltip hover and focus, context menu via Shift+F10, DataTable sorting, selection, row actions and states, pagination, the mobile FilterBar Drawer, 44px controls on mobile and reduced motion — 343/343 checks. No axe exclusions were added for 07C (the only scoped exclusion remains the 07B Combobox note above).

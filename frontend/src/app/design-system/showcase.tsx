@@ -38,8 +38,9 @@ import {
 import { ThemeSelector } from "@/design-system/theme/ThemeSelector";
 
 import { FormsShowcase } from "./showcase-forms";
+import { OverlaysShowcase } from "./showcase-overlays";
 
-// Component showcase for T00-07A and T00-07B (development/test only; see gate.ts).
+// Component showcase for T00-07A, T00-07B and T00-07C (development/test only; see gate.ts).
 // Realistic maritime sample data (CLAUDE.md §61); nothing is fetched.
 
 const VARIANTS: ButtonVariant[] = [
@@ -124,7 +125,7 @@ export function Showcase() {
       <header className="flex flex-col gap-6 desktop:flex-row desktop:items-end desktop:justify-between">
         <div className="flex flex-col gap-2">
           <p className="text-caption font-semibold tracking-wide text-text-muted uppercase">
-            MTI 360 · T00-07A · T00-07B
+            MTI 360 · T00-07A · T00-07B · T00-07C
           </p>
           <h1 className="text-page-title text-text-primary">Design system</h1>
           <p className="max-w-2xl text-body text-text-secondary">
@@ -446,6 +447,7 @@ export function Showcase() {
       </Section>
 
       <FormsShowcase />
+      <OverlaysShowcase />
     </main>
   );
 }

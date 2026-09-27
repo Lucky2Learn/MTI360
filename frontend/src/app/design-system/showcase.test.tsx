@@ -67,7 +67,7 @@ describe("design-system showcase gate", () => {
 });
 
 describe("design-system showcase content", () => {
-  it("shows every T00-07A and T00-07B component section and passes axe", async () => {
+  it("shows every T00-07A, T00-07B and T00-07C component section and passes axe", async () => {
     const { container } = render(
       <ThemeProvider>
         <Showcase />
@@ -97,6 +97,21 @@ describe("design-system showcase content", () => {
       "DatePicker",
       "FileUpload",
       "Student enquiry form",
+      "Dialog",
+      "AlertDialog",
+      "Popover",
+      "Tooltip",
+      "Drawer",
+      "Dropdown Menu",
+      "Context Menu",
+      "Toast",
+      "DataTable",
+      "Pagination",
+      "FilterBar",
+      "Search",
+      "Radio",
+      "Switch",
+      "TimePicker",
     ]) {
       expect(
         screen.getByRole("heading", { level: 2, name }),

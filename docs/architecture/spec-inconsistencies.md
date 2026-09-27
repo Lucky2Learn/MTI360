@@ -139,6 +139,7 @@
 - **Status:** `OPEN` (handled by T00-07 decisions D9 and D12; specifications unchanged)
 - **Where:** TASKS.md T00-07 (23 components) vs DESIGN-SYSTEM.md §69 and CLAUDE.md §26 (also IconButton, TimePicker, Checkbox, Radio, Switch, Textarea, Search, PermissionGate, AccessDenied …); TASKS.md lists **Modal** and **Dialog** separately while DESIGN-SYSTEM.md §48 treats "Modals / Dialogs" as one pattern.
 - **Current handling:** T00-07 adds IconButton (07A), Textarea and Checkbox (07B) because listed components need them, and defers Radio group, Switch, TimePicker, Search input and PermissionGate/AccessDenied (D12). Modal = generic modal container (sheet on mobile); Dialog = confirmation `alertdialog` built on Modal (D9, 07C).
+- **T00-07C update:** the T00-07C implementation prompt set the overlay names used in code: **Dialog** is the generic modal (TASKS.md "Modal"; sizes sm–xl) and **AlertDialog** is the confirmation `alertdialog` (TASKS.md "Dialog"). It also brought Radio group, Switch, TimePicker and Search into 07C and added Popover, Tooltip, DropdownMenu and ContextMenu. Still deferred: PermissionGate / AccessDenied and ChartCard (INC-19).
 - **Proposed resolution:** Align the TASKS.md and DESIGN-SYSTEM.md component lists and state the Modal/Dialog distinction in DESIGN-SYSTEM.md.
 
 ## INC-19 — Chart palette and chart library undefined
@@ -146,7 +147,7 @@
 - **Status:** `OPEN` (T00-07 decision D11)
 - **Where:** DESIGN-SYSTEM.md §52 ("Charts should use the MTI 360 palette"), §89
 - **Issue:** No categorical or sequential chart palette and no chart library are defined.
-- **Current handling:** ChartCard (07C) is a frame only (title, legend slot, states, accessible summary and data-table alternative); no chart library or chart tokens are added in T00-07.
+- **Current handling:** No chart library or chart tokens are added in T00-07. ChartCard, planned for 07C as a frame only (title, legend slot, states, accessible summary and data-table alternative), was not part of the T00-07C implementation scope and is **deferred** to the first chart/dashboard task.
 - **Proposed resolution:** Define chart palette tokens (Light/Dark, contrast-checked) and choose a chart library with the first chart screen.
 
 ## INC-20 — Locale, date and currency formats unspecified
@@ -155,7 +156,8 @@
 - **Where:** PRD.md, UI-SCREENS.md (no formats); PLATFORM-ADMIN.md tenant settings (Timezone, Currency); product context India (DGS)
 - **Current handling:** Components accept pre-formatted values (KPI, Timeline). DatePicker (07B) formats with locale `en-IN` (DD/MM/YYYY) by default, with a `locale` prop; no timezone conversion in components.
 - **T00-07B update — first day of the week:** locale and first day of the week are treated as **separate settings**. The MTI 360 **product default is Monday-first** (T00-07 D10, confirmed by T00-07B D3), even though the CLDR default for `en-IN` is Sunday. DatePicker therefore uses `en-IN` formatting with `firstDayOfWeek="mon"` by default and accepts an explicit `firstDayOfWeek` override. The specifications do not state a first-day convention.
-- **Proposed resolution:** Specify default locale, date/time and currency formatting, the first day of the week (and whether tenants may change it), and how tenant Timezone/Currency settings apply (Phase 03).
+- **T00-07C update — times:** TimePicker uses ISO `"HH:mm"` values (no dates, no time zones) and `en-IN` display, which is 12-hour with leading zeros and lower-case am/pm; `hourCycle` overrides the clock. Pagination formats numbers with `en-IN`. The specifications define no time format and no 12/24-hour convention.
+- **Proposed resolution:** Specify default locale, date/time and currency formatting, the 12/24-hour convention, the first day of the week (and whether tenants may change it), and how tenant Timezone/Currency settings apply (Phase 03).
 
 ## INC-21 — Button "Tertiary" vs "Ghost" not defined
 
@@ -180,3 +182,19 @@
 - **Issue:** Neither the presentation of the required indicator nor when a success state is shown is defined.
 - **Current handling:** a visible `*` after the label (hidden from assistive technology) plus the programmatic required state, and a "* Required field" note on forms; success is opt-in (`successMessage`: icon + text), never automatic.
 - **Proposed resolution:** Document both conventions in DESIGN-SYSTEM.md §42.
+
+## INC-24 — Dark error text on elevated surfaces below 4.5:1
+
+- **Status:** `OPEN` (found in T00-07C browser verification; tokens unchanged)
+- **Where:** `tokens/semantic.css` (Dark: `error-text` = `error-400` #CF7A7A; `surface-elevated` = `ocean-800` #073B57); DESIGN-SYSTEM.md §8 (semantic colours), CLAUDE.md §38 (WCAG 2.2 AA)
+- **Issue:** In Dark mode `error-text` on `surface-elevated` (menus, popovers, dialogs) is 3.79:1 — below 4.5:1 for normal text. It passes on `surface-primary` and on `error-surface` (4.79:1). The other state `*-text` tokens were not assessed on `surface-elevated` in T00-06.
+- **Current handling:** No token change (a T00-07C stop condition). Destructive menu items keep the label in `text-primary` at rest with an error-coloured icon (non-text, ≥ 3:1) and show `error-text` only on the `error-surface` focus background. Components must not place `*-text` state text directly on `surface-elevated` in Dark mode.
+- **Proposed resolution:** Add a contrast-checked Dark state-text step for elevated surfaces (or lighten `error-text`) in a token task, and extend the token contrast tests to `surface-elevated`.
+
+## INC-25 — Toast, tooltip and context-menu conventions unspecified
+
+- **Status:** `OPEN` (T00-07C)
+- **Where:** DESIGN-SYSTEM.md §49 (notifications), §74; no specification of tooltip or context-menu usage
+- **Issue:** The specifications define no toast durations, stacking limit, placement, persistence rules or action behaviour, and no rules for tooltips or context menus.
+- **Current handling:** Toasts: success/info 5 s, warning 8 s, error and toasts with an action persist until dismissed (WCAG 2.2.1), at most 3 visible, bottom placement (bottom-end from `tablet`), timers paused on hover/focus. Toasts use React Aria's `UNSTABLE_Toast*` exports (1.21.1 pinned) behind the MTI 360 API. Tooltips: 600 ms hover delay, immediate on keyboard focus, never the only source of information. Context menus: right-click, Shift+F10 and the ContextMenu key; a shortcut only — every action must be reachable another way.
+- **Proposed resolution:** Document these conventions in DESIGN-SYSTEM.md §49/§74; re-check the Toast wrapper when React Aria stabilises the toast API.
