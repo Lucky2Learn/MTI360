@@ -40,7 +40,7 @@ env:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Repository: landing-page integrity, environment hygiene
+  # Repository: landing-page integrity, environment hygiene, workflow linting
   # ---------------------------------------------------------------------------
   repo:
     name: repo
@@ -67,6 +67,14 @@ jobs:
 
       - name: Environment template and secret hygiene
         run: pnpm run check:env
+
+      - name: Install actionlint (pinned, checksum-verified)
+        run: |
+          bash scripts/ci/install-tool.sh actionlint "${RUNNER_TEMP}/bin"
+          echo "${RUNNER_TEMP}/bin" >> "${GITHUB_PATH}"
+
+      - name: Lint workflows (actionlint + shellcheck of run blocks)
+        run: actionlint -color
 
   # ---------------------------------------------------------------------------
   # Frontend: frozen install, format, lint, typecheck, tests, Next.js build
@@ -157,13 +165,39 @@ jobs:
         run: pnpm run test:backend
 
   # ---------------------------------------------------------------------------
+  # Secrets: gitleaks over the FULL history of every ref, plus a self-test
+  # proving detection and that the allowlist in .gitleaks.toml is narrow.
+  # ---------------------------------------------------------------------------
+  secrets:
+    name: secrets
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout (full history, all refs)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install gitleaks (pinned, checksum-verified)
+        run: |
+          bash scripts/ci/install-tool.sh gitleaks "${RUNNER_TEMP}/bin"
+          echo "${RUNNER_TEMP}/bin" >> "${GITHUB_PATH}"
+
+      - name: Scan full git history (all refs, values redacted)
+        run: gitleaks git --log-opts="--all" --redact --no-banner --config .gitleaks.toml .
+
+      - name: Detection self-test (runtime-generated fixtures, never committed)
+        run: bash scripts/ci/gitleaks-selftest.sh
+
+  # ---------------------------------------------------------------------------
   # Single required status. Passes only when every required job succeeded;
   # failure, cancellation or skipping of any job fails ci-ok.
   # ---------------------------------------------------------------------------
   ci-ok:
     name: ci-ok
     if: always()
-    needs: [repo, frontend, backend]
+    needs: [repo, frontend, backend, secrets]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
