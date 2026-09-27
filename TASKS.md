@@ -472,7 +472,7 @@ Skeleton
 
 ### T00-07 Update (2026-09-27)
 
-**Status:** IN_PROGRESS — delivered in three slices (decision D1): **07A** COMPLETED (merged to `main` via PR #7, merge commit `8a370a4`); **07B** forms READY_FOR_REVIEW (branch `feat/T00-07b-form-components`, based on `main` at `8a370a4`); **07C** overlays/data NOT_STARTED.
+**Status:** IN_PROGRESS — delivered in three slices (decision D1): **07A** COMPLETED (merged to `main` via PR #7, merge commit `8a370a4`); **07B** forms COMPLETED (merged via PR #8, merge commit `1b8740c`); **07C** overlays, data and interaction controls READY_FOR_REVIEW (branch `feat/T00-07c-overlays-data`, based on `main` at `1b8740c`).
 
 **Approved decisions (D1–D14):** D1 three slices, each with its own PR and merge commit; D2 React Aria Components 1.21.1 (ADR-0008); D3 Lucide 1.47.0 via `design-system/icons`; D4 local `cx()` and typed variant maps; D5 semantic `surface-hover`, `surface-selected`, `brand-primary-hover`, `success-strong`, `error-strong`, `overlay-scrim` plus a component-token layer (control heights 32/40/44, focus ring, z-index); D6 guards (no arbitrary values, React Aria/Lucide boundaries, no raw HTML); D7 user-event and axe-core; D8 `/design-system` showcase for development/test only; D9 Modal = container, Dialog = confirmation on Modal; D10 default locale `en-IN`; D11 ChartCard is a frame, no chart library; D12 add IconButton/Textarea/Checkbox, defer Radio/Switch/TimePicker/Search/PermissionGate; D13 tertiary = text-style, ghost = hover surface, success uses `success-strong`; D14 Toast region mounted by T00-08. Details: `docs/architecture/components.md`, `docs/adr/0008-headless-primitives-and-icons.md`; INC-18 … INC-21.
 
@@ -495,6 +495,17 @@ Skeleton
 * DatePicker: DD/MM/YYYY for `en-IN`, ISO API, Monday-first default, `firstDayOfWeek` override, min/max/unavailable validation, no hydration warnings.
 * FileUpload: D7 rules enforced and tested; no transport, previews or object URLs.
 * No new dependencies or tokens; guards pass; no backend, database, Docker, compose, CI, environment template, ADR, DESIGN-SYSTEM.md or landing-page changes.
+
+**07C scope (T00-07C implementation prompt):** Dialog/Modal (sm–xl), AlertDialog, Popover, Tooltip and shared overlay infrastructure; Drawer (left/right/top/bottom), DropdownMenu, ContextMenu, Toast; DataTable (typed, sorting, single/multiple selection with indeterminate select-all, row actions, loading/empty/error, responsive) and Pagination; FilterBar (mobile Drawer), Search, Radio, Switch, TimePicker (`en-IN`, `@internationalized/date`, no time zones). This brings Radio, Switch, TimePicker and Search forward from the D12 deferral. ChartCard (D11) is not in the 07C scope and is deferred (INC-19); PermissionGate/AccessDenied remain deferred. Naming: `Dialog` = TASKS.md "Modal", `AlertDialog` = TASKS.md "Dialog" (INC-18).
+
+**07C acceptance criteria:**
+
+* All 07C components exist with contracts in `components.md` (§3C); 07A/07B public APIs unchanged.
+* Overlays: focus moves in, is trapped (modals) and returns; Escape closes; AlertDialog focuses the safest action and ignores scrim clicks; overlays stay inside the viewport at 390/768/1024/1440; reduced motion removes transitions.
+* Toast: announced region, error and action toasts persist (WCAG 2.2.1), dismiss button, not colour alone.
+* DataTable: sorting with `aria-sort`, selection with indeterminate select-all through the shared Checkbox, row actions, loading/empty/error states, no page overflow on mobile.
+* Keyboard models, visible focus, 44px targets on mobile; axe 0 violations in Light and Dark (unit tests while open; browser incl. contrast) without new exclusions; no hydration warnings or console errors.
+* No new dependencies or tokens; guards pass; no backend, database, Docker, compose, CI, environment template, ADR, DESIGN-SYSTEM.md or landing-page changes; INC-18/19/20 updated, INC-24 and INC-25 recorded.
 
 ---
 
