@@ -55,7 +55,8 @@ MTI360/
 │       │   ├── tokens/                ✅ primitives, semantic Light + Dark, Tailwind @theme (T00-06)
 │       │   ├── theme/                 ✅ Light / Dark / System + pre-paint script, ThemeSelector (T00-06)
 │       │   ├── typography/            ✅ self-hosted Inter (T00-06)
-│       │   ├── components/            ✅ 07A: Button, IconButton, Card, Badge, Tabs, Kpi, Timeline, Alert, Skeleton, EmptyState, ErrorState (T00-07)
+│       │   ├── components/            ✅ 07A: Button, IconButton, Card, Badge, Tabs, Kpi, Timeline, Alert, Skeleton, EmptyState, ErrorState;
+│       │   │                          07B: Field/Form, Input, Textarea, Checkbox, Select, Combobox, DatePicker, FileUpload (T00-07)
 │       │   ├── icons/  lib/  testing/ ✅ Lucide set, cx/focusRing, axe helper (T00-07)
 │       │   └── templates/             T01 … T18
 │       ├── shells/                    PlatformShell, TenantShell, StudentShell, PublicSiteShell
