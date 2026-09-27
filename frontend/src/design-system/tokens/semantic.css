@@ -1,0 +1,197 @@
+/*
+ * MTI 360 — semantic tokens with Light and Dark mappings (T00-06)
+ *
+ * Layer 2 of 3: primitives (primitives.css) → semantic → Tailwind theme (tailwind.css).
+ *
+ * Names follow DESIGN-SYSTEM.md §10. Every token has a Light and a Dark mapping
+ * and references primitives only (enforced by tokens.test.ts). Dark mode is a
+ * designed mapping (§12), never an inversion of Light.
+ *
+ * Theme selection (design-system/theme): the pre-paint script sets
+ * data-theme="light" | "dark" on <html> before first paint. Without JavaScript
+ * no data-theme is set and the operating-system preference applies through the
+ * prefers-color-scheme fallback, which MUST stay identical to the Dark block
+ * (enforced by tokens.test.ts).
+ *
+ * Contrast (WCAG 2.2 AA) of every text / non-text pair is verified in both
+ * themes by tokens.test.ts: docs/architecture/design-tokens.md.
+ */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Page backgrounds */
+  --background-primary: var(--pearl-50);
+  --background-secondary: var(--ice-50);
+
+  /* Surfaces */
+  --surface-primary: var(--white);
+  --surface-secondary: var(--pearl-100);
+  --surface-elevated: var(--white);
+
+  /* Text */
+  --text-primary: var(--ocean-900);
+  --text-secondary: var(--ink-700);
+  --text-muted: var(--ink-600);
+  --text-inverse: var(--pearl-50);
+  --link: var(--seaglass-800);
+
+  /* Borders and focus */
+  --border-subtle: var(--pearl-200);
+  --border-default: var(--ice-200);
+  --border-strong: var(--ink-400);
+  --focus-ring: var(--seaglass-700);
+
+  /* Brand and accents */
+  --brand-primary: var(--ocean-800);
+  --brand-secondary: var(--ocean-700);
+  --accent-maritime: var(--seaglass-700);
+  --accent-brass: var(--brass-600);
+
+  /* Semantic states: <state> = icon/indicator (non-text, >= 3:1), -surface = background, -text = text (>= 4.5:1) */
+  --success: var(--success-600);
+  --success-surface: var(--success-100);
+  --success-text: var(--success-700);
+  --warning: var(--warning-600);
+  --warning-surface: var(--warning-100);
+  --warning-text: var(--warning-700);
+  --error: var(--error-600);
+  --error-surface: var(--error-100);
+  --error-text: var(--error-700);
+  --info: var(--info-600);
+  --info-surface: var(--info-100);
+  --info-text: var(--info-700);
+
+  /* AI (restrained; DESIGN-SYSTEM.md §8) */
+  --ai-primary: var(--ai-600);
+  --ai-surface: var(--ai-100);
+  --ai-border: var(--ai-300);
+
+  /* Elevation (DESIGN-SYSTEM.md §35): border + subtle shadow */
+  --elevation-sm: 0 1px 2px color-mix(in srgb, var(--ocean-900) 6%, transparent);
+  --elevation-md: 0 2px 8px color-mix(in srgb, var(--ocean-900) 8%, transparent);
+  --elevation-lg: 0 8px 24px
+    color-mix(in srgb, var(--ocean-900) 12%, transparent);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Page backgrounds */
+  --background-primary: var(--midnight-950);
+  --background-secondary: var(--midnight-900);
+
+  /* Surfaces */
+  --surface-primary: var(--midnight-800);
+  --surface-secondary: var(--ocean-900);
+  --surface-elevated: var(--ocean-800);
+
+  /* Text */
+  --text-primary: var(--pearl-50);
+  --text-secondary: var(--mist-300);
+  --text-muted: var(--mist-400);
+  --text-inverse: var(--midnight-950);
+  --link: var(--seaglass-500);
+
+  /* Borders and focus */
+  --border-subtle: var(--mist-800);
+  --border-default: var(--mist-850);
+  --border-strong: var(--mist-600);
+  --focus-ring: var(--seaglass-500);
+
+  /* Brand and accents */
+  --brand-primary: var(--seaglass-500);
+  --brand-secondary: var(--ocean-700);
+  --accent-maritime: var(--seaglass-500);
+  --accent-brass: var(--brass-500);
+
+  /* Semantic states: <state> = icon/indicator (non-text, >= 3:1), -surface = background, -text = text (>= 4.5:1) */
+  --success: var(--success-400);
+  --success-surface: var(--success-950);
+  --success-text: var(--success-400);
+  --warning: var(--warning-400);
+  --warning-surface: var(--warning-950);
+  --warning-text: var(--warning-400);
+  --error: var(--error-400);
+  --error-surface: var(--error-950);
+  --error-text: var(--error-400);
+  --info: var(--info-400);
+  --info-surface: var(--info-950);
+  --info-text: var(--info-400);
+
+  /* AI (restrained; DESIGN-SYSTEM.md §8) */
+  --ai-primary: var(--ai-400);
+  --ai-surface: var(--ai-950);
+  --ai-border: var(--ai-800);
+
+  /* Elevation (DESIGN-SYSTEM.md §35): surface contrast + border; near-zero shadow */
+  --elevation-sm: 0 1px 2px
+    color-mix(in srgb, var(--midnight-950) 30%, transparent);
+  --elevation-md: 0 2px 8px
+    color-mix(in srgb, var(--midnight-950) 35%, transparent);
+  --elevation-lg: 0 8px 24px
+    color-mix(in srgb, var(--midnight-950) 45%, transparent);
+}
+
+/* No-JavaScript fallback: follow the operating system (identical to the Dark block). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+
+    /* Page backgrounds */
+    --background-primary: var(--midnight-950);
+    --background-secondary: var(--midnight-900);
+
+    /* Surfaces */
+    --surface-primary: var(--midnight-800);
+    --surface-secondary: var(--ocean-900);
+    --surface-elevated: var(--ocean-800);
+
+    /* Text */
+    --text-primary: var(--pearl-50);
+    --text-secondary: var(--mist-300);
+    --text-muted: var(--mist-400);
+    --text-inverse: var(--midnight-950);
+    --link: var(--seaglass-500);
+
+    /* Borders and focus */
+    --border-subtle: var(--mist-800);
+    --border-default: var(--mist-850);
+    --border-strong: var(--mist-600);
+    --focus-ring: var(--seaglass-500);
+
+    /* Brand and accents */
+    --brand-primary: var(--seaglass-500);
+    --brand-secondary: var(--ocean-700);
+    --accent-maritime: var(--seaglass-500);
+    --accent-brass: var(--brass-500);
+
+    /* Semantic states: <state> = icon/indicator (non-text, >= 3:1), -surface = background, -text = text (>= 4.5:1) */
+    --success: var(--success-400);
+    --success-surface: var(--success-950);
+    --success-text: var(--success-400);
+    --warning: var(--warning-400);
+    --warning-surface: var(--warning-950);
+    --warning-text: var(--warning-400);
+    --error: var(--error-400);
+    --error-surface: var(--error-950);
+    --error-text: var(--error-400);
+    --info: var(--info-400);
+    --info-surface: var(--info-950);
+    --info-text: var(--info-400);
+
+    /* AI (restrained; DESIGN-SYSTEM.md §8) */
+    --ai-primary: var(--ai-400);
+    --ai-surface: var(--ai-950);
+    --ai-border: var(--ai-800);
+
+    /* Elevation (DESIGN-SYSTEM.md §35): surface contrast + border; near-zero shadow */
+    --elevation-sm: 0 1px 2px
+      color-mix(in srgb, var(--midnight-950) 30%, transparent);
+    --elevation-md: 0 2px 8px
+      color-mix(in srgb, var(--midnight-950) 35%, transparent);
+    --elevation-lg: 0 8px 24px
+      color-mix(in srgb, var(--midnight-950) 45%, transparent);
+  }
+}
