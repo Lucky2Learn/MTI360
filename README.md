@@ -31,7 +31,7 @@ MTI 360 is **one product with four experiences**:
 
 ## Current status
 
-> **No product functionality has been implemented yet.** The development toolchain (T00-02), local Docker infrastructure (T00-03), validated per-environment configuration (T00-04), CI (T00-05) and the design-token foundation with Light/Dark/System themes (T00-06) exist; the frontend has only a neutral token-styled root page and the backend only a `/health` liveness endpoint. No database schema, authentication or tenancy exists.
+> **No product functionality has been implemented yet.** The development toolchain (T00-02), local Docker infrastructure (T00-03), validated per-environment configuration (T00-04), CI (T00-05), the design-token foundation with Light/Dark/System themes (T00-06) and the first component-library slice (T00-07A) exist; the frontend has only a neutral token-styled root page and a development-only component showcase and the backend only a `/health` liveness endpoint. No database schema, authentication or tenancy exists.
 
 | Area | Status |
 |---|---|
@@ -41,8 +41,9 @@ MTI 360 is **one product with four experiences**:
 | T00-03 Docker Development Environment | `COMPLETED` (merged, PR #3) |
 | T00-04 Environment Configuration | `COMPLETED` (merged, PR #4) |
 | T00-05 CI Foundation | `COMPLETED` (merged, PR #5) |
-| T00-06 Design Token Foundation | `READY_FOR_REVIEW` |
-| Phase 00 Foundation (T00-07 … T00-10) | Not started |
+| T00-06 Design Token Foundation | `COMPLETED` (merged, PR #6) |
+| T00-07 Core Component Library | `IN_PROGRESS` — 07A `READY_FOR_REVIEW`; 07B, 07C not started |
+| Phase 00 Foundation (T00-08 … T00-10) | Not started |
 | Product features (screens, APIs, database, auth, tenancy) | Not started |
 
 The live tracker is [DEVELOPMENT-STATUS.md](DEVELOPMENT-STATUS.md).

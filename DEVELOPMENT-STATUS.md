@@ -107,7 +107,7 @@ M0 — Foundation Ready
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-09-27:** T00-01 … T00-05 are `COMPLETED` (merged to `main`; T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5). T00-06 (Design Token Foundation) is `READY_FOR_REVIEW`. Only the toolchain, local infrastructure, validated environment configuration, CI, design tokens with the Light/Dark/System theme and a neutral page / `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
+> **2026-09-27:** T00-01 … T00-06 are `COMPLETED` (merged to `main`; T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6). T00-07 (Core Component Library) is `IN_PROGRESS`: slice 07A is `READY_FOR_REVIEW`. Only the toolchain, local infrastructure, validated environment configuration, CI, design tokens with the Light/Dark/System theme, the first component slice, a development-only showcase and a neutral page / `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
 
 ---
 
@@ -183,7 +183,7 @@ IN_PROGRESS
 ## Phase Completion
 
 ```text
-5 / 10 tasks completed (T00-01 … T00-05 COMPLETED; T00-06 READY_FOR_REVIEW)
+6 / 10 tasks completed (T00-01 … T00-06 COMPLETED; T00-07 IN_PROGRESS — 07A READY_FOR_REVIEW)
 ```
 
 ---
@@ -444,7 +444,7 @@ Landing page SHA-256 unchanged. ACRS unchanged (listing comparison).
 
 ### T00-06 — Design Token Foundation
 
-**Status:** `READY_FOR_REVIEW` (branch `feat/T00-06-design-tokens`, based on `main` at `e335502`; not pushed)
+**Status:** `COMPLETED` (merged to `main` via PR #6, merge commit `0f4346b`)
 
 **Implementation:**
 
@@ -495,18 +495,39 @@ Landing page SHA-256 unchanged. ACRS unchanged (listing comparison).
 
 ### T00-07 — Core Component Library
 
-**Status:** `NOT_STARTED`
+**Status:** `IN_PROGRESS` — **07A** `READY_FOR_REVIEW` (branch `feat/T00-07a-components-foundation`, based on `main` at `0f4346b`; not pushed); **07B** (forms) and **07C** (overlays, data) `NOT_STARTED`
 
-**Implementation:**
+**Implementation (07A):**
 
 ```text
-Not started
+Dependencies: react-aria-components 1.21.1, @internationalized/date 3.12.4,
+  lucide-react 1.47.0; dev @testing-library/user-event 14.6.7, axe-core 4.13.0
+Infrastructure: lib/cx.ts (cx, focusRing), icons/ (curated Lucide set),
+  testing/axe.ts, tokens/components.css (control heights 32/40/44 with 44 px
+  medium below tablet, focus ring, z-index); semantic surface-hover,
+  surface-selected, brand-primary-hover, success-strong, error-strong,
+  overlay-scrim (+ derived seaglass-950/400); guard extensions
+Components: Button, IconButton, Card, Badge, Tabs, KPI, Timeline, Alert,
+  Skeleton (+ LoadingRegion), EmptyState, ErrorState
+Showcase: /design-system (development/test only, 404 otherwise, noindex)
+Docs: components.md (contracts), ADR-0008, INC-18..INC-21
 ```
 
-**Verification:**
+**Verification (07A):**
 
 ```text
-Not verified
+pnpm check: PASS (frontend 305 tests incl. axe on every component, token
+  contrast matrix with new tokens, guards with detector fixtures, showcase
+  gate matrix; backend 139). Guard negative check: planted arbitrary value,
+  lucide/React Aria imports and raw HTML all fail.
+Headless Chromium 1.63 on the production image (APP_ENV=test): 70/70 -
+  Light and Dark at 390/768/1024/1440 with axe (WCAG 2.2 AA incl. contrast)
+  0 violations, no overflow, no console warnings, no external requests;
+  keyboard activation, focus ring in the token colour, tabs keyboard model,
+  pending/disabled, 44 px controls on mobile, reduced motion, neutral page
+  regression; APP_ENV=production: /design-system 404.
+Clean clone, gitleaks, Docker build + API smoke: PASS. Landing page
+  unchanged. ACRS unchanged (listing comparison).
 ```
 
 ---
@@ -1200,16 +1221,16 @@ A screen is only considered implemented when its required underlying behavior is
 | CampusSwitcher | `NOT_STARTED` |
 | NotificationCenter | `NOT_STARTED` |
 | UserMenu | `NOT_STARTED` |
-| Button | `NOT_STARTED` |
-| IconButton | `NOT_STARTED` |
+| Button | `READY_FOR_REVIEW` (T00-07A) |
+| IconButton | `READY_FOR_REVIEW` (T00-07A) |
 | Input | `NOT_STARTED` |
 | Select | `NOT_STARTED` |
 | Combobox | `NOT_STARTED` |
 | DatePicker | `NOT_STARTED` |
 | FileUpload | `NOT_STARTED` |
-| Tabs | `NOT_STARTED` |
-| Card | `NOT_STARTED` |
-| Badge | `NOT_STARTED` |
+| Tabs | `READY_FOR_REVIEW` (T00-07A) |
+| Card | `READY_FOR_REVIEW` (T00-07A) |
+| Badge | `READY_FOR_REVIEW` (T00-07A) |
 | DataTable | `NOT_STARTED` |
 | FilterBar | `NOT_STARTED` |
 | Pagination | `NOT_STARTED` |
@@ -1217,13 +1238,13 @@ A screen is only considered implemented when its required underlying behavior is
 | Modal | `NOT_STARTED` |
 | Dialog | `NOT_STARTED` |
 | Toast | `NOT_STARTED` |
-| Alert | `NOT_STARTED` |
-| Timeline | `NOT_STARTED` |
-| KPI | `NOT_STARTED` |
+| Alert | `READY_FOR_REVIEW` (T00-07A) |
+| Timeline | `READY_FOR_REVIEW` (T00-07A) |
+| KPI | `READY_FOR_REVIEW` (T00-07A) |
 | ChartCard | `NOT_STARTED` |
-| EmptyState | `NOT_STARTED` |
-| ErrorState | `NOT_STARTED` |
-| Skeleton | `NOT_STARTED` |
+| EmptyState | `READY_FOR_REVIEW` (T00-07A) |
+| ErrorState | `READY_FOR_REVIEW` (T00-07A) |
+| Skeleton | `READY_FOR_REVIEW` (T00-07A) |
 | PermissionGate | `NOT_STARTED` |
 
 ---
@@ -1293,7 +1314,8 @@ A screen is only considered implemented when its required underlying behavior is
 | Local Docker Infrastructure (T00-03) | `COMPLETED` |
 | Environment Configuration (T00-04) | `COMPLETED` |
 | CI Foundation (T00-05) | `COMPLETED` |
-| Design Token Foundation (T00-06) | `READY_FOR_REVIEW` |
+| Design Token Foundation (T00-06) | `COMPLETED` |
+| Core Component Library (T00-07) | `IN_PROGRESS` (07A `READY_FOR_REVIEW`) |
 | Architecture Decision Records | `READY_FOR_REVIEW` (ADR-0001 … ADR-0006) |
 | Production Implementation | `NOT_STARTED` |
 
@@ -1500,6 +1522,12 @@ Four environments validated at startup. D1: database TLS (`ssl=require` or stric
 
 ---
 
+### DEC-021 — Core Component Library (T00-07 D1–D14, ADR-0008)
+
+Delivered in three slices (07A infrastructure/display/states, 07B forms, 07C overlays/data), each with its own PR and merge commit. React Aria Components as the headless primitive layer and Lucide as the single icon family, both behind design-system boundaries enforced by tests. Component-token layer and new interaction tokens; no arbitrary Tailwind values. `/design-system` showcase only in development/test. Spec inconsistencies INC-18 … INC-21 recorded. See `docs/architecture/components.md`.
+
+---
+
 ### DEC-020 — Design Token Foundation (T00-06 D1–D10, ADR-0007)
 
 Tailwind CSS 4.3 (CSS-first `@theme`) over three token layers: primitives (DESIGN-SYSTEM.md palette verbatim + documented derived mixes; the only raw colours) → semantic tokens with separate Light and Dark mappings switched by `data-theme` → Tailwind utilities; Tailwind defaults removed; no `dark:` in components. Self-hosted Inter; system monospace. Theme preference `light | dark | system` in `localStorage` (`mti360.theme`, default `system`) applied by a pre-paint script; per-user persistence in Phase 01. Contrast conflicts of specification colours recorded as INC-17 (DESIGN-SYSTEM.md unchanged). See `docs/architecture/design-tokens.md`.
@@ -1531,6 +1559,8 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-09-27 | T00-05 CI Foundation implemented | `READY_FOR_REVIEW` on `feat/T00-05-ci-foundation`; CI with required `ci-ok`, secret scanning, Docker smoke test |
 | 2026-09-27 | T00-05 merged to `main` (PR #5, `e335502`) | `COMPLETED` |
 | 2026-09-27 | T00-06 Design Token Foundation implemented | `READY_FOR_REVIEW` on `feat/T00-06-design-tokens`; tokens, Tailwind v4, Light/Dark/System theme |
+| 2026-09-27 | T00-06 merged to `main` (PR #6, `0f4346b`) | `COMPLETED` |
+| 2026-09-27 | T00-07A components foundation implemented | `READY_FOR_REVIEW` on `feat/T00-07a-components-foundation`; 11 components, React Aria, Lucide, showcase |
 
 ---
 
@@ -1997,14 +2027,79 @@ Review T00-06 -> push, PR, CI, merge commit -> T00-07 Core Component Library
 
 ---
 
+## 2026-09-27 — T00-07A Core Component Library: foundation slice
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+First of three T00-07 slices: React Aria Components and Lucide behind design-system boundaries, component infrastructure (cx/focusRing, icon set, axe helper, component tokens, interaction tokens, stronger guards) and eleven components — Button, IconButton, Card, Badge, Tabs, KPI, Timeline, Alert, Skeleton, EmptyState, ErrorState — with a development/test-only showcase.
+
+**Files:**
+
+```text
+Created: frontend/src/design-system/{components/*, icons/, lib/, testing/,
+  tokens/components.css}, frontend/src/app/design-system/{page,showcase,gate,
+  showcase.test}, docs/architecture/components.md,
+  docs/adr/0008-headless-primitives-and-icons.md
+Changed: frontend/package.json, pnpm-lock.yaml (additions only),
+  tokens/{primitives,semantic,tailwind}.css, tokens/{tokens,guard}.test.ts,
+  app/globals.css, design-system/README.md, frontend/README.md, README.md,
+  ARCHITECTURE.md (§5 note), docs/README.md,
+  docs/architecture/{design-tokens,repository-structure,toolchain,
+  spec-inconsistencies}.md, TASKS.md, DEVELOPMENT-STATUS.md
+Unchanged (verified): backend, database, Docker/compose, CI workflows,
+  environment templates, ADR-0001..0007, DESIGN-SYSTEM.md, theme runtime,
+  root layout, neutral page, index.html, app.js, styles.css; ACRS
+```
+
+**Database / API / UI:**
+
+```text
+Database / API: none. UI: 11 library components and the /design-system
+showcase (development/test only); no product screens.
+```
+
+**Tests:**
+
+```text
+Frontend 305 passed (was 193). Backend 139 passed. pnpm check passes.
+Headless Chromium verification 70/70.
+```
+
+**Known Issues:**
+
+```text
+Specification gaps recorded, not resolved: INC-18 (component list, Modal vs
+Dialog), INC-19 (chart palette), INC-20 (locale formats), INC-21 (tertiary
+vs ghost). Filled destructive/success hover is an elevation change (no
+dedicated hover colour token). React Aria Link navigates without client-side
+routing until T00-08 adds a RouterProvider. The showcase is exposed if a
+deployment omits APP_ENV (defaults to development, T00-04); deployments must
+set APP_ENV.
+```
+
+**Next:**
+
+```text
+Review T00-07A -> push, PR, CI, merge commit -> T00-07B Form components
+```
+
+---
+
 # 40. NEXT TASK
 
 The next step is:
 
 ```text
-Review T00-06 (READY_FOR_REVIEW): push, open the pull request, verify CI on
-GitHub and merge with a merge commit. Then continue with T00-07 — Core
-Component Library.
+Review T00-07A (READY_FOR_REVIEW): push, open the pull request, verify CI on
+GitHub and merge with a merge commit. Then continue with T00-07B — form
+components (Field, Input, Textarea, Checkbox, Select, Combobox, DatePicker,
+FileUpload).
 ```
 
 The completed-task description below is retained for reference.

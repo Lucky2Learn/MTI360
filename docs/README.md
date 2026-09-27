@@ -38,6 +38,7 @@ Recommended reading order (CLAUDE.md §2):
 | [0005](adr/0005-identity-and-session-realms.md) | Identity and session realms | Accepted |
 | [0006](adr/0006-api-prefixes.md) | API prefixes | Accepted |
 | [0007](adr/0007-styling-tailwind-semantic-tokens.md) | Styling: Tailwind CSS v4 with semantic design tokens | Accepted |
+| [0008](adr/0008-headless-primitives-and-icons.md) | Headless accessible primitives (React Aria Components) and icons (Lucide) | Accepted |
 
 ADR format: Status, Context, Decision, Consequences, Alternatives considered. ADRs are immutable once accepted; a change is made by a new ADR that supersedes the old one.
 
@@ -51,6 +52,7 @@ ADR format: Status, Context, Decision, Consequences, Alternatives considered. AD
 | [environments.md](architecture/environments.md) | Environment matrix: configuration sources, per-environment rules, secret handling, `pnpm check:env` (T00-04) |
 | [toolchain.md](architecture/toolchain.md) | Exact runtime and dependency versions, version holds, supply-chain controls, commands, update policy (T00-02) |
 | [design-tokens.md](architecture/design-tokens.md) | Token architecture, primitive and derived colours, semantic Light/Dark mapping, type/spacing/radius/elevation/breakpoints, contrast, theme runtime, fonts (T00-06) |
+| [components.md](architecture/components.md) | Component library: delivery slices, rules and guards, §73/§74 contract per component, showcase (T00-07) |
 | [ci.md](architecture/ci.md) | CI workflows, required `ci-ok` status, security model, pinned versions, Dependabot scope, local reproduction, future branch protection (T00-05) |
 | [spec-inconsistencies.md](architecture/spec-inconsistencies.md) | Known inconsistencies between specifications, recorded for future resolution |
 

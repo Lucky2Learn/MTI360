@@ -45,6 +45,7 @@ MTI360/
 │       ├── proxy.ts                   host → experience rewrite, security headers, CSP nonce
 │       │                              (Next.js 16 renamed Middleware → Proxy)
 │       ├── app/                       ✅ layout.tsx, neutral page.tsx, page.test.tsx (T00-02); globals.css, tokens + theme wired (T00-06)
+│       │   ├── design-system/         ✅ component showcase, development/test only (T00-07)
 │       │   ├── platform/              Platform Control Plane
 │       │   ├── (tenant-auth)/         AUTH-01 … AUTH-05
 │       │   ├── app/                   Tenant Application
@@ -54,7 +55,8 @@ MTI360/
 │       │   ├── tokens/                ✅ primitives, semantic Light + Dark, Tailwind @theme (T00-06)
 │       │   ├── theme/                 ✅ Light / Dark / System + pre-paint script, ThemeSelector (T00-06)
 │       │   ├── typography/            ✅ self-hosted Inter (T00-06)
-│       │   ├── components/            core components
+│       │   ├── components/            ✅ 07A: Button, IconButton, Card, Badge, Tabs, Kpi, Timeline, Alert, Skeleton, EmptyState, ErrorState (T00-07)
+│       │   ├── icons/  lib/  testing/ ✅ Lucide set, cx/focusRing, axe helper (T00-07)
 │       │   └── templates/             T01 … T18
 │       ├── shells/                    PlatformShell, TenantShell, StudentShell, PublicSiteShell
 │       ├── features/                  UI feature modules mirroring backend modules
