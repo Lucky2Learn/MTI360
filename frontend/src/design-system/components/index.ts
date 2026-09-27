@@ -8,6 +8,7 @@ export * from "./Button";
 export * from "./Card";
 export * from "./EmptyState";
 export * from "./ErrorState";
+export * from "./Field";
 export * from "./IconButton";
 export * from "./Kpi";
 export * from "./Skeleton";
