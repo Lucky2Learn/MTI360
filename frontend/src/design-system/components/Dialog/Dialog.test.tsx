@@ -184,15 +184,23 @@ describe("AlertDialog", () => {
     render(<DeleteConfirm onConfirm={onConfirm} onCancel={onCancel} />);
 
     await user.click(screen.getByRole("button", { name: "Delete record" }));
+    const dialog = await screen.findByRole("alertdialog");
     await user.click(document.body);
     expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+    // Focus containment brings focus back inside the dialog (asynchronously
+    // under load in jsdom) before Escape is handled by the dialog.
+    await waitFor(() =>
+      expect(dialog.contains(document.activeElement)).toBe(true),
+    );
 
     await user.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
 
+    // Reopen once the previous dialog has fully closed (async under load).
     await user.click(screen.getByRole("button", { name: "Delete record" }));
-    await user.click(screen.getByRole("button", { name: "Cancel" }));
-    expect(onCancel).toHaveBeenCalledTimes(1);
+    await screen.findByRole("alertdialog");
+    await user.click(await screen.findByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(onCancel).toHaveBeenCalledTimes(1));
     expect(onConfirm).not.toHaveBeenCalled();
   });
 });
