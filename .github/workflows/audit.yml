@@ -1,0 +1,83 @@
+# =============================================================================
+# MTI 360 — dependency audit (T00-05)
+#
+# REPORTING ONLY: not part of ci-ok and not a required check (yet). A finding
+# shows as a failed run so it stays visible. Architecture: docs/architecture/ci.md
+# =============================================================================
+
+name: Audit
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    # Weekly, Monday 04:17 UTC.
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+  UV_VERSION: "0.12.19"
+  # SHA-256 of uv-x86_64-unknown-linux-gnu.tar.gz 0.12.19 (verified by setup-uv).
+  UV_CHECKSUM: "23bf5552d220e0842b65c862097b2ebaeba0064b74eda5e565e77fd25969d8c8"
+  PIP_AUDIT_VERSION: "2.10.1"
+
+jobs:
+  pnpm-audit:
+    name: pnpm audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js (.nvmrc)
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - name: Enable pnpm (packageManager via Corepack)
+        run: corepack enable pnpm
+
+      - name: Audit locked frontend dependencies
+        run: pnpm audit
+
+  pip-audit:
+    name: pip-audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up uv (pinned, checksum-verified)
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          checksum: ${{ env.UV_CHECKSUM }}
+          enable-cache: false
+
+      - name: Export locked backend dependencies (with hashes)
+        run: >-
+          uv export --locked --directory backend --format requirements-txt
+          --all-groups --quiet --output-file "${RUNNER_TEMP}/requirements.txt"
+
+      - name: Audit locked backend dependencies
+        run: >-
+          uv tool run --exclude-newer "7 days" --from "pip-audit==${PIP_AUDIT_VERSION}"
+          pip-audit --strict --require-hashes --disable-pip --progress-spinner off
+          --requirement "${RUNNER_TEMP}/requirements.txt"

@@ -1,0 +1,78 @@
+# =============================================================================
+# MTI 360 — Dependabot (T00-05, decision D7)
+#
+# Enabled ONLY for: github-actions, docker, docker-compose.
+#
+# NOT enabled (compatibility could not be established — docs/architecture/ci.md):
+#   * npm / pnpm — Dependabot documents pnpm v7–v10; MTI 360 pins pnpm 11.
+#   * uv — [tool.uv] required-version (>=0.12.19,<0.13) makes uv refuse to run
+#     under a Dependabot-bundled uv outside that range.
+# Frontend and backend dependencies follow the manual monthly update policy in
+# docs/architecture/toolchain.md §8.
+#
+# Policy: monthly, grouped, 7-day release cooldown (matches the npm/PyPI
+# cooldown in T00-02). Major versions and documented holds are NOT proposed —
+# each is a dedicated task (toolchain.md §3 and §8).
+# =============================================================================
+
+version: 2
+
+updates:
+  # GitHub Actions — SHA-pinned in .github/workflows; Dependabot updates the
+  # SHA and the version comment together.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    commit-message:
+      prefix: "ci(deps)"
+
+  # Dockerfile base images (backend/, frontend/).
+  - package-ecosystem: docker
+    directories:
+      - /backend
+      - /frontend
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    groups:
+      docker-images:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      # Holds: uv must satisfy [tool.uv] required-version (<0.13);
+      # Python stays on 3.14; Node stays on the 24 LTS line (toolchain.md §1).
+      - dependency-name: "*astral-sh/uv"
+        versions: [">=0.13"]
+      - dependency-name: "python"
+        versions: [">=3.15"]
+      - dependency-name: "node"
+        versions: [">=25"]
+    commit-message:
+      prefix: "chore(deps)"
+
+  # compose.yaml local infrastructure images.
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    groups:
+      compose-images:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    commit-message:
+      prefix: "chore(deps)"
