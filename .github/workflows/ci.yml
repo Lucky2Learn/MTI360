@@ -1,0 +1,181 @@
+# =============================================================================
+# MTI 360 — CI (T00-05)
+#
+# Required quality and security gates. Branch protection requires ONE status:
+# "ci-ok", which passes only when every required job below succeeded.
+# Architecture, security model and local reproduction: docs/architecture/ci.md
+#
+# Rules for this file:
+#   * Every action is pinned to a full commit SHA (release >= 7 days old).
+#   * Least privilege: contents: read; no secrets; no pull_request_target.
+#   * Never interpolate ${{ github.event.* }} or other untrusted values into
+#     run: blocks — pass them through env: instead.
+#   * Jobs call the existing root scripts (package.json); checks are never
+#     re-implemented here.
+# =============================================================================
+
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Superseded pull request runs are cancelled; runs on main always complete.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+  NEXT_TELEMETRY_DISABLED: "1"
+  UV_VERSION: "0.12.19"
+  # SHA-256 of uv-x86_64-unknown-linux-gnu.tar.gz 0.12.19 (verified by setup-uv).
+  UV_CHECKSUM: "23bf5552d220e0842b65c862097b2ebaeba0064b74eda5e565e77fd25969d8c8"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Repository: landing-page integrity, environment hygiene
+  # ---------------------------------------------------------------------------
+  repo:
+    name: repo
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout (full history and tags for check:landing)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node.js (.nvmrc)
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - name: Enable pnpm (packageManager via Corepack)
+        run: corepack enable pnpm
+
+      - name: Landing-page integrity
+        run: pnpm run check:landing
+
+      - name: Environment template and secret hygiene
+        run: pnpm run check:env
+
+  # ---------------------------------------------------------------------------
+  # Frontend: frozen install, format, lint, typecheck, tests, Next.js build
+  # ---------------------------------------------------------------------------
+  frontend:
+    name: frontend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js (.nvmrc)
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - name: Enable pnpm (packageManager via Corepack)
+        run: corepack enable pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Format check
+        run: pnpm run format:check:frontend
+
+      - name: Lint
+        run: pnpm run lint:frontend
+
+      - name: Typecheck
+        run: pnpm run typecheck:frontend
+
+      - name: Tests
+        run: pnpm run test:frontend
+
+      - name: Build
+        run: pnpm run build
+
+  # ---------------------------------------------------------------------------
+  # Backend: locked uv environment, lock check, Ruff, mypy, pytest
+  # ---------------------------------------------------------------------------
+  backend:
+    name: backend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js (.nvmrc) for the root scripts
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - name: Enable pnpm (packageManager via Corepack)
+        run: corepack enable pnpm
+
+      - name: Set up uv (pinned, checksum-verified)
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          checksum: ${{ env.UV_CHECKSUM }}
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install (locked environment)
+        run: uv sync --locked --directory backend
+
+      - name: Lock verification
+        run: pnpm run check:lock
+
+      - name: Format check
+        run: pnpm run format:check:backend
+
+      - name: Lint
+        run: pnpm run lint:backend
+
+      - name: Typecheck
+        run: pnpm run typecheck:backend
+
+      - name: Tests
+        run: pnpm run test:backend
+
+  # ---------------------------------------------------------------------------
+  # Single required status. Passes only when every required job succeeded;
+  # failure, cancellation or skipping of any job fails ci-ok.
+  # ---------------------------------------------------------------------------
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs: [repo, frontend, backend]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: All required jobs succeeded
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Required job results: ${RESULTS}"
+          for result in ${RESULTS}; do
+            if [ "${result}" != "success" ]; then
+              echo "::error::A required CI job did not succeed (result: ${result})."
+              exit 1
+            fi
+          done
