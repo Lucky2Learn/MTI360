@@ -7,13 +7,16 @@ import { cx } from "@/design-system/lib/cx";
 
 import { AppHeader } from "./AppHeader";
 import { AppSidebar, sidebarOffset, type SidebarMode } from "./AppSidebar";
+import { MobileNavigation } from "./MobileNavigation";
+import { MAIN_CONTENT_ID, SkipNavigation } from "./SkipNavigation";
 
 import type { Navigation } from "./navigation";
 
-// ApplicationShell (T00-08): composition of header, sidebar and main content
-// for the Platform, Tenant and Student experiences. Structural only: it does
-// not authenticate, authorize or resolve a tenant; the navigation it receives
-// is configuration that later phases filter server-side.
+// ApplicationShell (T00-08): composition for the Platform, Tenant and Student
+// experiences: skip link → header (navigation drawer trigger below desktop)
+// → sidebar → main content. Structural only: it does not authenticate,
+// authorize or resolve a tenant; the navigation it receives is configuration
+// that later phases filter server-side.
 
 export type ApplicationShellProps = {
   /** Name of the experience, e.g. "Platform Administration". */
@@ -39,7 +42,19 @@ export function ApplicationShell({
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <AppHeader experienceLabel={experienceLabel} homeHref={homeHref} />
+      <SkipNavigation />
+      <AppHeader
+        experienceLabel={experienceLabel}
+        homeHref={homeHref}
+        navigationTrigger={
+          <MobileNavigation
+            experienceLabel={experienceLabel}
+            navigationLabel={navigationLabel}
+            navigation={navigation}
+            pathname={pathname}
+          />
+        }
+      />
       <AppSidebar
         navigationLabel={navigationLabel}
         navigation={navigation}
@@ -49,7 +64,7 @@ export function ApplicationShell({
         onCollapsedChange={setCollapsed}
       />
       <main
-        id="main-content"
+        id={MAIN_CONTENT_ID}
         tabIndex={-1}
         className={cx(
           "flex min-w-0 flex-1 flex-col outline-none",

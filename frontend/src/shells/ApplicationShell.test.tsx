@@ -51,6 +51,18 @@ describe("ApplicationShell", () => {
     await expectNoA11yViolations(container);
   });
 
+  it("starts with the skip link and offers the navigation drawer trigger", async () => {
+    const user = userEvent.setup();
+    renderShell();
+    await user.tab();
+    expect(screen.getByRole("link", { name: "Skip to content" })).toHaveFocus();
+    await user.keyboard("{Enter}");
+    expect(screen.getByRole("main")).toHaveFocus();
+    expect(
+      screen.getByRole("button", { name: "Open navigation" }).closest("span"),
+    ).toHaveClass("desktop:hidden");
+  });
+
   it("links the MTI 360 identity to the experience home", () => {
     renderShell();
     expect(
