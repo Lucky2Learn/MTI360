@@ -7,7 +7,7 @@ Shared visual foundation for all four experiences. Values come from [DESIGN-SYST
 | `tokens/` | `primitives.css` (palette + derived; the only raw colours), `semantic.css` (Light / Dark mappings), `tailwind.css` (Tailwind v4 `@theme`), token and guard tests | T00-06 |
 | `theme/` | Light / Dark / System preference, pre-paint script, `ThemeProvider` / `useTheme`, `ThemeSelector` | T00-06 |
 | `typography/` | Self-hosted Inter (`next/font/local`) | T00-06 |
-| `components/` | Core components — 07A: Button, IconButton, Card, Badge, Tabs, Kpi, Timeline, Alert, Skeleton, EmptyState, ErrorState; 07B: Field/Form, Input, Textarea, Checkbox, Select, Combobox, DatePicker, FileUpload; 07C: Overlay (internal), Dialog, AlertDialog, Popover, Tooltip, Drawer, DropdownMenu, ContextMenu, Toast, DataTable, Pagination, FilterBar, Search, RadioGroup, Switch, TimePicker | T00-07 |
+| `components/` | Core components — 07A: Button, IconButton, Card, Badge, Tabs, Kpi, Timeline, Alert, Skeleton, EmptyState, ErrorState; 07B: Field/Form, Input, Textarea, Checkbox, Select, Combobox, DatePicker, FileUpload; 07C: Overlay (internal), Dialog, AlertDialog, Popover, Tooltip, Drawer, DropdownMenu, ContextMenu, Toast, DataTable, Pagination, FilterBar, Search, RadioGroup, Switch, TimePicker; T00-08: NavigationProvider (client-side routing for React Aria links) | T00-07, T00-08 |
 | `icons/` | Curated Lucide icons (the only `lucide-react` import) | T00-07 |
 | `lib/` | `cx()` and the shared `focusRing` classes | T00-07 |
 | `testing/` | `expectNoA11yViolations()` (axe) for component tests | T00-07 |

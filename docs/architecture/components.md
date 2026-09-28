@@ -15,7 +15,7 @@ T00-07 is delivered in three slices, each with its own branch, review, pull requ
 | **07B** Forms | Field foundation + Form, Input, Textarea, Checkbox, Select, Combobox, DatePicker, FileUpload | Merged (PR #8) |
 | **07C** Overlays, data and interaction controls | Dialog (Modal), AlertDialog, Popover, Tooltip, Drawer, DropdownMenu, ContextMenu, Toast, DataTable, Pagination, FilterBar, Search, RadioGroup, Switch, TimePicker | Implemented |
 
-The T00-07C implementation prompt brought Search, Radio group, Switch and TimePicker (deferred by D12) into 07C and did not include ChartCard (INC-19). Still deferred: ChartCard, PermissionGate / AccessDenied (ErrorState provides the permission presentation). Shell components are T00-08.
+The T00-07C implementation prompt brought Search, Radio group, Switch and TimePicker (deferred by D12) into 07C and did not include ChartCard (INC-19). Still deferred: ChartCard, PermissionGate / AccessDenied (ErrorState provides the permission presentation). Shell components are T00-08 ([application-shell.md](application-shell.md)).
 
 ## 2. Architecture and rules
 
@@ -42,7 +42,7 @@ screens — import only from "@/design-system/components"
 
 Server-component compatible (no client code): Card, Badge, KPI, Timeline, Alert, Skeleton, EmptyState. Client components: Button, IconButton, Tabs, ErrorState, all form components (07B) and all 07C components.
 
-Links rendered by `Button href` are React Aria links (plain `<a href>` navigation). Client-side routing integration (`RouterProvider`) is added with the application shell (T00-08).
+Links rendered by `Button href` are React Aria links (plain `<a href>` navigation). Since T00-08, `NavigationProvider` (`components/Router`, a framework-neutral wrapper of React Aria's `RouterProvider`) is mounted by the shell's `ExperienceFrame` with the Next.js router, so these links navigate client-side inside the experiences; outside it they fall back to normal browser navigation.
 
 ## 3. Component contracts (DESIGN-SYSTEM.md §73 / §74)
 

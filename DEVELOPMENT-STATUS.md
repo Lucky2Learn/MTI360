@@ -107,7 +107,7 @@ M0 — Foundation Ready
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-09-27:** T00-01 … T00-06 are `COMPLETED` (merged to `main`; T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6). T00-07 (Core Component Library) is `IN_PROGRESS`: slices 07A and 07B are merged (PR #7, PR #8) and slice 07C is `READY_FOR_REVIEW`. Only the toolchain, local infrastructure, validated environment configuration, CI, design tokens with the Light/Dark/System theme, three component slices, a development-only showcase and a neutral page / `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
+> **2026-09-28:** T00-01 … T00-07 are `COMPLETED` (merged to `main`; T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9). T00-08 (Application Shell) is `READY_FOR_REVIEW`: the shell and the four experience route boundaries (`/platform`, `/app`, `/student`, `/site`) exist with navigation placeholders only. Only the toolchain, local infrastructure, validated environment configuration, CI, design tokens with the Light/Dark/System theme, the component library, a development-only showcase, the application shell with placeholder pages, a neutral root page and the `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
 
 ---
 
@@ -183,7 +183,7 @@ IN_PROGRESS
 ## Phase Completion
 
 ```text
-6 / 10 tasks completed (T00-01 … T00-06 COMPLETED; T00-07 IN_PROGRESS — 07A and 07B COMPLETED, 07C READY_FOR_REVIEW)
+7 / 10 tasks completed (T00-01 … T00-07 COMPLETED; T00-08 READY_FOR_REVIEW)
 ```
 
 ---
@@ -495,7 +495,7 @@ Landing page SHA-256 unchanged. ACRS unchanged (listing comparison).
 
 ### T00-07 — Core Component Library
 
-**Status:** `IN_PROGRESS` — **07A** `COMPLETED` (merged to `main` via PR #7, merge commit `8a370a4`); **07B** (forms) `COMPLETED` (merged via PR #8, merge commit `1b8740c`); **07C** (overlays, data, interaction controls) `READY_FOR_REVIEW` (branch `feat/T00-07c-overlays-data`, based on `main` at `1b8740c`; not pushed). T00-07 stays `IN_PROGRESS` until 07C is merged; ChartCard and PermissionGate/AccessDenied are deferred (INC-19, INC-18).
+**Status:** `COMPLETED` — **07A** merged to `main` via PR #7 (merge commit `8a370a4`); **07B** (forms) via PR #8 (`1b8740c`); **07C** (overlays, data, interaction controls) via PR #9 (`e69603e`). ChartCard and PermissionGate/AccessDenied are deferred (INC-19, INC-18).
 
 **Implementation (07C):**
 
@@ -599,18 +599,44 @@ Clean clone, gitleaks, Docker build + API smoke: PASS. Landing page
 
 ### T00-08 — Application Shell
 
-**Status:** `NOT_STARTED`
+**Status:** `READY_FOR_REVIEW` (branch `feat/T00-08-application-shell`, based on `main` at `e69603e`; not pushed)
 
 **Implementation:**
 
 ```text
-Not started
+Shell (frontend/src/shells/, contracts: docs/architecture/application-shell.md):
+  ApplicationShell, AppHeader, AppSidebar (collapsible rail / fixed),
+  AppNavigation (configuration-driven, nested, badges, aria-current),
+  MobileNavigation (T00-07C Drawer), Breadcrumbs, PageHeader, PageContainer /
+  PageContent, SkipNavigation, UserMenu (DropdownMenu; Preferences opens the
+  existing ThemeSelector), NotificationCenter (Popover; static data),
+  CommandSearch (Dialog + Search; Ctrl+K; pages of the current experience),
+  global ToastRegion mount, ShellLoading / ShellError, PublicSiteShell,
+  ExperienceFrame; NavigationProvider (design-system/components/Router)
+  connects React Aria links to the Next.js router
+Experience framework: EXPERIENCE ids, typed configuration, registry, page
+  resolution and static params (structural only: no auth, authorization or
+  tenant resolution; no tenant identifier in routes)
+Routes: /platform (7), /app (76), /student (10), /site (5) placeholder pages
+  with layout (noindex), loading and error boundaries; other paths 404
+"/" unchanged (neutral page; marketing site not integrated, INC-26);
+  /design-system gate unchanged (404 in production)
+No new dependencies, no new tokens, no theme-runtime or 07A/B/C API changes;
+  icon module extended with shell/navigation icons
+Docs: application-shell.md; INC-26, INC-27, INC-28
 ```
 
 **Verification:**
 
 ```text
-Not verified
+pnpm check: PASS (frontend 555 tests, backend 139). Headless Chromium on the
+production image (APP_ENV=test and production): 394/394 — every experience in
+Light and Dark at 390/768/1024/1440 (HTTP 200, one main/h1, noindex, no
+overflow, axe 0 incl. contrast, no console/hydration errors, no external
+requests); skip link, rail/collapse, drawer focus and Escape, menus, Preferences
+theme switch + persistence, System theme, notifications, Ctrl+K search, toast,
+public-site navigation, client-side links, reduced motion; / neutral page; /design-system 200 in
+test and 404 in production; unknown paths 404.
 ```
 
 ---
@@ -1276,16 +1302,16 @@ A screen is only considered implemented when its required underlying behavior is
 
 | Component | Status |
 |---|---|
-| AppShell | `NOT_STARTED` |
-| Sidebar | `NOT_STARTED` |
-| TopBar | `NOT_STARTED` |
-| PageHeader | `NOT_STARTED` |
-| Breadcrumb | `NOT_STARTED` |
-| GlobalSearch | `NOT_STARTED` |
-| TenantContext | `NOT_STARTED` |
-| CampusSwitcher | `NOT_STARTED` |
-| NotificationCenter | `NOT_STARTED` |
-| UserMenu | `NOT_STARTED` |
+| AppShell | `READY_FOR_REVIEW` (T00-08, `ApplicationShell`; INC-28) |
+| Sidebar | `READY_FOR_REVIEW` (T00-08, `AppSidebar` + `AppNavigation`) |
+| TopBar | `READY_FOR_REVIEW` (T00-08, `AppHeader`) |
+| PageHeader | `READY_FOR_REVIEW` (T00-08) |
+| Breadcrumb | `READY_FOR_REVIEW` (T00-08, `Breadcrumbs`) |
+| GlobalSearch | `READY_FOR_REVIEW` (T00-08, `CommandSearch`; entry point only) |
+| TenantContext | `NOT_STARTED` (needs authentication and tenancy) |
+| CampusSwitcher | `NOT_STARTED` (needs authentication and tenancy) |
+| NotificationCenter | `READY_FOR_REVIEW` (T00-08; static data) |
+| UserMenu | `READY_FOR_REVIEW` (T00-08; no authentication) |
 | Button | `COMPLETED` (T00-07A, PR #7) |
 | IconButton | `COMPLETED` (T00-07A, PR #7) |
 | Input | `COMPLETED` (T00-07B, PR #8) |
@@ -1296,13 +1322,13 @@ A screen is only considered implemented when its required underlying behavior is
 | Tabs | `COMPLETED` (T00-07A, PR #7) |
 | Card | `COMPLETED` (T00-07A, PR #7) |
 | Badge | `COMPLETED` (T00-07A, PR #7) |
-| DataTable | `READY_FOR_REVIEW` (T00-07C) |
-| FilterBar | `READY_FOR_REVIEW` (T00-07C) |
-| Pagination | `READY_FOR_REVIEW` (T00-07C) |
-| Drawer | `READY_FOR_REVIEW` (T00-07C) |
-| Modal | `READY_FOR_REVIEW` (T00-07C, `Dialog`) |
-| Dialog | `READY_FOR_REVIEW` (T00-07C, `AlertDialog`; INC-18) |
-| Toast | `READY_FOR_REVIEW` (T00-07C) |
+| DataTable | `COMPLETED` (T00-07C, PR #9) |
+| FilterBar | `COMPLETED` (T00-07C, PR #9) |
+| Pagination | `COMPLETED` (T00-07C, PR #9) |
+| Drawer | `COMPLETED` (T00-07C, PR #9) |
+| Modal | `COMPLETED` (T00-07C, PR #9, `Dialog`) |
+| Dialog | `COMPLETED` (T00-07C, PR #9, `AlertDialog`; INC-18) |
+| Toast | `COMPLETED` (T00-07C, PR #9) |
 | Alert | `COMPLETED` (T00-07A, PR #7) |
 | Timeline | `COMPLETED` (T00-07A, PR #7) |
 | KPI | `COMPLETED` (T00-07A, PR #7) |
@@ -1312,7 +1338,7 @@ A screen is only considered implemented when its required underlying behavior is
 | Skeleton | `COMPLETED` (T00-07A, PR #7) |
 | PermissionGate | `NOT_STARTED` |
 
-Also implemented outside this list: Textarea and Checkbox (T00-07B, PR #8); Popover, Tooltip, DropdownMenu, ContextMenu, Search, RadioGroup, Switch and TimePicker (T00-07C, `READY_FOR_REVIEW`).
+Also implemented outside this list: Textarea and Checkbox (T00-07B, PR #8); Popover, Tooltip, DropdownMenu, ContextMenu, Search, RadioGroup, Switch and TimePicker (T00-07C, PR #9). T00-08 also adds PageContainer/PageContent, SkipNavigation, MobileNavigation, ShellLoading/ShellError and PublicSiteShell (`READY_FOR_REVIEW`).
 
 ---
 
@@ -1382,7 +1408,8 @@ Also implemented outside this list: Textarea and Checkbox (T00-07B, PR #8); Popo
 | Environment Configuration (T00-04) | `COMPLETED` |
 | CI Foundation (T00-05) | `COMPLETED` |
 | Design Token Foundation (T00-06) | `COMPLETED` |
-| Core Component Library (T00-07) | `IN_PROGRESS` (07A and 07B `COMPLETED`, 07C `READY_FOR_REVIEW`) |
+| Core Component Library (T00-07) | `COMPLETED` (PR #7, PR #8, PR #9) |
+| Application Shell (T00-08) | `READY_FOR_REVIEW` |
 | Architecture Decision Records | `READY_FOR_REVIEW` (ADR-0001 … ADR-0006) |
 | Production Implementation | `NOT_STARTED` |
 
@@ -1632,6 +1659,8 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-09-27 | T00-07B form components implemented | `READY_FOR_REVIEW` on `feat/T00-07b-form-components`; Field/Form + 7 form components |
 | 2026-09-27 | T00-07B merged to `main` (PR #8, `1b8740c`) | `COMPLETED` |
 | 2026-09-27 | T00-07C overlays, data and interaction controls implemented | `READY_FOR_REVIEW` on `feat/T00-07c-overlays-data`; 15 components + overlay infrastructure |
+| 2026-09-28 | T00-07C merged to `main` (PR #9, `e69603e`) | T00-07 `COMPLETED` |
+| 2026-09-28 | T00-08 Application Shell implemented | `READY_FOR_REVIEW` on `feat/T00-08-application-shell`; shell + four experience route boundaries |
 
 ---
 
@@ -2294,15 +2323,85 @@ Review T00-07C -> push, PR, CI, merge commit -> T00-07 COMPLETED -> T00-08 Appli
 
 ---
 
+## 2026-09-28 — T00-08 Application Shell & Experience Routing Foundation
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+Reusable application shell and the four experience route boundaries: `/platform` (Platform Administration), `/app` (Tenant Application), `/student` (Student Portal) and `/site` (Tenant Public Website preview), each with configuration-driven navigation placeholders, loading and error boundaries. Structural only — no authentication, authorization, tenant resolution or business modules. `/` stays the neutral root page: the marketing landing page is not integrated into Next.js (user decision, INC-26).
+
+**Files:**
+
+```text
+Created: frontend/src/shells/ (ApplicationShell, AppHeader, AppSidebar,
+  AppNavigation, navigation.ts, MobileNavigation, Breadcrumbs, PageHeader,
+  PageContainer, SkipNavigation, UserMenu, NotificationCenter, CommandSearch,
+  ShellBoundaries, PublicSiteShell, ExperienceFrame, ExperiencePlaceholder,
+  ToastExample, experiences/{types,platform,tenant,student,public-site,index})
+  with tests; frontend/src/app/{platform,app,student,site}/ (layout, loading,
+  error, [[...slug]]/page); frontend/src/app/experience-routes.test.tsx;
+  docs/architecture/application-shell.md
+Created (design system): components/Router (NavigationProvider) with test
+Changed: design-system/icons/index.ts (shell and navigation icons),
+  design-system/components/index.ts (Router export),
+  app/design-system/showcase.test.tsx (explicit 20 s budget for the
+  whole-page axe test; no assertion changed),
+  docs/architecture/{spec-inconsistencies,repository-structure}.md,
+  docs/architecture/components.md, docs/README.md, frontend and
+  design-system READMEs, README.md, TASKS.md, DEVELOPMENT-STATUS.md
+Unchanged (verified): package.json and lockfiles, next.config.ts, tokens,
+  theme runtime and storage key, 07A/07B/07C components and public APIs, root layout, neutral
+  page, /design-system gate, backend, database, Dockerfiles and ignore files,
+  compose, CI, environment templates, ADRs, DESIGN-SYSTEM.md, index.html,
+  app.js, styles.css; ACRS
+```
+
+**Database / API / UI:**
+
+```text
+Database / API: none. UI: shell and placeholder pages that state the module is
+not built; demo account/notification data is generic and static.
+```
+
+**Tests:**
+
+```text
+Frontend 555 passed (was 482). Backend 139 passed. pnpm check passes.
+Headless Chromium verification 394/394.
+```
+
+**Known Issues:**
+
+```text
+Marketing site hosting is undecided (INC-26). /site/* differs from the
+architecture's /sites/[site]/* rewrite target (INC-27). Shell names differ
+between specifications (INC-28). TenantContext, CampusSwitcher and the
+support-session banner slot need authentication/tenancy and are not built.
+Collapsed rail items have no visible tooltip (names remain available to
+assistive technology). Sidebar collapse state is not persisted.
+```
+
+**Next:**
+
+```text
+Review T00-08 -> push, PR, CI, merge commit -> T00-09 Responsive Foundation
+```
+
+---
+
 # 40. NEXT TASK
 
 The next step is:
 
 ```text
-Review T00-07C (READY_FOR_REVIEW): push, open the pull request, verify CI on
-GitHub and merge with a merge commit; T00-07 then becomes COMPLETED (ChartCard
-and PermissionGate/AccessDenied deferred). Then continue with T00-08 —
-Application Shell.
+Review T00-08 (READY_FOR_REVIEW): push, open the pull request, verify CI on
+GitHub and merge with a merge commit; T00-08 then becomes COMPLETED. Then
+continue with T00-09 — Responsive Foundation.
 ```
 
 The completed-task description below is retained for reference.

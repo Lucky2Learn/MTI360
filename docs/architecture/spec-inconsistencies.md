@@ -198,3 +198,27 @@
 - **Issue:** The specifications define no toast durations, stacking limit, placement, persistence rules or action behaviour, and no rules for tooltips or context menus.
 - **Current handling:** Toasts: success/info 5 s, warning 8 s, error and toasts with an action persist until dismissed (WCAG 2.2.1), at most 3 visible, bottom placement (bottom-end from `tablet`), timers paused on hover/focus. Toasts use React Aria's `UNSTABLE_Toast*` exports (1.21.1 pinned) behind the MTI 360 API. Tooltips: 600 ms hover delay, immediate on keyboard focus, never the only source of information. Context menus: right-click, Shift+F10 and the ContextMenu key; a shortcut only — every action must be reachable another way.
 - **Proposed resolution:** Document these conventions in DESIGN-SYSTEM.md §49/§74; re-check the Toast wrapper when React Aria stabilises the toast API.
+
+## INC-26 — Marketing site hosting/integration
+
+- **Status:** `OPEN` (T00-08)
+- **Where:** T00-08 implementation prompt (`/` → MTI 360 marketing landing page) vs ADR-0003 (marketing website separate from the application; no code imported into `frontend/`; "convert the landing page to Next.js now" rejected), `frontend/Dockerfile.dockerignore` (the marketing files never enter the frontend build context) and the MKT-01 relocation plan
+- **Issue:** Serving the frozen marketing landing page (`index.html`, `app.js`, `styles.css`, tag `marketing-site-v1`) at `/` from the Next.js application would require Docker changes or copies of the files inside `frontend/`, and would contradict ADR-0003.
+- **Decision (T00-08, user):** The marketing site remains architecturally separate from the Next.js SaaS application. `/` stays the existing neutral root page. The marketing files and their hashes are unchanged, and the Dockerfile, its ignore file and ADR-0003 are unchanged.
+- **Proposed resolution:** A future MKT task and ADR-0009 will determine the marketing site's final hosting/deployment model.
+
+## INC-27 — Tenant Public Website route prefix
+
+- **Status:** `OPEN` (T00-08)
+- **Where:** T00-08 implementation prompt and decision (`/site/*`) vs repository-structure.md §2 and ADR-0003 (`/sites/[site]/*`, an internal rewrite target reached through host-based routing, direct access blocked by the proxy)
+- **Issue:** T00-08 created the Tenant Public Website structure at `/site/*` as directed. The approved architecture places it at `/sites/[site]/*` with the tenant resolved server-side from a verified domain.
+- **Current handling:** `/site/*` is a neutral structural preview (5 placeholder pages, no tenant identity, branding or data, `noindex`). No proxy or rewrite exists.
+- **Proposed resolution:** Decide the final route when tenant resolution for public sites is built (Phase 14 / proxy task), then align either the code or repository-structure.md §2.
+
+## INC-28 — Application shell component names
+
+- **Status:** `OPEN` (T00-08)
+- **Where:** TASKS.md T00-08 (AppShell, Sidebar, TopBar, PageHeader, Breadcrumb, GlobalSearch, NotificationCenter, UserMenu), CLAUDE.md §26 (also TenantContext, CampusSwitcher), repository-structure.md §2 (PlatformShell, TenantShell + support-session banner slot, StudentShell, PublicSiteShell)
+- **Issue:** The documents name the shell pieces differently.
+- **Current handling:** One shared `ApplicationShell` (AppShell) configured per experience by `ExperienceFrame` serves as PlatformShell, TenantShell and StudentShell; `AppSidebar`/`AppNavigation` = Sidebar, `AppHeader` = TopBar, `Breadcrumbs` = Breadcrumb, `CommandSearch` = GlobalSearch (entry point only); `PublicSiteShell` as named. TenantContext, CampusSwitcher and the support-session banner slot depend on authentication and tenancy and are not built. Details: [application-shell.md](application-shell.md).
+- **Proposed resolution:** Align the names in TASKS.md, CLAUDE.md §26 and repository-structure.md §2 in a documentation task.

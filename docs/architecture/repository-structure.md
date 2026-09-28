@@ -46,11 +46,12 @@ MTI360/
 │       │                              (Next.js 16 renamed Middleware → Proxy)
 │       ├── app/                       ✅ layout.tsx, neutral page.tsx, page.test.tsx (T00-02); globals.css, tokens + theme wired (T00-06)
 │       │   ├── design-system/         ✅ component showcase, development/test only (T00-07)
-│       │   ├── platform/              Platform Control Plane
+│       │   ├── platform/              ✅ Platform Control Plane — shell + placeholder pages (T00-08)
 │       │   ├── (tenant-auth)/         AUTH-01 … AUTH-05
-│       │   ├── app/                   Tenant Application
-│       │   ├── student/               Student Portal
-│       │   └── sites/[site]/          Tenant Public Website (rewrite target only)
+│       │   ├── app/                   ✅ Tenant Application — shell + placeholder pages (T00-08)
+│       │   ├── student/               ✅ Student Portal — shell + placeholder pages (T00-08)
+│       │   ├── site/                  ✅ Tenant Public Website preview (T00-08; INC-27)
+│       │   └── sites/[site]/          Tenant Public Website (rewrite target only; INC-27)
 │       ├── design-system/             ✅ README (T00-06)
 │       │   ├── tokens/                ✅ primitives, semantic Light + Dark, Tailwind @theme (T00-06)
 │       │   ├── theme/                 ✅ Light / Dark / System + pre-paint script, ThemeSelector (T00-06)
@@ -61,7 +62,7 @@ MTI360/
 │       │   │                          Pagination, FilterBar, Search, Radio, Switch, TimePicker (T00-07)
 │       │   ├── icons/  lib/  testing/ ✅ Lucide set, cx/focusRing, axe helper (T00-07)
 │       │   └── templates/             T01 … T18
-│       ├── shells/                    PlatformShell, TenantShell, StudentShell, PublicSiteShell
+│       ├── shells/                    ✅ ApplicationShell (Platform/Tenant/Student), PublicSiteShell, experiences/ (T00-08; INC-28)
 │       ├── features/                  UI feature modules mirroring backend modules
 │       ├── lib/                       api client, session helpers, PermissionGate (UX only)
 │       └── test/                      test utilities, MSW handlers
