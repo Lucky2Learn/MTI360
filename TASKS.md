@@ -472,7 +472,7 @@ Skeleton
 
 ### T00-07 Update (2026-09-27)
 
-**Status:** IN_PROGRESS — delivered in three slices (decision D1): **07A** COMPLETED (merged to `main` via PR #7, merge commit `8a370a4`); **07B** forms COMPLETED (merged via PR #8, merge commit `1b8740c`); **07C** overlays, data and interaction controls READY_FOR_REVIEW (branch `feat/T00-07c-overlays-data`, based on `main` at `1b8740c`).
+**Status:** COMPLETED — delivered in three slices (decision D1): **07A** merged to `main` via PR #7 (merge commit `8a370a4`); **07B** forms via PR #8 (`1b8740c`); **07C** overlays, data and interaction controls via PR #9 (`e69603e`).
 
 **Approved decisions (D1–D14):** D1 three slices, each with its own PR and merge commit; D2 React Aria Components 1.21.1 (ADR-0008); D3 Lucide 1.47.0 via `design-system/icons`; D4 local `cx()` and typed variant maps; D5 semantic `surface-hover`, `surface-selected`, `brand-primary-hover`, `success-strong`, `error-strong`, `overlay-scrim` plus a component-token layer (control heights 32/40/44, focus ring, z-index); D6 guards (no arbitrary values, React Aria/Lucide boundaries, no raw HTML); D7 user-event and axe-core; D8 `/design-system` showcase for development/test only; D9 Modal = container, Dialog = confirmation on Modal; D10 default locale `en-IN`; D11 ChartCard is a frame, no chart library; D12 add IconButton/Textarea/Checkbox, defer Radio/Switch/TimePicker/Search/PermissionGate; D13 tertiary = text-style, ghost = hover surface, success uses `success-strong`; D14 Toast region mounted by T00-08. Details: `docs/architecture/components.md`, `docs/adr/0008-headless-primitives-and-icons.md`; INC-18 … INC-21.
 
@@ -525,6 +525,23 @@ GlobalSearch
 NotificationCenter
 UserMenu
 ```
+
+### T00-08 Update (2026-09-28)
+
+**Status:** READY_FOR_REVIEW (branch `feat/T00-08-application-shell`, based on `main` at `e69603e`). Contracts: `docs/architecture/application-shell.md`.
+
+**Scope (T00-08 implementation prompt and decision):** reusable shell (`frontend/src/shells/`) — ApplicationShell, AppHeader, AppSidebar/AppNavigation, MobileNavigation (Drawer), Breadcrumbs, PageHeader, PageContainer/PageContent, SkipNavigation, UserMenu (DropdownMenu + existing ThemeSelector), NotificationCenter (Popover, static data), CommandSearch (Dialog + Search, Ctrl+K), global ToastRegion mount, ShellLoading/ShellError — and the experience framework with route boundaries `/platform/*`, `/app/*`, `/student/*` and `/site/*` (navigation placeholders only). Names map to the list above as recorded in INC-28.
+
+**Decision (marketing site):** Option A — the frozen marketing landing page is **not** integrated into Next.js; `/` stays the neutral root page; no ADR-0009 in T00-08; `index.html`, `app.js`, `styles.css`, the Dockerfile, its ignore file and ADR-0003 are unchanged (INC-26). `/site/*` follows the task prompt and differs from the architecture's `/sites/[site]/*` (INC-27).
+
+**Acceptance criteria:**
+
+* Shell components exist with tests (including axe) and documented contracts; 07A/07B/07C public APIs, tokens and the theme runtime unchanged; no new dependencies.
+* Each experience has its own navigation configuration, layout (`noindex`), loading and error boundary; only configured pages exist, other paths 404; no tenant identifier in routes; no authentication, authorization or tenant resolution.
+* Mobile drawer (focus in, Escape, focus restored), tablet rail, desktop sidebar with collapse; skip link; 44px targets on mobile; no horizontal overflow at 390/768/1024/1440.
+* Light, Dark and System in every experience; axe 0 violations in Chromium (including contrast) with overlays open; no console/hydration errors; no external requests; reduced motion respected.
+* `/` is the neutral root page; `/design-system` is 200 in development/test and 404 in production; landing-page hashes unchanged.
+* No backend, database, Docker, compose, CI or environment changes.
 
 ---
 

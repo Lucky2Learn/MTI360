@@ -1,6 +1,6 @@
 # frontend/
 
-**Status:** Toolchain foundation (T00-02), a server-only environment contract (`src/lib/env.ts`, T00-04) the design-token foundation with the Light/Dark/System theme (`src/design-system/`, T00-06) and three component slices (T00-07A: Button, IconButton, Card, Badge, Tabs, KPI, Timeline, Alert, Skeleton, EmptyState, ErrorState; T00-07B: Field/Form, Input, Textarea, Checkbox, Select, Combobox, DatePicker, FileUpload; T00-07C: Dialog, AlertDialog, Popover, Tooltip, Drawer, DropdownMenu, ContextMenu, Toast, DataTable, Pagination, FilterBar, Search, RadioGroup, Switch, TimePicker). Contains a root layout, a neutral token-styled root page, the development/test-only `/design-system` showcase and tests — no product screens or experience routes yet.
+**Status:** Toolchain foundation (T00-02), a server-only environment contract (`src/lib/env.ts`, T00-04) the design-token foundation with the Light/Dark/System theme (`src/design-system/`, T00-06) and three component slices (T00-07A: Button, IconButton, Card, Badge, Tabs, KPI, Timeline, Alert, Skeleton, EmptyState, ErrorState; T00-07B: Field/Form, Input, Textarea, Checkbox, Select, Combobox, DatePicker, FileUpload; T00-07C: Dialog, AlertDialog, Popover, Tooltip, Drawer, DropdownMenu, ContextMenu, Toast, DataTable, Pagination, FilterBar, Search, RadioGroup, Switch, TimePicker). Since T00-08 it also contains the application shell (`src/shells/`) and the experience routes `/platform`, `/app`, `/student` and `/site` with placeholder pages only (contracts: [docs/architecture/application-shell.md](../docs/architecture/application-shell.md)). Contains a root layout, a neutral token-styled root page, the development/test-only `/design-system` showcase and tests — no product screens, authentication or tenancy yet.
 
 **Styling:** Tailwind CSS v4 utilities mapped to MTI 360 semantic tokens only; Tailwind's default palette, sizes, radii and breakpoints are removed. Rules: [src/design-system/README.md](src/design-system/README.md), [docs/architecture/design-tokens.md](../docs/architecture/design-tokens.md), [docs/architecture/components.md](../docs/architecture/components.md).
 
@@ -43,7 +43,7 @@ Frontend engineering. Design-token and component changes must follow `DESIGN-SYS
 - Next.js routes (`src/app/`), kept thin — they compose shells and feature modules
 - `src/proxy.ts` — host → experience rewrite, security headers (never authorization). Next.js 16 renamed "Middleware" (`middleware.ts`) to "Proxy" (`proxy.ts`).
 - `src/design-system/` — semantic tokens, Light/Dark/System theme, core components, page templates T01–T18
-- `src/shells/` — PlatformShell, TenantShell, StudentShell, PublicSiteShell
+- `src/shells/` — ApplicationShell (configured per experience as the Platform, Tenant and Student shells), PublicSiteShell, navigation, header utilities and the experience framework (T00-08; INC-28)
 - `src/features/` — UI feature modules that mirror backend modules
 - `src/lib/` — typed API client, session helpers, `PermissionGate` (UX only)
 - Unit, component and integration tests colocated with the code
