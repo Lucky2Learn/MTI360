@@ -3,12 +3,19 @@
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
+import { ToastRegion } from "@/design-system/components";
 import { cx } from "@/design-system/lib/cx";
 
 import { AppHeader } from "./AppHeader";
 import { AppSidebar, sidebarOffset, type SidebarMode } from "./AppSidebar";
+import { CommandSearch } from "./CommandSearch";
 import { MobileNavigation } from "./MobileNavigation";
+import {
+  NotificationCenter,
+  type ShellNotification,
+} from "./NotificationCenter";
 import { MAIN_CONTENT_ID, SkipNavigation } from "./SkipNavigation";
+import { UserMenu, type ShellAccount } from "./UserMenu";
 
 import type { Navigation } from "./navigation";
 
@@ -16,7 +23,8 @@ import type { Navigation } from "./navigation";
 // experiences: skip link → header (navigation drawer trigger below desktop)
 // → sidebar → main content. Structural only: it does not authenticate,
 // authorize or resolve a tenant; the navigation it receives is configuration
-// that later phases filter server-side.
+// that later phases filter server-side. The shell mounts the application's
+// single global ToastRegion, so any code inside it can call toast.*().
 
 export type ApplicationShellProps = {
   /** Name of the experience, e.g. "Platform Administration". */
@@ -26,6 +34,11 @@ export type ApplicationShellProps = {
   /** Accessible name of the navigation landmark. */
   navigationLabel: string;
   sidebar?: SidebarMode;
+  account: ShellAccount;
+  /** Show the page search entry point (Ctrl+K). */
+  search?: boolean;
+  /** Notification centre items; omit to hide the notification entry point. */
+  notifications?: ShellNotification[];
   children: ReactNode;
 };
 
@@ -35,6 +48,9 @@ export function ApplicationShell({
   navigation,
   navigationLabel,
   sidebar = "collapsible",
+  account,
+  search = false,
+  notifications,
   children,
 }: ApplicationShellProps) {
   const pathname = usePathname() ?? homeHref;
@@ -53,6 +69,20 @@ export function ApplicationShell({
             navigation={navigation}
             pathname={pathname}
           />
+        }
+        actions={
+          <>
+            {search && (
+              <CommandSearch
+                experienceLabel={experienceLabel}
+                navigation={navigation}
+              />
+            )}
+            {notifications && (
+              <NotificationCenter notifications={notifications} />
+            )}
+            <UserMenu account={account} />
+          </>
         }
       />
       <AppSidebar
@@ -73,6 +103,7 @@ export function ApplicationShell({
       >
         {children}
       </main>
+      <ToastRegion />
     </div>
   );
 }

@@ -1,7 +1,8 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { toast, toastQueue } from "@/design-system/components";
 import { expectNoA11yViolations } from "@/design-system/testing/axe";
 
 import { ApplicationShell } from "./ApplicationShell";
@@ -11,6 +12,7 @@ import { TEST_NAVIGATION } from "./test-helpers";
 const navigationState = vi.hoisted(() => ({ pathname: "/app" }));
 vi.mock("next/navigation", () => ({
   usePathname: () => navigationState.pathname,
+  useRouter: () => ({ push: vi.fn() }),
 }));
 
 function renderShell(sidebar?: "collapsible" | "fixed") {
@@ -21,6 +23,9 @@ function renderShell(sidebar?: "collapsible" | "fixed") {
       navigation={TEST_NAVIGATION}
       navigationLabel="Tenant navigation"
       sidebar={sidebar}
+      account={{ name: "Demo user", detail: "Demo account", initials: "DU" }}
+      search
+      notifications={[]}
     >
       <PageContainer>
         <h1>Dashboard</h1>
@@ -61,6 +66,31 @@ describe("ApplicationShell", () => {
     expect(
       screen.getByRole("button", { name: "Open navigation" }).closest("span"),
     ).toHaveClass("desktop:hidden");
+  });
+
+  it("offers search, notifications and the account menu", () => {
+    renderShell();
+    // Button (tablet+) and IconButton (mobile); CSS shows one of them.
+    expect(screen.getAllByRole("button", { name: /^Search/ })).toHaveLength(2);
+    expect(
+      screen.getByRole("button", { name: "Notifications" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Demo user, account menu" }),
+    ).toHaveAttribute("aria-haspopup", "true");
+  });
+
+  it("mounts the global toast region once", async () => {
+    renderShell();
+    act(() => {
+      toast.success("Batch schedule saved");
+    });
+    const regions = await screen.findAllByRole("region", {
+      name: "Notifications",
+    });
+    expect(regions).toHaveLength(1);
+    expect(within(regions[0]!).getByText("Batch schedule saved")).toBeVisible();
+    act(() => toastQueue.clear());
   });
 
   it("links the MTI 360 identity to the experience home", () => {
