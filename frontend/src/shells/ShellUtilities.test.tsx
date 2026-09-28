@@ -152,6 +152,10 @@ describe("NotificationCenter", () => {
       }),
     ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Mark all as read" }));
+    // Focus stays in the panel when the button disables itself.
+    expect(
+      screen.getByRole("button", { name: /^Batch DNS 2026-B/ }),
+    ).toHaveFocus();
     expect(
       screen.getByRole("button", { name: "Notifications", hidden: true }),
     ).toBeInTheDocument();
@@ -221,7 +225,7 @@ describe("CommandSearch", () => {
     expect(screen.getByRole("status")).toHaveTextContent("1 page");
     expect(
       within(screen.getByRole("list", { name: "Pages" })).getByRole("link", {
-        name: "Leads",
+        name: /^Leads,\s*Admissions$/,
       }),
     ).toHaveAttribute("href", "/app/admissions/leads");
     await user.keyboard("{Enter}");

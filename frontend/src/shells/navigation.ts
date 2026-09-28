@@ -91,3 +91,15 @@ export function flattenNavigation(navigation: Navigation): NavItem[] {
   for (const section of navigation) visit(section.items);
   return items;
 }
+
+/** Every item with its parent (for context when labels repeat, e.g. "Leads"). */
+export function navigationEntries(
+  navigation: Navigation,
+): { item: NavItem; parent?: NavItem }[] {
+  return navigation.flatMap((section) =>
+    section.items.flatMap((item) => [
+      { item },
+      ...(item.children ?? []).map((child) => ({ item: child, parent: item })),
+    ]),
+  );
+}

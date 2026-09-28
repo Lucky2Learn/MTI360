@@ -24,6 +24,7 @@ export * from "./Menu";
 export * from "./Pagination";
 export * from "./Popover";
 export * from "./Radio";
+export * from "./Router";
 export * from "./Search";
 export * from "./Select";
 export * from "./Skeleton";

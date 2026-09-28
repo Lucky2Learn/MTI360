@@ -8,7 +8,7 @@ import { Button, Dialog, IconButton, Search } from "@/design-system/components";
 import { ForwardIcon, SearchIcon } from "@/design-system/icons";
 import { cx, focusRing } from "@/design-system/lib/cx";
 
-import { flattenNavigation, type Navigation } from "./navigation";
+import { navigationEntries, type Navigation } from "./navigation";
 
 // CommandSearch (T00-08): shell entry point for future global search and
 // commands. Today it only finds pages of the current experience's navigation
@@ -64,8 +64,13 @@ export function CommandSearch({
   };
 
   const term = query.trim().toLowerCase();
-  const results = flattenNavigation(navigation)
-    .filter((item) => !term || item.label.toLowerCase().includes(term))
+  const results = navigationEntries(navigation)
+    .filter(
+      ({ item, parent }) =>
+        !term ||
+        item.label.toLowerCase().includes(term) ||
+        Boolean(parent?.label.toLowerCase().includes(term)),
+    )
     .slice(0, MAX_RESULTS);
 
   return (
@@ -113,7 +118,7 @@ export function CommandSearch({
                 const first = results[0];
                 if (!first) return;
                 close();
-                router.push(first.href);
+                router.push(first.item.href);
               }}
               // Opening search is an explicit user request to type (command
               // palette pattern), not DOM autofocus on page load.
@@ -127,7 +132,7 @@ export function CommandSearch({
             </p>
             {results.length > 0 && (
               <ul aria-label="Pages" className="flex flex-col gap-1">
-                {results.map((item) => (
+                {results.map(({ item, parent }) => (
                   <li key={item.id}>
                     <Link
                       href={item.href}
@@ -138,7 +143,15 @@ export function CommandSearch({
                         focusRing,
                       )}
                     >
-                      <span className="truncate">{item.label}</span>
+                      <span className="flex min-w-0 items-baseline gap-2">
+                        <span className="truncate">{item.label}</span>
+                        {parent && (
+                          <span className="truncate text-caption text-text-muted">
+                            <span className="sr-only">, </span>
+                            {parent.label}
+                          </span>
+                        )}
+                      </span>
                       <ForwardIcon
                         aria-hidden="true"
                         className="size-4 shrink-0 text-text-muted"
