@@ -7,6 +7,7 @@ import { CloseIcon } from "@/design-system/icons";
 
 import {
   expectFocusContained,
+  expectHeadingOutline,
   expectFocusRing,
   expectNamedControls,
   tabSequence,
@@ -116,5 +117,37 @@ describe("expectFocusRing", () => {
     expect(() =>
       expectFocusRing(screen.getByRole("button", { name: "Bare" })),
     ).toThrow(/no token focus ring/);
+  });
+});
+
+describe("expectHeadingOutline", () => {
+  it("accepts one h1 followed by nested levels without gaps", () => {
+    const { container } = render(
+      <main>
+        <h1>Batches</h1>
+        <h2>Upcoming</h2>
+        <h3>DNS 2026-B</h3>
+        <h2>Archived</h2>
+      </main>,
+    );
+    expect(expectHeadingOutline(container)).toEqual([1, 2, 3, 2]);
+  });
+
+  it("rejects a missing or repeated h1 and skipped levels", () => {
+    const skipped = render(
+      <main>
+        <h1>Batches</h1>
+        <h3>Upcoming</h3>
+      </main>,
+    );
+    expect(() => expectHeadingOutline(skipped.container)).toThrow();
+    skipped.unmount();
+    const twoH1 = render(
+      <main>
+        <h1>Batches</h1>
+        <h1>Courses</h1>
+      </main>,
+    );
+    expect(() => expectHeadingOutline(twoH1.container)).toThrow();
   });
 });

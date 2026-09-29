@@ -110,3 +110,23 @@ export function expectFocusRing(element: Element): void {
     `no token focus ring on ${element.outerHTML.slice(0, 120)} or its wrappers`,
   );
 }
+
+/**
+ * Heading convention (docs/architecture/accessibility.md): exactly one h1 per
+ * page, it comes first, and no level is skipped going down (h2 → h4 is not
+ * allowed; going back up is fine). Returns the outline for extra assertions.
+ */
+export function expectHeadingOutline(container: HTMLElement): number[] {
+  const levels = within(container)
+    .queryAllByRole("heading")
+    .map((heading) => Number(heading.tagName.slice(1)) || 2);
+  expect(levels.filter((level) => level === 1)).toHaveLength(1);
+  expect(levels[0]).toBe(1);
+  const skips = levels.flatMap((level, index) =>
+    index > 0 && level > levels[index - 1]! + 1
+      ? [`h${levels[index - 1]} → h${level}`]
+      : [],
+  );
+  expect(skips).toEqual([]);
+  return levels;
+}
