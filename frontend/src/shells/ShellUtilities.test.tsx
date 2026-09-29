@@ -190,12 +190,16 @@ describe("CommandSearch", () => {
     renderSearch();
     await user.click(screen.getAllByRole("button", { name: "Search" })[0]!);
     const dialog = screen.getByRole("dialog", { name: "Search" });
+    // The Search field keeps its own (empty) loading status mounted (T00-10);
+    // the result count is the last status in the dialog.
     await waitFor(() =>
       expect(
         within(dialog).getByRole("searchbox", { name: "Search pages" }),
       ).toHaveFocus(),
     );
-    expect(within(dialog).getByRole("status")).toHaveTextContent("7 pages");
+    expect(within(dialog).getAllByRole("status").at(-1)!).toHaveTextContent(
+      "7 pages",
+    );
     await expectNoA11yViolations(document.body);
   });
 
@@ -222,7 +226,7 @@ describe("CommandSearch", () => {
       name: "Search pages",
     });
     await user.type(field, "lead");
-    expect(screen.getByRole("status")).toHaveTextContent("1 page");
+    expect(screen.getAllByRole("status").at(-1)!).toHaveTextContent("1 page");
     expect(
       within(screen.getByRole("list", { name: "Pages" })).getByRole("link", {
         name: /^Leads,\s*Admissions$/,
@@ -241,7 +245,7 @@ describe("CommandSearch", () => {
       await screen.findByRole("searchbox", { name: "Search pages" }),
       "zzz",
     );
-    expect(screen.getByRole("status")).toHaveTextContent(
+    expect(screen.getAllByRole("status").at(-1)!).toHaveTextContent(
       "No pages match “zzz”.",
     );
     expect(screen.queryByRole("list", { name: "Pages" })).toBeNull();

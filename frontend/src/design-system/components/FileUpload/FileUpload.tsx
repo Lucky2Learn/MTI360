@@ -132,6 +132,10 @@ export function FileUpload({
       </span>
       <DropZone
         isDisabled={isDisabled}
+        // React Aria names its hidden keyboard/paste button "<aria-label>
+        // <label>"; without this prefix it would announce the internal
+        // default "DropZone" (T00-10).
+        aria-label="Drop or paste files for"
         aria-labelledby={labelId}
         aria-describedby={describedBy}
         onDrop={(event) => {

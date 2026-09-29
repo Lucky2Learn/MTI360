@@ -9,7 +9,7 @@ import {
   type TabsProps as AriaTabsProps,
 } from "react-aria-components";
 
-import { cx, focusRing } from "@/design-system/lib/cx";
+import { cx, focusRing, insetFocusRing } from "@/design-system/lib/cx";
 
 import type { ReactNode } from "react";
 
@@ -68,7 +68,9 @@ export function Tab({ id, children, isDisabled }: TabProps) {
         "data-hovered:text-text-primary",
         "data-selected:border-accent-maritime data-selected:font-semibold data-selected:text-text-primary",
         "data-disabled:cursor-not-allowed data-disabled:opacity-50",
-        focusRing,
+        // Inset ring: the tab list scrolls horizontally and would clip an
+        // outer ring (T00-10).
+        insetFocusRing,
       )}
     >
       {children}

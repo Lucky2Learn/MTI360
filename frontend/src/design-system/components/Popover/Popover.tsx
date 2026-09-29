@@ -1,9 +1,8 @@
 "use client";
 
+import { useId } from "react";
 import {
-  Dialog as AriaDialog,
   DialogTrigger,
-  Heading,
   Popover as AriaPopover,
   type PopoverProps as AriaPopoverProps,
 } from "react-aria-components";
@@ -20,6 +19,11 @@ import type { ReactElement, ReactNode } from "react";
 // returns to the trigger. The panel is a labelled dialog. Select, Combobox and
 // DatePicker (07B) share the same surface (Overlay/overlay.ts) but keep their
 // own React Aria popovers because their collections need them.
+//
+// T00-10: the React Aria popover itself is the dialog (no nested Dialog), so
+// its visually hidden "Dismiss" buttons for screen-reader users sit inside
+// the labelled dialog rather than in unlabelled page content (axe "region"),
+// and focus is contained while it is open (the page behind is inert).
 
 export type PopoverSize = "sm" | "md";
 
@@ -53,6 +57,7 @@ export function Popover({
   defaultOpen,
   onOpenChange,
 }: PopoverProps) {
+  const titleId = useId();
   return (
     <DialogTrigger
       isOpen={isOpen}
@@ -64,23 +69,21 @@ export function Popover({
         placement={placement}
         offset={8}
         containerPadding={16}
+        aria-labelledby={title ? titleId : undefined}
+        aria-label={title ? undefined : ariaLabel}
         className={cx(popoverSurface, "max-w-full", sizes[size])}
       >
-        <AriaDialog
-          aria-label={title ? undefined : ariaLabel}
-          // a11y-focus: popover dialog; receives programmatic focus only
-          className="flex flex-col gap-2 p-4 outline-none"
-        >
+        <div className="flex flex-col gap-2 p-4">
           {title && (
-            <Heading
-              slot="title"
+            <h2
+              id={titleId}
               className="text-body-sm font-semibold text-text-primary"
             >
               {title}
-            </Heading>
+            </h2>
           )}
           <div className="text-body-sm text-text-secondary">{children}</div>
-        </AriaDialog>
+        </div>
       </AriaPopover>
     </DialogTrigger>
   );

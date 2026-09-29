@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 import { Button } from "@/design-system/components/Button";
 import { IconButton } from "@/design-system/components/IconButton";
 import { Select } from "@/design-system/components/Select";
@@ -17,6 +19,12 @@ import {
 // Next / Last. Mobile: Previous · "Page x of y" · Next (44px targets).
 // <nav> landmark; the current page has aria-current="page"; unavailable
 // controls are disabled.
+//
+// Focus (T00-10, WCAG 2.4.3): pressing First/Previous/Next/Last can disable
+// the pressed control (first or last page reached), which drops keyboard
+// focus to <body>. After a page change started inside the component, focus
+// then moves to the current page button (tablet+) or the remaining enabled
+// page control (mobile). Page changes from outside never move focus.
 
 export type PaginationProps = {
   /** 1-based current page. */
@@ -69,11 +77,46 @@ export function Pagination({
   const last = Math.min(current * pageSize, totalItems);
   const isFirst = current <= 1;
   const isLast = current >= totalPages;
-  const go = (target: number) =>
+  const navRef = useRef<HTMLElement>(null);
+  const restoreFocus = useRef(false);
+  const go = (target: number) => {
+    restoreFocus.current = true;
     onPageChange(Math.min(Math.max(1, target), totalPages));
+  };
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!restoreFocus.current || !nav) return;
+    restoreFocus.current = false;
+    const active = document.activeElement;
+    const stillFocused =
+      active instanceof HTMLElement &&
+      nav.contains(active) &&
+      !active.hasAttribute("disabled");
+    if (stillFocused) return;
+    const visible = (element: HTMLElement) =>
+      element.getClientRects().length > 0;
+    const currentPage = [
+      ...nav.querySelectorAll<HTMLElement>(
+        '[data-page-controls] [aria-current="page"]',
+      ),
+    ];
+    const enabled = [
+      ...nav.querySelectorAll<HTMLElement>(
+        "[data-page-controls] button:not([disabled])",
+      ),
+    ];
+    const target =
+      currentPage.find(visible) ??
+      enabled.find(visible) ??
+      currentPage[0] ??
+      enabled[0];
+    target?.focus();
+  }, [current]);
 
   return (
     <nav
+      ref={navRef}
       aria-label={label}
       className="flex flex-col gap-3 tablet:flex-row tablet:items-center tablet:justify-between"
     >
@@ -99,7 +142,10 @@ export function Pagination({
         )}
 
         {/* Mobile: compact */}
-        <div className="flex w-full items-center justify-between gap-2 tablet:hidden">
+        <div
+          data-page-controls=""
+          className="flex w-full items-center justify-between gap-2 tablet:hidden"
+        >
           <IconButton
             label="Previous page"
             icon={ChevronLeftIcon}
@@ -120,7 +166,10 @@ export function Pagination({
         </div>
 
         {/* Tablet and up: full */}
-        <ul className="hidden items-center gap-1 tablet:flex">
+        <ul
+          data-page-controls=""
+          className="hidden items-center gap-1 tablet:flex"
+        >
           <li>
             <IconButton
               label="First page"

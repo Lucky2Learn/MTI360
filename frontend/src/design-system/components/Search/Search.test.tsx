@@ -73,3 +73,22 @@ describe("Search", () => {
     expect(screen.getByText("Recent: Mumbai campus")).toBeInTheDocument();
   });
 });
+
+describe("Search announcements (T00-10)", () => {
+  it("keeps its status region mounted so the loading text is announced", () => {
+    const { rerender } = render(
+      <Search label="Search records" loadingLabel="Searching records…" />,
+    );
+    const status = screen.getByRole("status");
+    expect(status).toBeEmptyDOMElement();
+    rerender(
+      <Search
+        label="Search records"
+        isLoading
+        loadingLabel="Searching records…"
+      />,
+    );
+    expect(screen.getByRole("status")).toBe(status);
+    expect(status).toHaveTextContent("Searching records…");
+  });
+});
