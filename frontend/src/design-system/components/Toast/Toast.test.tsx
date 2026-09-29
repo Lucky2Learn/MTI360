@@ -163,3 +163,29 @@ describe("Toast", () => {
     expect(screen.getByText("3 cadets affected.")).toBeInTheDocument();
   });
 });
+
+describe("Toast region landmark (T00-10)", () => {
+  it("is reachable with F6 once a toast appears, even when mounted empty", async () => {
+    const user = userEvent.setup();
+    const queue = createToastQueue();
+    render(
+      <>
+        <button type="button">Start</button>
+        <ToastRegion queue={queue} />
+      </>,
+    );
+    act(() => {
+      showToast({ tone: "info", title: "Batch saved" }, {}, queue);
+    });
+    await screen.findByText("Batch saved");
+    screen.getByRole("button", { name: "Start" }).focus();
+    await user.keyboard("{F6}");
+    await waitFor(() =>
+      expect(
+        screen
+          .getByRole("region", { name: "Notifications" })
+          .contains(document.activeElement),
+      ).toBe(true),
+    );
+  });
+});

@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useSyncExternalStore } from "react";
 import {
   Text,
   UNSTABLE_Toast as AriaToast,
@@ -28,6 +29,11 @@ import { cx } from "@/design-system/lib/cx";
 //
 // The global region is mounted by the application shell (T00-08); the
 // design-system showcase mounts its own.
+//
+// F6 (T00-10): React Aria registers the region as a landmark when it
+// renders, but its element only exists while a toast is visible, and with a
+// fixed label the registration is never retried — F6 never reached the
+// region. The region is therefore re-mounted when the first toast appears.
 
 export type ToastTone = "success" | "info" | "warning" | "error";
 
@@ -106,8 +112,19 @@ export function ToastRegion({
   queue = toastQueue,
   label = "Notifications",
 }: ToastRegionProps) {
+  const subscribe = useCallback(
+    (onChange: () => void) => queue.subscribe(onChange),
+    [queue],
+  );
+  const hasToasts = useSyncExternalStore(
+    subscribe,
+    () => queue.visibleToasts.length > 0,
+    () => false,
+  );
+
   return (
     <AriaToastRegion
+      key={hasToasts ? "visible" : "empty"}
       queue={queue}
       aria-label={label}
       // a11y-focus: region landmark (F6); each toast draws the focus ring

@@ -1,6 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import {
+  expectHeadingOutline,
+  expectNamedControls,
+} from "@/design-system/testing/a11y";
 import { expectNoA11yViolations } from "@/design-system/testing/axe";
 import { ThemeProvider } from "@/design-system/theme/ThemeProvider";
 
@@ -130,6 +134,9 @@ describe("design-system showcase content", WHOLE_PAGE, () => {
         screen.getByRole("heading", { level: 2, name }),
       ).toBeInTheDocument();
     }
+    // T00-10: every control named; one h1 and no skipped heading levels.
+    expectNamedControls(container);
+    expectHeadingOutline(container);
     await expectNoA11yViolations(container);
   });
 });
