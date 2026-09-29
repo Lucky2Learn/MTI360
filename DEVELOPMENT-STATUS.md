@@ -107,7 +107,7 @@ M0 — Foundation Ready
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-09-28:** T00-01 … T00-07 are `COMPLETED` (merged to `main`; T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9). T00-08 (Application Shell) is `READY_FOR_REVIEW`: the shell and the four experience route boundaries (`/platform`, `/app`, `/student`, `/site`) exist with navigation placeholders only. Only the toolchain, local infrastructure, validated environment configuration, CI, design tokens with the Light/Dark/System theme, the component library, a development-only showcase, the application shell with placeholder pages, a neutral root page and the `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
+> **2026-09-29:** T00-01 … T00-08 are `COMPLETED` (merged to `main`; T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10). T00-09 (Responsive Layout Foundation) is `READY_FOR_REVIEW`: reusable layout primitives and conventions, with generic development-only examples. Only the toolchain, local infrastructure, validated environment configuration, CI, design tokens with the Light/Dark/System theme, the component library, layout primitives, a development-only showcase, the application shell with placeholder pages, a neutral root page and the `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
 
 ---
 
@@ -183,7 +183,7 @@ IN_PROGRESS
 ## Phase Completion
 
 ```text
-7 / 10 tasks completed (T00-01 … T00-07 COMPLETED; T00-08 READY_FOR_REVIEW)
+8 / 10 tasks completed (T00-01 … T00-08 COMPLETED; T00-09 READY_FOR_REVIEW)
 ```
 
 ---
@@ -599,7 +599,7 @@ Clean clone, gitleaks, Docker build + API smoke: PASS. Landing page
 
 ### T00-08 — Application Shell
 
-**Status:** `READY_FOR_REVIEW` (branch `feat/T00-08-application-shell`, based on `main` at `e69603e`; not pushed)
+**Status:** `COMPLETED` (reviewed; merged to `main` via PR #10 with a merge commit, `4a47f98`, 2026-09-28)
 
 **Implementation:**
 
@@ -643,18 +643,50 @@ test and 404 in production; unknown paths 404.
 
 ### T00-09 — Responsive Foundation
 
-**Status:** `NOT_STARTED`
+**Status:** `READY_FOR_REVIEW` (branch `feat/T00-09-responsive-layout`, based on `main` at `4a47f98`; not pushed)
 
 **Implementation:**
 
 ```text
-Not started
+Layout primitives (frontend/src/design-system/layout/, "@/design-system/layout";
+  conventions: docs/architecture/layout.md):
+  responsive.ts (breakpoint vocabulary on the approved tiers, Responsive<T>,
+  4px spacing scale 2xs..2xl with section gaps growing from tablet, literal
+  column/span class maps), Container (narrow 48rem / standard 72rem / wide
+  80rem / full; page gutter 16/24/32px), Stack, Inline (wrap or stackBelow),
+  Grid / GridItem (1-6, 12 columns; spans), Section, SplitLayout (1:1, 2:1,
+  3:1; DOM order = stacked order), ActionBar (primary on top on mobile,
+  wrapping row from tablet), Show (CSS-only responsive visibility)
+Shell integration (public APIs unchanged): PageContainer uses the shared
+  widths/gutter (+ additive "narrow"); PageContent sections 24 -> 32px;
+  PageHeader and Section actions via ActionBar - beside the title while it
+  keeps >= 24rem, wrapped below otherwise (fixes a squeezed title at 768/1024)
+Defects found in Chromium, fixed without API changes: Kpi long values spilled
+  out of narrow cards (wrap-anywhere); ErrorState actions did not wrap;
+  DataTable scroll-region focus ring clipped by its frame (new insetFocusRing)
+Page conventions: page header/actions, dashboard, data list (FilterBar +
+  DataTable), detail (SplitLayout), form (1 -> 2 columns + ActionBar),
+  content widths, overflow/long content, RTL readiness
+Showcase: layout sections on /design-system; /design-system/layout = generic
+  page inside the real shell (development/test only, 404 in production)
+No new dependencies, breakpoints or tokens; responsive typography unchanged
+  (page title 24 -> 32px already per DESIGN-SYSTEM.md §19). INC-29
 ```
 
 **Verification:**
 
 ```text
-Not verified
+pnpm check: PASS (frontend 609 tests, backend 139). Headless Chromium on the
+production image (APP_ENV=test and production): 675/675 - the full T00-08
+shell regression plus /design-system and /design-system/layout in Light and
+Dark at 390/640/768/1024/1280/1440 (no page overflow, no element spilling its
+box, axe 0 incl. contrast with no exclusions, no console/hydration errors, no
+external requests), breakpoint edges 767/768, 1023/1024, 1439/1440, layout
+geometry per width, 44px targets, FilterBar drawer, table scroll region,
+keyboard order and unclipped focus ring, reduced motion, System theme,
+element-level spill on every experience; /design-system/layout 404 in
+production. gitleaks (full history): no leaks. API image smoke: PASS.
+Compose config: valid.
 ```
 
 ---
@@ -1302,16 +1334,16 @@ A screen is only considered implemented when its required underlying behavior is
 
 | Component | Status |
 |---|---|
-| AppShell | `READY_FOR_REVIEW` (T00-08, `ApplicationShell`; INC-28) |
-| Sidebar | `READY_FOR_REVIEW` (T00-08, `AppSidebar` + `AppNavigation`) |
-| TopBar | `READY_FOR_REVIEW` (T00-08, `AppHeader`) |
-| PageHeader | `READY_FOR_REVIEW` (T00-08) |
-| Breadcrumb | `READY_FOR_REVIEW` (T00-08, `Breadcrumbs`) |
-| GlobalSearch | `READY_FOR_REVIEW` (T00-08, `CommandSearch`; entry point only) |
+| AppShell | `COMPLETED` (T00-08, PR #10, `ApplicationShell`; INC-28) |
+| Sidebar | `COMPLETED` (T00-08, PR #10, `AppSidebar` + `AppNavigation`) |
+| TopBar | `COMPLETED` (T00-08, PR #10, `AppHeader`) |
+| PageHeader | `COMPLETED` (T00-08, PR #10; responsive actions `READY_FOR_REVIEW` in T00-09) |
+| Breadcrumb | `COMPLETED` (T00-08, PR #10, `Breadcrumbs`) |
+| GlobalSearch | `COMPLETED` (T00-08, PR #10, `CommandSearch`; entry point only) |
 | TenantContext | `NOT_STARTED` (needs authentication and tenancy) |
 | CampusSwitcher | `NOT_STARTED` (needs authentication and tenancy) |
-| NotificationCenter | `READY_FOR_REVIEW` (T00-08; static data) |
-| UserMenu | `READY_FOR_REVIEW` (T00-08; no authentication) |
+| NotificationCenter | `COMPLETED` (T00-08, PR #10; static data) |
+| UserMenu | `COMPLETED` (T00-08, PR #10; no authentication) |
 | Button | `COMPLETED` (T00-07A, PR #7) |
 | IconButton | `COMPLETED` (T00-07A, PR #7) |
 | Input | `COMPLETED` (T00-07B, PR #8) |
@@ -1338,7 +1370,7 @@ A screen is only considered implemented when its required underlying behavior is
 | Skeleton | `COMPLETED` (T00-07A, PR #7) |
 | PermissionGate | `NOT_STARTED` |
 
-Also implemented outside this list: Textarea and Checkbox (T00-07B, PR #8); Popover, Tooltip, DropdownMenu, ContextMenu, Search, RadioGroup, Switch and TimePicker (T00-07C, PR #9). T00-08 also adds PageContainer/PageContent, SkipNavigation, MobileNavigation, ShellLoading/ShellError and PublicSiteShell (`READY_FOR_REVIEW`).
+Also implemented outside this list: Textarea and Checkbox (T00-07B, PR #8); Popover, Tooltip, DropdownMenu, ContextMenu, Search, RadioGroup, Switch and TimePicker (T00-07C, PR #9). T00-08 also adds PageContainer/PageContent, SkipNavigation, MobileNavigation, ShellLoading/ShellError and PublicSiteShell (`COMPLETED`, PR #10). T00-09 adds the layout primitives Container, Stack, Inline, Grid/GridItem, Section, SplitLayout, ActionBar and Show (`READY_FOR_REVIEW`; docs/architecture/layout.md).
 
 ---
 
@@ -1409,7 +1441,8 @@ Also implemented outside this list: Textarea and Checkbox (T00-07B, PR #8); Popo
 | CI Foundation (T00-05) | `COMPLETED` |
 | Design Token Foundation (T00-06) | `COMPLETED` |
 | Core Component Library (T00-07) | `COMPLETED` (PR #7, PR #8, PR #9) |
-| Application Shell (T00-08) | `READY_FOR_REVIEW` |
+| Application Shell (T00-08) | `COMPLETED` (PR #10) |
+| Responsive Layout Foundation (T00-09) | `READY_FOR_REVIEW` |
 | Architecture Decision Records | `READY_FOR_REVIEW` (ADR-0001 … ADR-0006) |
 | Production Implementation | `NOT_STARTED` |
 
@@ -1661,6 +1694,8 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-09-27 | T00-07C overlays, data and interaction controls implemented | `READY_FOR_REVIEW` on `feat/T00-07c-overlays-data`; 15 components + overlay infrastructure |
 | 2026-09-28 | T00-07C merged to `main` (PR #9, `e69603e`) | T00-07 `COMPLETED` |
 | 2026-09-28 | T00-08 Application Shell implemented | `READY_FOR_REVIEW` on `feat/T00-08-application-shell`; shell + four experience route boundaries |
+| 2026-09-28 | T00-08 merged to `main` (PR #10, `4a47f98`) | `COMPLETED` |
+| 2026-09-29 | T00-09 Responsive Layout Foundation implemented | `READY_FOR_REVIEW` on `feat/T00-09-responsive-layout`; layout primitives, shell integration, layout showcase |
 
 ---
 
@@ -2394,14 +2429,79 @@ Review T00-08 -> push, PR, CI, merge commit -> T00-09 Responsive Foundation
 
 ---
 
+## 2026-09-29 — T00-09 Responsive Layout Foundation
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+Reusable responsive layout primitives and conventions so future screens adapt consistently from 390px to 1440px+ without inventing layout rules. The T00-08 shell is integrated without API changes, and the layout is demonstrated with generic examples (development/test only). No business screens.
+
+**Files:**
+
+```text
+Created: frontend/src/design-system/layout/ (responsive.ts, Container, Stack,
+  Inline, Grid, Section, SplitLayout, ActionBar, Show, index.ts) with tests;
+  frontend/src/app/design-system/showcase-layout.tsx;
+  frontend/src/app/design-system/layout/ (page.tsx, layout-example.tsx, test);
+  docs/architecture/layout.md
+Changed: shells/PageContainer.tsx, shells/PageHeader.tsx (+ tests);
+  design-system/components/Kpi, ErrorState, DataTable (+ tests; layout
+  defects, no API change); design-system/lib/cx.ts (insetFocusRing);
+  app/design-system/showcase.tsx (+ test); docs/architecture/{components,
+  application-shell,spec-inconsistencies}.md, docs/README.md, README.md,
+  frontend and design-system READMEs, TASKS.md, DEVELOPMENT-STATUS.md
+Unchanged (verified): package.json and lockfiles, tokens and breakpoints,
+  theme runtime, 07A/07B/07C and T00-08 public APIs, backend, database,
+  Dockerfiles and ignore files, compose, CI, environment templates, ADRs,
+  DESIGN-SYSTEM.md, index.html, app.js, styles.css; ACRS
+```
+
+**Database / API / UI:**
+
+```text
+Database / API: none. UI: layout primitives; generic layout examples with
+sample maritime labels on development/test-only pages.
+```
+
+**Tests:**
+
+```text
+Frontend 609 passed (was 555). Backend 139 passed. pnpm check passes.
+Headless Chromium verification 675/675 (includes the T00-08 regression).
+```
+
+**Known Issues:**
+
+```text
+Content-width caps (72/80rem) are below DESIGN-SYSTEM.md §82's typical
+1200-1440px, and the layout primitive names are not in the specifications
+(INC-29). Breakpoints are viewport-based: column counts must account for the
+256px sidebar (documented). The KPI of a very large unabbreviated figure wraps
+in narrow cells; compact formats are recommended. Full RTL is not implemented
+(layout is direction-neutral).
+```
+
+**Next:**
+
+```text
+Review T00-09 -> push, PR, CI, merge commit -> T00-10 Accessibility Foundation
+```
+
+---
+
 # 40. NEXT TASK
 
 The next step is:
 
 ```text
-Review T00-08 (READY_FOR_REVIEW): push, open the pull request, verify CI on
-GitHub and merge with a merge commit; T00-08 then becomes COMPLETED. Then
-continue with T00-09 — Responsive Foundation.
+Review T00-09 (READY_FOR_REVIEW): push, open the pull request, verify CI on
+GitHub and merge with a merge commit; T00-09 then becomes COMPLETED. Then
+continue with T00-10 — Accessibility Foundation.
 ```
 
 The completed-task description below is retained for reference.

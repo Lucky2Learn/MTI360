@@ -36,7 +36,7 @@ screens — import only from "@/design-system/components"
 | React Aria packages imported only in `design-system/components` | guard |
 | `dangerouslySetInnerHTML` only for the pre-paint theme script | guard |
 | Class joining with `cx()`; variants as `Record<Variant, string>` maps (no clsx/cva/tailwind-merge, D4) | review |
-| Visible focus via `focusRing` (semantic `focus-ring`, `--focus-ring-width` 2px, offset 2px) | tests + browser check |
+| Visible focus via `focusRing` (semantic `focus-ring`, `--focus-ring-width` 2px, offset 2px); `insetFocusRing` (same ring, drawn inside) for focusable containers within a clipping parent (T00-09) | tests + browser check |
 | Motion only with `motion-safe:` or disabled by `motion-reduce:` | browser check (reduced motion) |
 | Axe on every component test (`testing/axe.ts`; contrast and landmark rules checked in the browser) | tests |
 
@@ -106,7 +106,7 @@ Links rendered by `Button href` are React Aria links (plain `<a href>` navigatio
 | Purpose | Label · Value · Trend · Comparison · Context (§51) |
 | Props | `label`, `value` (pre-formatted: locale/currency by the caller, D10), `trend` {`direction` up/down/flat, `value`, `sentiment` positive/negative/neutral}, `comparison`, `context`, `icon` |
 | Theme | trend colour follows the caller's **sentiment**, not the direction (overdue fees up = negative) |
-| Responsive | the KPI fills its grid cell; grids stack on mobile (the caller's layout) |
+| Responsive | the KPI fills its grid cell; grids stack on mobile (the caller's layout, [layout.md](layout.md)). A value wider than the cell wraps instead of spilling (T00-09); prefer compact formats ("₹12.4 Cr") in multi-column rows |
 | Accessibility | labelled group; trend in words for screen readers ("Increased by 8.4%"), arrow + sign visually — never colour alone |
 
 ### Timeline
@@ -150,6 +150,7 @@ Links rendered by `Button href` are React Aria links (plain `<a href>` navigatio
 | Purpose | What happened, what was saved, what to do, can I retry (§60); permission-restricted presentation (§57) |
 | Props | `kind` (error, permission), `title`, `description`, `savedState`, `onRetry`/`retryLabel`/`isRetrying`, `backHref`/`backLabel`, `supportHref`/`supportLabel`, `reference`, `titleAs` |
 | Security | renders only caller-supplied, user-safe text; `Error` objects do not type-check; no stack traces, SQL or provider details (CLAUDE.md §37); `reference` is a correlation ID for support. The authorization decision is always server-side |
+| Responsive | the actions stack full width on mobile and form a row from `tablet` that wraps in narrow containers (T00-09) |
 | Accessibility | labelled region; actions are real buttons/links |
 
 ## 3B. Form component contracts (T00-07B)
@@ -307,7 +308,7 @@ Decisions (T00-07B proposal, approved): D1 `value`/`defaultValue`/`onChange` wit
 | Sorting | header buttons cycle ascending → descending → unsorted; `aria-sort` + icon |
 | Selection | the shared Checkbox; "Select all rows" with an indeterminate state; per row "Select {label}" |
 | States | loading (skeleton rows, `aria-busy`, polite status), error (ErrorState + retry), empty (EmptyState) |
-| Responsive | `scroll`: the table scrolls inside a focusable, labelled region (the page never overflows) and columns can be hidden below `tablet` / `desktop`; `cards`: each row becomes a card below `tablet` |
+| Responsive | `scroll`: the table scrolls inside a focusable, labelled region (the page never overflows) and columns can be hidden below `tablet` / `desktop`; `cards`: each row becomes a card below `tablet`. The region's focus ring is drawn inside it (`insetFocusRing`) because the rounded frame clips overflow (T00-09) |
 
 ### Pagination
 
@@ -357,7 +358,8 @@ Decisions (T00-07B proposal, approved): D1 `value`/`defaultValue`/`onChange` wit
 ## 4. Showcase — `/design-system` (decision D8)
 
 - Every 07A, 07B and 07C component in its variants and states (07C sections in `showcase-overlays.tsx`, with a showcase-only toast queue and region), with realistic maritime sample data and the theme selector; a Student enquiry form (two columns from `desktop`, §84 actions, simulated server validation — nothing is submitted).
-- Available only when `APP_ENV` is `development` or `test`; any other value or an invalid configuration returns **404** (fail closed). `robots: noindex, nofollow`. Rendered per request (`force-dynamic`), so the runtime `APP_ENV` of the container decides.
+- T00-09 adds the layout sections (`showcase-layout.tsx`: breakpoints, Container, Stack, Inline, Grid, Section, two-column layout, responsive visibility) and `/design-system/layout`, a generic page inside the real application shell (dashboard, data, detail and form layouts with long content). Layout contracts: [layout.md](layout.md).
+- Available only when `APP_ENV` is `development` or `test` (both `/design-system` and `/design-system/layout`); any other value or an invalid configuration returns **404** (fail closed). `robots: noindex, nofollow`. Rendered per request (`force-dynamic`), so the runtime `APP_ENV` of the container decides.
 - Residual risk: `APP_ENV` defaults to `development` when unset (T00-04), so a deployment that omits it would expose this data-free gallery; deployed environments must set `APP_ENV` (environments.md).
 
 ## 5. Verification (T00-07A)

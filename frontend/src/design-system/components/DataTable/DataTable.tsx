@@ -12,7 +12,7 @@ import {
   SortDescendingIcon,
   SortableIcon,
 } from "@/design-system/icons";
-import { cx, focusRing } from "@/design-system/lib/cx";
+import { cx, focusRing, insetFocusRing } from "@/design-system/lib/cx";
 
 // DataTable (DESIGN-SYSTEM.md §44, §27, §74; T00-07C). A typed, controlled
 // foundation — never fetches; the application owns data, sorting, selection
@@ -209,8 +209,9 @@ export function DataTable<Row>({
           // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
           tabIndex={0}
           className={cx(
-            "overflow-x-auto",
-            focusRing,
+            // Inset ring: the rounded frame above clips overflow (T00-09).
+            "overflow-x-auto rounded-xl",
+            insetFocusRing,
             cards && "hidden tablet:block",
           )}
         >

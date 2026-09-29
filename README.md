@@ -31,7 +31,7 @@ MTI 360 is **one product with four experiences**:
 
 ## Current status
 
-> **No product functionality has been implemented yet.** The development toolchain (T00-02), local Docker infrastructure (T00-03), validated per-environment configuration (T00-04), CI (T00-05), the design-token foundation with Light/Dark/System themes (T00-06) the component library (T00-07) and the application shell with the four experience route boundaries (T00-08, placeholder pages only) exist; the frontend has a neutral token-styled root page, the shell at `/platform`, `/app`, `/student` and `/site`, and a development-only component showcase, and the backend only a `/health` liveness endpoint. No database schema, authentication or tenancy exists.
+> **No product functionality has been implemented yet.** The development toolchain (T00-02), local Docker infrastructure (T00-03), validated per-environment configuration (T00-04), CI (T00-05), the design-token foundation with Light/Dark/System themes (T00-06) the component library (T00-07) and the application shell with the four experience route boundaries (T00-08, placeholder pages only) and the responsive layout primitives (T00-09) exist; the frontend has a neutral token-styled root page, the shell at `/platform`, `/app`, `/student` and `/site`, and a development-only component and layout showcase, and the backend only a `/health` liveness endpoint. No database schema, authentication or tenancy exists.
 
 | Area | Status |
 |---|---|
@@ -43,8 +43,9 @@ MTI 360 is **one product with four experiences**:
 | T00-05 CI Foundation | `COMPLETED` (merged, PR #5) |
 | T00-06 Design Token Foundation | `COMPLETED` (merged, PR #6) |
 | T00-07 Core Component Library | `COMPLETED` (merged, PR #7, PR #8, PR #9) |
-| T00-08 Application Shell | `READY_FOR_REVIEW` |
-| Phase 00 Foundation (T00-09, T00-10) | Not started |
+| T00-08 Application Shell | `COMPLETED` (merged, PR #10) |
+| T00-09 Responsive Layout Foundation | `READY_FOR_REVIEW` |
+| Phase 00 Foundation (T00-10) | Not started |
 | Product features (screens, APIs, database, auth, tenancy) | Not started |
 
 The live tracker is [DEVELOPMENT-STATUS.md](DEVELOPMENT-STATUS.md).

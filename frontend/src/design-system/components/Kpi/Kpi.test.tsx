@@ -64,4 +64,9 @@ describe("Kpi", () => {
       screen.getByText("Across 3 partner shipping companies"),
     ).toBeInTheDocument();
   });
+
+  it("wraps a value wider than a narrow column instead of spilling out (T00-09)", () => {
+    render(<Kpi label="Fees collected this year" value="₹12,40,00,000" />);
+    expect(screen.getByText("₹12,40,00,000")).toHaveClass("wrap-anywhere");
+  });
 });

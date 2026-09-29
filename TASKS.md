@@ -528,7 +528,7 @@ UserMenu
 
 ### T00-08 Update (2026-09-28)
 
-**Status:** READY_FOR_REVIEW (branch `feat/T00-08-application-shell`, based on `main` at `e69603e`). Contracts: `docs/architecture/application-shell.md`.
+**Status:** COMPLETED (merged to `main` via PR #10, `4a47f98`). Contracts: `docs/architecture/application-shell.md`.
 
 **Scope (T00-08 implementation prompt and decision):** reusable shell (`frontend/src/shells/`) — ApplicationShell, AppHeader, AppSidebar/AppNavigation, MobileNavigation (Drawer), Breadcrumbs, PageHeader, PageContainer/PageContent, SkipNavigation, UserMenu (DropdownMenu + existing ThemeSelector), NotificationCenter (Popover, static data), CommandSearch (Dialog + Search, Ctrl+K), global ToastRegion mount, ShellLoading/ShellError — and the experience framework with route boundaries `/platform/*`, `/app/*`, `/student/*` and `/site/*` (navigation placeholders only). Names map to the list above as recorded in INC-28.
 
@@ -561,6 +561,21 @@ Verify:
 1280
 1440+
 ```
+
+### T00-09 Update (2026-09-29)
+
+**Status:** READY_FOR_REVIEW (branch `feat/T00-09-responsive-layout`, based on `main` at `4a47f98`). Conventions and contracts: `docs/architecture/layout.md`.
+
+**Scope (T00-09 implementation prompt):** reusable layout primitives in `frontend/src/design-system/layout/`: Container (content widths narrow / standard / wide / full), Stack, Inline, Grid/GridItem, Section, SplitLayout, ActionBar and Show (CSS-only responsive visibility). The breakpoint and spacing vocabulary reuses the approved tiers. The T00-08 shell is integrated without breaking its API: PageContainer uses the shared widths (plus `narrow`), and PageHeader actions wrap below a long title. Page conventions for dashboards, lists with filters and tables, detail pages and forms are documented. `/design-system` gains layout sections, and `/design-system/layout` shows a generic page in the real shell (development/test only). No business screens, and no new dependencies, breakpoints or tokens. Layout defects found in 07A/07C during verification were fixed without API changes (Kpi long values, ErrorState action wrapping, DataTable scroll-region focus ring). Naming and width notes: INC-29.
+
+**Acceptance criteria:**
+
+* Every primitive has behaviour tests (responsive configuration, wrapping, alignment, spacing, composition, semantics, long content) and passes axe; 07A/07B/07C and T00-08 public APIs are unchanged.
+* No page-level horizontal overflow and no element spilling its box at 390/640/768/1024/1280/1440 in Light and Dark, including long names, e-mails, titles, breadcrumbs and large numbers.
+* 44px mobile touch targets; the DOM order is the focus order; focus rings are visible and unclipped; reduced motion; System theme.
+* Axe 0 violations in Chromium with no new exclusions; no console or hydration errors; no external requests.
+* `/design-system` and `/design-system/layout` return 200 in development/test and 404 in production; the four experiences work; landing-page hashes are unchanged.
+* No backend, database, Docker, compose, CI or environment changes.
 
 ---
 

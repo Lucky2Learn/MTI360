@@ -73,4 +73,19 @@ describe("ErrorState", () => {
     const element = <ErrorState {...props} />;
     expect(element).toBeTruthy();
   });
+
+  it("wraps its actions in narrow containers (T00-09)", () => {
+    render(
+      <ErrorState
+        title="We couldn't load the fee schedule"
+        onRetry={() => {}}
+        backHref="#top"
+        supportHref="#top"
+      />,
+    );
+    const actions = screen.getByRole("button", {
+      name: "Try again",
+    }).parentElement!;
+    expect(actions).toHaveClass("tablet:flex-row", "tablet:flex-wrap");
+  });
 });

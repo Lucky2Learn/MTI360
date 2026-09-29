@@ -50,8 +50,8 @@ PublicExperience       label, basePath, navigationLabel, navigation, pageWidth
 | `AppNavigation` | `<nav aria-label>`; labelled section lists; links with `aria-current="page"`; one nesting level under a disclosure button (`aria-expanded`, `aria-controls`; the branch with the current page opens); badges with a screen-reader description; `full` / `rail` / `auto` display | native links (`next/link`) |
 | `MobileNavigation` | Navigation in a left Drawer below the desktop breakpoint; closes when a link is followed | Drawer, IconButton |
 | `Breadcrumbs` | `<nav aria-label="Breadcrumb">` + `<ol>`; last item `aria-current="page"` (not a link); middle items collapse to an ellipsis on mobile; labels truncate | `next/link` |
-| `PageHeader` | Breadcrumbs → single `h1` + status → description → actions (stacked on mobile) → secondary content | Breadcrumbs |
-| `PageContainer` / `PageContent` | Content column: `standard` (72rem), `wide` (80rem), `full`; padding 16/24/32px; vertical rhythm | — |
+| `PageHeader` | Breadcrumbs → single `h1` + status → description → actions (stacked on mobile, primary on top; from tablet beside the title while it keeps ≥ 24rem, otherwise wrapped below it — T00-09) → secondary content | Breadcrumbs, ActionBar |
+| `PageContainer` / `PageContent` | Content column: `narrow` (48rem, T00-09), `standard` (72rem), `wide` (80rem), `full`; padding 16/24/32px; sections 24 → 32px apart. Widths and gutter are the layout conventions in [layout.md](layout.md) | design-system/layout |
 | `SkipNavigation` | First tab stop, visible on focus (44px tall), moves focus to `main` without changing the URL | — |
 | `UserMenu` | Account menu: Profile, Preferences, Help, Sign out. Preferences opens the existing `ThemeSelector` in a Dialog. Sign out / Profile / Help explain they are not available yet | DropdownMenu, Dialog, ThemeSelector, Toast |
 | `NotificationCenter` | Bell with unread count in its name; list with read/unread (dot, weight, "Unread" prefix — not colour alone); mark one/all read; empty state. Static data via props | Popover, EmptyState, IconButton |
@@ -88,4 +88,4 @@ Landmarks: `banner`, `navigation` (labelled per experience), `main`, `contentinf
 
 ## 6. Not in T00-08
 
-Authentication, sessions, RBAC, tenant resolution, impersonation/support sessions, the proxy, real notifications (backend, polling, WebSocket, push), global/tenant/AI search, tenant branding, the public website builder, business modules, and the responsive grid (T00-09) and accessibility foundation (T00-10) tasks.
+Authentication, sessions, RBAC, tenant resolution, impersonation/support sessions, the proxy, real notifications (backend, polling, WebSocket, push), global/tenant/AI search, tenant branding, the public website builder, business modules, and the responsive layout (T00-09, [layout.md](layout.md)) and accessibility foundation (T00-10) tasks.

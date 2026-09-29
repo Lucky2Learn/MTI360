@@ -14,7 +14,8 @@ import { cx } from "@/design-system/lib/cx";
 
 // ErrorState (DESIGN-SYSTEM.md §57, §60; UI-SCREENS.md §10; CLAUDE.md §37).
 // Answers: What happened? What was saved? What can I do? Can I retry?
-// Offers Retry / Go back / Contact support where applicable.
+// Offers Retry / Go back / Contact support where applicable; the actions
+// wrap when the container is narrower than one row of buttons (T00-09).
 //
 // Security: only caller-supplied, user-safe text is rendered — never an Error
 // object, stack trace, SQL, provider payload or internal detail (the props
@@ -94,7 +95,7 @@ export function ErrorState({
         )}
       </div>
       {(onRetry || backHref || supportHref) && (
-        <div className="flex w-full flex-col items-stretch gap-2 tablet:w-auto tablet:flex-row tablet:items-center tablet:justify-center">
+        <div className="flex w-full flex-col items-stretch gap-2 tablet:w-auto tablet:flex-row tablet:flex-wrap tablet:items-center tablet:justify-center">
           {onRetry && (
             <Button
               iconStart={RetryIcon}

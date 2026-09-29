@@ -72,7 +72,7 @@ describe("design-system showcase gate", () => {
 const WHOLE_PAGE = { timeout: 20_000 };
 
 describe("design-system showcase content", WHOLE_PAGE, () => {
-  it("shows every T00-07A, T00-07B and T00-07C component section and passes axe", async () => {
+  it("shows every T00-07A, T00-07B, T00-07C and T00-09 section and passes axe", async () => {
     const { container } = render(
       <ThemeProvider>
         <Showcase />
@@ -117,6 +117,14 @@ describe("design-system showcase content", WHOLE_PAGE, () => {
       "Radio",
       "Switch",
       "TimePicker",
+      "Breakpoints",
+      "Container",
+      "Stack",
+      "Inline",
+      "Grid",
+      "Section",
+      "Two-column layout",
+      "Responsive visibility",
     ]) {
       expect(
         screen.getByRole("heading", { level: 2, name }),

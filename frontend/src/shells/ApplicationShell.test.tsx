@@ -145,6 +145,7 @@ describe("ApplicationShell", () => {
 
 describe("PageContainer", () => {
   it.each([
+    ["narrow", "max-w-3xl"],
     ["standard", "max-w-6xl"],
     ["wide", "max-w-7xl"],
     ["full", "max-w-none"],
@@ -159,5 +160,24 @@ describe("PageContainer", () => {
       "data-page-width",
       width,
     );
+  });
+
+  it("uses the shared page gutter and section spacing (T00-09)", () => {
+    const { container } = render(
+      <PageContainer>
+        <PageContent>
+          <p>Body</p>
+        </PageContent>
+      </PageContainer>,
+    );
+    const page = container.firstElementChild!;
+    expect(page).toHaveClass(
+      "max-w-6xl",
+      "px-4",
+      "tablet:px-6",
+      "desktop:px-8",
+      "min-w-0",
+    );
+    expect(page.firstElementChild).toHaveClass("gap-6", "tablet:gap-8");
   });
 });

@@ -16,3 +16,12 @@ export function cx(...values: ClassValue[]): string {
  */
 export const focusRing =
   "outline-none data-focus-visible:outline-solid data-focus-visible:outline-(length:--focus-ring-width) data-focus-visible:outline-offset-(length:--focus-ring-offset) data-focus-visible:outline-focus-ring focus-visible:outline-solid focus-visible:outline-(length:--focus-ring-width) focus-visible:outline-offset-(length:--focus-ring-offset) focus-visible:outline-focus-ring";
+
+/**
+ * Focus ring drawn inside the element (negative offset) for focusable
+ * containers whose parent clips overflow — e.g. the DataTable scroll region
+ * inside its rounded, overflow-hidden frame (T00-09) — so the ring is never cut
+ * off.
+ */
+export const insetFocusRing =
+  "outline-none focus-visible:outline-solid focus-visible:outline-(length:--focus-ring-width) focus-visible:-outline-offset-(length:--focus-ring-width) focus-visible:outline-focus-ring";
