@@ -118,3 +118,64 @@ describe("Pagination", () => {
     expect(screen.getByText("No items")).toBeInTheDocument();
   });
 });
+
+describe("Pagination focus (T00-10)", () => {
+  it("moves focus to the current page when the pressed control becomes disabled", async () => {
+    const user = userEvent.setup();
+    render(<Controlled />);
+    const last = within(full()).getByRole("button", { name: "Last page" });
+    last.focus();
+    await user.keyboard("{Enter}");
+    expect(last).toBeDisabled();
+    const current = within(full()).getByRole("button", { name: "Page 52" });
+    expect(current).toHaveAttribute("aria-current", "page");
+    expect(current).toHaveFocus();
+
+    within(full()).getByRole("button", { name: "First page" }).focus();
+    await user.keyboard("{Enter}");
+    expect(
+      within(full()).getByRole("button", { name: "Page 1" }),
+    ).toHaveFocus();
+  });
+
+  it("keeps focus on the pressed control while it stays enabled", async () => {
+    const user = userEvent.setup();
+    render(<Controlled />);
+    const next = within(full()).getByRole("button", { name: "Next page" });
+    next.focus();
+    await user.keyboard("{Enter}");
+    await user.keyboard("{Enter}");
+    expect(next).toHaveFocus();
+    expect(
+      within(full()).getByRole("button", { name: "Page 3" }),
+    ).toHaveAttribute("aria-current", "page");
+  });
+
+  it("does not move focus when the page changes from outside", () => {
+    const { rerender } = render(
+      <>
+        <button type="button">Elsewhere</button>
+        <Pagination
+          page={1}
+          pageSize={25}
+          totalItems={100}
+          onPageChange={vi.fn()}
+        />
+      </>,
+    );
+    const elsewhere = screen.getByRole("button", { name: "Elsewhere" });
+    elsewhere.focus();
+    rerender(
+      <>
+        <button type="button">Elsewhere</button>
+        <Pagination
+          page={4}
+          pageSize={25}
+          totalItems={100}
+          onPageChange={vi.fn()}
+        />
+      </>,
+    );
+    expect(elsewhere).toHaveFocus();
+  });
+});

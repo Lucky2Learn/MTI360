@@ -70,16 +70,16 @@ export function Search({
         />
         <span className="absolute inset-y-0 right-1 flex items-center gap-1">
           {isLoading && (
-            <>
-              <SpinnerIcon
-                aria-hidden="true"
-                className="size-4 text-text-muted motion-safe:animate-spin"
-              />
-              <span role="status" className="sr-only">
-                {loadingLabel}
-              </span>
-            </>
+            <SpinnerIcon
+              aria-hidden="true"
+              className="size-4 text-text-muted motion-safe:animate-spin"
+            />
           )}
+          {/* Always mounted: a live region that appears together with its
+              text is often not announced (T00-10). */}
+          <span role="status" className="sr-only">
+            {isLoading ? loadingLabel : ""}
+          </span>
           <AriaButton
             aria-label="Clear search"
             className={cx(

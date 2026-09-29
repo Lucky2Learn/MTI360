@@ -56,6 +56,7 @@ export function MenuContent({
       // eslint-disable-next-line jsx-a11y/no-autofocus
       autoFocus={initialFocus}
       onAction={(key: Key) => onAction(String(key))}
+      // a11y-focus: menu container; menu items show the focus ring
       className="flex min-w-48 flex-col gap-1 p-1 outline-none"
     >
       {items.map((entry) =>

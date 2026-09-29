@@ -49,7 +49,7 @@ PublicExperience       label, basePath, navigationLabel, navigation, pageWidth
 | `AppSidebar` | Fixed column below the header. `collapsible`: 64px icon rail on tablet; 256px on desktop with Collapse/Expand. `fixed`: desktop only. Exposes `sidebarOffset()` for the main column | AppNavigation, IconButton |
 | `AppNavigation` | `<nav aria-label>`; labelled section lists; links with `aria-current="page"`; one nesting level under a disclosure button (`aria-expanded`, `aria-controls`; the branch with the current page opens); badges with a screen-reader description; `full` / `rail` / `auto` display | native links (`next/link`) |
 | `MobileNavigation` | Navigation in a left Drawer below the desktop breakpoint; closes when a link is followed | Drawer, IconButton |
-| `Breadcrumbs` | `<nav aria-label="Breadcrumb">` + `<ol>`; last item `aria-current="page"` (not a link); middle items collapse to an ellipsis on mobile; labels truncate | `next/link` |
+| `Breadcrumbs` | `<nav aria-label="Breadcrumb">` + `<ol>`; last item `aria-current="page"` (not a link); middle items collapse to an ellipsis on mobile; labels truncate; links are 44px tall below `tablet` (T00-10) | `next/link` |
 | `PageHeader` | Breadcrumbs → single `h1` + status → description → actions (stacked on mobile, primary on top; from tablet beside the title while it keeps ≥ 24rem, otherwise wrapped below it — T00-09) → secondary content | Breadcrumbs, ActionBar |
 | `PageContainer` / `PageContent` | Content column: `narrow` (48rem, T00-09), `standard` (72rem), `wide` (80rem), `full`; padding 16/24/32px; sections 24 → 32px apart. Widths and gutter are the layout conventions in [layout.md](layout.md) | design-system/layout |
 | `SkipNavigation` | First tab stop, visible on focus (44px tall), moves focus to `main` without changing the URL | — |
@@ -85,6 +85,8 @@ No horizontal page overflow at any width (verified in Chromium, including with t
 ## 5. Accessibility
 
 Landmarks: `banner`, `navigation` (labelled per experience), `main`, `contentinfo` (public site), toast `region`. Skip link first. One `h1` per page. Keyboard: Tab order follows the visual order; Enter/Space operate disclosures; Escape closes drawer, menu, popover and dialogs with focus returned to the trigger; Ctrl+K / ⌘K opens search. Visible focus ring (2px, semantic `focus-ring`) in both themes. Reduced motion removes transitions. Unit tests run axe on every component; Chromium runs axe (WCAG 2.2 AA + best practices, including contrast) on every experience in Light and Dark at 390/768/1024/1440 and with each overlay open — 0 violations, no rules disabled.
+
+T00-10 ([accessibility.md](accessibility.md)): `ShellAccessibility.test.tsx` checks every experience, on its home page and on its deepest page. It verifies one `banner` and one `main#main-content`, uniquely named navigation landmarks, one `h1` with a valid heading outline, `contentinfo` only on the public site, every control named, axe, and the skip link as the first tab stop that moves focus to `main`. Chromium walks every focus stop (visible ring, ring contrast ≥ 3:1, not clipped, never in hidden content, 44px on mobile) in Light and Dark at 390/768/1024/1440. The toast region is now reachable with F6. Breadcrumb links meet 44px on mobile. No landmark or keyboard behaviour change was otherwise needed.
 
 ## 6. Not in T00-08
 

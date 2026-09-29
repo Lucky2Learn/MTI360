@@ -69,7 +69,8 @@ export function Breadcrumbs({ items, label = "Breadcrumb" }: BreadcrumbsProps) {
                 <Link
                   href={item.href}
                   className={cx(
-                    "inline-flex min-h-6 max-w-40 items-center truncate rounded-xs text-link underline-offset-4 hover:underline tablet:max-w-60",
+                    // 44px touch target on mobile, compact from tablet (T00-10).
+                    "inline-flex min-h-11 max-w-40 items-center truncate rounded-xs text-link underline-offset-4 hover:underline tablet:min-h-6 tablet:max-w-60",
                     focusRing,
                   )}
                 >

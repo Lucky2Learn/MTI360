@@ -323,3 +323,30 @@ describe("DataTable", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("DataTable announcements (T00-10)", () => {
+  it("keeps one status region mounted and reports loading, then the outcome", () => {
+    const { rerender } = render(
+      <Table isLoading loadingLabel="Loading vessels" />,
+    );
+    const status = screen.getByRole("status");
+    expect(status).toHaveTextContent("Loading vessels");
+
+    rerender(
+      <Table
+        rows={[]}
+        error={{ title: "We couldn't load the vessels", onRetry: () => {} }}
+      />,
+    );
+    expect(screen.getByRole("status")).toBe(status);
+    expect(status).toHaveTextContent("We couldn't load the vessels");
+
+    rerender(<Table rows={[]} />);
+    expect(screen.getByRole("status")).toBe(status);
+    expect(status.textContent).not.toBe("");
+
+    rerender(<Table />);
+    expect(screen.getByRole("status")).toBe(status);
+    expect(status).toBeEmptyDOMElement();
+  });
+});

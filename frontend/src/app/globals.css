@@ -29,4 +29,29 @@
     font-size: var(--text-body);
     line-height: var(--text-body--line-height);
   }
+
+  /* Focus fallback (T00-10, WCAG 2.4.7): any keyboard-focused element that
+     does not style its own focus — a plain <a>, <summary>, a native control —
+     gets the token ring instead of the browser default. Components keep their
+     own focusRing / insetFocusRing / fieldFocus (utilities win over base). */
+  :focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring);
+    outline-offset: var(--focus-ring-offset);
+  }
+
+  /* Reduced-motion safety net (T00-10, WCAG 2.3.3): components already pair
+     every transition/animation with motion-reduce: / motion-safe: (guarded by
+     tokens/guard.test.ts); this also covers third-party and future code.
+     Durations become near-zero, so end states and transition/animation events
+     still happen — state changes stay visible, only the movement goes. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }

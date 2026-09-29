@@ -195,11 +195,18 @@ export function DataTable<Row>({
   return (
     <div className="flex flex-col gap-4">
       <div className="overflow-hidden rounded-xl border border-border-subtle bg-surface-primary">
-        {isLoading && (
-          <p role="status" className="sr-only">
-            {loadingLabel}
-          </p>
-        )}
+        {/* Always mounted (T00-10): announces loading and then a failed or
+            empty result; a region mounted with its text is often missed. A
+            populated table is announced by its content, not here. */}
+        <p role="status" className="sr-only">
+          {isLoading
+            ? loadingLabel
+            : error
+              ? error.title
+              : rows.length === 0
+                ? emptyState.title
+                : ""}
+        </p>
         <div
           role="region"
           aria-labelledby={captionId}

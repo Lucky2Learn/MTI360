@@ -324,3 +324,65 @@ describe.each([
     },
   );
 });
+
+// T00-10 (docs/architecture/accessibility.md §10).
+// brand-primary is the non-text indicator of selected checkboxes, radios and
+// switches and the fill of primary buttons: ≥ 3:1 against every surface.
+const NON_TEXT_T00_10: [string, string, number][] = [
+  ...BACKGROUNDS,
+  "surface-hover",
+  "surface-selected",
+].map((bg): [string, string, number] => ["brand-primary", bg, 3]);
+
+// State text on elevated surfaces (dialogs, drawers, popovers, menus).
+// INC-24: in Dark mode every *-text state token is below 4.5:1 on
+// surface-elevated (error 3.79, info 4.03, success 4.19, warning 4.22) and
+// needs a token change (a T00-10 stop condition). They are pinned so a token
+// fix shows up here — move a token out of the list once it passes.
+const INC_24_DARK_EXCEPTIONS = new Set<string>([
+  "error-text",
+  "info-text",
+  "success-text",
+  "warning-text",
+]);
+
+describe.each([
+  ["Light", light],
+  ["Dark", dark],
+])("WCAG 2.2 AA non-text contrast (T00-10) — %s theme", (_theme, mapping) => {
+  it.each(NON_TEXT_T00_10)(
+    "%s on %s ≥ %s:1",
+    (foreground, background, minimum) => {
+      expect(
+        contrast(resolve(mapping, foreground), resolve(mapping, background)),
+      ).toBeGreaterThanOrEqual(minimum);
+    },
+  );
+});
+
+describe("state text on surface-elevated (T00-10, INC-24)", () => {
+  it.each(STATES.map((state) => `${state}-text`))(
+    "%s ≥ 4.5:1 in Light",
+    (token) => {
+      expect(
+        contrast(resolve(light, token), resolve(light, "surface-elevated")),
+      ).toBeGreaterThanOrEqual(4.5);
+    },
+  );
+
+  it.each(STATES.map((state) => `${state}-text`))(
+    "%s in Dark: ≥ 4.5:1 unless it is a documented INC-24 exception",
+    (token) => {
+      const ratio = contrast(
+        resolve(dark, token),
+        resolve(dark, "surface-elevated"),
+      );
+      if (INC_24_DARK_EXCEPTIONS.has(token)) {
+        expect(ratio).toBeLessThan(4.5);
+        expect(ratio).toBeGreaterThanOrEqual(3);
+      } else {
+        expect(ratio).toBeGreaterThanOrEqual(4.5);
+      }
+    },
+  );
+});

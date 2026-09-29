@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import { Button } from "@/design-system/components/Button";
+import { expectFocusContained } from "@/design-system/testing/a11y";
 import { expectNoA11yViolations } from "@/design-system/testing/axe";
 
 import { Popover } from "./Popover";
@@ -68,5 +69,31 @@ describe("Popover", () => {
     expect(
       screen.getByRole("dialog", { name: "Quick settings" }),
     ).toBeInTheDocument();
+  });
+
+  it("is itself the labelled dialog, so the hidden dismiss buttons are inside it (T00-10)", async () => {
+    const user = userEvent.setup();
+    render(<HelpPopover />);
+    await user.click(screen.getByRole("button", { name: "What is sea time?" }));
+    const dialog = screen.getByRole("dialog", { name: "Sea time" });
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    const dismiss = document.querySelectorAll('button[aria-label="Dismiss"]');
+    expect(dismiss.length).toBeGreaterThan(0);
+    for (const button of dismiss)
+      expect(dialog).toContainElement(button as HTMLElement);
+    expect(screen.getByRole("heading", { name: "Sea time" }).id).toBe(
+      dialog.getAttribute("aria-labelledby"),
+    );
+  });
+
+  it("contains keyboard focus while open (T00-10)", async () => {
+    const user = userEvent.setup();
+    render(<HelpPopover />);
+    await user.click(screen.getByRole("button", { name: "What is sea time?" }));
+    const dialog = screen.getByRole("dialog");
+    await waitFor(() =>
+      expect(dialog.contains(document.activeElement)).toBe(true),
+    );
+    await expectFocusContained(user, dialog, 4);
   });
 });

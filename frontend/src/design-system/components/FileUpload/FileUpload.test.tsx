@@ -69,6 +69,22 @@ describe("FileUpload", () => {
     await expectNoA11yViolations(container);
   });
 
+  it("names the drop zone's keyboard/paste button after the field, not an internal default (T00-10)", () => {
+    render(
+      <FileUpload
+        label="Continuous Discharge Certificate (CDC)"
+        accept={DOCUMENTS}
+        maxSize={5 * MB}
+      />,
+    );
+    expect(
+      screen.getByRole("button", {
+        name: "Drop or paste files for Continuous Discharge Certificate (CDC)",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /DropZone/ })).toBeNull();
+  });
+
   it("accepts a valid file, lists it and removes it by keyboard", async () => {
     const user = setup();
     const onChange = vi.fn();

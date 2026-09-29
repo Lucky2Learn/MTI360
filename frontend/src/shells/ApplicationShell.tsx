@@ -97,6 +97,7 @@ export function ApplicationShell({
         id={MAIN_CONTENT_ID}
         tabIndex={-1}
         className={cx(
+          // a11y-focus: skip-link target (tabIndex -1), programmatic focus only
           "flex min-w-0 flex-1 flex-col outline-none",
           sidebarOffset(sidebar, collapsed),
         )}

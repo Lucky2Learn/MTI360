@@ -8,6 +8,8 @@ import { cx } from "@/design-system/lib/cx";
 // prefers-reduced-motion; no information depends on motion.
 
 /** Anchored floating surface (popovers, listboxes, menus, calendar). */
+// a11y-focus: overlay surfaces are programmatic focus containers (the
+// dialog, listbox or menu inside them draws the focus ring on its controls).
 export const popoverSurface = cx(
   "z-(--z-dropdown) rounded-md border border-border-default bg-surface-elevated text-text-primary shadow-lg outline-none",
   "transition-opacity starting:opacity-0 motion-reduce:transition-none",
@@ -20,5 +22,6 @@ export const modalBackdrop = cx(
 );
 
 /** Raised panel for dialogs and drawers. */
+// a11y-focus: modal panel container; the dialog's controls draw the ring.
 export const panelSurface =
   "flex flex-col overflow-hidden border border-border-default bg-surface-elevated text-text-primary shadow-lg outline-none";

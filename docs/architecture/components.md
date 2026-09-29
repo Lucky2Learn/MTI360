@@ -36,9 +36,10 @@ screens — import only from "@/design-system/components"
 | React Aria packages imported only in `design-system/components` | guard |
 | `dangerouslySetInnerHTML` only for the pre-paint theme script | guard |
 | Class joining with `cx()`; variants as `Record<Variant, string>` maps (no clsx/cva/tailwind-merge, D4) | review |
-| Visible focus via `focusRing` (semantic `focus-ring`, `--focus-ring-width` 2px, offset 2px); `insetFocusRing` (same ring, drawn inside) for focusable containers within a clipping parent (T00-09) | tests + browser check |
+| Visible focus via `focusRing` (semantic `focus-ring`, `--focus-ring-width` 2px, offset 2px); `insetFocusRing` (same ring, drawn inside) for focusable containers within a clipping parent (T00-09); global `:focus-visible` fallback; `outline-none` only with a replacement or an `a11y-focus:` justification (T00-10) | tests + guard + browser check |
+| Every transition/animation paired with `motion-reduce:` / `motion-safe:` on the same line; no positive `tabIndex` (T00-10) | guard |
 | Motion only with `motion-safe:` or disabled by `motion-reduce:` | browser check (reduced motion) |
-| Axe on every component test (`testing/axe.ts`; contrast and landmark rules checked in the browser) | tests |
+| Axe on every component test (`testing/axe.ts`; contrast and landmark rules checked in the browser); shared accessibility assertions in `testing/a11y.ts` and the cross-component contract in `components/accessibility.test.tsx` (T00-10, [accessibility.md](accessibility.md)) | tests |
 
 Server-component compatible (no client code): Card, Badge, KPI, Timeline, Alert, Skeleton, EmptyState. Client components: Button, IconButton, Tabs, ErrorState, all form components (07B) and all 07C components.
 
@@ -97,7 +98,7 @@ Links rendered by `Button href` are React Aria links (plain `<a href>` navigatio
 | Props | Tabs: `selectedKey`/`defaultSelectedKey`/`onSelectionChange`; TabList: `aria-label` (required); Tab: `id`, `isDisabled`; TabPanel: `id` |
 | States | default, hover, selected (Sea Glass indicator bar + semibold), focus-visible, disabled |
 | Responsive | the tab list scrolls horizontally on narrow screens (native scrollbar as the overflow cue) |
-| Accessibility | tablist/tab/tabpanel roles, arrow keys, Home/End, disabled tabs skipped, panel labelled by its tab |
+| Accessibility | tablist/tab/tabpanel roles, arrow keys, Home/End, disabled tabs skipped, panel labelled by its tab; the focus ring is drawn inside each tab (`insetFocusRing`) so the scrolling list cannot clip it (T00-10) |
 
 ### KPI
 
@@ -209,7 +210,7 @@ Decisions (T00-07B proposal, approved): D1 `value`/`defaultValue`/`onChange` wit
 | Props | as Select + `filtering` (`contains` default, or `manual`), `inputValue`/`defaultInputValue`/`onInputChange`, `isLoading`, `emptyMessage`, `loadingMessage`, `allowsCustomValue` (default false) |
 | Async (manual) | the caller owns the text and supplies already-filtered options; the component never fetches. Loading: spinner + polite status text **inside the popover** (React Aria hides content outside an open popover; its ListBox does not forward `aria-busy`) |
 | Behaviour | empty-result message in the listbox; custom text reverts to the selected option on blur; selected id in `FormData` |
-| Known axe note | while the popover is open React Aria hides the rest of the page with `aria-hidden` (not inert), which axe reports as `aria-hidden-focus`. Tab closes the popover before focus moves, so focus never reaches hidden content (verified in the browser) |
+| Known axe note | while the list is open React Aria's `useComboBox` hides the rest of the page with `aria-hidden` (its `ariaHideOutside` call does not use the inert option; no prop exposes it). axe then reports `aria-hidden-focus`, `page-has-heading-one` and `region`, and — because options use virtual focus (`aria-activedescendant`) — `scrollable-region-focusable` for the scrolling list. Tab closes the list before focus moves, focus never reaches hidden content, arrow keys scroll the active option into view, and axe is 0 once closed (re-verified in Chromium in T00-10; [accessibility.md](accessibility.md) §15). No axe exclusion exists in the repository |
 
 ### DatePicker
 
@@ -230,7 +231,7 @@ Decisions (T00-07B proposal, approved): D1 `value`/`defaultValue`/`onChange` wit
 | Props | `label`, `accept` (**required**: [{`label`, `mimeTypes`, `extensions`}]), `maxSize` (**required**, bytes), `maxFiles` (default 1), `value`/`defaultValue`/`onChange(File[])`, `onReject(rejections)`, `isRequired`, `isDisabled`, `isInvalid`, `errorMessage`, `description`, `locale` |
 | Client checks (UX only, D7) | extension (last one, case-insensitive) **and** browser-reported MIME must match the same `accept` entry; permanent deny list (`DENIED_EXTENSIONS`: executables, installers, scripts, HTML/SVG/XML, macro-enabled Office formats) regardless of `accept`; empty files; size; count; duplicates; names with control characters, path separators or > 255 characters |
 | Security boundary | client checks are not a security control. The server remains authoritative: extension + sniffed MIME + size, filename sanitisation, content validation, malware scan, tenant-scoped storage (CLAUDE.md §50, ARCHITECTURE.md §49). No previews, no object URLs, no reading of file contents; names rendered as text only |
-| Accessibility | labelled group; "Choose file(s)" button (Enter/Space); focusable drop zone with paste support; rules text linked as a description; rejections in a polite status region; labelled "Remove {file}" buttons (44px below `tablet`) |
+| Accessibility | labelled group; "Choose file(s)" button (Enter/Space); focusable drop zone with paste support, named "Drop or paste files for {label}" (T00-10; previously React Aria's internal "DropZone"); rules text linked as a description; rejections in a polite status region; labelled "Remove {file}" buttons (44px below `tablet`) |
 
 ## 3C. Overlay, data and interaction contracts (T00-07C)
 
@@ -261,7 +262,7 @@ Decisions (T00-07B proposal, approved): D1 `value`/`defaultValue`/`onChange` wit
 |---|---|
 | Purpose | Anchored supplementary content or a small interactive group |
 | Props | `trigger`, `title` or `aria-label` (an accessible name is required), `children`, `placement` (default `bottom start`), `size` (`sm` 256px / `md` 320px), `isOpen` / `defaultOpen` / `onOpenChange` |
-| Behaviour | labelled dialog; flips and shifts inside the viewport; Escape and outside interaction close it; focus returns to the trigger |
+| Behaviour | the React Aria popover itself is the labelled dialog (T00-10: no nested Dialog, so its hidden screen-reader "Dismiss" buttons are inside the dialog); focus moves in and is contained while the page is inert; flips and shifts inside the viewport; Escape and outside interaction close it; focus returns to the trigger |
 
 ### Tooltip
 
@@ -295,7 +296,7 @@ Decisions (T00-07B proposal, approved): D1 `value`/`defaultValue`/`onChange` wit
 |---|---|
 | API | `toast.success` / `info` / `warning` / `error(title, { description?, action?, timeout?, onClose? })`, `toast.dismiss(key)`, `showToast(content, options, queue)`, `createToastQueue()` (max 3 visible), `ToastRegion({ queue?, label = "Notifications" })` |
 | Timing (WCAG 2.2.1) | success and info 5 s, warning 8 s; **error toasts and toasts with an action persist** until dismissed; timers pause while hovered or focused |
-| Accessibility | landmark region (F6), announced on arrival, tone icon + title (not colour alone), labelled "Dismiss notification" button, focus restored when the last toast closes |
+| Accessibility | landmark region (F6 — fixed in T00-10: the region is re-mounted when the first toast appears so React Aria registers the landmark), announced on arrival, tone icon + title (not colour alone), labelled "Dismiss notification" button, focus restored when the last toast closes |
 | Layout | fixed at the bottom; full width minus gutters on mobile, 384px at the bottom end from `tablet`; `z-(--z-toast)` |
 | Notes | built on React Aria's `UNSTABLE_Toast*` exports (1.21.1 pinned); the MTI 360 API insulates screens from upstream changes (INC-25). The global region is mounted by the application shell (T00-08) |
 
@@ -307,7 +308,7 @@ Decisions (T00-07B proposal, approved): D1 `value`/`defaultValue`/`onChange` wit
 | Props | `label` (caption), `columns` (`id`, `header`, `cell(row)`, `isSortable`, `align`, `isRowHeader`, `visibleFrom`), `rows`, `getRowId`, `getRowLabel`, `sort` / `onSortChange`, `selectionMode` (`none` / `single` / `multiple`), `selectedIds` / `onSelectionChange`, `rowActions(row)`, `rowActionsLabel`, `isLoading` / `loadingLabel` / `loadingRows`, `error` (`title`, `description`, `onRetry`, `reference`), `emptyState`, `footer`, `mobileLayout` (`scroll` default / `cards`) |
 | Sorting | header buttons cycle ascending → descending → unsorted; `aria-sort` + icon |
 | Selection | the shared Checkbox; "Select all rows" with an indeterminate state; per row "Select {label}" |
-| States | loading (skeleton rows, `aria-busy`, polite status), error (ErrorState + retry), empty (EmptyState) |
+| States | loading (skeleton rows, `aria-busy`), error (ErrorState + retry), empty (EmptyState); one persistent polite status announces "Loading …" and then the error or empty title (T00-10) |
 | Responsive | `scroll`: the table scrolls inside a focusable, labelled region (the page never overflows) and columns can be hidden below `tablet` / `desktop`; `cards`: each row becomes a card below `tablet`. The region's focus ring is drawn inside it (`insetFocusRing`) because the rounded frame clips overflow (T00-09) |
 
 ### Pagination
@@ -315,7 +316,7 @@ Decisions (T00-07B proposal, approved): D1 `value`/`defaultValue`/`onChange` wit
 | Aspect | Contract |
 |---|---|
 | Props | `page` (1-based), `pageSize`, `totalItems`, `onPageChange`, `pageSizeOptions` + `onPageSizeChange` (rows-per-page Select), `label` (navigation name; unique on a page), `itemLabel`, `locale` (default `en-IN` number formatting) |
-| Behaviour | first / previous / next / last and page numbers with ellipses (`pageItems`); the current page has `aria-current="page"`; "Showing a–b of n" summary; compact "Page x of y" below `tablet` |
+| Behaviour | first / previous / next / last and page numbers with ellipses (`pageItems`); the current page has `aria-current="page"`; "Showing a–b of n" summary; compact "Page x of y" below `tablet`; when a pressed control becomes disabled (first/last page reached), focus moves to the current page button or the remaining page control instead of `<body>` (T00-10) |
 
 ### FilterBar
 
@@ -329,7 +330,7 @@ Decisions (T00-07B proposal, approved): D1 `value`/`defaultValue`/`onChange` wit
 | Aspect | Contract |
 |---|---|
 | Props | React Aria SearchField props (`value` / `defaultValue` / `onChange`, `onSubmit`, `onClear`, `name`, `isDisabled`) + `label`, `isLabelHidden`, `placeholder`, `description`, `isLoading` / `loadingLabel`, `suggestions` slot |
-| Behaviour | `type="search"` with a clear button; Escape clears, Enter submits; never searches or debounces by itself; 44px below `tablet` |
+| Behaviour | `type="search"` with a clear button; Escape clears, Enter submits; never searches or debounces by itself; 44px below `tablet`; the loading status stays mounted so it is announced (T00-10) |
 
 ### RadioGroup
 

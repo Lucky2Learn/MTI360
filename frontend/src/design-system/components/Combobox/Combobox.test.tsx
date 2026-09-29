@@ -141,3 +141,20 @@ describe("Combobox", () => {
     expect(submitted?.get("port")).toBe("koc");
   });
 });
+
+describe("Combobox keyboard (T00-10)", () => {
+  it("opens the full list with ArrowDown before typing and returns to the input on Escape", async () => {
+    const user = userEvent.setup();
+    render(<Combobox label="Home port" options={PORTS} />);
+    const input = screen.getByRole("combobox", { name: "Home port" });
+    await user.click(input);
+    await user.keyboard("{ArrowDown}");
+    expect(input).toHaveAttribute("aria-expanded", "true");
+    expect(
+      within(screen.getByRole("listbox")).getAllByRole("option"),
+    ).toHaveLength(PORTS.length);
+    await user.keyboard("{Escape}");
+    expect(input).toHaveAttribute("aria-expanded", "false");
+    expect(input).toHaveFocus();
+  });
+});

@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
+import { expectFocusRing } from "@/design-system/testing/a11y";
 import { expectNoA11yViolations } from "@/design-system/testing/axe";
 
 import { Tab, TabList, TabPanel, Tabs } from "./Tabs";
@@ -97,5 +98,15 @@ describe("Tabs", () => {
   it("scrolls horizontally instead of overflowing on small screens", () => {
     render(<StudentTabs />);
     expect(screen.getByRole("tablist").className).toContain("overflow-x-auto");
+  });
+
+  it("draws the focus ring inside each tab so the scrolling list cannot clip it (T00-10)", () => {
+    render(<StudentTabs />);
+    for (const tab of screen.getAllByRole("tab")) {
+      expectFocusRing(tab);
+      expect(tab.className).toContain(
+        "focus-visible:-outline-offset-(length:--focus-ring-width)",
+      );
+    }
   });
 });

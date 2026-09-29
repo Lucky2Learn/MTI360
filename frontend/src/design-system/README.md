@@ -11,7 +11,7 @@ Shared visual foundation for all four experiences. Values come from [DESIGN-SYST
 | `icons/` | Curated Lucide icons (the only `lucide-react` import) | T00-07 |
 | `layout/` | Responsive layout primitives — Container, Stack, Inline, Grid/GridItem, Section, SplitLayout, ActionBar, Show — and the breakpoint/spacing vocabulary ([layout.md](../../../docs/architecture/layout.md)) | T00-09 |
 | `lib/` | `cx()` and the shared `focusRing` / `insetFocusRing` classes | T00-07, T00-09 |
-| `testing/` | `expectNoA11yViolations()` (axe) for component tests | T00-07 |
+| `testing/` | `expectNoA11yViolations()` (axe); accessibility assertions `expectNamedControls`, `tabSequence`, `expectFocusContained`, `expectFocusRing`, `expectHeadingOutline` ([accessibility.md](../../../docs/architecture/accessibility.md)) | T00-07, T00-10 |
 | `templates/` | Page templates T01–T18 | later |
 
 ## Rules
@@ -21,6 +21,7 @@ Shared visual foundation for all four experiences. Values come from [DESIGN-SYST
 - No arbitrary values (`p-[17px]`, `bg-[…]`) — test-enforced since T00-07 — and no off-grid spacing (`p-7`); add a token instead. Token references such as `outline-(length:--focus-ring-width)` are allowed.
 - Page layout uses `@/design-system/layout` (Grid, Stack, Inline, SplitLayout, ActionBar, Show) instead of ad-hoc flex/grid classes and scattered `hidden desktop:block` utilities.
 - Screens import components from `@/design-system/components` and icons from `@/design-system/icons`; React Aria and `lucide-react` are imported only inside `components/` and `icons/` (test-enforced).
+- Accessibility (WCAG 2.2 AA) follows [accessibility.md](../../../docs/architecture/accessibility.md): native HTML first, then React Aria. Every focusable element shows the token ring (`focusRing` / `insetFocusRing` / `fieldFocus`); `outline-none` only with a replacement or an `a11y-focus:` justification; every transition paired with `motion-reduce:` / `motion-safe:`; no positive `tabIndex` (all test-enforced).
 - Every component follows its contract in [docs/architecture/components.md](../../../docs/architecture/components.md) and has tests with an axe check.
 - Text uses `text-*`, `link` or `*-text` tokens (≥ 4.5:1). `accent-maritime`, `accent-brass` and state colours (`success`, …) are for non-text indicators.
 - Never communicate status by colour alone.
