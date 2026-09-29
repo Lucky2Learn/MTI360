@@ -30,7 +30,7 @@ export type GridProps = {
   gap?: Gap;
   /** Vertical alignment of items in a row; stretch (equal height) by default. */
   align?: CrossAlign;
-  as?: "div" | "section" | "ul" | "ol";
+  as?: "div" | "section" | "ul" | "ol" | "dl";
   id?: string;
   "aria-labelledby"?: string;
   "aria-label"?: string;

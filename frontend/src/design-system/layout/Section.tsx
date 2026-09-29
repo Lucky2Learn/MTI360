@@ -2,6 +2,7 @@ import { useId, type ReactNode } from "react";
 
 import { cx } from "@/design-system/lib/cx";
 
+import { ActionBar } from "./ActionBar";
 import { gapClasses, type Gap } from "./responsive";
 
 // Section (T00-09): a titled block of page content — heading, optional
@@ -9,7 +10,8 @@ import { gapClasses, type Gap } from "./responsive";
 // <section> named by its heading; without one it is a plain grouping <div>
 // (an unnamed <section> adds nothing for assistive technology). The spacing
 // between sections is set by the parent (Stack gap "xl" / "2xl"), not here.
-// Header actions sit beside the title from tablet and stack full width below.
+// Header actions (ActionBar) sit beside the title from tablet while the title
+// keeps at least 24rem, wrap below it otherwise, and stack full width on mobile.
 // Server-component compatible.
 
 type HeadingLevel = "h2" | "h3";
@@ -54,8 +56,8 @@ export function Section({
 
   return (
     <section id={id} aria-labelledby={titleId} className={classes}>
-      <div className="flex min-w-0 flex-col gap-3 tablet:flex-row tablet:items-start tablet:justify-between">
-        <div className="flex min-w-0 flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-3 tablet:flex-row tablet:flex-wrap tablet:items-start tablet:justify-between">
+        <div className="flex min-w-0 flex-col gap-1 tablet:flex-1 tablet:basis-96">
           <Heading
             id={titleId}
             className={cx(
@@ -71,11 +73,7 @@ export function Section({
             </div>
           )}
         </div>
-        {actions && (
-          <div className="flex flex-col-reverse gap-2 tablet:flex-row tablet:flex-wrap tablet:items-center tablet:justify-end">
-            {actions}
-          </div>
-        )}
+        {actions && <ActionBar>{actions}</ActionBar>}
       </div>
       {children}
     </section>

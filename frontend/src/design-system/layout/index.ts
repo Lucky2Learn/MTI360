@@ -3,6 +3,7 @@
 // Page structure (PageContainer, PageHeader, PageContent) belongs to the
 // application shell ("@/shells") and composes these primitives.
 
+export * from "./ActionBar";
 export * from "./Container";
 export * from "./Grid";
 export * from "./Inline";

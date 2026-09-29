@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { Button, Card, CardHeader } from "@/design-system/components";
 import { expectNoA11yViolations } from "@/design-system/testing/axe";
 
+import { ActionBar } from "./ActionBar";
 import { Show } from "./Show";
 import { SplitLayout } from "./SplitLayout";
 
@@ -123,5 +124,43 @@ describe("Show", () => {
     const { renderToString } = await import("react-dom/server");
     const markup = renderToString(<Show from="large">Large</Show>);
     expect(markup).toContain('class="hidden large:contents"');
+  });
+});
+
+describe("ActionBar", () => {
+  it("stacks full width with the primary action on top on mobile, a wrapping row from tablet", () => {
+    render(
+      <ActionBar>
+        <Button variant="tertiary">Cancel</Button>
+        <Button>Submit</Button>
+      </ActionBar>,
+    );
+    const bar = screen.getByRole("button", { name: "Submit" }).parentElement!;
+    expect(bar).toHaveClass(
+      "flex-col-reverse",
+      "tablet:flex-row",
+      "tablet:flex-wrap",
+      "tablet:justify-end",
+    );
+    expect(bar).not.toHaveAttribute("role");
+  });
+
+  it("supports alignment, a divider and a labelled group", async () => {
+    const { container } = render(
+      <ActionBar align="between" divider aria-label="Form actions">
+        <Button variant="secondary">Save draft</Button>
+        <Button>Submit enquiry</Button>
+      </ActionBar>,
+    );
+    const group = screen.getByRole("group", { name: "Form actions" });
+    expect(group).toHaveClass(
+      "tablet:justify-between",
+      "border-t",
+      "border-border-subtle",
+    );
+    expect(
+      screen.getAllByRole("button").map((button) => button.textContent),
+    ).toEqual(["Save draft", "Submit enquiry"]);
+    await expectNoA11yViolations(container);
   });
 });

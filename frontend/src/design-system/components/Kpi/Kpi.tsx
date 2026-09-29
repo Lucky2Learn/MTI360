@@ -18,7 +18,9 @@ import { cx } from "@/design-system/lib/cx";
 // ("Increased by 8.4%") — never by colour alone. Whether "up" is good depends
 // on the metric, so `sentiment` is set by the caller (e.g. overdue fees up =
 // negative). Values are pre-formatted by the caller (locale/currency, D10).
-// Server-component compatible.
+// A value wider than the card (e.g. "₹12,40,00,000" in a narrow column)
+// wraps instead of spilling out (T00-09); prefer compact formats such as
+// "₹12.4 Cr" for multi-column KPI rows. Server-component compatible.
 
 export type KpiTrendDirection = "up" | "down" | "flat";
 export type KpiSentiment = "positive" | "negative" | "neutral";
@@ -91,7 +93,9 @@ export function Kpi({
           />
         )}
       </div>
-      <p className="text-page-title text-text-primary tabular-nums">{value}</p>
+      <p className="text-page-title wrap-anywhere text-text-primary tabular-nums">
+        {value}
+      </p>
       {(trend || comparison) && (
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-body-sm">
           {trend && TrendIcon && (

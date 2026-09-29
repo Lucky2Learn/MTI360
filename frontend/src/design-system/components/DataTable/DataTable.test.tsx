@@ -287,6 +287,11 @@ describe("DataTable", () => {
     const region = screen.getByRole("region", { name: "Vessels" });
     expect(region).toHaveAttribute("tabindex", "0");
     expect(region.className).toContain("overflow-x-auto");
+    // Inset focus ring: the rounded frame clips overflow (T00-09).
+    expect(region.className).toContain(
+      "focus-visible:-outline-offset-(length:--focus-ring-width)",
+    );
+    expect(region.parentElement).toHaveClass("overflow-hidden");
     expect(
       screen.getByRole("columnheader", { name: "Type" }).className,
     ).toContain("hidden tablet:table-cell");

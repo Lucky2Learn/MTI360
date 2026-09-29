@@ -86,6 +86,49 @@ describe("PageHeader", () => {
     await expectNoA11yViolations(container);
   });
 
+  it("stacks actions on mobile and lets them wrap below a long title from tablet (T00-09)", () => {
+    render(
+      <PageHeader
+        title="Pre-Sea Training Operations Overview — Anglo-Eastern Maritime Training Centre, Navi Mumbai"
+        actions={
+          <>
+            <Button variant="secondary">Export report</Button>
+            <Button variant="secondary">Share</Button>
+            <Button>Schedule batch</Button>
+          </>
+        }
+      />,
+    );
+    const actions = screen.getByRole("button", {
+      name: "Schedule batch",
+    }).parentElement!;
+    // Mobile: full-width column, primary (last in the DOM) on top.
+    expect(actions).toHaveClass("flex-col-reverse", "tablet:flex-row");
+    expect(actions).toHaveClass("tablet:flex-wrap");
+    expect(actions).not.toHaveClass("tablet:shrink-0");
+    // Tablet+: the title keeps at least 24rem; the actions wrap otherwise.
+    const titleBlock = screen.getByRole("heading", { level: 1 }).parentElement!
+      .parentElement!;
+    expect(titleBlock).toHaveClass(
+      "min-w-0",
+      "tablet:flex-1",
+      "tablet:basis-96",
+    );
+    expect(titleBlock.parentElement).toHaveClass(
+      "tablet:flex-row",
+      "tablet:flex-wrap",
+    );
+    expect(screen.getByRole("heading", { level: 1 })).toHaveClass(
+      "break-words",
+    );
+    // DOM (focus) order is unchanged.
+    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
+      "Export report",
+      "Share",
+      "Schedule batch",
+    ]);
+  });
+
   it("renders only the title when nothing else is supplied", () => {
     render(<PageHeader title="Settings" />);
     expect(screen.queryByRole("navigation")).toBeNull();
