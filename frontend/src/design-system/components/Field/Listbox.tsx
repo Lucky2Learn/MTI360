@@ -59,6 +59,7 @@ export function OptionList({
       renderEmptyState={() => (
         <p className="px-3 py-2 text-body-sm text-text-muted">{emptyState}</p>
       )}
+      // a11y-focus: listbox container; options show the focus ring
       className="flex flex-col gap-1 outline-none"
     >
       {(option) => (

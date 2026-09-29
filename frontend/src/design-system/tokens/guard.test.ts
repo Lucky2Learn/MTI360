@@ -14,6 +14,14 @@ import { describe, expect, it } from "vitest";
 // 4. lucide-react is imported only by design-system/icons/.
 // 5. React Aria packages are imported only by design-system/components/.
 // 6. dangerouslySetInnerHTML only for the approved pre-paint script (app/layout.tsx).
+// 7. (T00-10) outline-none never removes focus without a replacement: a token
+//    ring or focus style within the same class statement, or an explicit
+//    "a11y-focus:" comment for programmatic focus containers (dialog panels,
+//    listbox/menu containers, main#main-content).
+// 8. (T00-10) every transition/animation utility is paired with motion-reduce:
+//    or motion-safe: on the same line (WCAG 2.3.3; the global CSS net in
+//    app/globals.css is only a safety net).
+// 9. (T00-10) no positive tabIndex (focus order follows the DOM, WCAG 2.4.3).
 
 // Paths come from node:path (Vite rewrites directory `new URL(…, import.meta.url)`).
 const SELF = fileURLToPath(import.meta.url);
@@ -33,12 +41,38 @@ const LUCIDE_IMPORT = /(?:from\s+|import\s*\(\s*)["']lucide-react["']/;
 const REACT_ARIA_IMPORT =
   /(?:from\s+|import\s*\(\s*)["'](?:react-aria-components|react-aria|react-stately|@react-aria\/[^"']+|@react-stately\/[^"']+)["']/;
 const RAW_HTML = /dangerouslySetInnerHTML/;
+const OUTLINE_NONE = /(?<![\w:-])outline-none(?![\w-])/;
+const FOCUS_REPLACEMENT =
+  /focusRing|insetFocusRing|fieldFocus|(?:data-focus-visible|focus-visible|data-focused|data-focus-within):|a11y-focus:/;
+const MOTION_UTILITY =
+  /(?<![\w:-])(?:transition(?:-[a-z]+)?|animate-[a-z]+)(?![\w-])/;
+const MOTION_GUARD = /motion-reduce:|motion-safe:/;
+const POSITIVE_TABINDEX = /tab[iI]ndex=(?:\{\s*[1-9]|"[1-9])/;
 
 function sourceFiles(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const full = path.join(directory, entry.name);
     if (entry.isDirectory()) return sourceFiles(full);
     return /\.(?:css|ts|tsx|mts|js|jsx|mjs)$/.test(entry.name) ? [full] : [];
+  });
+}
+
+/** Lines matching `pattern` with no `allowed` match within `radius` lines. */
+function unpairedLines(
+  file: string,
+  pattern: RegExp,
+  allowed: RegExp,
+  radius: number,
+): string[] {
+  const lines = readFileSync(file, "utf8").split(/\r?\n/);
+  return lines.flatMap((line, index) => {
+    if (!pattern.test(line)) return [];
+    const window = lines
+      .slice(Math.max(0, index - radius), index + radius + 1)
+      .join("\n");
+    return allowed.test(window)
+      ? []
+      : [`${path.relative(SRC, file)}:${index + 1}: ${line.trim()}`];
   });
 }
 
@@ -109,6 +143,29 @@ describe("design-system guard", () => {
     expect(offenders).toEqual([]);
     expect(offendingLines(ROOT_LAYOUT, RAW_HTML)).toHaveLength(1);
   });
+
+  it("never removes the focus outline without a replacement (T00-10)", () => {
+    const offenders = scripts
+      .filter((file) => !/\.test\.tsx?$/.test(file))
+      .flatMap((file) =>
+        unpairedLines(file, OUTLINE_NONE, FOCUS_REPLACEMENT, 4),
+      );
+    expect(offenders).toEqual([]);
+  });
+
+  it("pairs every transition and animation with a reduced-motion variant (T00-10)", () => {
+    const offenders = scripts
+      .filter((file) => !/\.test\.tsx?$/.test(file))
+      .flatMap((file) => unpairedLines(file, MOTION_UTILITY, MOTION_GUARD, 0));
+    expect(offenders).toEqual([]);
+  });
+
+  it("uses no positive tabIndex (T00-10)", () => {
+    const offenders = scripts.flatMap((file) =>
+      offendingLines(file, POSITIVE_TABINDEX),
+    );
+    expect(offenders).toEqual([]);
+  });
 });
 
 // The detectors themselves, so a regex change cannot silently weaken a guard.
@@ -133,6 +190,24 @@ describe("guard detectors", () => {
     "type Map = { [key: string]: number };",
   ])("allows %s", (line) => {
     expect(ARBITRARY_VALUE.test(line)).toBe(false);
+  });
+
+  it("recognise focus, motion and tab-order patterns (T00-10)", () => {
+    expect(OUTLINE_NONE.test('className="rounded outline-none"')).toBe(true);
+    expect(OUTLINE_NONE.test('"focus:outline-none"')).toBe(false);
+    expect(FOCUS_REPLACEMENT.test("data-focus-visible:outline-solid")).toBe(
+      true,
+    );
+    expect(FOCUS_REPLACEMENT.test("// a11y-focus: dialog panel")).toBe(true);
+    expect(FOCUS_REPLACEMENT.test('className="rounded"')).toBe(false);
+    expect(MOTION_UTILITY.test('"transition-colors text-body"')).toBe(true);
+    expect(MOTION_UTILITY.test('"motion-safe:animate-spin"')).toBe(false);
+    expect(MOTION_UTILITY.test('"animate-pulse"')).toBe(true);
+    expect(MOTION_GUARD.test("motion-reduce:transition-none")).toBe(true);
+    expect(POSITIVE_TABINDEX.test("tabIndex={2}")).toBe(true);
+    expect(POSITIVE_TABINDEX.test('tabindex="1"')).toBe(true);
+    expect(POSITIVE_TABINDEX.test("tabIndex={0}")).toBe(false);
+    expect(POSITIVE_TABINDEX.test("tabIndex={-1}")).toBe(false);
   });
 
   it("recognises icon, React Aria and raw-HTML usage", () => {

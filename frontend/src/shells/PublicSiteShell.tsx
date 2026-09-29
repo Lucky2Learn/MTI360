@@ -100,6 +100,7 @@ export function PublicSiteShell({
       <main
         id={MAIN_CONTENT_ID}
         tabIndex={-1}
+        // a11y-focus: skip-link target (tabIndex -1), programmatic focus only
         className="flex min-w-0 flex-1 flex-col outline-none"
       >
         {children}

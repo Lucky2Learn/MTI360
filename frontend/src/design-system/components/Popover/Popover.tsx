@@ -68,6 +68,7 @@ export function Popover({
       >
         <AriaDialog
           aria-label={title ? undefined : ariaLabel}
+          // a11y-focus: popover dialog; receives programmatic focus only
           className="flex flex-col gap-2 p-4 outline-none"
         >
           {title && (

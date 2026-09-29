@@ -179,7 +179,10 @@ export function DatePicker({
           offset={4}
           className={cx(popoverSurface, "p-3")}
         >
-          <Dialog className="outline-none">
+          <Dialog
+            // a11y-focus: calendar dialog panel; focus moves to the grid
+            className="outline-none"
+          >
             <Calendar className="flex flex-col gap-2">
               <header className="flex items-center justify-between gap-2">
                 <AriaButton

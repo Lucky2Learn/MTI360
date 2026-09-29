@@ -36,6 +36,7 @@ export function PanelDialog({
     <AriaDialog
       role={role}
       aria-describedby={description ? descriptionId : undefined}
+      // a11y-focus: dialog panel; receives programmatic focus only
       className="flex max-h-full min-h-0 flex-1 flex-col outline-none"
     >
       {({ close }) => (

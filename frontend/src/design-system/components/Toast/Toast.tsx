@@ -110,6 +110,7 @@ export function ToastRegion({
     <AriaToastRegion
       queue={queue}
       aria-label={label}
+      // a11y-focus: region landmark (F6); each toast draws the focus ring
       className="fixed inset-x-4 bottom-4 z-(--z-toast) flex flex-col-reverse gap-2 outline-none tablet:right-4 tablet:left-auto tablet:w-96"
     >
       {({ toast: item }) => {
