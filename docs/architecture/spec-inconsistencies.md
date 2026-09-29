@@ -222,3 +222,12 @@
 - **Issue:** The documents name the shell pieces differently.
 - **Current handling:** One shared `ApplicationShell` (AppShell) configured per experience by `ExperienceFrame` serves as PlatformShell, TenantShell and StudentShell; `AppSidebar`/`AppNavigation` = Sidebar, `AppHeader` = TopBar, `Breadcrumbs` = Breadcrumb, `CommandSearch` = GlobalSearch (entry point only); `PublicSiteShell` as named. TenantContext, CampusSwitcher and the support-session banner slot depend on authentication and tenancy and are not built. Details: [application-shell.md](application-shell.md).
 - **Proposed resolution:** Align the names in TASKS.md, CLAUDE.md §26 and repository-structure.md §2 in a documentation task.
+
+## INC-29 — Content widths and layout primitive names
+
+- **Status:** `OPEN` (T00-09)
+- **Where:** DESIGN-SYSTEM.md §82 ("typical desktop content width 1200–1440px") vs the T00-08 `PageContainer` widths kept by T00-09 (`standard` 72rem / 1152px, `wide` 80rem / 1280px, `full`); the T00-09 implementation prompt's candidate primitive names (PageLayout, SidebarLayout, ContentLayout, ResponsiveColumns, AspectRatio); TASKS.md T00-09 verification widths (390, 640, 768, 1024, 1280, 1440) vs the prompt's four tiers.
+- **Issue:** `standard` is slightly narrower than the §82 range, and the specifications do not name the layout primitives.
+- **Current handling:** The widths are unchanged from T00-08 (no visual change to existing pages). A `narrow` (48rem) width was added for focused forms. On desktop the content column also loses 256px to the sidebar, so a wider `standard` would rarely be reached. The layout names are `Container`, `Stack`, `Inline`, `Grid`/`GridItem`, `Section`, `SplitLayout`, `ActionBar` and `Show`. PageLayout is the existing `PageContainer` + `PageHeader` + `PageContent`. SidebarLayout/ContentLayout are covered by `SplitLayout`/`Container`, and AspectRatio is not built (no consumer). Browser verification covers all six TASKS.md widths. Details: [layout.md](layout.md).
+- **Proposed resolution:** Confirm or adjust the `standard`/`wide` caps against §82 when the first real pages (T02/T03) are designed, and record the layout names in DESIGN-SYSTEM.md / CLAUDE.md §26 in a documentation task.
+

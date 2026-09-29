@@ -54,6 +54,7 @@ ADR format: Status, Context, Decision, Consequences, Alternatives considered. AD
 | [design-tokens.md](architecture/design-tokens.md) | Token architecture, primitive and derived colours, semantic Light/Dark mapping, type/spacing/radius/elevation/breakpoints, contrast, theme runtime, fonts (T00-06) |
 | [components.md](architecture/components.md) | Component library: delivery slices, rules and guards, §73/§74 contract per component, showcase (T00-07) |
 | [application-shell.md](architecture/application-shell.md) | Application shell, experience framework and route boundaries (T00-08) |
+| [layout.md](architecture/layout.md) | Responsive layout primitives, breakpoints, spacing, content widths and page patterns (T00-09) |
 | [ci.md](architecture/ci.md) | CI workflows, required `ci-ok` status, security model, pinned versions, Dependabot scope, local reproduction, future branch protection (T00-05) |
 | [spec-inconsistencies.md](architecture/spec-inconsistencies.md) | Known inconsistencies between specifications, recorded for future resolution |
 
