@@ -107,7 +107,7 @@ M0 — Foundation Ready
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-09-29:** T00-01 … T00-08 are `COMPLETED` (merged to `main`; T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10). T00-09 (Responsive Layout Foundation) is `READY_FOR_REVIEW`: reusable layout primitives and conventions, with generic development-only examples. Only the toolchain, local infrastructure, validated environment configuration, CI, design tokens with the Light/Dark/System theme, the component library, layout primitives, a development-only showcase, the application shell with placeholder pages, a neutral root page and the `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
+> **2026-09-29:** T00-01 … T00-09 are `COMPLETED` (merged to `main`; T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11). T00-10 (Accessibility Foundation) is `READY_FOR_REVIEW`: a WCAG 2.2 AA contract, guards, test helpers, verified component and shell fixes, and regression coverage. Only the toolchain, local infrastructure, validated environment configuration, CI, design tokens with the Light/Dark/System theme, the component library, layout primitives, the accessibility foundation, a development-only showcase, the application shell with placeholder pages, a neutral root page and the `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
 
 ---
 
@@ -183,7 +183,7 @@ IN_PROGRESS
 ## Phase Completion
 
 ```text
-8 / 10 tasks completed (T00-01 … T00-08 COMPLETED; T00-09 READY_FOR_REVIEW)
+9 / 10 tasks completed (T00-01 … T00-09 COMPLETED; T00-10 READY_FOR_REVIEW)
 ```
 
 ---
@@ -643,7 +643,7 @@ test and 404 in production; unknown paths 404.
 
 ### T00-09 — Responsive Foundation
 
-**Status:** `READY_FOR_REVIEW` (branch `feat/T00-09-responsive-layout`, based on `main` at `4a47f98`; not pushed)
+**Status:** `COMPLETED` (reviewed; merged to `main` via PR #11 with a merge commit, `265a06d`)
 
 **Implementation:**
 
@@ -693,18 +693,57 @@ Compose config: valid.
 
 ### T00-10 — Accessibility Foundation
 
-**Status:** `NOT_STARTED`
+**Status:** `READY_FOR_REVIEW` (branch `feat/T00-10-accessibility-foundation`, based on `main` at `265a06d`; not pushed)
 
 **Implementation:**
 
 ```text
-Not started
+Contract: docs/architecture/accessibility.md (WCAG 2.2 AA; keyboard, focus,
+  names, forms, live regions, overlays, tables, motion, contrast, landmarks,
+  headings, links vs buttons, touch targets, testing, screen checklist,
+  known exceptions)
+Foundation: app/globals.css :focus-visible token fallback + reduced-motion
+  safety net; design-system/testing/a11y.ts (expectNamedControls,
+  tabSequence, expectFocusContained, expectFocusRing, expectHeadingOutline);
+  guards: outline-none only with a replacement or "a11y-focus:"
+  justification, every transition/animation paired with a reduced-motion
+  variant, no positive tabIndex
+Verified defects fixed (public APIs unchanged): Pagination focus lost to
+  <body> at first/last page; Tabs focus ring clipped by the scrolling list
+  (insetFocusRing); Popover Dismiss buttons outside the dialog (axe region)
+  and focus not contained (popover is now the dialog); FileUpload drop zone
+  named "DropZone"; DataTable/Search status regions mounted with their text
+  (now persistent; DataTable announces error/empty); Toast region not
+  reachable with F6 (landmark never registered); Breadcrumb links 24px on
+  mobile (now 44px)
+Tests: cross-component contract (components/accessibility.test.tsx), shell
+  accessibility for all experiences (ShellAccessibility.test.tsx), page-level
+  names and heading outline, brand-primary non-text contrast, INC-24 pairs
+  pinned
+No new dependencies, tokens, breakpoints or ADRs; no backend/infra changes
+Remaining exceptions: Combobox axe rules while open (React Aria, documented,
+  no repository exclusion); INC-24 Dark state text on elevated surfaces
+  (token decision needed); 32px sm/in-field controls (>= 24px, WCAG 2.5.8)
 ```
 
 **Verification:**
 
 ```text
-Not verified
+pnpm check: PASS (frontend 684 tests, backend 139). Headless Chromium on the
+production image (APP_ENV=test and production): 1386/1386 - the full T00-08
+and T00-09 suites plus: keyboard walk of every focus stop on all experiences,
+/design-system and /design-system/layout in Light and Dark at
+390/768/1024/1440 (visible token ring, ring contrast >= 3:1, never clipped,
+never in hidden content, 44px mobile targets, axe 0 incl. contrast, no console
+errors); overlay matrix (Dialog, AlertDialog x2, Drawers, Popovers, menus:
+focus entry, name, axe while open, containment, Home/End, Escape, focus
+return) at 390/1024 in both themes; context menu, Select, calendar, time
+segments; Combobox exception limited to its 4 documented rules while open and
+axe 0 once closed; Pagination focus; Tabs keyboard and inset ring; form
+first-invalid focus + error association; toast region F6 and keyboard
+dismissal; reduced motion; System theme; /design-system and
+/design-system/layout 404 in production. gitleaks (full history): no leaks.
+API image smoke: PASS. Compose config: valid.
 ```
 
 ---
@@ -1337,7 +1376,7 @@ A screen is only considered implemented when its required underlying behavior is
 | AppShell | `COMPLETED` (T00-08, PR #10, `ApplicationShell`; INC-28) |
 | Sidebar | `COMPLETED` (T00-08, PR #10, `AppSidebar` + `AppNavigation`) |
 | TopBar | `COMPLETED` (T00-08, PR #10, `AppHeader`) |
-| PageHeader | `COMPLETED` (T00-08, PR #10; responsive actions `READY_FOR_REVIEW` in T00-09) |
+| PageHeader | `COMPLETED` (T00-08, PR #10; responsive actions T00-09, PR #11) |
 | Breadcrumb | `COMPLETED` (T00-08, PR #10, `Breadcrumbs`) |
 | GlobalSearch | `COMPLETED` (T00-08, PR #10, `CommandSearch`; entry point only) |
 | TenantContext | `NOT_STARTED` (needs authentication and tenancy) |
@@ -1370,7 +1409,7 @@ A screen is only considered implemented when its required underlying behavior is
 | Skeleton | `COMPLETED` (T00-07A, PR #7) |
 | PermissionGate | `NOT_STARTED` |
 
-Also implemented outside this list: Textarea and Checkbox (T00-07B, PR #8); Popover, Tooltip, DropdownMenu, ContextMenu, Search, RadioGroup, Switch and TimePicker (T00-07C, PR #9). T00-08 also adds PageContainer/PageContent, SkipNavigation, MobileNavigation, ShellLoading/ShellError and PublicSiteShell (`COMPLETED`, PR #10). T00-09 adds the layout primitives Container, Stack, Inline, Grid/GridItem, Section, SplitLayout, ActionBar and Show (`READY_FOR_REVIEW`; docs/architecture/layout.md).
+Also implemented outside this list: Textarea and Checkbox (T00-07B, PR #8); Popover, Tooltip, DropdownMenu, ContextMenu, Search, RadioGroup, Switch and TimePicker (T00-07C, PR #9). T00-08 also adds PageContainer/PageContent, SkipNavigation, MobileNavigation, ShellLoading/ShellError and PublicSiteShell (`COMPLETED`, PR #10). T00-09 adds the layout primitives Container, Stack, Inline, Grid/GridItem, Section, SplitLayout, ActionBar and Show (`COMPLETED`, PR #11; docs/architecture/layout.md). T00-10 hardens the library for WCAG 2.2 AA without API changes; the accessibility contract, test helpers and guards are `READY_FOR_REVIEW` (docs/architecture/accessibility.md).
 
 ---
 
@@ -1442,7 +1481,8 @@ Also implemented outside this list: Textarea and Checkbox (T00-07B, PR #8); Popo
 | Design Token Foundation (T00-06) | `COMPLETED` |
 | Core Component Library (T00-07) | `COMPLETED` (PR #7, PR #8, PR #9) |
 | Application Shell (T00-08) | `COMPLETED` (PR #10) |
-| Responsive Layout Foundation (T00-09) | `READY_FOR_REVIEW` |
+| Responsive Layout Foundation (T00-09) | `COMPLETED` (PR #11) |
+| Accessibility Foundation (T00-10) | `READY_FOR_REVIEW` |
 | Architecture Decision Records | `READY_FOR_REVIEW` (ADR-0001 … ADR-0006) |
 | Production Implementation | `NOT_STARTED` |
 
@@ -1696,6 +1736,8 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-09-28 | T00-08 Application Shell implemented | `READY_FOR_REVIEW` on `feat/T00-08-application-shell`; shell + four experience route boundaries |
 | 2026-09-28 | T00-08 merged to `main` (PR #10, `4a47f98`) | `COMPLETED` |
 | 2026-09-29 | T00-09 Responsive Layout Foundation implemented | `READY_FOR_REVIEW` on `feat/T00-09-responsive-layout`; layout primitives, shell integration, layout showcase |
+| 2026-09-29 | T00-09 merged to `main` (PR #11, `265a06d`) | `COMPLETED` |
+| 2026-09-29 | T00-10 Accessibility Foundation implemented | `READY_FOR_REVIEW` on `feat/T00-10-accessibility-foundation`; WCAG 2.2 AA contract, guards, helpers, 8 verified fixes, contract tests |
 
 ---
 
@@ -2494,14 +2536,97 @@ Review T00-09 -> push, PR, CI, merge commit -> T00-10 Accessibility Foundation
 
 ---
 
+## 2026-09-29 — T00-10 Accessibility Foundation
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+Hardens the existing tokens, components, shell and layouts against WCAG 2.2 AA without redesign, new dependencies, token changes or public API changes. The work covers:
+
+* a documented accessibility contract and screen checklist;
+* a focus and reduced-motion base layer;
+* shared test helpers and static guards;
+* eight verified defects fixed;
+* cross-component and shell regression suites.
+
+No business screens.
+
+**Files:**
+
+```text
+Created: docs/architecture/accessibility.md; frontend/src/design-system/
+  testing/a11y.ts (+ test); frontend/src/app/globals.test.ts;
+  design-system/components/accessibility.test.tsx;
+  shells/ShellAccessibility.test.tsx
+Changed: app/globals.css (focus fallback, reduced-motion net);
+  tokens/guard.test.ts (3 guards), tokens/tokens.test.ts (non-text and
+  INC-24 pairs); components Pagination, Tabs, Popover, FileUpload,
+  DataTable, Search, Toast (+ tests), Combobox test; a11y-focus
+  annotations in overlay.ts, PanelDialog, Listbox, MenuContent, DatePicker,
+  Toast, ApplicationShell, PublicSiteShell; shells/Breadcrumbs.tsx;
+  ShellUtilities/showcase/layout-example tests; docs/architecture/
+  {components,application-shell,spec-inconsistencies}.md, docs/README.md,
+  README.md, frontend and design-system READMEs, TASKS.md,
+  DEVELOPMENT-STATUS.md
+Unchanged (verified): package.json and lockfiles, tokens (primitive and
+  semantic values), breakpoints, theme runtime, public component/shell/layout
+  APIs, backend, database, Dockerfiles and ignore files, compose, CI,
+  environment templates, ADRs, DESIGN-SYSTEM.md, index.html, app.js,
+  styles.css; ACRS
+```
+
+**Database / API / UI:**
+
+```text
+Database / API: none. UI: no visual redesign; breadcrumb links are taller on
+mobile (44px), tabs show an inset ring, focus fallback on native elements.
+```
+
+**Tests:**
+
+```text
+Frontend 684 passed (was 609). Backend 139 passed. pnpm check passes.
+Headless Chromium verification 1386/1386 (includes the T00-08 and T00-09
+suites).
+```
+
+**Known Issues:**
+
+```text
+Combobox: React Aria hides the page with aria-hidden while the list is open
+(axe aria-hidden-focus, page-has-heading-one, region, scrollable-region-
+focusable); documented, no repository exclusion, verified harmless. INC-24:
+in Dark mode all four *-text state tokens on surface-elevated are below
+4.5:1 (3.79-4.22) - field messages inside dialogs/drawers/popovers are
+affected; needs a token decision. 32px sm and in-field controls meet 24px
+(WCAG 2.5.8) but not the 44px convention. Collapsed rail has no visible
+tooltip. Assistive-technology (NVDA/VoiceOver) spot checks remain for
+Phase 16/17.
+```
+
+**Next:**
+
+```text
+Review T00-10 -> push, PR, CI, merge commit -> Phase 00 complete ->
+PHASE 01 (T01-01 User Identity Model); decide INC-24 (token task)
+```
+
+---
+
 # 40. NEXT TASK
 
 The next step is:
 
 ```text
-Review T00-09 (READY_FOR_REVIEW): push, open the pull request, verify CI on
-GitHub and merge with a merge commit; T00-09 then becomes COMPLETED. Then
-continue with T00-10 — Accessibility Foundation.
+Review T00-10 (READY_FOR_REVIEW): push, open the pull request, verify CI on
+GitHub and merge with a merge commit; T00-10 then becomes COMPLETED and
+Phase 00 is complete. Decide INC-24 (Dark state text on elevated surfaces,
+a token task). Then continue with PHASE 01 — T01-01 User Identity Model.
 ```
 
 The completed-task description below is retained for reference.

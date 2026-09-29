@@ -564,7 +564,7 @@ Verify:
 
 ### T00-09 Update (2026-09-29)
 
-**Status:** READY_FOR_REVIEW (branch `feat/T00-09-responsive-layout`, based on `main` at `4a47f98`). Conventions and contracts: `docs/architecture/layout.md`.
+**Status:** COMPLETED (merged to `main` via PR #11, `265a06d`). Conventions and contracts: `docs/architecture/layout.md`.
 
 **Scope (T00-09 implementation prompt):** reusable layout primitives in `frontend/src/design-system/layout/`: Container (content widths narrow / standard / wide / full), Stack, Inline, Grid/GridItem, Section, SplitLayout, ActionBar and Show (CSS-only responsive visibility). The breakpoint and spacing vocabulary reuses the approved tiers. The T00-08 shell is integrated without breaking its API: PageContainer uses the shared widths (plus `narrow`), and PageHeader actions wrap below a long title. Page conventions for dashboards, lists with filters and tables, detail pages and forms are documented. `/design-system` gains layout sections, and `/design-system/layout` shows a generic page in the real shell (development/test only). No business screens, and no new dependencies, breakpoints or tokens. Layout defects found in 07A/07C during verification were fixed without API changes (Kpi long values, ErrorState action wrapping, DataTable scroll-region focus ring). Naming and width notes: INC-29.
 
@@ -592,6 +592,26 @@ Implement:
 * screen-reader support
 * reduced motion
 * contrast
+
+### T00-10 Update (2026-09-29)
+
+**Status:** READY_FOR_REVIEW (branch `feat/T00-10-accessibility-foundation`, based on `main` at `265a06d`). Contract, conventions, checklist and known exceptions: `docs/architecture/accessibility.md`.
+
+**Scope (T00-10 implementation prompt):** harden the existing tokens, components, shell and layouts against WCAG 2.2 AA without redesign, new dependencies, token changes or public API changes. This covers:
+
+* Foundation: a global `:focus-visible` fallback and a reduced-motion safety net; test helpers (`expectNamedControls`, `tabSequence`, `expectFocusContained`, `expectFocusRing`, `expectHeadingOutline`); guards for focus replacement, reduced-motion pairing and positive `tabIndex`.
+* Verified defect fixes: Pagination focus loss; Tabs ring clipping; Popover structure and focus containment; the FileUpload drop-zone name; persistent DataTable and Search status regions; Toast region F6; Breadcrumb touch targets.
+* A cross-component accessibility contract suite, and a shell accessibility suite for all four experiences.
+
+Remaining exceptions are documented: the React Aria Combobox axe rules while open, and INC-24.
+
+**Acceptance criteria:**
+
+* Keyboard operation, visible and unclipped focus, focus containment and return for every overlay, accessible names for every control, forms with required/invalid/error association and first-invalid focus, and live regions per convention — tested in jsdom and verified in Chromium.
+* Light, Dark and System at 390/768/1024/1440 with axe 0 violations (no new exclusions), focus-ring contrast ≥ 3:1, 44px mobile targets (documented exceptions only) and reduced motion.
+* Landmarks, a single `h1` and a valid heading outline on every experience; the skip link works.
+* T00-06 … T00-09 regression suites pass; `/design-system` and `/design-system/layout` return 404 in production.
+* No backend, database, Docker, compose, CI, environment, token or dependency changes; the marketing files are unchanged.
 
 ---
 

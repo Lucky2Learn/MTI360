@@ -190,6 +190,7 @@
 - **Issue:** In Dark mode `error-text` on `surface-elevated` (menus, popovers, dialogs) is 3.79:1 — below 4.5:1 for normal text. It passes on `surface-primary` and on `error-surface` (4.79:1). The other state `*-text` tokens were not assessed on `surface-elevated` in T00-06.
 - **Current handling:** No token change (a T00-07C stop condition). Destructive menu items keep the label in `text-primary` at rest with an error-coloured icon (non-text, ≥ 3:1) and show `error-text` only on the `error-surface` focus background. Components must not place `*-text` state text directly on `surface-elevated` in Dark mode.
 - **Proposed resolution:** Add a contrast-checked Dark state-text step for elevated surfaces (or lighten `error-text`) in a token task, and extend the token contrast tests to `surface-elevated`.
+- **T00-10 update (still `OPEN`, scope wider than first recorded):** The token contrast tests now cover every `*-text` state token on `surface-elevated`. All pass in Light. In Dark **all four** are below 4.5:1 (but ≥ 3:1): `error-text` 3.79, `info-text` 4.03, `success-text` 4.19, `warning-text` 4.22. The four pairs are pinned as documented exceptions in `tokens.test.ts` and must leave the list once fixed. Impact: field error and success messages, or other bare state text, rendered inside a Dialog, Drawer or Popover in Dark mode are below AA until a token task resolves this. Badges and Alerts use their own state surfaces and are not affected. A token change is a T00-10 stop condition, so no token was changed. [accessibility.md](accessibility.md) §10 and §15.
 
 ## INC-25 — Toast, tooltip and context-menu conventions unspecified
 
@@ -198,6 +199,7 @@
 - **Issue:** The specifications define no toast durations, stacking limit, placement, persistence rules or action behaviour, and no rules for tooltips or context menus.
 - **Current handling:** Toasts: success/info 5 s, warning 8 s, error and toasts with an action persist until dismissed (WCAG 2.2.1), at most 3 visible, bottom placement (bottom-end from `tablet`), timers paused on hover/focus. Toasts use React Aria's `UNSTABLE_Toast*` exports (1.21.1 pinned) behind the MTI 360 API. Tooltips: 600 ms hover delay, immediate on keyboard focus, never the only source of information. Context menus: right-click, Shift+F10 and the ContextMenu key; a shortcut only — every action must be reachable another way.
 - **Proposed resolution:** Document these conventions in DESIGN-SYSTEM.md §49/§74; re-check the Toast wrapper when React Aria stabilises the toast API.
+- **T00-10 update (still `OPEN`; conventions unchanged):** The accessibility conventions for toasts, tooltips and live regions are now documented in [accessibility.md](accessibility.md) §6 and §4. A wrapper defect was fixed along the way: the toast region was not reachable with F6, because React Aria's landmark registration never retried once the region element appeared. The specification gap itself remains.
 
 ## INC-26 — Marketing site hosting/integration
 
