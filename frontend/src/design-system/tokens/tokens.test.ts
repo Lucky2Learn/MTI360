@@ -4,119 +4,26 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import {
+  dark,
+  expectContrast,
+  fallback,
+  light,
+  mix,
+  primitives,
+} from "@/design-system/testing/contrast";
+
 // Design-token contract (T00-06; interaction states and component tokens T00-07). Parses the token CSS directly, so the files
-// that ship are the files that are tested.
+// that ship are the files that are tested. Parsing and WCAG colour maths live
+// in design-system/testing/contrast.ts (T00-10A), shared with component tests.
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const read = (relative: string): string =>
   readFileSync(path.resolve(HERE, relative), "utf8");
 
-const primitivesCss = read("./primitives.css");
-const semanticCss = read("./semantic.css");
 const tailwindCss = read("./tailwind.css");
 const componentsCss = read("./components.css");
 const designSystemMd = read("../../../../DESIGN-SYSTEM.md");
-
-// --- Parsing helpers ---------------------------------------------------------
-
-type Mix = { a: string; b: string; t: number };
-type Primitive = { hex: string; mix?: Mix };
-
-function parsePrimitives(css: string): Map<string, Primitive> {
-  const result = new Map<string, Primitive>();
-  const pattern =
-    /--([a-z0-9-]+):\s*(#[0-9a-f]{6});(?:\s*\/\*\s*mix\(([a-z0-9-]+),\s*([a-z0-9-]+),\s*([0-9.]+)\)\s*\*\/)?/gi;
-  for (const match of css.matchAll(pattern)) {
-    const [, name, hex, a, b, t] = match;
-    result.set(name!, {
-      hex: hex!.toLowerCase(),
-      mix: a && b && t ? { a, b, t: Number(t) } : undefined,
-    });
-  }
-  return result;
-}
-
-/** Returns the body of the first `{ … }` block whose selector starts at `marker`. */
-function blockAfter(css: string, marker: string): string {
-  const start = css.indexOf(marker);
-  if (start === -1) throw new Error(`Block not found: ${marker}`);
-  const open = css.indexOf("{", start);
-  let depth = 0;
-  for (let i = open; i < css.length; i += 1) {
-    if (css[i] === "{") depth += 1;
-    if (css[i] === "}") depth -= 1;
-    if (depth === 0) return css.slice(open + 1, i);
-  }
-  throw new Error(`Unterminated block: ${marker}`);
-}
-
-function declarations(block: string): Map<string, string> {
-  const result = new Map<string, string>();
-  const withoutComments = block.replace(/\/\*[\s\S]*?\*\//g, "");
-  for (const match of withoutComments.matchAll(
-    /--([a-z0-9-]+):\s*([^;]+);/gi,
-  )) {
-    result.set(match[1]!, match[2]!.trim().replace(/\s+/g, " "));
-  }
-  return result;
-}
-
-const primitives = parsePrimitives(primitivesCss);
-const light = declarations(
-  blockAfter(semanticCss, ':root,\n[data-theme="light"]'),
-);
-const dark = declarations(blockAfter(semanticCss, '[data-theme="dark"] {'));
-const fallback = declarations(
-  blockAfter(
-    blockAfter(semanticCss, "@media (prefers-color-scheme: dark)"),
-    ":root:not([data-theme])",
-  ),
-);
-
-// --- Colour maths (WCAG 2.2) ----------------------------------------------------
-
-function channels(hex: string): [number, number, number] {
-  const value = hex.replace("#", "");
-  return [0, 2, 4].map((i) => parseInt(value.slice(i, i + 2), 16)) as [
-    number,
-    number,
-    number,
-  ];
-}
-
-function mix(a: string, b: string, t: number): string {
-  const ca = channels(a);
-  const cb = channels(b);
-  return `#${ca
-    .map((c, i) => Math.round(c * t + cb[i]! * (1 - t)))
-    .map((c) => c.toString(16).padStart(2, "0"))
-    .join("")}`;
-}
-
-function luminance(hex: string): number {
-  const [r, g, b] = channels(hex).map((c) => {
-    const s = c / 255;
-    return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-  }) as [number, number, number];
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-function contrast(a: string, b: string): number {
-  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [
-    number,
-    number,
-  ];
-  return (hi + 0.05) / (lo + 0.05);
-}
-
-/** Resolves a semantic colour token to its primitive hex value. */
-function resolve(theme: Map<string, string>, token: string): string {
-  const value = theme.get(token);
-  const reference = value?.match(/^var\(--([a-z0-9-]+)\)$/)?.[1];
-  const primitive = reference ? primitives.get(reference) : undefined;
-  if (!primitive) throw new Error(`Cannot resolve --${token} (${value})`);
-  return primitive.hex;
-}
 
 // --- Contract ---------------------------------------------------------------------
 
@@ -308,27 +215,6 @@ describe("semantic tokens", () => {
     }
   });
 });
-
-/**
- * Reusable WCAG 2.2 contrast assertion: resolves both semantic tokens in the
- * given theme and reports the pair, the colours and the measured ratio on
- * failure. Returns the ratio.
- */
-function expectContrast(
-  theme: Map<string, string>,
-  foreground: string,
-  background: string,
-  minimum: number,
-): number {
-  const fg = resolve(theme, foreground);
-  const bg = resolve(theme, background);
-  const ratio = contrast(fg, bg);
-  expect(
-    ratio,
-    `${foreground} ${fg} on ${background} ${bg} = ${ratio.toFixed(2)}:1`,
-  ).toBeGreaterThanOrEqual(minimum);
-  return ratio;
-}
 
 describe.each([
   ["Light", light],
