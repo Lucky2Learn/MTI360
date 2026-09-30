@@ -309,6 +309,27 @@ describe("semantic tokens", () => {
   });
 });
 
+/**
+ * Reusable WCAG 2.2 contrast assertion: resolves both semantic tokens in the
+ * given theme and reports the pair, the colours and the measured ratio on
+ * failure. Returns the ratio.
+ */
+function expectContrast(
+  theme: Map<string, string>,
+  foreground: string,
+  background: string,
+  minimum: number,
+): number {
+  const fg = resolve(theme, foreground);
+  const bg = resolve(theme, background);
+  const ratio = contrast(fg, bg);
+  expect(
+    ratio,
+    `${foreground} ${fg} on ${background} ${bg} = ${ratio.toFixed(2)}:1`,
+  ).toBeGreaterThanOrEqual(minimum);
+  return ratio;
+}
+
 describe.each([
   ["Light", light],
   ["Dark", dark],
@@ -316,11 +337,7 @@ describe.each([
   it.each(CONTRAST_PAIRS)(
     "%s on %s ≥ %s:1",
     (foreground, background, minimum) => {
-      const ratio = contrast(
-        resolve(mapping, foreground),
-        resolve(mapping, background),
-      );
-      expect(ratio).toBeGreaterThanOrEqual(minimum);
+      expectContrast(mapping, foreground, background, minimum);
     },
   );
 });
@@ -334,18 +351,6 @@ const NON_TEXT_T00_10: [string, string, number][] = [
   "surface-selected",
 ].map((bg): [string, string, number] => ["brand-primary", bg, 3]);
 
-// State text on elevated surfaces (dialogs, drawers, popovers, menus).
-// INC-24: in Dark mode every *-text state token is below 4.5:1 on
-// surface-elevated (error 3.79, info 4.03, success 4.19, warning 4.22) and
-// needs a token change (a T00-10 stop condition). They are pinned so a token
-// fix shows up here — move a token out of the list once it passes.
-const INC_24_DARK_EXCEPTIONS = new Set<string>([
-  "error-text",
-  "info-text",
-  "success-text",
-  "warning-text",
-]);
-
 describe.each([
   ["Light", light],
   ["Dark", dark],
@@ -353,35 +358,54 @@ describe.each([
   it.each(NON_TEXT_T00_10)(
     "%s on %s ≥ %s:1",
     (foreground, background, minimum) => {
-      expect(
-        contrast(resolve(mapping, foreground), resolve(mapping, background)),
-      ).toBeGreaterThanOrEqual(minimum);
+      expectContrast(mapping, foreground, background, minimum);
     },
   );
 });
 
-describe("state text on surface-elevated (T00-10, INC-24)", () => {
-  it.each(STATES.map((state) => `${state}-text`))(
-    "%s ≥ 4.5:1 in Light",
-    (token) => {
-      expect(
-        contrast(resolve(light, token), resolve(light, "surface-elevated")),
-      ).toBeGreaterThanOrEqual(4.5);
-    },
-  );
+// State text on every surface it can be rendered on (T00-10, T00-10A):
+// page backgrounds, cards, elevated surfaces (dialogs, drawers, popovers,
+// menus), hover and selected rows/options, and its own state surface.
+const STATE_TEXT_SURFACES = [
+  ...BACKGROUNDS,
+  "surface-hover",
+  "surface-selected",
+];
+const STATE_TEXT_PAIRS: [string, string][] = STATES.flatMap((state) =>
+  [...STATE_TEXT_SURFACES, `${state}-surface`].map((bg): [string, string] => [
+    `${state}-text`,
+    bg,
+  ]),
+);
 
-  it.each(STATES.map((state) => `${state}-text`))(
-    "%s in Dark: ≥ 4.5:1 unless it is a documented INC-24 exception",
-    (token) => {
-      const ratio = contrast(
-        resolve(dark, token),
-        resolve(dark, "surface-elevated"),
-      );
-      if (INC_24_DARK_EXCEPTIONS.has(token)) {
+// INC-24: Dark *-text state tokens below 4.5:1 (all ≥ 3:1). surface-hover is
+// the same colour as surface-elevated in Dark. Measured (T00-10A):
+// surface-elevated / surface-hover — error 3.79, info 4.03, success 4.19,
+// warning 4.22; surface-selected — error 4.00, info 4.25, success 4.42,
+// warning 4.45. Pinned so a token fix shows up here — remove a pair once it
+// passes.
+const INC_24_DARK_EXCEPTIONS = new Set<string>(
+  STATES.flatMap((state) =>
+    ["surface-elevated", "surface-hover", "surface-selected"].map(
+      (bg) => `${state}-text on ${bg}`,
+    ),
+  ),
+);
+
+describe("state text on every surface (T00-10A, INC-24)", () => {
+  it.each(STATE_TEXT_PAIRS)("%s on %s ≥ 4.5:1 in Light", (text, bg) => {
+    expectContrast(light, text, bg, 4.5);
+  });
+
+  it.each(STATE_TEXT_PAIRS)(
+    "%s on %s in Dark: ≥ 4.5:1 unless it is a documented INC-24 exception",
+    (text, bg) => {
+      if (INC_24_DARK_EXCEPTIONS.has(`${text} on ${bg}`)) {
+        const ratio = contrast(resolve(dark, text), resolve(dark, bg));
         expect(ratio).toBeLessThan(4.5);
         expect(ratio).toBeGreaterThanOrEqual(3);
       } else {
-        expect(ratio).toBeGreaterThanOrEqual(4.5);
+        expectContrast(dark, text, bg, 4.5);
       }
     },
   );
