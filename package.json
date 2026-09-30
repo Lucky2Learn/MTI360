@@ -10,7 +10,7 @@
     "bootstrap": "pnpm install --frozen-lockfile && uv sync --locked --directory backend",
     "dev": "pnpm run \"/^dev:/\"",
     "dev:frontend": "pnpm --filter @mti360/frontend dev",
-    "dev:backend": "uv run --locked --directory backend uvicorn app.main:create_app --factory --reload --host 127.0.0.1 --port ${API_PORT:-8000} --no-server-header",
+    "dev:backend": "uv run --locked --directory backend uvicorn app.main:create_app --factory --reload --host 127.0.0.1 --port ${API_PORT:-8000} --no-server-header --no-access-log",
     "build": "pnpm --filter @mti360/frontend build",
     "lint": "pnpm run lint:frontend && pnpm run lint:backend",
     "lint:frontend": "pnpm --filter @mti360/frontend lint",
