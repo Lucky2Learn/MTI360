@@ -72,6 +72,35 @@ select = [
 known-first-party = ["app"]
 
 # ---------------------------------------------------------------------------
+# import-linter — architecture boundaries (T01-01; repository-structure.md §3)
+# ---------------------------------------------------------------------------
+[tool.importlinter]
+root_package = "app"
+
+[[tool.importlinter.contracts]]
+name = "Layers: main -> api -> modules -> integrations -> core"
+type = "layers"
+layers = [
+    "app.main",
+    "app.api",
+    "app.modules",
+    "(app.integrations)",
+    "app.core",
+]
+
+[[tool.importlinter.contracts]]
+name = "Core configuration and identifiers depend on nothing else in core"
+type = "forbidden"
+source_modules = ["app.core.config", "app.core.ids"]
+forbidden_modules = [
+    "app.core.db",
+    "app.core.context",
+    "app.core.errors",
+    "app.core.logging",
+    "app.core.middleware",
+]
+
+# ---------------------------------------------------------------------------
 # mypy — strict type checking
 # ---------------------------------------------------------------------------
 [tool.mypy]

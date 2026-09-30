@@ -7,7 +7,8 @@ Run locally (from ``backend/``)::
 (or ``pnpm dev:backend`` from the repository root).
 
 Realm routers (``/api/v1/platform``, ``/api/v1``, ``/api/v1/student``,
-``/api/v1/public``, ``/api/v1/webhooks`` — ADR-0006) are mounted by later tasks.
+``/api/v1/public``, ``/api/v1/webhooks`` — ADR-0006) are mounted with
+deny-by-default guards (``app/api``); modules add their routes to them.
 """
 
 from collections.abc import AsyncIterator
@@ -17,6 +18,7 @@ from typing import Literal
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from app.api import mount_api, operation_id
 from app.core.config import Settings, get_settings
 from app.core.db import create_engine, create_sessionmaker
 from app.core.errors import install_exception_handlers
@@ -59,6 +61,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         redoc_url=None,
         openapi_url="/openapi.json" if is_development else None,
         lifespan=lifespan,
+        generate_unique_id_function=operation_id,
     )
     app.state.settings = settings
     app.state.engine = engine
@@ -66,6 +69,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     install_exception_handlers(app)
     app.add_middleware(RequestContextMiddleware)
+    mount_api(app)
 
     @app.get("/health", tags=["operations"])
     async def health() -> HealthResponse:

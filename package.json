@@ -14,7 +14,7 @@
     "build": "pnpm --filter @mti360/frontend build",
     "lint": "pnpm run lint:frontend && pnpm run lint:backend",
     "lint:frontend": "pnpm --filter @mti360/frontend lint",
-    "lint:backend": "uv run --locked --directory backend ruff check .",
+    "lint:backend": "uv run --locked --directory backend ruff check . && uv run --locked --directory backend lint-imports",
     "typecheck": "pnpm run typecheck:frontend && pnpm run typecheck:backend",
     "typecheck:frontend": "pnpm --filter @mti360/frontend typecheck",
     "typecheck:backend": "uv run --locked --directory backend mypy",
