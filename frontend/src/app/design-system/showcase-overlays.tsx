@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 
 import {
+  Alert,
   AlertDialog,
   Badge,
   Button,
@@ -137,6 +138,27 @@ const ROW_ACTIONS: MenuEntry[] = [
   { id: "sep", type: "separator" },
   { id: "delete", label: "Delete", icon: DeleteIcon, tone: "destructive" },
 ];
+
+// T00-10A (INC-24): state text rendered on surface-elevated, so browser
+// verification measures it inside every overlay type in both themes.
+function OverlayValidation() {
+  return (
+    <div className="flex flex-col gap-4">
+      <Input
+        label="CDC number"
+        isInvalid
+        errorMessage="Enter the Continuous Discharge Certificate number."
+      />
+      <Input
+        label="INDoS number"
+        defaultValue="08ZL1234"
+        successMessage="INDoS number verified."
+      />
+      <Alert tone="warning" title="Medical certificate expires in 14 days" />
+      <Alert tone="info" title="STCW refresher batch opens on 3 November" />
+    </div>
+  );
+}
 
 function Section({
   id,
@@ -498,6 +520,42 @@ export function OverlaysShowcase() {
               </div>
             </Drawer>
           ))}
+        </div>
+      </Section>
+
+      <Section
+        id="overlay-validation"
+        title="Validation in overlays"
+        description="Field error and success messages and alerts on elevated surfaces (Dialog, Drawer, Popover)."
+      >
+        <div className="flex flex-wrap gap-3">
+          <Dialog
+            title="Update cadet documents"
+            trigger={
+              <Button variant="secondary">Open validation dialog</Button>
+            }
+            actions={(close) => <Button onPress={close}>Done</Button>}
+          >
+            <OverlayValidation />
+          </Dialog>
+          <Drawer
+            side="right"
+            title="Document checks"
+            trigger={
+              <Button variant="secondary">Open validation drawer</Button>
+            }
+            actions={(close) => <Button onPress={close}>Done</Button>}
+          >
+            <OverlayValidation />
+          </Drawer>
+          <Popover
+            title="Quick document check"
+            trigger={
+              <Button variant="secondary">Open validation popover</Button>
+            }
+          >
+            <OverlayValidation />
+          </Popover>
         </div>
       </Section>
 
