@@ -3,7 +3,8 @@
 # MTI 360 backend image (T00-03) — production-shaped, multi-stage.
 #
 # Build context: backend/        docker build -t mti360-api backend
-# Runs:          uvicorn app.main:create_app (FastAPI)
+# Runs:          uvicorn app.main:create_app (FastAPI) — default command
+#                alembic upgrade head               — "migrate" (T01-01, compose)
 #
 # - Locked, production-only dependencies (uv sync --locked --no-dev).
 # - Runtime runs as a dedicated non-root user; application files are root-owned
@@ -34,6 +35,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev --no-install-project
 
 COPY app ./app
+COPY alembic.ini ./
+COPY migrations ./migrations
 
 # --- runtime ------------------------------------------------------------------
 FROM ${PYTHON_IMAGE} AS runtime
@@ -50,6 +53,8 @@ WORKDIR /app
 
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/app /app/app
+COPY --from=builder /app/alembic.ini /app/alembic.ini
+COPY --from=builder /app/migrations /app/migrations
 
 USER 10001:10001
 

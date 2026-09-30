@@ -142,6 +142,31 @@ services:
   # Hardened: read-only root filesystem, all capabilities dropped,
   # no privilege escalation, non-root users defined in the images.
   # ==========================================================================
+  # One-shot schema migration (T01-01): same image, owner role, then exits.
+  # Run it before starting the api:  docker compose run --rm migrate
+  # (pnpm stack:up does this). The api never runs migrations itself.
+  migrate:
+    build:
+      context: ./backend
+    image: mti360-api:local
+    profiles: ["app"]
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # Container-network URLs (ADR-0004). Only this one-shot service receives
+      # the owner credentials. Passwords must be URL-safe (for example hex)
+      # because they are interpolated into URLs.
+      MIGRATIONS_DATABASE_URL: postgresql+asyncpg://mti_owner:${MTI_OWNER_PASSWORD:?Set MTI_OWNER_PASSWORD in .env (copy .env.example)}@postgres:5432/${POSTGRES_DB:-mti360}
+      DATABASE_URL: &app-database-url postgresql+asyncpg://mti_app:${MTI_APP_PASSWORD:?Set MTI_APP_PASSWORD in .env (copy .env.example)}@postgres:5432/${POSTGRES_DB:-mti360}
+      READONLY_DATABASE_URL: &readonly-database-url postgresql+asyncpg://mti_readonly:${MTI_READONLY_PASSWORD:?Set MTI_READONLY_PASSWORD in .env (copy .env.example)}@postgres:5432/${POSTGRES_DB:-mti360}
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    restart: "no"
+
   api:
     build:
       context: ./backend
@@ -150,6 +175,10 @@ services:
     environment:
       APP_ENV: ${APP_ENV:-development}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # Application and read-only roles only; never the owner (migrations run
+      # in the separate "migrate" service).
+      DATABASE_URL: *app-database-url
+      READONLY_DATABASE_URL: *readonly-database-url
     ports:
       - "127.0.0.1:${API_PORT:-8000}:8000"
     read_only: true
