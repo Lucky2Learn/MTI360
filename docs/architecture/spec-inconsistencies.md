@@ -8,6 +8,7 @@
 | `OPEN` | Not resolved; specifications disagree |
 | `DECIDED-BY-ADR` | An ADR sets the engineering direction; the older specification text still needs a documentation update |
 | `CLOSED` | Specifications updated and consistent |
+| `RESOLVED` | An implementation defect recorded here was fixed in the named task and verified; no specification change was needed |
 
 ---
 
@@ -185,12 +186,18 @@
 
 ## INC-24 — Dark error text on elevated surfaces below 4.5:1
 
-- **Status:** `OPEN` (found in T00-07C browser verification; tokens unchanged)
+- **Status:** `RESOLVED` (T00-10A; found in T00-07C browser verification)
 - **Where:** `tokens/semantic.css` (Dark: `error-text` = `error-400` #CF7A7A; `surface-elevated` = `ocean-800` #073B57); DESIGN-SYSTEM.md §8 (semantic colours), CLAUDE.md §38 (WCAG 2.2 AA)
 - **Issue:** In Dark mode `error-text` on `surface-elevated` (menus, popovers, dialogs) is 3.79:1 — below 4.5:1 for normal text. It passes on `surface-primary` and on `error-surface` (4.79:1). The other state `*-text` tokens were not assessed on `surface-elevated` in T00-06.
 - **Current handling:** No token change (a T00-07C stop condition). Destructive menu items keep the label in `text-primary` at rest with an error-coloured icon (non-text, ≥ 3:1) and show `error-text` only on the `error-surface` focus background. Components must not place `*-text` state text directly on `surface-elevated` in Dark mode.
 - **Proposed resolution:** Add a contrast-checked Dark state-text step for elevated surfaces (or lighten `error-text`) in a token task, and extend the token contrast tests to `surface-elevated`.
 - **T00-10 update (still `OPEN`, scope wider than first recorded):** The token contrast tests now cover every `*-text` state token on `surface-elevated`. All pass in Light. In Dark **all four** are below 4.5:1 (but ≥ 3:1): `error-text` 3.79, `info-text` 4.03, `success-text` 4.19, `warning-text` 4.22. The four pairs are pinned as documented exceptions in `tokens.test.ts` and must leave the list once fixed. Impact: field error and success messages, or other bare state text, rendered inside a Dialog, Drawer or Popover in Dark mode are below AA until a token task resolves this. Badges and Alerts use their own state surfaces and are not affected. A token change is a T00-10 stop condition, so no token was changed. [accessibility.md](accessibility.md) §10 and §15.
+- **T00-10A resolution (`RESOLVED`):** measured again before the change. In Dark, the `*-400` text also failed on `surface-selected` (`seaglass-950`): error 4.00, info 4.25, success 4.42, warning 4.45. `surface-hover` has the same colour as `surface-elevated`. No existing primitive is a lighter step of these hues, so the user approved a narrowly scoped exception: add four derived `*-300` primitives with the documented formula `mix(state-600, ice-100, t)` (success 0.62, warning 0.72, error 0.56, info 0.58; no palette change, no new hue), and remap **only** Dark `success/warning/error/info-text` (Dark block and the no-JavaScript fallback). New Dark ratios on `surface-elevated` / `surface-hover`: error 4.72, info 4.74, success 4.68, warning 4.63; on `surface-selected`: 4.98, 5.00, 4.94, 4.89; every other Dark surface is at least 5.52. Unchanged: every existing primitive and its value, the Light mappings, and the Dark indicators and `success-strong` / `error-strong` fills (still `*-400`). Coverage:
+  - `tokens.test.ts` checks every `*-text` against every background and surface in Light and Dark, with no exceptions left, and pins the mappings.
+  - `components/state-text.test.tsx` checks the pairs as each component renders them: field error and success, Switch error, Alert, ErrorState, Toast, the destructive menu item, and Dialog, AlertDialog, Drawer and Popover.
+  - Chromium measures the computed colours inside a Dialog, Drawer and Popover in Light, Dark and System at 390/768/1024/1440, with axe 0 violations including contrast.
+
+  Details: [design-tokens.md](design-tokens.md) §2, §3, §5 and [accessibility.md](accessibility.md) §10.
 
 ## INC-25 — Toast, tooltip and context-menu conventions unspecified
 

@@ -595,7 +595,7 @@ Implement:
 
 ### T00-10 Update (2026-09-29)
 
-**Status:** READY_FOR_REVIEW (branch `feat/T00-10-accessibility-foundation`, based on `main` at `265a06d`). Contract, conventions, checklist and known exceptions: `docs/architecture/accessibility.md`.
+**Status:** COMPLETED (merged to `main` via PR #12, `94cb752`). Contract, conventions, checklist and known exceptions: `docs/architecture/accessibility.md`.
 
 **Scope (T00-10 implementation prompt):** harden the existing tokens, components, shell and layouts against WCAG 2.2 AA without redesign, new dependencies, token changes or public API changes. This covers:
 
@@ -612,6 +612,31 @@ Remaining exceptions are documented: the React Aria Combobox axe rules while ope
 * Landmarks, a single `h1` and a valid heading outline on every experience; the skip link works.
 * T00-06 … T00-09 regression suites pass; `/design-system` and `/design-system/layout` return 404 in production.
 * No backend, database, Docker, compose, CI, environment, token or dependency changes; the marketing files are unchanged.
+
+---
+
+## T00-10A — Accessibility Token Correction (INC-24)
+
+**Priority:** P0
+
+**Status:** READY_FOR_REVIEW (branch `feat/T00-10a-accessibility-token-correction`, based on `main` at `94cb752`).
+
+**Objective:** Fix the Dark-mode `*-text` state colours that were below the WCAG 2.2 AA 4.5:1 text target on elevated surfaces (INC-24), without redesigning the colour system.
+
+**Scope:**
+
+* Measured first. Dark `*-400` text on `surface-elevated` / `surface-hover` was error 3.79, info 4.03, success 4.19 and warning 4.22; on `surface-selected` it was 4.00–4.45.
+* No existing primitive is a lighter step of these hues. The user therefore approved a narrowly scoped exception: four derived `*-300` primitives, `mix(state-600, ice-100, t)`, used only by Dark `*-text` and the no-JavaScript fallback. Existing primitives, Light mappings, the Dark indicators and the `-strong` fills are unchanged.
+* A shared contrast test helper (`design-system/testing/contrast.ts`, `expectContrast`) and a state text × every-surface matrix in `tokens.test.ts`, with the mappings pinned.
+* A component regression suite, `components/state-text.test.tsx`: the pairs as components render them, in Light and Dark.
+* A development-only showcase fixture, "Validation in overlays", so that Chromium measures state text inside a Dialog, Drawer and Popover.
+
+**Acceptance criteria:**
+
+* Every `*-text` token is ≥ 4.5:1 on every background and surface in Light and Dark. On `surface-elevated` in Dark: error 4.72, info 4.74, success 4.68, warning 4.63.
+* Reverting a Dark `*-text` token to `*-400` fails the token and component tests.
+* Chromium on the production image: state text in overlays is ≥ 4.5:1 in Light, Dark and System at 390/768/1024/1440, with axe 0 violations including contrast. The T00-08, T00-09 and T00-10 suites pass, and the Combobox exception is unchanged.
+* No new dependencies, and no component API, layout, breakpoint, typography, spacing, backend, database, Docker, compose, CI, environment, ADR or marketing-file changes. INC-24 is `RESOLVED`.
 
 ---
 
@@ -3561,6 +3586,7 @@ T00-07
 T00-08
 T00-09
 T00-10
+T00-10A
 
 ↓
 

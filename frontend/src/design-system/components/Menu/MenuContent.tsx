@@ -16,8 +16,8 @@ import { cx } from "@/design-system/lib/cx";
 // type-ahead, Enter/Space activate, Escape closes, disabled items skipped.
 // Destructive items: an error-coloured icon at rest and error-text on an
 // error-surface when focused/hovered — never colour alone (the label says what
-// happens). The label stays text-primary at rest because Dark error-text on
-// surface-elevated is below 4.5:1 (3.79:1); see INC in spec-inconsistencies.
+// happens). The label stays text-primary at rest (chosen in T00-07C when Dark
+// error-text on surface-elevated was 3.79:1; INC-24, resolved in T00-10A).
 
 export type MenuAction = {
   id: string;
