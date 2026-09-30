@@ -52,10 +52,11 @@
 
 ## INC-06 — Tenant role names
 
-- **Status:** `OPEN` — must be resolved before Phase 01 role seeding (T01-08)
+- **Status:** `OPEN` — must be resolved before business role templates are seeded (Phase 04)
 - **Where:** CLAUDE.md §11 vs PRD.md §85
 - **Issue:** CLAUDE.md lists Tenant Admin, Admissions Manager, Counsellor, Faculty, Finance User, Compliance User, Placement User, Communication User, AI Manager, Analyst. PRD.md lists INSTITUTE_OWNER, DIRECTOR, PRINCIPAL, ADMIN, ADMISSION_MANAGER, COUNSELLOR, ACCOUNTS, FACULTY, COMPLIANCE, PLACEMENT, MARKETING, **STUDENT**. PRD includes STUDENT as a tenant role although the Student Portal is a separate experience and realm (ADR-0005).
 - **Proposed resolution:** Agree one canonical system-role template list; model students as a separate realm rather than a staff role.
+- **T01-00 update (still `OPEN`, wider):** The T01-00 prompt adds a third list: Tenant Owner, Tenant Admin, Admissions, Academic, Finance, Compliance, Placement, Communication, Faculty, Staff. Decision D7 (ADR-0011): T01 seeds only the templates `INSTITUTE_OWNER` and `ADMIN`. Roles are per-tenant data cloned from code templates, so business templates can be added later without changing authorization. Students are a separate realm (ADR-0005), never a tenant role.
 
 ## INC-07 — Subscription plan names
 
@@ -70,6 +71,7 @@
 - **Issue:** Whether platform administrators share the `users` table, and whether sessions or JWTs are used, was unspecified.
 - **Direction:** Separate `platform_users`; opaque server-side sessions. ARCHITECTURE.md §10 carries a T00-01 note.
 - **Proposed resolution:** Update ARCHITECTURE.md §32 identity table list when Phase 01 models are designed.
+- **T01-00 update:** The Phase 01 identity tables are decided: `users` (identity) separated from `user_credentials`; `platform_users` separated from `platform_user_credentials`; `tenant_memberships` replaces `tenant_users`; sessions in `user_sessions` / `platform_sessions` ([ADR-0010](../adr/0010-sessions-credentials-and-csrf.md), D14 amended). ARCHITECTURE.md §32 is updated in T01-10, once the tables exist.
 
 ## INC-09 — Status vocabularies
 
@@ -240,3 +242,42 @@
 - **Current handling:** The widths are unchanged from T00-08 (no visual change to existing pages). A `narrow` (48rem) width was added for focused forms. On desktop the content column also loses 256px to the sidebar, so a wider `standard` would rarely be reached. The layout names are `Container`, `Stack`, `Inline`, `Grid`/`GridItem`, `Section`, `SplitLayout`, `ActionBar` and `Show`. PageLayout is the existing `PageContainer` + `PageHeader` + `PageContent`. SidebarLayout/ContentLayout are covered by `SplitLayout`/`Container`, and AspectRatio is not built (no consumer). Browser verification covers all six TASKS.md widths. Details: [layout.md](layout.md).
 - **Proposed resolution:** Confirm or adjust the `standard`/`wide` caps against §82 when the first real pages (T02/T03) are designed, and record the layout names in DESIGN-SYSTEM.md / CLAUDE.md §26 in a documentation task.
 
+## INC-30 — Platform role names
+
+- **Status:** `OPEN` (T01-00)
+- **Where:** PRD.md §85 and PLATFORM-ADMIN.md §7 (seven roles: `SUPER_ADMIN`, `PLATFORM_OPERATIONS_ADMIN`, `CUSTOMER_SUCCESS_ADMIN`, `BILLING_ADMIN`, `SUPPORT_ADMIN`, `SECURITY_AUDIT_ADMIN`, `AI_PLATFORM_ADMIN`) vs the T01-00 prompt ("Platform Super Admin", "Platform Admin", "Platform Support")
+- **Issue:** Two different platform role sets.
+- **Current handling:** Decision D7 (ADR-0011) keeps the seven codes from the specifications. In T01 only `SUPER_ADMIN` and `SECURITY_AUDIT_ADMIN` receive permissions.
+- **Proposed resolution:** Confirm the seven-role set in Phase 02, or map the prompt's three roles onto it.
+
+## INC-31 — Phase 01 task breakdown
+
+- **Status:** `CLOSED` in T01-01 (T01-00 decision D1; TASKS.md re-baselined)
+- **Where:** TASKS.md Phase 01 (previous T01-01 … T01-12) and ADR-0004 / ADR-0005 status lines, which cite the previous IDs
+- **Issue:** The previous breakdown had no database or API foundation task, placed audit after authentication and MFA before platform identity, and had no frontend integration task.
+- **Current handling:** Phase 01 is re-sequenced into T01-00 … T01-10. The mapping from the previous IDs is in TASKS.md, Phase 01. The accepted ADRs are not edited.
+- **Proposed resolution:** None required; mention the mapping if ADR-0004 or ADR-0005 are ever superseded.
+
+## INC-32 — Tenant lifecycle transitions
+
+- **Status:** `OPEN` (T01-00)
+- **Where:** PLATFORM-ADMIN.md §5–§6 and PRD.md §13: a linear diagram plus SUSPENDED → ACTIVE
+- **Issue:** The allowed transitions are not specified (for example TRIAL → CANCELLED, PAST_DUE → ACTIVE, or reactivating a CANCELLED tenant).
+- **Current handling:** Decision D15: T01 defines all eight states. T01 implements only create, suspend and reactivate. Access is allowed in TRIAL, ACTIVE and PAST_DUE.
+- **Proposed resolution:** Define the transition matrix in T02-05.
+
+## INC-33 — Login identifier
+
+- **Status:** `OPEN` (T01-00)
+- **Where:** APP-FLOW.md §4 ("Enter Email/Mobile") vs security.md and PLATFORM-ADMIN.md §15 (email and password)
+- **Issue:** Mobile-number login is mentioned but not specified (verification, uniqueness, OTP delivery).
+- **Current handling:** Decision D12: email is the only login identifier in T01 (ADR-0010).
+- **Proposed resolution:** Specify mobile or OTP login with the SMS integration (Phase 09) if it is still wanted.
+
+## INC-34 — "institutes" vs "tenants"
+
+- **Status:** `OPEN` (T01-00)
+- **Where:** ARCHITECTURE.md §32 (`institutes`, `campuses` under "Institute" and `tenants` under "Identity") vs PRD.md §11 (a tenant **is** a Maritime Training Institute)
+- **Issue:** It is unclear whether an institute is a separate entity from the tenant.
+- **Current handling:** A tenant is the institute. The institute profile and branding (ADMIN-01, ADMIN-02) will be a 1:1 extension owned by the `institute` module in Phase 03, not a second tenant-like entity.
+- **Proposed resolution:** Update ARCHITECTURE.md §32 together with INC-08 in T01-10.

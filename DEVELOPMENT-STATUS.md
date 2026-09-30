@@ -90,13 +90,14 @@ IN_PROGRESS
 ## Current Phase
 
 ```text
-PHASE 00 — FOUNDATION
+PHASE 01 — AUTHENTICATION & MULTI-TENANCY
 ```
 
 ## Current Milestone
 
 ```text
-M0 — Foundation Ready
+M1 — Secure SaaS Foundation (Phase 01)
+M0 — Foundation Ready: reached 2026-09-30 (Phase 00 complete)
 ```
 
 ## Overall Completion
@@ -107,7 +108,7 @@ M0 — Foundation Ready
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-09-30:** T00-01 … T00-10 are `COMPLETED` (merged to `main`; T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12). T00-10A (Accessibility Token Correction, INC-24) is `READY_FOR_REVIEW`: Dark state text now meets 4.5:1 on every surface. Only the toolchain, local infrastructure, validated environment configuration, CI, design tokens with the Light/Dark/System theme, the component library, layout primitives, the accessibility foundation, a development-only showcase, the application shell with placeholder pages, a neutral root page and the `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
+> **2026-09-30:** Phase 00 is `COMPLETED`: T00-01 … T00-10A are merged to `main` (T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12, T00-10A via PR #13). Phase 01 is `IN_PROGRESS`: the T01-00 architecture review is approved (D1–D22 with the D10 and D14 amendments) and T01-01 (Backend, Database & API Foundation) is `READY_FOR_REVIEW`. T01-01 is infrastructure only: database access, migrations, request context, error envelope, logging and deny-by-default realm routers. No authentication, tenancy, user or business tables and no product functionality exist yet, so product implementation completion remains 0%.
 
 ---
 
@@ -151,8 +152,8 @@ Multi-Tenancy
 
 | Phase | Description | Status |
 |---|---|---|
-| 00 | Foundation | `IN_PROGRESS` |
-| 01 | Authentication & Multi-Tenancy | `NOT_STARTED` |
+| 00 | Foundation | `COMPLETED` |
+| 01 | Authentication & Multi-Tenancy | `IN_PROGRESS` |
 | 02 | Platform Control Plane | `NOT_STARTED` |
 | 03 | Tenant Foundation | `NOT_STARTED` |
 | 04 | Admissions | `NOT_STARTED` |
@@ -177,13 +178,13 @@ Multi-Tenancy
 ## Phase Status
 
 ```text
-IN_PROGRESS
+COMPLETED
 ```
 
 ## Phase Completion
 
 ```text
-10 / 10 tasks completed (T00-01 … T00-10 COMPLETED); corrective task T00-10A READY_FOR_REVIEW
+10 / 10 tasks completed (T00-01 … T00-10 COMPLETED); corrective task T00-10A COMPLETED
 ```
 
 ---
@@ -750,7 +751,7 @@ API image smoke: PASS. Compose config: valid.
 
 ### T00-10A — Accessibility Token Correction (INC-24)
 
-**Status:** `READY_FOR_REVIEW` (branch `feat/T00-10a-accessibility-token-correction`, based on `main` at `94cb752`; not pushed)
+**Status:** `COMPLETED` (reviewed; merged to `main` via PR #13, `9f00b2e`)
 
 **Implementation:**
 
@@ -797,29 +798,76 @@ PASS. Compose config: valid.
 ## Phase Status
 
 ```text
-NOT_STARTED
+IN_PROGRESS
 ```
 
 ## Phase Completion
 
 ```text
-0 / 12 tasks
+1 / 11 tasks completed (T01-00 COMPLETED; T01-01 READY_FOR_REVIEW)
 ```
+
+Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TASKS.md, Phase 01).
 
 | Task | Description | Status |
 |---|---|---|
-| T01-01 | User Identity Model | `NOT_STARTED` |
-| T01-02 | Authentication | `NOT_STARTED` |
-| T01-03 | MFA | `NOT_STARTED` |
-| T01-04 | Platform Identity | `NOT_STARTED` |
-| T01-05 | Tenant Model | `NOT_STARTED` |
-| T01-06 | Campus Model | `NOT_STARTED` |
-| T01-07 | Tenant Context | `NOT_STARTED` |
-| T01-08 | Role Model | `NOT_STARTED` |
-| T01-09 | Authorization Engine | `NOT_STARTED` |
-| T01-10 | Tenant Isolation | `NOT_STARTED` |
-| T01-11 | Audit Foundation | `NOT_STARTED` |
-| T01-12 | Security Tests | `NOT_STARTED` |
+| T01-00 | Architecture Review | `COMPLETED` (approved 2026-09-30) |
+| T01-01 | Backend, Database & API Foundation | `READY_FOR_REVIEW` |
+| T01-02 | Audit Foundation | `NOT_STARTED` |
+| T01-03 | Tenancy Core | `NOT_STARTED` |
+| T01-04 | Tenant Identity & Authentication | `NOT_STARTED` |
+| T01-05 | Authorization & RBAC | `NOT_STARTED` |
+| T01-06 | Platform Identity & MFA | `NOT_STARTED` |
+| T01-07 | Platform Administration Foundation (API) | `NOT_STARTED` |
+| T01-08 | Tenant Administration Foundation (API) | `NOT_STARTED` |
+| T01-09 | Frontend Authentication & Session Integration | `NOT_STARTED` |
+| T01-10 | Security Verification Gate | `NOT_STARTED` |
+
+### T01-01 — Backend, Database & API Foundation
+
+**Status:** `READY_FOR_REVIEW` (branch `feat/T01-01-backend-foundation`, based on `main` at `9f00b2e`; not pushed)
+
+**Implementation:**
+
+```text
+Dependencies (D4): sqlalchemy[asyncio] 2.0.54, asyncpg 0.31.0, alembic 1.20.0;
+  dev import-linter 2.15 (Python 3.14 wheels, 7-day cooldown)
+Database: UUIDv7 ids; Base + naming convention; UUIDPrimaryKey, Timestamp
+  (timestamptz), Versioned (optimistic lock -> 409) mixins; app-role engine;
+  DbSession = one transaction per request, SET LOCAL app.realm/request_id/
+  tenant_id/user_id, committed BEFORE the response (scope=function), rolled
+  back on error
+Migrations: Alembic (owner role, model discovery, runtime role names for
+  grants); baseline 0001 revokes runtime write access to alembic_version;
+  pnpm db:migrate / db:check; compose "migrate" one-shot (only service with
+  owner credentials); database/init/02-test-database.sh (mti360_test)
+API: RequestContext; realm routers /api/v1/platform, /api/v1, /student,
+  /public, /webhooks with guards run first; deny by default (401) until
+  T01-04/T01-06; envelope {data, meta} / {error: {code, message, details,
+  request_id}}; RequestModel extra=forbid; offset pagination + allow-listed
+  sort; operationId <realm>_<tag>_<function>
+Operations: JSON logs with redaction, request_id, no query strings; uvicorn
+  access log off; X-Request-ID; no-store + nosniff on /api
+Architecture: import-linter layers main -> api -> modules -> integrations
+  -> core; ADR-0010 (sessions, identity/credential split - D14 amended),
+  ADR-0011 (RBAC), ADR-0012 (encryption); backend-foundation.md incl.
+  post-commit side-effect semantics (D10 amended)
+No authentication, tenant, user or business tables; no frontend changes
+```
+
+**Verification:**
+
+```text
+Backend 219 tests (was 139): unit, API conventions, security (realm guards,
+route-coverage meta-test over effective routes) and 11 PostgreSQL
+integration tests (migrations up/down/check, role privileges, commit/
+rollback, commit-before-response, SET LOCAL isolation, mixins). Without the
+TEST_*_DATABASE_URL variables: 208 passed, 11 skipped. ruff, ruff format,
+mypy (strict), import-linter: pass. Mutation checks: the default FastAPI
+dependency scope fails the commit-ordering test; a core -> api import breaks
+the layer contract. actionlint: pass. See the development log for the full
+gate list.
+```
 
 ---
 
@@ -1527,7 +1575,9 @@ Also implemented outside this list: Textarea and Checkbox (T00-07B, PR #8); Popo
 | Application Shell (T00-08) | `COMPLETED` (PR #10) |
 | Responsive Layout Foundation (T00-09) | `COMPLETED` (PR #11) |
 | Accessibility Foundation (T00-10) | `COMPLETED` (PR #12) |
-| Accessibility Token Correction (T00-10A) | `READY_FOR_REVIEW` |
+| Accessibility Token Correction (T00-10A) | `COMPLETED` (PR #13) |
+| Architecture Review (T01-00) | `COMPLETED` (approved; D1–D22) |
+| Backend, Database & API Foundation (T01-01) | `READY_FOR_REVIEW` |
 | Architecture Decision Records | `READY_FOR_REVIEW` (ADR-0001 … ADR-0006) |
 | Production Implementation | `NOT_STARTED` |
 
@@ -1785,6 +1835,9 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-09-29 | T00-10 Accessibility Foundation implemented | `READY_FOR_REVIEW` on `feat/T00-10-accessibility-foundation`; WCAG 2.2 AA contract, guards, helpers, 8 verified fixes, contract tests |
 | 2026-09-30 | T00-10 merged to `main` (PR #12, `94cb752`) | `COMPLETED` |
 | 2026-09-30 | T00-10A Accessibility Token Correction implemented | `READY_FOR_REVIEW` on `feat/T00-10a-accessibility-token-correction`; INC-24 resolved (Dark `*-text` → derived `*-300`), contrast helper, component regression |
+| 2026-09-30 | T00-10A merged to `main` (PR #13, `9f00b2e`) | `COMPLETED`; Phase 00 complete |
+| 2026-09-30 | T01-00 Architecture Review approved | `COMPLETED`; D1–D22 with the D10 and D14 amendments; Phase 01 re-sequenced |
+| 2026-09-30 | T01-01 Backend, Database & API Foundation implemented | `READY_FOR_REVIEW` on `feat/T01-01-backend-foundation`; database/migrations, context, errors, logging, realm routers, CI PostgreSQL |
 
 ---
 
@@ -2728,14 +2781,118 @@ PHASE 01 (T01-01 User Identity Model)
 
 ---
 
+## 2026-09-30 — T01-00 Architecture Review
+
+**Status:**
+
+```text
+COMPLETED
+```
+
+**Summary:**
+
+A read-only review of the repository against the specifications and ADRs. It produced the T01 architecture, data model, authentication, RBAC and isolation design, test strategy, a re-sequenced Phase 01 (T01-00 … T01-10) and decisions D1–D22.
+
+The user approved it on 2026-09-30 with two amendments:
+- D14: user identity is separated from authentication credentials;
+- D10: post-commit email semantics are documented explicitly.
+
+Both are recorded in ADR-0010 and `docs/architecture/backend-foundation.md` §5 and §10.
+
+---
+
+## 2026-09-30 — T01-01 Backend, Database & API Foundation
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+The infrastructure every backend module depends on:
+- async SQLAlchemy with asyncpg, and Alembic migrations run as the owner role;
+- UUIDv7 identifiers and the column mixins;
+- one transaction per request with `SET LOCAL` context, committed before the response;
+- the trusted request context;
+- the API error envelope;
+- redacted JSON logging with request IDs;
+- the five realm routers with deny-by-default guards;
+- pagination, sorting and schema conventions;
+- import-linter layer contracts;
+- a PostgreSQL test database in local development and CI.
+
+There are no business tables and no authentication.
+
+**Files:**
+
+```text
+Created: backend/alembic.ini, backend/migrations/ (env.py, helpers.py,
+  script.py.mako, versions/0001_baseline.py); backend/app/core/{ids,
+  context, errors, logging, middleware, schemas, pagination}.py,
+  core/db/{base, engine, settings, session}.py; backend/app/api/
+  (realms.py, platform, tenant, student, public, webhooks);
+  backend/app/modules/__init__.py; backend/tests/{api,security,
+  integration}/ and unit tests; database/init/02-test-database.sh;
+  scripts/ci/start-test-database.sh; docs/adr/0010-0012;
+  docs/architecture/backend-foundation.md
+Changed: backend/app/main.py, pyproject.toml, uv.lock, Dockerfile
+  (migrations in the image, --no-access-log), tests/conftest.py;
+  compose.yaml (migrate service; api gets app/readonly URLs only);
+  package.json (db:migrate, db:check, stack:up runs migrate, lint:backend
+  runs import-linter, dev:backend --no-access-log); .github/workflows/ci.yml
+  (backend job starts PostgreSQL and requires database tests); docs
+  (TASKS.md re-baseline, DEVELOPMENT-STATUS.md, spec-inconsistencies,
+  repository-structure, ci, runbook, READMEs)
+Unchanged (verified): frontend, design tokens, environment templates and
+  Settings fields, ADR-0001 … ADR-0008, specification documents,
+  index.html, app.js, styles.css; ACRS
+```
+
+**Database / API / UI:**
+
+```text
+Database: Alembic baseline 0001 (no tables; alembic_version protected).
+API: realm routers mounted with no business routes; every authenticated
+realm returns 401. UI: none.
+```
+
+**Tests:**
+
+```text
+Backend 219 passed with the PostgreSQL test database (208 passed + 11
+skipped without it). Frontend unchanged (783). Import contracts: 2 kept.
+```
+
+**Known Issues:**
+
+```text
+The deployed API settings still require MIGRATIONS_DATABASE_URL (T00-04);
+the API process should not need owner credentials - follow-up with the
+deployment work (compose already withholds them). No readiness endpoint
+yet. The CI PostgreSQL step cannot be exercised locally without touching
+the developer's mti360 volume (compose pins the project and volume names);
+it is verified by actionlint and on the first GitHub run.
+```
+
+**Next:**
+
+```text
+Review T01-01 -> push, PR, CI (first run of the PostgreSQL step), merge
+commit -> T01-02 Audit Foundation
+```
+
+---
+
 # 40. NEXT TASK
 
 The next step is:
 
 ```text
-Review T00-10A (READY_FOR_REVIEW; resolves INC-24): push, open the pull
-request, verify CI on GitHub and merge with a merge commit; Phase 00 is then
-complete. Then continue with PHASE 01 — T01-01 User Identity Model.
+Review T01-01 (READY_FOR_REVIEW): push, open the pull request, verify CI on
+GitHub (including the new PostgreSQL step) and merge with a merge commit.
+Then continue with T01-02 — Audit Foundation.
 ```
 
 The completed-task description below is retained for reference.

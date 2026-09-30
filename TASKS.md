@@ -619,7 +619,7 @@ Remaining exceptions are documented: the React Aria Combobox axe rules while ope
 
 **Priority:** P0
 
-**Status:** READY_FOR_REVIEW (branch `feat/T00-10a-accessibility-token-correction`, based on `main` at `94cb752`).
+**Status:** COMPLETED (merged to `main` via PR #13, `9f00b2e`).
 
 **Objective:** Fix the Dark-mode `*-text` state colours that were below the WCAG 2.2 AA 4.5:1 text target on elevated surfaces (INC-24), without redesigning the colour system.
 
@@ -646,84 +646,112 @@ Remaining exceptions are documented: the React Aria Combobox axe rules while ope
 
 Establish the security and tenancy foundation before building business modules.
 
----
+## Re-baseline (T01-00, approved 2026-09-30)
 
-## T01-01 — User Identity Model
+The T01-00 architecture review re-sequenced Phase 01 by dependency order (decision D1; INC-31).
+- The API and database foundation come first.
+- Audit comes before authentication.
+- Tenancy comes before identity.
+- MFA comes with platform identity.
+- Support sessions move to Phase 02.
 
-Implement:
+Decisions D1–D22 and their two approved amendments (D10, D14) are recorded in `docs/architecture/backend-foundation.md` §10, ADR-0010, ADR-0011 and ADR-0012.
 
-* users
-* credentials
-* status
-* profile
-* authentication metadata
+Every slice is delivered as five commits:
+1. foundation / schema;
+2. domain / service;
+3. API or UI;
+4. security tests;
+5. documentation.
 
----
+| ID | Slice | Status |
+|---|---|---|
+| T01-00 | Architecture Review | COMPLETED (approved 2026-09-30) |
+| T01-01 | Backend, Database & API Foundation | READY_FOR_REVIEW |
+| T01-02 | Audit Foundation | NOT_STARTED |
+| T01-03 | Tenancy Core (Tenant, Campus, isolation layers) | NOT_STARTED |
+| T01-04 | Tenant Identity & Authentication | NOT_STARTED |
+| T01-05 | Authorization & RBAC | NOT_STARTED |
+| T01-06 | Platform Identity & MFA | NOT_STARTED |
+| T01-07 | Platform Administration Foundation (API) | NOT_STARTED |
+| T01-08 | Tenant Administration Foundation (API) and development seed | NOT_STARTED |
+| T01-09 | Frontend Authentication & Session Integration | NOT_STARTED |
+| T01-10 | Security Verification Gate & Phase Close-out | NOT_STARTED |
 
-## T01-02 — Authentication
-
-Implement:
-
-* login
-* logout
-* session management
-* password reset
-* account status
-
-### UI
-
-```text
-AUTH-01
-AUTH-02
-AUTH-03
-AUTH-04
-AUTH-05
-```
-
----
-
-## T01-03 — MFA
-
-Implement MFA architecture and UI.
-
----
-
-## T01-04 — Platform Identity
-
-Separate platform administrator identity from tenant user context.
-
----
-
-## T01-05 — Tenant Model
-
-Implement:
+Dependencies:
 
 ```text
-Tenant
-Tenant Status
-Tenant Configuration
-Tenant Metadata
+T01-01 → T01-02 → T01-03 → T01-04 → T01-05 ─┬→ T01-08 ─┐
+                     └──────────→ T01-06 ───┼→ T01-07 ─┤
+                                            └──────────┴→ T01-09 → T01-10
 ```
+
+Mapping from the previous Phase 01 IDs (ADR-0004 and ADR-0005 cite the previous IDs):
+
+| Previous ID | Now |
+|---|---|
+| T01-01 User Identity Model | T01-04 |
+| T01-02 Authentication | T01-04 (API) and T01-09 (UI) |
+| T01-03 MFA | T01-06 |
+| T01-04 Platform Identity | T01-06 |
+| T01-05 Tenant Model | T01-03 |
+| T01-06 Campus Model | T01-03 |
+| T01-07 Tenant Context | T01-01 (context plumbing), T01-03 (resolution), T01-04 (active tenant in the session) |
+| T01-08 Role Model | T01-05 |
+| T01-09 Authorization Engine | T01-05 |
+| T01-10 Tenant Isolation | T01-03 (layers) and T01-10 (gate) |
+| T01-11 Audit Foundation | T01-02 |
+| T01-12 Security Tests | every slice, plus T01-10 |
+
+Isolation layers for subsystems that do not exist yet (jobs, storage, search, analytics, AI) are tested by the task that introduces each of them; the route-coverage test enforces this.
 
 ---
 
-## T01-06 — Campus Model
+## T01-00 — Architecture Review
 
-Implement tenant campuses.
+**Status:** COMPLETED (read-only review; approved 2026-09-30 with amendments to D10 and D14).
 
-Relationship:
-
-```text
-Tenant
-  ↓
-Campus
-```
+Output: the T01 architecture, the data model, the authentication, RBAC and isolation design, the test strategy, the task breakdown and decisions D1–D22 (`docs/architecture/backend-foundation.md` §10).
 
 ---
 
-## T01-07 — Tenant Context
+## T01-01 — Backend, Database & API Foundation
 
-Implement secure server-side tenant resolution.
+**Priority:** P0
+
+**Status:** READY_FOR_REVIEW (branch `feat/T01-01-backend-foundation`, based on `main` at `9f00b2e`).
+
+**Objective:** Provide the infrastructure every backend module depends on, with no business tables and no authentication.
+
+**Implemented:**
+
+* SQLAlchemy 2.0 async, asyncpg, Alembic (baseline `0001`), UUIDv7 identifiers, and the Base / timestamp / version mixins.
+* The application-role engine, and one transaction per request committed before the response, with `SET LOCAL` context for RLS.
+* `RequestContext`, the error envelope and handlers, JSON logging with redaction, and request IDs.
+* The five realm routers with deny-by-default guards, response and pagination conventions, and OpenAPI operation IDs.
+* The `migrate` service, the test database and CI PostgreSQL.
+* import-linter contracts.
+* ADR-0010 … ADR-0012.
+
+**Acceptance criteria:**
+
+* Migrations upgrade, downgrade and upgrade cleanly; `alembic check` shows no drift; runtime roles cannot change `alembic_version` or create objects.
+* A request commits on success, rolls back on error, and never reports success when the commit fails; context never leaks between transactions.
+* Every `/api` route is guarded by the realm that owns its prefix (meta-test); authenticated realms and webhooks return 401 before validation.
+* Errors use the envelope without input values, SQL or stack traces; every response carries a request ID; logs are JSON, redacted and free of query strings.
+* No authentication, tenant, user or business tables; no frontend, token or marketing changes.
+
+---
+
+## T01-02 — Audit Foundation
+
+`audit_events` (append-only grants, RLS, redacted metadata), the audit writer and the security-event writer (D22).
+
+---
+
+## T01-03 — Tenancy Core
+
+`tenants`, `campuses`, `TenantScopedMixin`, the tenant-scoped repository, the ORM auto-filter, RLS policies, composite foreign keys, `system_context`, and the tenant status access policy (D15). Isolation tests at the database and repository layers.
 
 ### Critical Requirement
 
@@ -731,22 +759,15 @@ Never trust arbitrary client-supplied tenant IDs for authorization.
 
 ---
 
-## T01-08 — Role Model
+## T01-04 — Tenant Identity & Authentication
 
-Implement:
-
-```text
-Role
-Permission
-Role Permission
-User Role
-```
+`users` (identity) separated from `user_credentials` (ADR-0010, D14 amended); memberships and campus scope; `user_sessions`; login, logout, session, and tenant and campus switching; CSRF; rate limits and lockout; password reset and invitation acceptance with post-commit email (D10 amended). UI AUTH-01 … AUTH-05 follows in T01-09.
 
 ---
 
-## T01-09 — Authorization Engine
+## T01-05 — Authorization & RBAC
 
-Implement centralized authorization.
+Permission registry, tenant roles and templates, `role_permissions` with the realm foreign key, membership roles, `authorize()` and `require_permission`, and the route-coverage meta-test extended to permissions (ADR-0011).
 
 Must support:
 
@@ -759,61 +780,41 @@ Resource permissions
 
 ---
 
-## T01-10 — Tenant Isolation
+## T01-06 — Platform Identity & MFA
 
-Implement and test tenant isolation at:
-
-```text
-API
-Service
-Repository
-Database
-Search
-Jobs
-Storage
-Analytics
-AI
-```
+`platform_users` separated from `platform_user_credentials`; platform roles and sessions; TOTP and recovery codes (mandatory for platform users, optional enrolment for tenant users); a step-up hook; `DATA_ENCRYPTION_KEY` (ADR-0012). UI PLAT-01 and PLAT-02 follow in T01-09.
 
 ---
 
-## T01-11 — Audit Foundation
+## T01-07 — Platform Administration Foundation (API)
 
-Implement audit framework.
-
-Capture appropriate:
-
-```text
-Actor
-Tenant
-Action
-Resource
-Timestamp
-Result
-```
+Tenant provisioning (tenant, primary campus, cloned roles, owner invitation); tenant list and detail; suspend and reactivate; platform users; platform audit read. The screens remain in Phase 02.
 
 ---
 
-## T01-12 — Security Tests
+## T01-08 — Tenant Administration Foundation (API)
 
-Create cross-tenant security tests.
+Campuses, members (invite, suspend, revoke), member roles and campus scope, custom roles, tenant audit read, and the development seed (D16). The screens remain in Phase 03.
+
+---
+
+## T01-09 — Frontend Authentication & Session Integration
+
+The same-origin API proxy, session helpers, the AUTH-01 … AUTH-05, PLAT-01 and PLAT-02 pages on the T16 template, guarded shells, tenant and campus switchers, role-aware navigation, and logout.
+
+---
+
+## T01-10 — Security Verification Gate
+
+The cross-tenant, realm, IDOR and RBAC matrix across every route, the session-security suite, and the Phase 01 close-out.
 
 Must prove:
 
 ```text
 Tenant A cannot access Tenant B.
+A Tenant Admin cannot perform Platform Admin operations.
+An unauthenticated user cannot access protected APIs.
 ```
-
-Test:
-
-* GET
-* POST
-* PATCH
-* DELETE
-* Search
-* Reports
-* Export
-* Jobs
 
 ---
 
@@ -3590,6 +3591,7 @@ T00-10A
 
 ↓
 
+T01-00
 T01-01
 T01-02
 T01-03
@@ -3600,8 +3602,6 @@ T01-07
 T01-08
 T01-09
 T01-10
-T01-11
-T01-12
 
 ↓
 

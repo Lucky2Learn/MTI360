@@ -34,7 +34,7 @@ PR / push to main / dispatch
 |---|---|
 | **repo** | `pnpm run check:landing` (needs full history + the `marketing-site-v1` tag) · `pnpm run check:env` · actionlint (with shellcheck of every `run:` block) |
 | **frontend** | `pnpm install --frozen-lockfile` · `pnpm run format:check:frontend` · `lint:frontend` · `typecheck:frontend` · `test:frontend` · `build` |
-| **backend** | `uv sync --locked --directory backend` · `pnpm run check:lock` (`uv lock --check`) · `format:check:backend` · `lint:backend` · `typecheck:backend` · `test:backend` |
+| **backend** | `bash scripts/ci/start-test-database.sh` (T01-01: compose `postgres` on a fresh volume, generated masked passwords, exports `TEST_*_DATABASE_URL` and `REQUIRE_DATABASE_TESTS=1`) · `uv sync --locked --directory backend` · `pnpm run check:lock` (`uv lock --check`) · `format:check:backend` · `lint:backend` (Ruff + import-linter) · `typecheck:backend` · `test:backend` (including the PostgreSQL integration tests) · `docker compose --profile infra down --volumes` (always) |
 | **secrets** | `gitleaks git --log-opts="--all" --redact --config .gitleaks.toml .` (full history, all refs) · `bash scripts/ci/gitleaks-selftest.sh` |
 | **docker** | `docker build` of `mti360-api:ci` and `mti360-frontend:ci` (never pushed) · `bash scripts/ci/docker-smoke.sh mti360-api:ci` · `docker compose --env-file .env.example --profile infra --profile app config --quiet` |
 | **ci-ok** | `needs` all five, `if: always()`; fails unless every result is `success` (failure, cancelled or skipped all fail it) |
@@ -194,7 +194,7 @@ CodeQL and the Audit workflow are not required checks.
 
 ## 9. Out of scope (T00-05)
 
-Deployment/CD; staging and production infrastructure; registry pushes; GitHub Environments and secrets; integration tests requiring a database or application code; Playwright/E2E; coverage thresholds; SBOM, signing and provenance; digest pinning of base images; import linting (added once backend modules exist); merge queue; Dependabot for npm/pnpm and uv; applying branch protection.
+Deployment/CD; staging and production infrastructure; registry pushes; GitHub Environments and secrets; Playwright/E2E; coverage thresholds; SBOM, signing and provenance; digest pinning of base images; merge queue; Dependabot for npm/pnpm and uv; applying branch protection.
 
 ## 10. Decisions (T00-05)
 
