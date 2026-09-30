@@ -378,35 +378,33 @@ const STATE_TEXT_PAIRS: [string, string][] = STATES.flatMap((state) =>
   ]),
 );
 
-// INC-24: Dark *-text state tokens below 4.5:1 (all ≥ 3:1). surface-hover is
-// the same colour as surface-elevated in Dark. Measured (T00-10A):
-// surface-elevated / surface-hover — error 3.79, info 4.03, success 4.19,
-// warning 4.22; surface-selected — error 4.00, info 4.25, success 4.42,
-// warning 4.45. Pinned so a token fix shows up here — remove a pair once it
-// passes.
-const INC_24_DARK_EXCEPTIONS = new Set<string>(
-  STATES.flatMap((state) =>
-    ["surface-elevated", "surface-hover", "surface-selected"].map(
-      (bg) => `${state}-text on ${bg}`,
-    ),
-  ),
-);
-
+// INC-24 (resolved in T00-10A): Dark *-text used *-400 and measured 3.79–4.22
+// on surface-elevated/surface-hover and 4.00–4.45 on surface-selected. Dark
+// *-text now maps to the lighter derived *-300 step; every pair must pass.
 describe("state text on every surface (T00-10A, INC-24)", () => {
   it.each(STATE_TEXT_PAIRS)("%s on %s ≥ 4.5:1 in Light", (text, bg) => {
     expectContrast(light, text, bg, 4.5);
   });
 
-  it.each(STATE_TEXT_PAIRS)(
-    "%s on %s in Dark: ≥ 4.5:1 unless it is a documented INC-24 exception",
-    (text, bg) => {
-      if (INC_24_DARK_EXCEPTIONS.has(`${text} on ${bg}`)) {
-        const ratio = contrast(resolve(dark, text), resolve(dark, bg));
-        expect(ratio).toBeLessThan(4.5);
-        expect(ratio).toBeGreaterThanOrEqual(3);
-      } else {
-        expectContrast(dark, text, bg, 4.5);
-      }
+  it.each(STATE_TEXT_PAIRS)("%s on %s ≥ 4.5:1 in Dark", (text, bg) => {
+    expectContrast(dark, text, bg, 4.5);
+  });
+});
+
+// T00-10A scope: only Dark *-text moved to *-300. Light *-text, and the Dark
+// indicators and -strong fills, keep their existing primitives.
+describe("state token mappings (T00-10A)", () => {
+  it.each(STATES)(
+    "%s: Dark text uses %s-300, indicators stay -400",
+    (state) => {
+      expect(dark.get(`${state}-text`)).toBe(`var(--${state}-300)`);
+      expect(dark.get(state)).toBe(`var(--${state}-400)`);
+      expect(light.get(`${state}-text`)).toBe(`var(--${state}-700)`);
     },
   );
+
+  it("keeps the success and error -strong fills on -400 in Dark", () => {
+    expect(dark.get("success-strong")).toBe("var(--success-400)");
+    expect(dark.get("error-strong")).toBe("var(--error-400)");
+  });
 });

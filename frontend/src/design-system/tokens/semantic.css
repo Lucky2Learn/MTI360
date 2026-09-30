@@ -116,16 +116,16 @@
   /* Semantic states: <state> = icon/indicator (non-text, >= 3:1), -surface = background, -text = text (>= 4.5:1) */
   --success: var(--success-400);
   --success-surface: var(--success-950);
-  --success-text: var(--success-400);
+  --success-text: var(--success-300);
   --warning: var(--warning-400);
   --warning-surface: var(--warning-950);
-  --warning-text: var(--warning-400);
+  --warning-text: var(--warning-300);
   --error: var(--error-400);
   --error-surface: var(--error-950);
-  --error-text: var(--error-400);
+  --error-text: var(--error-300);
   --info: var(--info-400);
   --info-surface: var(--info-950);
-  --info-text: var(--info-400);
+  --info-text: var(--info-300);
 
   /* AI (restrained; DESIGN-SYSTEM.md §8) */
   --ai-primary: var(--ai-400);
@@ -184,16 +184,16 @@
     /* Semantic states: <state> = icon/indicator (non-text, >= 3:1), -surface = background, -text = text (>= 4.5:1) */
     --success: var(--success-400);
     --success-surface: var(--success-950);
-    --success-text: var(--success-400);
+    --success-text: var(--success-300);
     --warning: var(--warning-400);
     --warning-surface: var(--warning-950);
-    --warning-text: var(--warning-400);
+    --warning-text: var(--warning-300);
     --error: var(--error-400);
     --error-surface: var(--error-950);
-    --error-text: var(--error-400);
+    --error-text: var(--error-300);
     --info: var(--info-400);
     --info-surface: var(--info-950);
-    --info-text: var(--info-400);
+    --info-text: var(--info-300);
 
     /* AI (restrained; DESIGN-SYSTEM.md §8) */
     --ai-primary: var(--ai-400);

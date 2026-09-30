@@ -97,6 +97,14 @@
   --info-400: #659dc0; /* mix(info-600, ice-100, 0.68) */
   --ai-400: #a398c9; /* mix(ai-600, ice-100, 0.58) */
 
+  /* Dark-mode state text (T00-10A, INC-24): a lighter step than *-400 so state
+     text is >= 4.5:1 on every Dark surface, including surface-elevated.
+     *-400 stays the Dark icon/indicator and -strong fill colour. */
+  --success-300: #6db096; /* mix(success-600, ice-100, 0.62) */
+  --warning-300: #c59b5b; /* mix(warning-600, ice-100, 0.72) */
+  --error-300: #d59293; /* mix(error-600, ice-100, 0.56) */
+  --info-300: #79aac8; /* mix(info-600, ice-100, 0.58) */
+
   /* Dark-mode state and AI surfaces (spec colour tinted into Midnight) */
   --success-950: #0c3133; /* mix(success-600, midnight-900, 0.18) */
   --warning-950: #232d29; /* mix(warning-600, midnight-900, 0.16) */
