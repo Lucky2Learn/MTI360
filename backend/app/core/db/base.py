@@ -55,10 +55,14 @@ class TimestampMixin:
     """``created_at`` / ``updated_at`` maintained by the database (UTC)."""
 
     created_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(), nullable=False, sort_order=90
+        DateTime(timezone=True), server_default=func.now(), nullable=False, sort_order=90
     )
     updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(), onupdate=func.now(), nullable=False, sort_order=91
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+        sort_order=91,
     )
 
 

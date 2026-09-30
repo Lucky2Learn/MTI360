@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.routing import APIRoute
 
 from app.api import platform, public, student, tenant, webhooks
-from app.api.realms import REALM_PREFIXES
+from app.api.realms import REALM_PREFIXES, realm_for_path
 from app.core.context import Realm
 
 # The tenant realm owns the remaining /api/v1/* paths, so it is mounted last.
@@ -29,6 +29,13 @@ def mount_api(app: FastAPI) -> None:
 
 
 def operation_id(route: APIRoute) -> str:
-    """OpenAPI operationId ``<tag>_<function name>``, e.g. ``campuses_list_campuses``."""
+    """OpenAPI operationId ``<realm>_<tag>_<function>``, e.g. ``tenant_campuses_list_campuses``.
+
+    The realm prefix keeps IDs unique when two realms expose the same operation
+    name (for example tenant and platform ``get_session``), so generated API
+    clients stay unambiguous. Routes outside the realms (``/health``) have none.
+    """
     tag = str(route.tags[0]).replace(" ", "_").lower() if route.tags else "api"
-    return f"{tag}_{route.name}"
+    realm = realm_for_path(route.path)
+    prefix = f"{realm.value}_" if realm else ""
+    return f"{prefix}{tag}_{route.name}"

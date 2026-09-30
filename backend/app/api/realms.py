@@ -23,7 +23,6 @@ from typing import Final
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.dependencies.models import Dependant
-from fastapi.routing import APIRoute
 
 from app.core.context import Realm, RequestContext, bind_context
 from app.core.errors import AuthenticationRequiredError, ErrorEnvelope
@@ -94,12 +93,27 @@ def _guards(dependant: Dependant) -> list[tuple[Realm, Access]]:
     return found
 
 
-def route_realm(route: APIRoute) -> tuple[Realm, Access] | None:
+def realm_for_path(path: str) -> Realm | None:
+    """The realm that owns an API path by prefix (ADR-0006), or ``None`` outside ``/api``."""
+    for realm, prefix in REALM_PREFIXES.items():
+        if realm is not Realm.TENANT and (path == prefix or path.startswith(f"{prefix}/")):
+            return realm
+    if path == API_PREFIX or path.startswith(f"{API_PREFIX}/"):
+        return Realm.TENANT
+    return None
+
+
+def route_realm(route: object) -> tuple[Realm, Access] | None:
     """The realm guard of a route, or ``None`` when the route is unguarded.
 
-    A route with more than one guard is a configuration error.
+    Accepts an ``APIRoute`` or a ``fastapi.routing.RouteContext`` (the effective
+    route of an included router, from ``iter_route_contexts(app.routes)``). A
+    route with more than one guard is a configuration error.
     """
-    guards = _guards(route.dependant)
+    dependant: Dependant | None = getattr(route, "dependant", None)
+    if dependant is None:
+        return None
+    guards = _guards(dependant)
     if len(guards) > 1:
-        raise ValueError(f"route {route.path} has more than one realm guard")
+        raise ValueError(f"route {getattr(route, 'path', '?')} has more than one realm guard")
     return guards[0] if guards else None

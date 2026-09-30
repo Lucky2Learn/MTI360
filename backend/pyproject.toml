@@ -122,4 +122,7 @@ warn_required_dynamic_aliases = true
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-ra --strict-markers --strict-config"
+markers = [
+    "integration: needs the PostgreSQL test database (TEST_*_DATABASE_URL; skipped when unset unless REQUIRE_DATABASE_TESTS=1)",
+]
 filterwarnings = ["error"]
