@@ -26,15 +26,17 @@ set -euo pipefail
 random_hex() { od -An -tx1 -N24 /dev/urandom | tr -d ' \n'; }
 
 umask 077
+: > .env
 while IFS= read -r line; do
   if [[ "${line}" == *=change-me ]]; then
     value="$(random_hex)"
+    # The mask command must reach the runner (stdout), never the .env file.
     echo "::add-mask::${value}"
-    printf '%s=%s\n' "${line%%=*}" "${value}"
+    printf '%s=%s\n' "${line%%=*}" "${value}" >> .env
   else
-    printf '%s\n' "${line}"
+    printf '%s\n' "${line}" >> .env
   fi
-done < .env.example > .env
+done < .env.example
 
 docker compose --profile infra up --detach --wait postgres
 
