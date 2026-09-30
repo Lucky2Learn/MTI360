@@ -107,7 +107,7 @@ M0 — Foundation Ready
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-09-29:** T00-01 … T00-09 are `COMPLETED` (merged to `main`; T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11). T00-10 (Accessibility Foundation) is `READY_FOR_REVIEW`: a WCAG 2.2 AA contract, guards, test helpers, verified component and shell fixes, and regression coverage. Only the toolchain, local infrastructure, validated environment configuration, CI, design tokens with the Light/Dark/System theme, the component library, layout primitives, the accessibility foundation, a development-only showcase, the application shell with placeholder pages, a neutral root page and the `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
+> **2026-09-30:** T00-01 … T00-10 are `COMPLETED` (merged to `main`; T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12). T00-10A (Accessibility Token Correction, INC-24) is `READY_FOR_REVIEW`: Dark state text now meets 4.5:1 on every surface. Only the toolchain, local infrastructure, validated environment configuration, CI, design tokens with the Light/Dark/System theme, the component library, layout primitives, the accessibility foundation, a development-only showcase, the application shell with placeholder pages, a neutral root page and the `/health` endpoint exist — no product functionality, database schema, authentication or tenancy — so product implementation completion remains 0%.
 
 ---
 
@@ -183,7 +183,7 @@ IN_PROGRESS
 ## Phase Completion
 
 ```text
-9 / 10 tasks completed (T00-01 … T00-09 COMPLETED; T00-10 READY_FOR_REVIEW)
+10 / 10 tasks completed (T00-01 … T00-10 COMPLETED); corrective task T00-10A READY_FOR_REVIEW
 ```
 
 ---
@@ -693,7 +693,7 @@ Compose config: valid.
 
 ### T00-10 — Accessibility Foundation
 
-**Status:** `READY_FOR_REVIEW` (branch `feat/T00-10-accessibility-foundation`, based on `main` at `265a06d`; not pushed)
+**Status:** `COMPLETED` (reviewed; merged to `main` via PR #12, `94cb752`). INC-24 was resolved by T00-10A.
 
 **Implementation:**
 
@@ -744,6 +744,50 @@ first-invalid focus + error association; toast region F6 and keyboard
 dismissal; reduced motion; System theme; /design-system and
 /design-system/layout 404 in production. gitleaks (full history): no leaks.
 API image smoke: PASS. Compose config: valid.
+```
+
+---
+
+### T00-10A — Accessibility Token Correction (INC-24)
+
+**Status:** `READY_FOR_REVIEW` (branch `feat/T00-10a-accessibility-token-correction`, based on `main` at `94cb752`; not pushed)
+
+**Implementation:**
+
+```text
+Measured: Dark *-text (= *-400) on surface-elevated/surface-hover: error
+  3.79, info 4.03, success 4.19, warning 4.22; on surface-selected 4.00-4.45
+Tokens (approved narrow exception): 4 derived primitives, documented mix
+  formula, no palette change: success-300 #6DB096 mix(success-600, ice-100,
+  0.62), warning-300 #C59B5B (0.72), error-300 #D59293 (0.56), info-300
+  #79AAC8 (0.58); Dark success/warning/error/info-text -> *-300 (Dark block
+  + no-JS fallback). Unchanged: every existing primitive, Light mappings,
+  Dark indicators and success/error-strong fills (*-400)
+Result: Dark *-text on surface-elevated: error 4.72, info 4.74, success
+  4.68, warning 4.63; surface-selected 4.89-5.00; other surfaces >= 5.52
+Tests: design-system/testing/contrast.ts (shared parsing + expectContrast);
+  tokens.test.ts state text x every surface (Light/Dark, no exceptions) +
+  mapping pins; components/state-text.test.tsx (rendered pairs: field
+  error/success, Switch error, Alert, ErrorState, Toast, destructive menu
+  item; Dialog, AlertDialog, Drawer, Popover; Light/Dark; axe)
+Showcase (development/test only): "Validation in overlays" fixture
+No new dependencies, component APIs, layouts, breakpoints or ADRs; no
+  backend/infra changes
+```
+
+**Verification:**
+
+```text
+pnpm check: PASS (frontend 783 tests, backend 139). Headless Chromium on the
+production image (APP_ENV=test and production): 1722/1722 - the full T00-08,
+T00-09 and T00-10 suites plus 336 T00-10A checks: state text inside the
+validation Dialog, Drawer and Popover in Light, Dark, System (OS dark) and
+System (OS light) at 390/768/1024/1440 (computed colour vs effective
+background >= 4.5:1; measured Dark minimum error-text 4.72, success-text
+4.68 on surface-elevated, info/warning-text 5.57/5.55 on their surfaces;
+axe 0 incl. color-contrast, no overflow, Escape + focus return). Combobox
+exception unchanged. gitleaks (full history): no leaks. API image smoke:
+PASS. Compose config: valid.
 ```
 
 ---
@@ -1482,7 +1526,8 @@ Also implemented outside this list: Textarea and Checkbox (T00-07B, PR #8); Popo
 | Core Component Library (T00-07) | `COMPLETED` (PR #7, PR #8, PR #9) |
 | Application Shell (T00-08) | `COMPLETED` (PR #10) |
 | Responsive Layout Foundation (T00-09) | `COMPLETED` (PR #11) |
-| Accessibility Foundation (T00-10) | `READY_FOR_REVIEW` |
+| Accessibility Foundation (T00-10) | `COMPLETED` (PR #12) |
+| Accessibility Token Correction (T00-10A) | `READY_FOR_REVIEW` |
 | Architecture Decision Records | `READY_FOR_REVIEW` (ADR-0001 … ADR-0006) |
 | Production Implementation | `NOT_STARTED` |
 
@@ -1738,6 +1783,8 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-09-29 | T00-09 Responsive Layout Foundation implemented | `READY_FOR_REVIEW` on `feat/T00-09-responsive-layout`; layout primitives, shell integration, layout showcase |
 | 2026-09-29 | T00-09 merged to `main` (PR #11, `265a06d`) | `COMPLETED` |
 | 2026-09-29 | T00-10 Accessibility Foundation implemented | `READY_FOR_REVIEW` on `feat/T00-10-accessibility-foundation`; WCAG 2.2 AA contract, guards, helpers, 8 verified fixes, contract tests |
+| 2026-09-30 | T00-10 merged to `main` (PR #12, `94cb752`) | `COMPLETED` |
+| 2026-09-30 | T00-10A Accessibility Token Correction implemented | `READY_FOR_REVIEW` on `feat/T00-10a-accessibility-token-correction`; INC-24 resolved (Dark `*-text` → derived `*-300`), contrast helper, component regression |
 
 ---
 
@@ -2618,15 +2665,77 @@ PHASE 01 (T01-01 User Identity Model); decide INC-24 (token task)
 
 ---
 
+## 2026-09-30 — T00-10A Accessibility Token Correction
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+Resolves INC-24. In Dark mode the four `*-text` state tokens failed WCAG 2.2 AA on elevated surfaces: 3.79–4.22:1 on `surface-elevated` / `surface-hover` and 4.00–4.45:1 on `surface-selected`. No existing primitive is a lighter step of these hues. So, as a user-approved narrow exception, four derived `*-300` steps were added using the documented formula, and only Dark `*-text` (plus its no-JavaScript fallback) was remapped to them. Contrast coverage now spans every surface, both at token level and as components render it. No business screens.
+
+**Files:**
+
+```text
+Created: frontend/src/design-system/testing/contrast.ts;
+  design-system/components/state-text.test.tsx
+Changed: tokens/primitives.css (4 derived steps), tokens/semantic.css (Dark
+  *-text, 8 lines), tokens/tokens.test.ts; app/design-system/
+  showcase-overlays.tsx (+ showcase.test.tsx); Menu/MenuContent.tsx
+  (comment only); docs/architecture/{design-tokens,accessibility,
+  components,spec-inconsistencies}.md, TASKS.md, DEVELOPMENT-STATUS.md
+Unchanged (verified): palette and every existing primitive value, Light
+  mappings, Dark indicators and -strong fills, package.json and lockfiles,
+  component/shell/layout APIs, breakpoints, typography, spacing, backend,
+  database, Dockerfiles and ignore files, compose, CI, environment
+  templates, ADRs, DESIGN-SYSTEM.md, index.html, app.js, styles.css; ACRS
+```
+
+**Database / API / UI:**
+
+```text
+Database / API: none. UI: Dark-mode error/info/success/warning text is
+slightly lighter (same hues); icons, indicators, fills and Light mode are
+unchanged.
+```
+
+**Tests:**
+
+```text
+Frontend 783 passed (was 684). Backend 139 passed. pnpm check passes.
+Headless Chromium verification 1722/1722 (includes the T00-08, T00-09 and
+T00-10 suites).
+```
+
+**Known Issues:**
+
+```text
+Combobox exception unchanged (React Aria aria-hidden while open). DESIGN-
+SYSTEM.md does not list derived steps (as for all derived tokens since
+T00-06; documented in design-tokens.md). Assistive-technology spot checks
+remain for Phase 16/17.
+```
+
+**Next:**
+
+```text
+Review T00-10A -> push, PR, CI, merge commit -> Phase 00 complete ->
+PHASE 01 (T01-01 User Identity Model)
+```
+
+---
+
 # 40. NEXT TASK
 
 The next step is:
 
 ```text
-Review T00-10 (READY_FOR_REVIEW): push, open the pull request, verify CI on
-GitHub and merge with a merge commit; T00-10 then becomes COMPLETED and
-Phase 00 is complete. Decide INC-24 (Dark state text on elevated surfaces,
-a token task). Then continue with PHASE 01 — T01-01 User Identity Model.
+Review T00-10A (READY_FOR_REVIEW; resolves INC-24): push, open the pull
+request, verify CI on GitHub and merge with a merge commit; Phase 00 is then
+complete. Then continue with PHASE 01 — T01-01 User Identity Model.
 ```
 
 The completed-task description below is retained for reference.

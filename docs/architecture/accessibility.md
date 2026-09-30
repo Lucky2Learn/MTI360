@@ -118,7 +118,7 @@ Rules:
 - Control boundaries use `border-strong` (inputs, selects, checkboxes, radios, switches, secondary buttons). `border-subtle` / `border-default` / `ai-border` are **decorative only**: cards, dividers and table rules. They must not be the only boundary of an interactive control.
 - Status is never conveyed by colour alone. Pair it with an icon, text, weight or shape.
 - Disabled controls use native `disabled` / `aria-disabled` plus reduced opacity. They are exempt from contrast requirements (1.4.3).
-- **Known exception, INC-24:** in Dark mode, all four `*-text` state tokens on `surface-elevated` (dialogs, drawers, popovers, menus) are below 4.5:1: error 3.79, info 4.03, success 4.19, warning 4.22 (all ≥ 3:1). Destructive menu items avoid it, and Badges and Alerts use their own state surfaces. Field error and success messages inside a Dialog, Drawer or Popover in Dark mode are still affected until the token task resolves INC-24. The failing pairs are pinned in `tokens.test.ts`.
+- **State text on every surface (INC-24, resolved in T00-10A):** every `*-text` token is ≥ 4.5:1 on every background and surface in both themes, including the elevated surfaces of dialogs, drawers, popovers and menus. Dark `*-text` uses the derived `*-300` step. Before T00-10A, the Dark values on `surface-elevated` were error 3.79, info 4.03, success 4.19 and warning 4.22; they are now 4.72, 4.74, 4.68 and 4.63 ([design-tokens.md](design-tokens.md) §3, §5). Field error and success messages may be used inside any overlay. The token tests and `components/state-text.test.tsx` guard this, and Chromium verifies it.
 
 ## 11. Structure: landmarks, headings, links and buttons
 
@@ -155,18 +155,20 @@ Rules:
 ## 13. Testing strategy
 
 1. **Guards (static):** `tokens/guard.test.ts` (focus replacement, reduced-motion pairing, no positive `tabIndex`, arbitrary values, raw colours, `dark:`, library boundaries). `jsx-a11y` recommended rules in lint. `globals.test.ts` pins the base-layer rules.
-2. **Component tests (jsdom):** each component's own tests plus `components/accessibility.test.tsx`. That suite checks overlay keyboard, focus and Escape/return; menu, tooltip and alert-dialog semantics; named controls; the token ring; semantic state; and keyboard operation. `ShellAccessibility.test.tsx` checks landmarks, headings, the skip link and names for every experience. Helpers in `design-system/testing`:
+2. **Component tests (jsdom):** each component's own tests plus `components/accessibility.test.tsx`. That suite checks overlay keyboard, focus and Escape/return; menu, tooltip and alert-dialog semantics; named controls; the token ring; semantic state; and keyboard operation. `ShellAccessibility.test.tsx` checks landmarks, headings, the skip link and names for every experience. `components/state-text.test.tsx` (T00-10A) pairs each rendered state text or icon with the surface behind it (including every overlay) and measures it in Light and Dark. Helpers in `design-system/testing`:
    - `expectNoA11yViolations`: axe. `color-contrast` and `region` are disabled in jsdom only; they run in Chromium.
    - `expectNamedControls`.
    - `tabSequence`.
    - `expectFocusContained`.
    - `expectFocusRing`.
    - `expectHeadingOutline`.
+   - `expectContrast` (`contrast.ts`, T00-10A): the WCAG contrast assertion shared by the token and component tests.
 3. **Browser (headless Chromium, production image):**
    - Light and Dark at 390/768/1024/1440, plus System.
    - Keyboard walk of every focus stop: visible ring, ring contrast ≥ 3:1, not clipped, never in hidden content, 44px on mobile.
    - axe (WCAG 2.2 AA plus best practice, including contrast).
    - The overlay matrix, reduced motion, and production gating.
+   - State text inside a Dialog, Drawer and Popover (T00-10A): computed colour against the effective background ≥ 4.5:1, plus axe including contrast. Covers Light, Dark, System with the OS set to dark and System with the OS set to light, at all four widths.
    - The script lives outside the repository, as in T00-07…T00-09, so no Playwright dependency is needed.
 4. **Assistive-technology spot checks** with NVDA/VoiceOver are recommended before production release (Phase 16/17). They are not automated here.
 
@@ -185,7 +187,7 @@ Every future MTI 360 screen verifies:
 - [ ] Errors announced appropriately (§6)
 - [ ] Loading state accessible: one status, skeletons hidden, no duplicate actions
 - [ ] No colour-only meaning
-- [ ] WCAG AA contrast (tokens only; mind INC-24 on elevated surfaces in Dark)
+- [ ] WCAG AA contrast (semantic tokens only; state text uses `*-text`, indicators use the state colour)
 - [ ] 44px mobile targets (exceptions per §12)
 - [ ] Reduced motion
 - [ ] No horizontal overflow at 390px
@@ -199,6 +201,5 @@ Every future MTI 360 screen verifies:
 | Exception | Where | Why | Mitigation |
 |---|---|---|---|
 | axe `aria-hidden-focus`, `page-has-heading-one`, `region`, `scrollable-region-focusable` **while a Combobox list is open** | Combobox (07B) | React Aria's `useComboBox` hides the page with `aria-hidden` (its `ariaHideOutside` call does not use the `inert` option, and no prop exposes it), so the header, `h1` and landmarks are hidden. The options use virtual focus (`aria-activedescendant`), so the scrolling list has no focusable descendant | Tab closes the list before focus moves, and focus never reaches hidden content. Arrow keys scroll the active option into view. Axe is 0 once the list is closed. Verified in Chromium in both themes at 390 and 1024. Revisit when React Aria exposes inert hiding for comboboxes |
-| Dark `*-text` state text on `surface-elevated` < 4.5:1 (3.79–4.22:1) | tokens (INC-24) | Needs a token change (stop condition) | Destructive menu items avoid it; Badges and Alerts are unaffected. Field error and success messages inside dialogs, drawers and popovers in Dark mode remain affected until INC-24 is resolved. **Decision needed:** a token task |
 | 32px `sm` controls, in-field auxiliary buttons, 24px-plus non-44px targets listed in §12 | Button/IconButton `sm`, DatePicker, Search, Combobox, DataTable | Density in secondary contexts | ≥ 24px (WCAG 2.5.8 AA). Primary mobile actions use `md` / `lg` |
 | Collapsed sidebar rail has no visible tooltip | Shell (T00-08) | Tooltip needs a React Aria pressable trigger. Rail items are native links | The accessible names are present. The full labels are available in the drawer |

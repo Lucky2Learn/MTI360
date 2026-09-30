@@ -288,7 +288,7 @@ Decisions (T00-07B proposal, approved): D1 `value`/`defaultValue`/`onChange` wit
 | DropdownMenu | `trigger` (a named Button or IconButton; the menu is labelled by it — menu-button pattern), `items`, `onAction`, `placement`, `isOpen` / `onOpenChange` |
 | ContextMenu | `label` (menu name), `items`, `onAction`, `children` (the region). Opens on right-click at the pointer, or with Shift+F10 / the ContextMenu key at the focused element; focus returns to the element focused before opening. A shortcut only — every action must also be reachable another way (for example a row DropdownMenu) |
 | Keyboard | arrows (wrapping), Home/End, type-ahead, Enter/Space, Escape; opening with the keyboard focuses the first item; disabled items are skipped |
-| Visuals | items 44px below `tablet`, 40px above; destructive = error-coloured icon at rest and `error-text` on `error-surface` when focused. The label stays `text-primary` at rest because Dark `error-text` on `surface-elevated` is 3.79:1 (INC-24) |
+| Visuals | items 44px below `tablet`, 40px above; destructive = error-coloured icon at rest and `error-text` on `error-surface` when focused. The label stays `text-primary` at rest; this was chosen when Dark `error-text` on `surface-elevated` was 3.79:1. INC-24 was resolved in T00-10A (now 4.72:1), and the rest-state design is unchanged |
 
 ### Toast
 

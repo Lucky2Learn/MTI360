@@ -48,6 +48,7 @@ The palette has no mid-neutrals, and several specification colours fail WCAG 2.2
 | Dark neutrals ("muted Ice") | `mist-300` = mix(ice-100, midnight-900, 0.84) · `mist-400` = 0.68 · `mist-600` = 0.52 · `mist-800` = 0.14 · `mist-850` = 0.24 |
 | Light text variants | `seaglass-800` = mix(seaglass-700, ocean-900, 0.75) · `success-700` = mix(success-600, ocean-900, 0.85) · `warning-700` = 0.75 · `error-700` = 0.88 · `info-700` = 0.88 · `ai-300` = mix(ai-600, ai-100, 0.4) |
 | Dark state and AI colours | `success-400` = mix(success-600, ice-100, 0.7) · `warning-400` = 0.8 · `error-400` = 0.7 · `info-400` = 0.68 · `ai-400` = 0.58 |
+| Dark state text (T00-10A) | `success-300` = mix(success-600, ice-100, 0.62) · `warning-300` = 0.72 · `error-300` = 0.56 · `info-300` = 0.58 |
 | Dark state and AI surfaces | `success-950` = mix(success-600, midnight-900, 0.18) · `warning-950` = 0.16 · `error-950` = 0.18 · `info-950` = 0.2 · `ai-950` = 0.2 · `ai-800` = 0.45 |
 | Interaction surfaces (T00-07) | `seaglass-950` = mix(seaglass-700, midnight-900, 0.24) · `seaglass-400` = mix(seaglass-500, ice-100, 0.8) |
 
@@ -75,7 +76,7 @@ The palette has no mid-neutrals, and several specification colours fail WCAG 2.2
 | `accent-brass` | brass-600 | brass-500 | Premium accent, sparingly, non-text |
 | `success` / `warning` / `error` / `info` | spec primaries | derived *-400 | Icons and indicators (non-text, ≥ 3:1) |
 | `*-surface` | spec surfaces | derived *-950 | State backgrounds |
-| `*-text` | derived *-700 | derived *-400 | State text (≥ 4.5:1) |
+| `*-text` | derived *-700 | derived *-300 (T00-10A) | State text (≥ 4.5:1 on every surface) |
 | `ai-primary` / `ai-surface` / `ai-border` | ai-600 / ai-100 / ai-300 | ai-400 / ai-950 / ai-800 | AI components, restrained |
 | `elevation-sm/md/lg` | Deep Ocean shadows 6% / 8% / 12% | Midnight 30% / 35% / 45% (near-invisible) | `shadow-sm/md/lg` |
 | `surface-hover` (T00-07) | pearl-100 | ocean-800 | Hover background (ghost/secondary buttons, rows) |
@@ -85,6 +86,8 @@ The palette has no mid-neutrals, and several specification colours fail WCAG 2.2
 | `overlay-scrim` (T00-07) | Midnight 45% | Midnight 70% | Scrim behind modals and drawers (07C) |
 
 Status is never communicated by colour alone (§7): pair `*-text`/`*` with an icon, label or shape.
+
+**Why Dark state text has its own step (T00-10A, INC-24).** Until T00-10A, Dark `*-text` and the Dark indicator shared the `*-400` step. That passed on page backgrounds and cards, but not on the lighter Dark overlay surfaces: on `surface-elevated` / `surface-hover` (`ocean-800`) error was 3.79, info 4.03, success 4.19 and warning 4.22, and on `surface-selected` (`seaglass-950`) 4.00–4.45. Field messages inside dialogs, drawers and popovers were therefore below AA. No existing primitive is a lighter step of these hues, and lightening `*-400` itself would also have changed the Dark icons, indicators and the `success-strong` / `error-strong` button fills. So T00-10A adds a `*-300` step, derived with the same formula from the same two palette colours (no new hue, no palette change), used only by Dark `*-text` and its no-JavaScript fallback. Each step is the smallest lightening that clears 4.6:1 on `surface-elevated`, to stay as close as possible to the original colour. Everything else is unchanged: the existing primitives, the Light mappings, the Dark indicators (`*-400`) and the `-strong` fills.
 
 ## 4. Non-colour tokens (Tailwind utilities)
 
@@ -108,7 +111,7 @@ Body and caption line heights are not specified in §18; they follow the 4px gri
 
 `tokens.test.ts` resolves every semantic token to its primitive and checks, in **both** themes:
 
-- **4.5:1 (text):** `text-primary`, `text-secondary`, `text-muted`, `link` on all five backgrounds and surfaces; `text-inverse` on `brand-primary`; each `*-text` on its `*-surface`, `surface-primary` and `background-primary`; `ai-primary` on `ai-surface` and `surface-primary`.
+- **4.5:1 (text):** `text-primary`, `text-secondary`, `text-muted`, `link` on all five backgrounds and surfaces; `text-inverse` on `brand-primary`; each `*-text` on its `*-surface` and on every background and surface, including `surface-elevated`, `surface-hover` and `surface-selected` (T00-10A); `ai-primary` on `ai-surface` and `surface-primary`.
 - **3:1 (non-text):** `border-strong`, `focus-ring`, `accent-maritime` on all backgrounds and surfaces; each state indicator on its surface and on `surface-primary`.
 
 Selected ratios:
@@ -121,13 +124,31 @@ Selected ratios:
 | `text-muted` on `surface-secondary` | 4.5:1 | 4.80 | 6.82 |
 | `link` on `surface-secondary` | 4.5:1 | 4.95 | 6.46 |
 | `text-inverse` on `brand-primary` | 4.5:1 | 11.30 | 7.87 |
-| `success-text` on `success-surface` | 4.5:1 | 4.71 | 4.94 |
-| `warning-text` on `warning-surface` | 4.5:1 | 4.82 | 5.06 |
-| `error-text` on `error-surface` | 4.5:1 | 5.05 | 4.79 |
-| `info-text` on `info-surface` | 4.5:1 | 5.08 | 4.74 |
+| `success-text` on `success-surface` | 4.5:1 | 4.71 | 5.52 |
+| `warning-text` on `warning-surface` | 4.5:1 | 4.82 | 5.55 |
+| `error-text` on `error-surface` | 4.5:1 | 5.05 | 5.97 |
+| `info-text` on `info-surface` | 4.5:1 | 5.08 | 5.57 |
+| `success-text` on `surface-elevated` | 4.5:1 | 5.36 | 4.68 |
+| `warning-text` on `surface-elevated` | 4.5:1 | 5.27 | 4.63 |
+| `error-text` on `surface-elevated` | 4.5:1 | 5.77 | 4.72 |
+| `info-text` on `surface-elevated` | 4.5:1 | 5.78 | 4.74 |
 | `ai-primary` on `ai-surface` | 4.5:1 | 5.04 | 5.44 |
 | `border-strong` on `surface-secondary` | 3:1 | 3.14 | 4.44 |
 | `focus-ring` on `surface-secondary` | 3:1 | 3.56 | 6.46 |
+
+Dark state text before and after T00-10A (`*-400` → `*-300`):
+
+| Dark surface | error | info | success | warning |
+|---|---|---|---|---|
+| `background-primary` | 5.93 → 7.39 | 6.30 → 7.42 | 6.56 → 7.33 | 6.60 → 7.25 |
+| `background-secondary` | 5.46 → 6.80 | 5.80 → 6.83 | 6.04 → 6.75 | 6.08 → 6.68 |
+| `surface-primary` | 4.78 → 5.95 | 5.07 → 5.97 | 5.28 → 5.90 | 5.32 → 5.84 |
+| `surface-secondary` | 4.87 → 6.07 | 5.18 → 6.09 | 5.39 → 6.02 | 5.42 → 5.96 |
+| `surface-elevated` / `surface-hover` | **3.79** → 4.72 | **4.03** → 4.74 | **4.19** → 4.68 | **4.22** → 4.63 |
+| `surface-selected` | **4.00** → 4.98 | **4.25** → 5.00 | **4.42** → 4.94 | **4.45** → 4.89 |
+| own `*-surface` | 4.79 → 5.97 | 4.74 → 5.57 | 4.94 → 5.52 | 5.06 → 5.55 |
+
+The shared helper `design-system/testing/contrast.ts` (parsing plus the reusable `expectContrast` assertion) is used by `tokens.test.ts` and by the component suite `components/state-text.test.tsx`. That suite measures the state text each component renders against the surface behind it.
 
 Specification colours that fail AA as text (kept verbatim for non-text use; INC-17): Sea Glass #168F91 on white 3.91:1 (white text on it also 3.91:1), #1CA7A5 2.95:1; warning #B7791F on its surface 3.33:1; success 3.95:1; error 4.29:1; info 4.47:1; Brass #B88A44 on white 3.11:1.
 

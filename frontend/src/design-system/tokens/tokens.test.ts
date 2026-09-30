@@ -4,119 +4,26 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import {
+  dark,
+  expectContrast,
+  fallback,
+  light,
+  mix,
+  primitives,
+} from "@/design-system/testing/contrast";
+
 // Design-token contract (T00-06; interaction states and component tokens T00-07). Parses the token CSS directly, so the files
-// that ship are the files that are tested.
+// that ship are the files that are tested. Parsing and WCAG colour maths live
+// in design-system/testing/contrast.ts (T00-10A), shared with component tests.
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const read = (relative: string): string =>
   readFileSync(path.resolve(HERE, relative), "utf8");
 
-const primitivesCss = read("./primitives.css");
-const semanticCss = read("./semantic.css");
 const tailwindCss = read("./tailwind.css");
 const componentsCss = read("./components.css");
 const designSystemMd = read("../../../../DESIGN-SYSTEM.md");
-
-// --- Parsing helpers ---------------------------------------------------------
-
-type Mix = { a: string; b: string; t: number };
-type Primitive = { hex: string; mix?: Mix };
-
-function parsePrimitives(css: string): Map<string, Primitive> {
-  const result = new Map<string, Primitive>();
-  const pattern =
-    /--([a-z0-9-]+):\s*(#[0-9a-f]{6});(?:\s*\/\*\s*mix\(([a-z0-9-]+),\s*([a-z0-9-]+),\s*([0-9.]+)\)\s*\*\/)?/gi;
-  for (const match of css.matchAll(pattern)) {
-    const [, name, hex, a, b, t] = match;
-    result.set(name!, {
-      hex: hex!.toLowerCase(),
-      mix: a && b && t ? { a, b, t: Number(t) } : undefined,
-    });
-  }
-  return result;
-}
-
-/** Returns the body of the first `{ … }` block whose selector starts at `marker`. */
-function blockAfter(css: string, marker: string): string {
-  const start = css.indexOf(marker);
-  if (start === -1) throw new Error(`Block not found: ${marker}`);
-  const open = css.indexOf("{", start);
-  let depth = 0;
-  for (let i = open; i < css.length; i += 1) {
-    if (css[i] === "{") depth += 1;
-    if (css[i] === "}") depth -= 1;
-    if (depth === 0) return css.slice(open + 1, i);
-  }
-  throw new Error(`Unterminated block: ${marker}`);
-}
-
-function declarations(block: string): Map<string, string> {
-  const result = new Map<string, string>();
-  const withoutComments = block.replace(/\/\*[\s\S]*?\*\//g, "");
-  for (const match of withoutComments.matchAll(
-    /--([a-z0-9-]+):\s*([^;]+);/gi,
-  )) {
-    result.set(match[1]!, match[2]!.trim().replace(/\s+/g, " "));
-  }
-  return result;
-}
-
-const primitives = parsePrimitives(primitivesCss);
-const light = declarations(
-  blockAfter(semanticCss, ':root,\n[data-theme="light"]'),
-);
-const dark = declarations(blockAfter(semanticCss, '[data-theme="dark"] {'));
-const fallback = declarations(
-  blockAfter(
-    blockAfter(semanticCss, "@media (prefers-color-scheme: dark)"),
-    ":root:not([data-theme])",
-  ),
-);
-
-// --- Colour maths (WCAG 2.2) ----------------------------------------------------
-
-function channels(hex: string): [number, number, number] {
-  const value = hex.replace("#", "");
-  return [0, 2, 4].map((i) => parseInt(value.slice(i, i + 2), 16)) as [
-    number,
-    number,
-    number,
-  ];
-}
-
-function mix(a: string, b: string, t: number): string {
-  const ca = channels(a);
-  const cb = channels(b);
-  return `#${ca
-    .map((c, i) => Math.round(c * t + cb[i]! * (1 - t)))
-    .map((c) => c.toString(16).padStart(2, "0"))
-    .join("")}`;
-}
-
-function luminance(hex: string): number {
-  const [r, g, b] = channels(hex).map((c) => {
-    const s = c / 255;
-    return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-  }) as [number, number, number];
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-function contrast(a: string, b: string): number {
-  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [
-    number,
-    number,
-  ];
-  return (hi + 0.05) / (lo + 0.05);
-}
-
-/** Resolves a semantic colour token to its primitive hex value. */
-function resolve(theme: Map<string, string>, token: string): string {
-  const value = theme.get(token);
-  const reference = value?.match(/^var\(--([a-z0-9-]+)\)$/)?.[1];
-  const primitive = reference ? primitives.get(reference) : undefined;
-  if (!primitive) throw new Error(`Cannot resolve --${token} (${value})`);
-  return primitive.hex;
-}
 
 // --- Contract ---------------------------------------------------------------------
 
@@ -316,11 +223,7 @@ describe.each([
   it.each(CONTRAST_PAIRS)(
     "%s on %s ≥ %s:1",
     (foreground, background, minimum) => {
-      const ratio = contrast(
-        resolve(mapping, foreground),
-        resolve(mapping, background),
-      );
-      expect(ratio).toBeGreaterThanOrEqual(minimum);
+      expectContrast(mapping, foreground, background, minimum);
     },
   );
 });
@@ -334,18 +237,6 @@ const NON_TEXT_T00_10: [string, string, number][] = [
   "surface-selected",
 ].map((bg): [string, string, number] => ["brand-primary", bg, 3]);
 
-// State text on elevated surfaces (dialogs, drawers, popovers, menus).
-// INC-24: in Dark mode every *-text state token is below 4.5:1 on
-// surface-elevated (error 3.79, info 4.03, success 4.19, warning 4.22) and
-// needs a token change (a T00-10 stop condition). They are pinned so a token
-// fix shows up here — move a token out of the list once it passes.
-const INC_24_DARK_EXCEPTIONS = new Set<string>([
-  "error-text",
-  "info-text",
-  "success-text",
-  "warning-text",
-]);
-
 describe.each([
   ["Light", light],
   ["Dark", dark],
@@ -353,36 +244,53 @@ describe.each([
   it.each(NON_TEXT_T00_10)(
     "%s on %s ≥ %s:1",
     (foreground, background, minimum) => {
-      expect(
-        contrast(resolve(mapping, foreground), resolve(mapping, background)),
-      ).toBeGreaterThanOrEqual(minimum);
+      expectContrast(mapping, foreground, background, minimum);
     },
   );
 });
 
-describe("state text on surface-elevated (T00-10, INC-24)", () => {
-  it.each(STATES.map((state) => `${state}-text`))(
-    "%s ≥ 4.5:1 in Light",
-    (token) => {
-      expect(
-        contrast(resolve(light, token), resolve(light, "surface-elevated")),
-      ).toBeGreaterThanOrEqual(4.5);
+// State text on every surface it can be rendered on (T00-10, T00-10A):
+// page backgrounds, cards, elevated surfaces (dialogs, drawers, popovers,
+// menus), hover and selected rows/options, and its own state surface.
+const STATE_TEXT_SURFACES = [
+  ...BACKGROUNDS,
+  "surface-hover",
+  "surface-selected",
+];
+const STATE_TEXT_PAIRS: [string, string][] = STATES.flatMap((state) =>
+  [...STATE_TEXT_SURFACES, `${state}-surface`].map((bg): [string, string] => [
+    `${state}-text`,
+    bg,
+  ]),
+);
+
+// INC-24 (resolved in T00-10A): Dark *-text used *-400 and measured 3.79–4.22
+// on surface-elevated/surface-hover and 4.00–4.45 on surface-selected. Dark
+// *-text now maps to the lighter derived *-300 step; every pair must pass.
+describe("state text on every surface (T00-10A, INC-24)", () => {
+  it.each(STATE_TEXT_PAIRS)("%s on %s ≥ 4.5:1 in Light", (text, bg) => {
+    expectContrast(light, text, bg, 4.5);
+  });
+
+  it.each(STATE_TEXT_PAIRS)("%s on %s ≥ 4.5:1 in Dark", (text, bg) => {
+    expectContrast(dark, text, bg, 4.5);
+  });
+});
+
+// T00-10A scope: only Dark *-text moved to *-300. Light *-text, and the Dark
+// indicators and -strong fills, keep their existing primitives.
+describe("state token mappings (T00-10A)", () => {
+  it.each(STATES)(
+    "%s: Dark text uses %s-300, indicators stay -400",
+    (state) => {
+      expect(dark.get(`${state}-text`)).toBe(`var(--${state}-300)`);
+      expect(dark.get(state)).toBe(`var(--${state}-400)`);
+      expect(light.get(`${state}-text`)).toBe(`var(--${state}-700)`);
     },
   );
 
-  it.each(STATES.map((state) => `${state}-text`))(
-    "%s in Dark: ≥ 4.5:1 unless it is a documented INC-24 exception",
-    (token) => {
-      const ratio = contrast(
-        resolve(dark, token),
-        resolve(dark, "surface-elevated"),
-      );
-      if (INC_24_DARK_EXCEPTIONS.has(token)) {
-        expect(ratio).toBeLessThan(4.5);
-        expect(ratio).toBeGreaterThanOrEqual(3);
-      } else {
-        expect(ratio).toBeGreaterThanOrEqual(4.5);
-      }
-    },
-  );
+  it("keeps the success and error -strong fills on -400 in Dark", () => {
+    expect(dark.get("success-strong")).toBe("var(--success-400)");
+    expect(dark.get("error-strong")).toBe("var(--error-400)");
+  });
 });
