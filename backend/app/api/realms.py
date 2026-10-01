@@ -15,15 +15,23 @@ until a provider signature verifier is attached (Phase 09). Anonymous routers
 
 ``tests/security`` enumerates every registered route and fails if one is not
 guarded (see :func:`route_realm`).
+
+The guard also opens the request's security-event scope (T01-02; ADR-0013
+§5). It is a function-scoped dependency resolved before every other one, so
+it exits last: after ``DbSession`` has committed or rolled back and released
+its connection, and before the response is sent. On exit it flushes the
+buffered security events in a fresh transaction — also when the guard itself
+denies the request.
 """
 
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator, Callable
 from enum import StrEnum
 from typing import Final
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.dependencies.models import Dependant
 
+from app.core.audit.security import security_event_scope
 from app.core.context import Realm, RequestContext, bind_context
 from app.core.errors import AuthenticationRequiredError, ErrorEnvelope
 from app.core.ids import new_id
@@ -51,20 +59,21 @@ _ERROR_RESPONSES: Final[dict[int | str, dict[str, object]]] = {
     status: {"model": ErrorEnvelope} for status in (401, 403, 404, 422, 500)
 }
 
-type Guard = Callable[[Request], Awaitable[RequestContext]]
+type Guard = Callable[[Request], AsyncIterator[RequestContext]]
 
 _GUARD_ATTRIBUTE: Final = "__mti360_realm__"
 
 
 def _make_guard(realm: Realm, access: Access) -> Guard:
-    async def guard(request: Request) -> RequestContext:
+    async def guard(request: Request) -> AsyncIterator[RequestContext]:
         request_id = getattr(request.state, "request_id", None) or new_id()
         context = RequestContext(realm=realm, request_id=request_id)
         bind_context(request, context)
-        if access is Access.AUTHENTICATED:
-            # No authentication mechanism exists yet (T01-04 / T01-06).
-            raise AuthenticationRequiredError()
-        return context
+        async with security_event_scope(request.app.state.sessionmaker, context):
+            if access is Access.AUTHENTICATED:
+                # No authentication mechanism exists yet (T01-04 / T01-06).
+                raise AuthenticationRequiredError()
+            yield context
 
     guard.__name__ = f"{realm.value}_{access.value}_guard"
     setattr(guard, _GUARD_ATTRIBUTE, (realm, access))
@@ -78,7 +87,8 @@ def realm_router(realm: Realm, *, access: Access = Access.AUTHENTICATED) -> APIR
     if access is Access.ANONYMOUS and realm not in _ANONYMOUS_REALMS:
         raise ValueError(f"the {realm.value} realm has no anonymous routes")
     return APIRouter(
-        dependencies=[Depends(_make_guard(realm, access))],
+        # scope="function": the guard exits before the response is sent.
+        dependencies=[Depends(_make_guard(realm, access), scope="function")],
         responses=_ERROR_RESPONSES,
     )
 
