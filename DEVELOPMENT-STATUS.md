@@ -108,7 +108,7 @@ M0 — Foundation Ready: reached 2026-09-30 (Phase 00 complete)
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-09-30:** Phase 00 is `COMPLETED`: T00-01 … T00-10A are merged to `main` (T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12, T00-10A via PR #13). Phase 01 is `IN_PROGRESS`: the T01-00 architecture review is approved (D1–D22 with the D10 and D14 amendments) and T01-01 (Backend, Database & API Foundation) is `READY_FOR_REVIEW`. T01-01 is infrastructure only: database access, migrations, request context, error envelope, logging and deny-by-default realm routers. No authentication, tenancy, user or business tables and no product functionality exist yet, so product implementation completion remains 0%.
+> **2026-09-30:** Phase 00 is `COMPLETED`: T00-01 … T00-10A are merged to `main` (T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12, T00-10A via PR #13). Phase 01 is `IN_PROGRESS`: the T01-00 architecture review is approved (D1–D22 with the D10 and D14 amendments) T01-01 (Backend, Database & API Foundation) is `COMPLETED` (PR #14), and T01-02 (Audit Foundation) is `READY_FOR_REVIEW`. Both are infrastructure only: database access, migrations, request context, error envelope, logging, deny-by-default realm routers and the append-only audit table with its writers. No authentication, tenancy, user or business tables and no product functionality exist yet, so product implementation completion remains 0%.
 
 ---
 
@@ -804,7 +804,7 @@ IN_PROGRESS
 ## Phase Completion
 
 ```text
-1 / 11 tasks completed (T01-00 COMPLETED; T01-01 READY_FOR_REVIEW)
+2 / 11 tasks completed (T01-00 and T01-01 COMPLETED; T01-02 READY_FOR_REVIEW)
 ```
 
 Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TASKS.md, Phase 01).
@@ -812,8 +812,8 @@ Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TAS
 | Task | Description | Status |
 |---|---|---|
 | T01-00 | Architecture Review | `COMPLETED` (approved 2026-09-30) |
-| T01-01 | Backend, Database & API Foundation | `READY_FOR_REVIEW` |
-| T01-02 | Audit Foundation | `NOT_STARTED` |
+| T01-01 | Backend, Database & API Foundation | `COMPLETED` (PR #14, `42bc8b1`) |
+| T01-02 | Audit Foundation | `READY_FOR_REVIEW` |
 | T01-03 | Tenancy Core | `NOT_STARTED` |
 | T01-04 | Tenant Identity & Authentication | `NOT_STARTED` |
 | T01-05 | Authorization & RBAC | `NOT_STARTED` |
@@ -825,7 +825,7 @@ Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TAS
 
 ### T01-01 — Backend, Database & API Foundation
 
-**Status:** `READY_FOR_REVIEW` (branch `feat/T01-01-backend-foundation`, based on `main` at `9f00b2e`; not pushed)
+**Status:** `COMPLETED` (merged to `main` by PR #14, merge commit `42bc8b1`; CI verified)
 
 **Implementation:**
 
@@ -867,6 +867,45 @@ mypy (strict), import-linter: pass. Mutation checks: the default FastAPI
 dependency scope fails the commit-ordering test; a core -> api import breaks
 the layer contract. actionlint: pass. See the development log for the full
 gate list.
+```
+
+### T01-02 — Audit Foundation
+
+**Status:** `READY_FOR_REVIEW` (branch `feat/T01-02-audit-foundation`, based on `main` at `42bc8b1`; not pushed)
+
+**Implementation:**
+
+```text
+Database: migration 0002 audit_events (UUIDv7 id, request_id, realm,
+  tenant_id NULL without FK, principal_id, category security|admin|
+  data_access|domain, event_type, target_type/target_id, JSONB metadata,
+  created_at); check constraints; 3 indexes; mti_app SELECT/INSERT only,
+  mti_readonly none; triggers reject UPDATE/DELETE/TRUNCATE for every role;
+  first RLS policies (platform reads all, tenant reads own tenant, INSERT
+  bound to trusted tenant and realm); mti_app stays NOBYPASSRLS
+Code: app/core/audit (events, metadata, models, writer, security);
+  write_audit_event in the request transaction; record_security_event
+  buffers per request, the realm guard (function-scoped yield dependency)
+  flushes after DbSession has released its connection and before the
+  response, via context_transaction (core/db/session.py); flush failure
+  logged (request ID, realm, count, exception class) and swallowed
+Docs: ADR-0013, backend-foundation.md §12, security.md §11, tenancy.md,
+  INC-35
+No authentication, tenants, users, producers, outbox, queue or retry
+```
+
+**Verification:**
+
+```text
+Backend 307 tests (was 222): 49 PostgreSQL integration tests (was 11) run
+with REQUIRE_DATABASE_TESTS=1 - schema, constraints, privileges,
+append-only (app role and owner), RLS read/insert matrix, migration
+down/up without orphans, writer commit/rollback/failure, security-event
+flush on a one-connection pool, flush failure logging. Without the
+database variables: 258 passed, 49 skipped. ruff, ruff format, mypy
+(strict), import-linter (2 kept): pass. Negative control: a request-scoped
+DbSession makes the flush time out on the one-connection pool and fails the
+lifecycle tests.
 ```
 
 ---
@@ -1838,6 +1877,8 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-09-30 | T00-10A merged to `main` (PR #13, `9f00b2e`) | `COMPLETED`; Phase 00 complete |
 | 2026-09-30 | T01-00 Architecture Review approved | `COMPLETED`; D1–D22 with the D10 and D14 amendments; Phase 01 re-sequenced |
 | 2026-09-30 | T01-01 Backend, Database & API Foundation implemented | `READY_FOR_REVIEW` on `feat/T01-01-backend-foundation`; database/migrations, context, errors, logging, realm routers, CI PostgreSQL |
+| 2026-10-01 | T01-01 merged to `main` (PR #14, `42bc8b1`) | `COMPLETED` |
+| 2026-10-01 | T01-02 Audit Foundation implemented | `READY_FOR_REVIEW` on `feat/T01-02-audit-foundation`; audit_events, append-only, first RLS policies, audit and security-event writers |
 
 ---
 
@@ -2885,14 +2926,87 @@ commit -> T01-02 Audit Foundation
 
 ---
 
+## 2026-10-01 — T01-02 Audit Foundation
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+The audit foundation (ADR-0013, T01-00 decision D22, locked decisions 1.1–1.9):
+- one append-only, mixed-scope `audit_events` table with nullable `tenant_id` and no foreign key;
+- database-level append-only enforcement through privileges and triggers;
+- the repository's first Row-Level Security policies;
+- `write_audit_event` in the request transaction;
+- `record_security_event`, buffered per request and flushed in a fresh transaction after the request connection is released;
+- metadata validation and redaction.
+
+T01-01 was merged to `main` by PR #14 (`42bc8b1`); its status is corrected to `COMPLETED`.
+
+**Files:**
+
+```text
+Created: backend/app/core/audit/{__init__, events, metadata, models,
+  writer, security}.py; backend/migrations/versions/0002_audit_events.py;
+  backend/tests/integration/test_audit_foundation.py;
+  backend/tests/unit/test_audit_contract.py; docs/adr/0013-audit-events.md
+Changed: backend/app/api/realms.py (guard = function-scoped yield
+  dependency with the security-event scope); backend/app/core/db/session.py
+  (context_transaction); backend/migrations/env.py (CORE_MODEL_MODULES);
+  backend/tests/integration/test_database_foundation.py (head derived, no
+  fixed "0001"); docs (backend-foundation §3/§4/§10/§12, security §11,
+  tenancy, repository-structure, runbook, spec-inconsistencies INC-35,
+  docs/README ADR index); TASKS.md; DEVELOPMENT-STATUS.md
+Unchanged (verified): frontend, dependencies (pyproject.toml, uv.lock),
+  compose, CI workflow, database/init, environment templates, ADR-0001 …
+  ADR-0012, specification documents, index.html, app.js, styles.css; ACRS
+```
+
+**Database / API / UI:**
+
+```text
+Database: migration 0002 (audit_events, constraints, 3 indexes, grants,
+2 triggers + 1 function, RLS with 3 policies). API: no new routes; the
+realm guard now also flushes security events. UI: none.
+```
+
+**Tests:**
+
+```text
+Backend 307 passed with the PostgreSQL test database and
+REQUIRE_DATABASE_TESTS=1 (258 passed + 49 skipped without it). Frontend
+unchanged. Import contracts: 2 kept.
+```
+
+**Known Issues:**
+
+```text
+No producers yet (authentication and administration arrive in T01-04 …
+T01-08). A failed security-event flush loses those events (logged; no
+outbox until the first background-job task). Support session, campus, IP
+and result fields are deferred (INC-35). Audit retention needs a reviewed
+owner-level migration path (the triggers block deletion for every role).
+```
+
+**Next:**
+
+```text
+Review T01-02 -> push, PR, CI, merge commit -> T01-03 Tenancy Core
+```
+
+---
+
 # 40. NEXT TASK
 
 The next step is:
 
 ```text
-Review T01-01 (READY_FOR_REVIEW): push, open the pull request, verify CI on
-GitHub (including the new PostgreSQL step) and merge with a merge commit.
-Then continue with T01-02 — Audit Foundation.
+Review T01-02 (READY_FOR_REVIEW): push, open the pull request, verify CI on
+GitHub (PostgreSQL integration tests required) and merge with a merge
+commit. Then continue with T01-03 — Tenancy Core.
 ```
 
 The completed-task description below is retained for reference.

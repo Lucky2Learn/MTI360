@@ -15,6 +15,8 @@ from urllib.parse import urlsplit
 import anyio
 import pytest
 from alembic import command
+from alembic.config import Config
+from alembic.script import ScriptDirectory
 from conftest import DatabaseUnderTest
 from fastapi import FastAPI, Request
 from httpx import ASGITransport, AsyncClient
@@ -61,6 +63,13 @@ async def _denied(url: str, sql: str) -> bool:
     return False
 
 
+def _head(config: Config) -> str:
+    """The current Alembic head, derived from the scripts (never a fixed revision)."""
+    head = ScriptDirectory.from_config(config).get_current_head()
+    assert head is not None
+    return head
+
+
 # --- Migrations -------------------------------------------------------------------
 
 
@@ -69,7 +78,7 @@ async def test_migrations_are_at_head_without_model_drift(
 ) -> None:
     version = await _scalar(migrated_database.owner_url, "SELECT version_num FROM alembic_version")
 
-    assert version == "0001"
+    assert version == _head(migrated_database.alembic_config())
     # `alembic check` raises when the models and the migrations differ. Alembic
     # runs its own event loop, so it is called from a worker thread.
     await anyio.to_thread.run_sync(command.check, migrated_database.alembic_config())
@@ -88,10 +97,9 @@ async def test_migrations_downgrade_and_upgrade_cleanly(
     )
     await anyio.to_thread.run_sync(command.upgrade, config, "head")
 
-    assert (
-        await _scalar(migrated_database.owner_url, "SELECT version_num FROM alembic_version")
-        == "0001"
-    )
+    assert await _scalar(
+        migrated_database.owner_url, "SELECT version_num FROM alembic_version"
+    ) == _head(config)
 
 
 # --- Least privilege (ADR-0004) -------------------------------------------------------
@@ -120,8 +128,9 @@ async def test_runtime_roles_are_unprivileged_and_do_not_own_the_schema(
 async def test_runtime_roles_can_read_but_never_change_the_migration_state(
     migrated_database: DatabaseUnderTest,
 ) -> None:
+    head = _head(migrated_database.alembic_config())
     for url in (migrated_database.app_url, migrated_database.readonly_url):
-        assert await _scalar(url, "SELECT version_num FROM alembic_version") == "0001"
+        assert await _scalar(url, "SELECT version_num FROM alembic_version") == head
         assert await _denied(url, "UPDATE alembic_version SET version_num = 'forged'")
         assert await _denied(url, "DELETE FROM alembic_version")
 

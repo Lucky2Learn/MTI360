@@ -43,6 +43,7 @@ Recommended reading order (CLAUDE.md §2):
 | [0010](adr/0010-sessions-credentials-and-csrf.md) | Sessions, credentials (identity separated from credentials) and CSRF | Accepted |
 | [0011](adr/0011-rbac-model.md) | Role-based access control model | Accepted |
 | [0012](adr/0012-application-level-encryption.md) | Application-level encryption of secrets at rest | Accepted |
+| [0013](adr/0013-audit-events.md) | Audit events: one append-only table, in-transaction and post-request writers | Accepted |
 
 ADR format: Status, Context, Decision, Consequences, Alternatives considered. ADRs are immutable once accepted; a change is made by a new ADR that supersedes the old one.
 

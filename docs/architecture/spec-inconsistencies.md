@@ -281,3 +281,15 @@
 - **Issue:** It is unclear whether an institute is a separate entity from the tenant.
 - **Current handling:** A tenant is the institute. The institute profile and branding (ADMIN-01, ADMIN-02) will be a 1:1 extension owned by the `institute` module in Phase 03, not a second tenant-like entity.
 - **Proposed resolution:** Update ARCHITECTURE.md §32 together with INC-08 in T01-10.
+
+## INC-35 — Audit event fields
+
+- **Status:** `DECIDED-BY-ADR` (T01-02, [ADR-0013](../adr/0013-audit-events.md) §2)
+- **Where:** security.md §11 (actor, realm, tenant, action, resource, **result**, timestamp, **`support_session_id`**, **`correlation_id`**, metadata); PRD.md §88 (**campus**, entity, **source**, result); PLATFORM-ADMIN.md §20, §74 (**role**, **IP / session reference**, **reason**, risk, status); tenancy.md §3 (`correlation_id`); T01-02 specification §7 (realm list without `webhook`)
+- **Issue:** The specifications list different audit fields. Several fields have no trusted source before support sessions (Phase 02), campus scope (T01-05), sessions (T01-04) or a trusted proxy chain (deployment work). `correlation_id` and `request_id` name the same thing. The `Realm` enum also contains `webhook`, which the T01-02 realm list omits.
+- **Current handling:**
+  - `audit_events` stores realm, tenant, principal, category, event type, a generic target, `request_id` (the correlation ID, not renamed) and redacted metadata.
+  - The result is expressed by the event type (`auth.login_failed`).
+  - Support session, campus, role, IP, session reference, reason and risk are not columns yet; a producer may put non-sensitive context in metadata.
+  - The realm check uses the complete existing `Realm` vocabulary, including `webhook`, so that a future webhook signature failure can be recorded.
+- **Proposed resolution:** Each task that introduces a trusted source adds its column with a migration: `support_session_id` in T02-04 and campus in T01-05 if needed. Align security.md, tenancy.md and PLATFORM-ADMIN.md §74 when PLAT-36 (Platform Audit Logs) is designed.

@@ -75,7 +75,7 @@ Another SaaS project (ACRS) may run on the same machine with its own Compose pro
 
 - Password authentication (`scram-sha-256`) is enforced for every connection from outside the container (host port and Compose network). The upstream image trusts local socket/loopback connections *inside* the container (reachable only with `docker exec`).
 - Changing role passwords in `.env` does not affect an existing volume; run `pnpm infra:reset` (deletes data) or change them with `ALTER ROLE`.
-- Migrations (T01-01): `pnpm db:migrate` applies Alembic migrations as `mti_owner` (`MIGRATIONS_DATABASE_URL`); `pnpm db:check` fails when models and migrations differ. `pnpm stack:up` runs the one-shot `migrate` container before starting the api. No application tables exist yet (baseline `0001`).
+- Migrations (T01-01): `pnpm db:migrate` applies Alembic migrations as `mti_owner` (`MIGRATIONS_DATABASE_URL`); `pnpm db:check` fails when models and migrations differ. `pnpm stack:up` runs the one-shot `migrate` container before starting the api. Revisions: `0001` baseline, `0002` `audit_events` (T01-02); no business tables yet.
 - **Test database** (T01-01): `database/init/02-test-database.sh` creates `${POSTGRES_DB}_test` (default `mti360_test`) with the same roles and grants. It runs automatically on an empty volume. For an **existing** volume, run it once (idempotent, keeps data):
 
   ```bash

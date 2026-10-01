@@ -15,23 +15,34 @@ Handlers and services receive the session through :data:`DbSession`:
 
 Side effects outside the database (email, webhooks, provider calls) happen only
 after a successful commit; see docs/architecture/backend-foundation.md §5.
+
+:func:`context_transaction` is the same transaction for code that runs
+outside the request transaction with a trusted context (the post-request
+security-event flush, T01-02; system jobs later).
 """
 
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.core.context import Realm, request_context
+from app.core.context import Realm, RequestContext, request_context
 from app.core.db.settings import apply_transaction_settings
 
 _USER_REALMS = frozenset({Realm.TENANT, Realm.STUDENT})
 
 
-async def _transaction(request: Request) -> AsyncIterator[AsyncSession]:
-    context = request_context(request)
-    factory: async_sessionmaker[AsyncSession] = request.app.state.sessionmaker
+@asynccontextmanager
+async def context_transaction(
+    factory: async_sessionmaker[AsyncSession], context: RequestContext
+) -> AsyncIterator[AsyncSession]:
+    """One transaction with ``context`` published by ``SET LOCAL``.
+
+    Commits when the block completes, rolls back when it raises, and returns
+    the connection to the pool when it ends.
+    """
     async with factory() as session, session.begin():
         await apply_transaction_settings(
             session,
@@ -42,6 +53,12 @@ async def _transaction(request: Request) -> AsyncIterator[AsyncSession]:
             # separate identity (ADR-0005) and never set it.
             user_id=context.principal_id if context.realm in _USER_REALMS else None,
         )
+        yield session
+
+
+async def _transaction(request: Request) -> AsyncIterator[AsyncSession]:
+    factory: async_sessionmaker[AsyncSession] = request.app.state.sessionmaker
+    async with context_transaction(factory, request_context(request)) as session:
         yield session
 
 

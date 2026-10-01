@@ -1,10 +1,10 @@
 # Backend Foundation (T01-01)
 
-- **Status:** Implemented in T01-01. Authentication, tenancy, RBAC and audit build on it in T01-02 … T01-10.
-- **Decisions:** T01-00 decisions D1–D22 (§10), [ADR-0001](../adr/0001-stack.md), [ADR-0004](../adr/0004-tenant-isolation.md)–[ADR-0006](../adr/0006-api-prefixes.md), [ADR-0010](../adr/0010-sessions-credentials-and-csrf.md)–[ADR-0012](../adr/0012-application-level-encryption.md)
+- **Status:** Implemented in T01-01; the audit foundation was added in T01-02 (§12, [ADR-0013](../adr/0013-audit-events.md)). Tenancy, authentication and RBAC build on it in T01-03 … T01-10.
+- **Decisions:** T01-00 decisions D1–D22 (§10), [ADR-0001](../adr/0001-stack.md), [ADR-0004](../adr/0004-tenant-isolation.md)–[ADR-0006](../adr/0006-api-prefixes.md), [ADR-0010](../adr/0010-sessions-credentials-and-csrf.md)–[ADR-0013](../adr/0013-audit-events.md)
 - **Related:** [repository-structure.md](repository-structure.md) §3, [tenancy.md](tenancy.md), [security.md](security.md), [ci.md](ci.md), [runbook](../runbooks/local-development.md)
 
-This is the engineering contract for every backend module: where code lives, how a request reaches the database, how errors, logs and pages look, and how it is tested. **No business tables and no authentication exist yet.** Every authenticated realm denies every request (§6).
+This is the engineering contract for every backend module: where code lives, how a request reaches the database, how errors, logs and pages look, and how it is tested. **No business tables and no authentication exist yet**; the only table is `audit_events` (§12). Every authenticated realm denies every request (§6).
 
 ## 1. Layout and boundaries
 
@@ -14,8 +14,9 @@ backend/app/
   api/              realm routers and guards (realms.py) + one module per realm
   core/             infrastructure only; imports no module
     config.py ids.py context.py errors.py logging.py middleware.py schemas.py pagination.py
-    db/             base.py (Base, mixins) engine.py settings.py (SET LOCAL) session.py (DbSession)
-  modules/          business domains (from T01-02)
+    db/             base.py (Base, mixins) engine.py settings.py (SET LOCAL) session.py (DbSession, context_transaction)
+    audit/          audit_events model, writers, metadata safety, security-event buffer (T01-02, §12)
+  modules/          business domains (none yet)
 backend/migrations/ Alembic env, helpers, versions/0001_baseline.py
 ```
 
@@ -48,6 +49,8 @@ import-linter enforces `app.main → app.api → app.modules → app.integration
   5. On success the transaction **commits before the response is sent** (FastAPI `scope="function"`). A failed commit becomes an error response, never a false success. On any exception it rolls back.
 - **No context leakage:** the settings are transaction-local; the next transaction on the same pooled connection sees none of them (tested). RLS policies read them with `nullif(current_setting('app.tenant_id', true), '')`.
 - **No session without context:** `DbSession` on a route outside the realm routers raises `MissingContextError` → 500.
+- **Short transactions outside the request:** `context_transaction(sessionmaker, context)` is the same transaction setup for code that runs with a trusted context but outside the request transaction. The post-request security-event flush uses it (§12), and system jobs will (T01-03).
+- **Guard ordering (T01-02):** the realm guard is a function-scoped `yield` dependency resolved before every other one, so it exits **after** `DbSession` has committed or rolled back and released its connection, and **before** the response is sent. Its exit flushes the request's security events (§12).
 
 ## 4. Migrations
 
@@ -58,6 +61,8 @@ import-linter enforces `app.main → app.api → app.modules → app.integration
 - `env.py` runs as the owner and discovers every `app/modules/*/models.py`. It takes the URL from the validated settings (or from test attributes), never from `alembic.ini`.
 - `migrations.helpers.database_roles()` gives migrations the runtime role names (from the `DATABASE_URL` and `READONLY_DATABASE_URL` users), so grants and RLS never hard-code them.
 - **Baseline `0001`:** no tables. It revokes write access to `alembic_version` from the runtime roles, which keep SELECT only.
+- **`0002` (T01-02):** `audit_events`, its privileges, append-only triggers and the first Row-Level Security policies (§12). A migration overrides the default privileges of `database/init/01-roles.sh` explicitly whenever a table must not get full DML.
+- `env.py` also imports the core table modules listed in `CORE_MODEL_MODULES` (`app.core.audit.models`).
 - **Review checklist** (in the revision template):
   - tenant tables use `TenantScopedMixin` with an RLS policy and composite foreign keys;
   - grants are explicit;
@@ -157,10 +162,41 @@ External side effects — email first (password reset, invitations; T01-04, T01-
 | D19 | Cookie names (ADR-0010) |
 | D20 | Admin foundation is API only; screens in Phases 02 and 03 |
 | D21 | import-linter contracts in CI (§1) |
-| D22 | Audit in the mutation's transaction; security events for failed requests in a separate transaction |
+| D22 | Audit in the mutation's transaction; security events for failed requests in a separate transaction. **Implemented in T01-02 (§12, ADR-0013):** the separate transaction runs after the request transaction has released its connection |
 
 ## 11. Known limitations and follow-ups
 
 - The API settings require `MIGRATIONS_DATABASE_URL` in staging and production (T00-04). The deployed API process should not need owner credentials. This is to be revisited with the deployment work (Phase 17); compose already withholds them from the `api` service.
 - There is no readiness endpoint (database, cache) yet; `/health` is liveness only.
 - The inbound `X-Request-ID` is ignored until a trusted proxy chain exists.
+
+## 12. Audit foundation (T01-02)
+
+Decision record: [ADR-0013](../adr/0013-audit-events.md). Code: `app/core/audit/`.
+
+- **One table, `audit_events`, mixed-scope.** `tenant_id` is `NULL` for platform, system and pre-authentication events. The categories are `security`, `admin`, `data_access` and `domain`. Event types are code-declared `AuditEventType` constants (dotted names, bound to one category). Targets are generic: a resource type and a UUID.
+- **No foreign keys.** `tenant_id` has none, because `tenants` arrives in T01-03 and audit history must outlive tenant records. `principal_id` and `target_id` have none either. The table does not use `TenantScopedMixin`; it has its own RLS policies.
+- **Append-only.**
+  - `mti_app` has SELECT and INSERT only.
+  - `mti_readonly` has no access.
+  - Triggers reject UPDATE, DELETE and TRUNCATE for every role, the owner included.
+- **The first RLS policies.**
+  - The platform realm reads every row.
+  - The tenant realm reads only rows of its trusted tenant.
+  - Other realms read nothing.
+  - An INSERT must match the trusted tenant (`IS NOT DISTINCT FROM`, NULL-safe) and the trusted realm.
+  - `mti_app` stays `NOBYPASSRLS`.
+
+| Writer | Categories | Transaction | On failure |
+|---|---|---|---|
+| `write_audit_event(session, …)` | admin, data_access, domain | The request transaction (`DbSession`); no other connection | The request fails and the mutation rolls back |
+| `record_security_event(…)` | security | Buffered in memory (max 32 per request); flushed by the realm guard's exit in a fresh `context_transaction` after the request connection is released | Logged (`audit.security_flush_failed`: request ID, realm, count, exception class only) and swallowed; the response is unchanged; no retry |
+
+- **Context.** Realm, tenant, principal and request ID always come from the trusted `RequestContext`. RLS checks tenant and realm again against `SET LOCAL`.
+- **Metadata.**
+  - It is a flat object of typed scalars and short lists, at most 32 keys and 4 KiB.
+  - Strings are truncated at 256 characters.
+  - Sensitive key names (the logging pattern, plus JWT and prompt) are **redacted** before persistence.
+  - Anything else raises `AuditMetadataError` with no values in the message.
+- **Not in T01-02:** outbox, queue, worker, retry and dead-letter handling; producers for real events (they arrive with authentication and administration); support-session, campus, IP and result fields (INC-35).
+- **Tests.** Test rows are identified by unique request IDs, never by counting the table, because nobody can delete audit rows. One test runs the request lifecycle on a pool of **one** connection (`pool_timeout=3`). If the flush and the request transaction ever needed two connections at once, it would fail.

@@ -54,7 +54,7 @@ correlation_id
 1. **Authorization dependency** — `require_permission("lead.read")` checks realm, permission, tenant status and feature entitlement.
 2. **`TenantScopedRepository`** — every query filtered by `context.tenant_id`; inserts stamped automatically; get-by-id is `WHERE id = :id AND tenant_id = :ctx`; a miss returns **404**, not 403.
 3. **Automatic ORM filter** — a SQLAlchemy `do_orm_execute` hook applies `with_loader_criteria` to every `TenantScoped` model; a query without tenant context **raises**, except inside an explicit, named, platform-only, audited `unscoped()` block.
-4. **PostgreSQL Row-Level Security** — policy `tenant_id = current_setting('app.tenant_id')::uuid` on each tenant table; `SET LOCAL app.tenant_id` in every transaction (API and workers); the application role is not the table owner and has no `BYPASSRLS`.
+4. **PostgreSQL Row-Level Security** — policy `tenant_id = current_setting('app.tenant_id')::uuid` on each tenant table (implemented as `nullif(current_setting('app.tenant_id', true), '')::uuid`, so an unset setting matches nothing; the first policies are on `audit_events`, T01-02); `SET LOCAL app.tenant_id` in every transaction (API and workers); the application role is not the table owner and has no `BYPASSRLS`.
 5. **Composite foreign keys** — parents have `UNIQUE (tenant_id, id)`; children reference `(tenant_id, parent_id)`.
 
 ## 5. Campus context
@@ -67,7 +67,7 @@ Campus-aware entities carry `campus_id`. Repositories apply `campus_id IN contex
 |---|---|
 | Object storage | Private bucket. Keys `tenants/{tenant_id}/{module}/{uuid}`; the client filename is never part of the key. Upload/download via an authorized API issuing short-lived presigned URLs. The storage wrapper rejects keys outside the context tenant prefix. |
 | Cache / rate limits | Only the `core/cache` wrapper touches Redis; it prefixes `t:{tenant_id}:` automatically. Raw client use is lint-banned. |
-| Audit logs | `tenant_id` nullable (null = platform event); rows carry `realm` and `support_session_id`. Append-only (application role has INSERT/SELECT only). Tenants read only their own rows (RLS). |
+| Audit logs | `audit_events` (T01-02, [ADR-0013](../adr/0013-audit-events.md)): `tenant_id` nullable (null = platform, system or pre-authentication event) with no foreign key; rows carry `realm` (`support_session_id` is added with support sessions in Phase 02). Append-only: the application role has INSERT/SELECT only, the read-only role has no access, and triggers reject UPDATE/DELETE/TRUNCATE. RLS: tenants read only their own rows, the platform realm reads all, and inserts must match the trusted tenant and realm. |
 | AI / RAG | Knowledge chunks and embeddings carry `tenant_id` under RLS; retrieval filters by tenant and publication state. Tools run **as the invoking principal**. |
 | SQL / Data Agent | Read-only database role, RLS, allow-listed views, statement timeout, row limit (ARCHITECTURE.md §24). |
 | Analytics | Tenant analytics run under RLS. Platform analytics read only aggregated usage/metrics tables. |
