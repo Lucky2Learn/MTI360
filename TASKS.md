@@ -667,8 +667,8 @@ Every slice is delivered as five commits:
 | ID | Slice | Status |
 |---|---|---|
 | T01-00 | Architecture Review | COMPLETED (approved 2026-09-30) |
-| T01-01 | Backend, Database & API Foundation | READY_FOR_REVIEW |
-| T01-02 | Audit Foundation | NOT_STARTED |
+| T01-01 | Backend, Database & API Foundation | COMPLETED |
+| T01-02 | Audit Foundation | READY_FOR_REVIEW |
 | T01-03 | Tenancy Core (Tenant, Campus, isolation layers) | NOT_STARTED |
 | T01-04 | Tenant Identity & Authentication | NOT_STARTED |
 | T01-05 | Authorization & RBAC | NOT_STARTED |
@@ -719,7 +719,7 @@ Output: the T01 architecture, the data model, the authentication, RBAC and isola
 
 **Priority:** P0
 
-**Status:** READY_FOR_REVIEW (branch `feat/T01-01-backend-foundation`, based on `main` at `9f00b2e`).
+**Status:** COMPLETED (merged to `main` by PR #14, merge commit `42bc8b1`).
 
 **Objective:** Provide the infrastructure every backend module depends on, with no business tables and no authentication.
 
@@ -745,7 +745,40 @@ Output: the T01 architecture, the data model, the authentication, RBAC and isola
 
 ## T01-02 — Audit Foundation
 
-`audit_events` (append-only grants, RLS, redacted metadata), the audit writer and the security-event writer (D22).
+**Priority:** P0
+
+**Status:** READY_FOR_REVIEW (branch `feat/T01-02-audit-foundation`, based on `main` at `42bc8b1`).
+
+**Objective:** `audit_events` (append-only grants, RLS, redacted metadata), the audit writer and the security-event writer (D22), with the locked decisions 1.1–1.9 of the T01-02 specification recorded in ADR-0013.
+
+**Implemented:**
+
+* `app/core/audit/`: the `AuditEvent` model and migration `0002`:
+  * one mixed-scope table;
+  * nullable `tenant_id` without a foreign key;
+  * categories `security`, `admin`, `data_access` and `domain`;
+  * code-declared event types, a generic target and bounded JSONB metadata;
+  * indexes for tenant reads, platform reads and request correlation.
+* Privileges and append-only enforcement:
+  * `mti_app` has SELECT and INSERT only, and `mti_readonly` has no access;
+  * triggers reject UPDATE, DELETE and TRUNCATE for every role.
+* The first RLS policies:
+  * the platform realm reads all rows, and the tenant realm reads its own tenant only;
+  * inserts are bound to the trusted tenant (NULL-safe) and realm.
+* `write_audit_event`: in the request transaction, on the request connection.
+* `record_security_event`: an in-memory buffer per request. The realm guard (now a function-scoped yield dependency) flushes it through `context_transaction` after the request connection is released and before the response; a failed flush is logged safely and swallowed.
+* Metadata validation, limits and deterministic redaction of sensitive keys.
+* ADR-0013 and INC-35.
+
+**Acceptance criteria:**
+
+* Upgrade and downgrade are clean, with no orphaned objects; `alembic check` shows no drift; migration tests derive the head.
+* UPDATE, DELETE and TRUNCATE are denied to `mti_app`, the triggers also reject them for the owner, and `mti_readonly` cannot read.
+* RLS matrix: the tenant reads its own rows; reads of other tenants, platform rows and other realms return nothing; inserts A→A and NULL→NULL are allowed; A→B, A→NULL and NULL→A are denied.
+* An audit event commits and rolls back with its mutation on one connection.
+* A security event survives a rollback and is flushed after the connection is released, on a one-connection pool.
+* A failed flush leaves the response unchanged and logs no metadata.
+* No authentication, tenants, users, outbox, queue or retry; import contracts kept.
 
 ---
 

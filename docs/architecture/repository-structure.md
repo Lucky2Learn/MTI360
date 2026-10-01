@@ -78,7 +78,7 @@ MTI360/
 │   │   │                              pagination, db/ (T01-01); later: security/, authz/, tenancy/, audit/,
 │   │   │                              events/, jobs/, storage/, cache/
 │   │   ├── api/                       ✅ realms.py + platform, tenant, student, public, webhooks (T01-01, deny by default)
-│   │   ├── modules/                   business domains (§3); package created in T01-01, first module T01-02
+│   │   ├── modules/                   business domains (§3); package created in T01-01, no module yet (audit lives in core, T01-02)
 │   │   ├── integrations/              whatsapp, email, sms, voice, payments, llm, storage adapters
 │   │   └── workers/                   worker entrypoint, job registry
 │   └── tests/                         ✅ conftest.py, unit/ (T00-02); api/, security/, integration/ (T01-01)

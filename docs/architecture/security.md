@@ -1,6 +1,6 @@
 # Security Foundation
 
-- **Status:** Approved design (T00-01), refined by ADR-0010 … ADR-0012 (T01-00). Implemented in T01-01: realm guards (deny by default), the error envelope without internals (§8), `extra="forbid"` request schemas and bounded pagination (§8), and redacted structured logging (§13); see [backend-foundation.md](backend-foundation.md). Authentication, CSRF, RBAC, rate limiting and audit follow in T01-02 … T01-06.
+- **Status:** Approved design (T00-01), refined by ADR-0010 … ADR-0012 (T01-00). Implemented in T01-01: realm guards (deny by default), the error envelope without internals (§8), `extra="forbid"` request schemas and bounded pagination (§8), and redacted structured logging (§13); see [backend-foundation.md](backend-foundation.md). The audit foundation followed in T01-02 (§11). Authentication, CSRF, RBAC and rate limiting follow in T01-04 … T01-06.
 - **Decisions:** [ADR-0004](../adr/0004-tenant-isolation.md), [ADR-0005](../adr/0005-identity-and-session-realms.md), [ADR-0006](../adr/0006-api-prefixes.md)
 - **Related:** CLAUDE.md §5–§11, §42–§51, §65, §94; ARCHITECTURE.md §48–§52; PLATFORM-ADMIN.md §15–§16, §65–§67, §93
 
@@ -87,9 +87,20 @@ Redis-backed, keyed per IP, account, tenant and endpoint class. Applies to login
 
 ## 11. Audit logging
 
-- `core/audit` writer called from services for authentication events, authorization changes, support sessions, tenant/subscription changes, financial and compliance changes, AI actions and data access.
-- Captures actor, realm, tenant, action, resource, result, timestamp, `support_session_id`, `correlation_id` and redacted metadata.
-- Append-only at the database-grant level.
+- **Implemented in T01-02** ([ADR-0013](../adr/0013-audit-events.md), [backend-foundation.md §12](backend-foundation.md#12-audit-foundation-t01-02)).
+- `app/core/audit` writers are called from services for authentication events, authorization changes, support sessions, tenant/subscription changes, financial and compliance changes, AI actions and data access. In T01-02 they have no producers yet.
+  - `write_audit_event` writes in the request transaction.
+  - `record_security_event` buffers the event and flushes it in a fresh transaction after the request transaction has released its connection, so security events survive rollbacks.
+- One table, `audit_events`, captures the realm, tenant (nullable, no foreign key), principal, category, event type, target (type and ID), `request_id`, timestamp and redacted metadata.
+  - `support_session_id`, campus, IP and result are deferred to the tasks that introduce trusted sources for them (INC-35).
+  - The request log's `request_id` is the correlation ID.
+- Append-only in the database:
+  - `mti_app` has SELECT and INSERT only, and `mti_readonly` has no access;
+  - triggers reject UPDATE, DELETE and TRUNCATE for every role.
+- Row-Level Security:
+  - the platform realm reads all rows;
+  - the tenant realm reads only its own tenant's rows;
+  - inserts must match the trusted tenant and realm context.
 
 ## 12. AI tool authorization
 
