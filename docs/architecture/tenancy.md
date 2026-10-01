@@ -4,7 +4,7 @@
 - **Decision:** [ADR-0004 — Tenant Isolation](../adr/0004-tenant-isolation.md)
 - **Related:** [ADR-0005](../adr/0005-identity-and-session-realms.md), [ADR-0006](../adr/0006-api-prefixes.md), CLAUDE.md §5–§8, §55
 
-Nothing in this document is implemented yet.
+Implemented so far (T01-01): the request context (§3; realm, request ID, principal and tenant fields) bound by deny-by-default realm guards, and the transaction-scoped `SET LOCAL app.tenant_id / app.user_id / app.realm` publication that RLS policies will read ([backend-foundation.md](backend-foundation.md) §3, §6). Tenant tables, the repository and ORM filters, RLS policies and the isolation test gate follow in T01-03 onwards.
 
 ## 1. Model
 

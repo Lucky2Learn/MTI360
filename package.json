@@ -10,11 +10,11 @@
     "bootstrap": "pnpm install --frozen-lockfile && uv sync --locked --directory backend",
     "dev": "pnpm run \"/^dev:/\"",
     "dev:frontend": "pnpm --filter @mti360/frontend dev",
-    "dev:backend": "uv run --locked --directory backend uvicorn app.main:create_app --factory --reload --host 127.0.0.1 --port ${API_PORT:-8000} --no-server-header",
+    "dev:backend": "uv run --locked --directory backend uvicorn app.main:create_app --factory --reload --host 127.0.0.1 --port ${API_PORT:-8000} --no-server-header --no-access-log",
     "build": "pnpm --filter @mti360/frontend build",
     "lint": "pnpm run lint:frontend && pnpm run lint:backend",
     "lint:frontend": "pnpm --filter @mti360/frontend lint",
-    "lint:backend": "uv run --locked --directory backend ruff check .",
+    "lint:backend": "uv run --locked --directory backend ruff check . && uv run --locked --directory backend lint-imports",
     "typecheck": "pnpm run typecheck:frontend && pnpm run typecheck:backend",
     "typecheck:frontend": "pnpm --filter @mti360/frontend typecheck",
     "typecheck:backend": "uv run --locked --directory backend mypy",
@@ -33,6 +33,8 @@
     "infra:down": "docker compose --profile infra --profile app down",
     "infra:reset": "docker compose --profile infra --profile app down --volumes --remove-orphans",
     "infra:logs": "docker compose --profile infra --profile app logs --follow --tail=200",
-    "stack:up": "docker compose --profile infra --profile app up -d --build --wait postgres redis object-storage mailpit api frontend && docker compose --profile infra run --rm object-storage-init"
+    "db:migrate": "uv run --locked --directory backend alembic upgrade head",
+    "db:check": "uv run --locked --directory backend alembic check",
+    "stack:up": "docker compose --profile infra --profile app up -d --wait postgres redis object-storage mailpit && docker compose --profile infra run --rm object-storage-init && docker compose --profile infra --profile app run --rm --build migrate && docker compose --profile infra --profile app up -d --build --wait api frontend"
   }
 }

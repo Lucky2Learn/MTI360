@@ -26,7 +26,8 @@ Application source code is **not** bind-mounted into containers for day-to-day w
 | `pnpm dev` | Native frontend + backend (ports from the shell: `FRONTEND_PORT`, `API_PORT`) |
 | `pnpm infra:logs` | Follow infrastructure / app container logs |
 | `pnpm infra:down` | Stop and remove MTI 360 containers and network. **Data volumes are kept.** |
-| `pnpm stack:up` | Build images and run infrastructure **plus** the api and frontend containers |
+| `pnpm stack:up` | Build images and run infrastructure, the one-shot `migrate` container, **then** the api and frontend containers |
+| `pnpm db:migrate` / `pnpm db:check` | Apply migrations to the local database (native) / fail when models and migrations differ |
 | `pnpm infra:reset` | **Deletes all local MTI 360 data**: removes MTI 360 containers, network and `mti360_*` volumes. Nothing else. |
 
 Stop the native `pnpm dev` servers before `pnpm stack:up` (and vice versa) — they use the same host ports.
@@ -74,7 +75,23 @@ Another SaaS project (ACRS) may run on the same machine with its own Compose pro
 
 - Password authentication (`scram-sha-256`) is enforced for every connection from outside the container (host port and Compose network). The upstream image trusts local socket/loopback connections *inside* the container (reachable only with `docker exec`).
 - Changing role passwords in `.env` does not affect an existing volume; run `pnpm infra:reset` (deletes data) or change them with `ALTER ROLE`.
-- No tables, schemas, RLS policies or migrations exist yet; `migrate` arrives with the first database task.
+- Migrations (T01-01): `pnpm db:migrate` applies Alembic migrations as `mti_owner` (`MIGRATIONS_DATABASE_URL`); `pnpm db:check` fails when models and migrations differ. `pnpm stack:up` runs the one-shot `migrate` container before starting the api. No application tables exist yet (baseline `0001`).
+- **Test database** (T01-01): `database/init/02-test-database.sh` creates `${POSTGRES_DB}_test` (default `mti360_test`) with the same roles and grants. It runs automatically on an empty volume. For an **existing** volume, run it once (idempotent, keeps data):
+
+  ```bash
+  MSYS_NO_PATHCONV=1 docker compose exec postgres bash /docker-entrypoint-initdb.d/02-test-database.sh
+  ```
+
+- **Database tests** run only when the test URLs are set; otherwise they are skipped. Use the passwords from the root `.env` (URL-safe values):
+
+  ```bash
+  export TEST_DATABASE_URL=postgresql+asyncpg://mti_app:<MTI_APP_PASSWORD>@127.0.0.1:5432/mti360_test
+  export TEST_MIGRATIONS_DATABASE_URL=postgresql+asyncpg://mti_owner:<MTI_OWNER_PASSWORD>@127.0.0.1:5432/mti360_test
+  export TEST_READONLY_DATABASE_URL=postgresql+asyncpg://mti_readonly:<MTI_READONLY_PASSWORD>@127.0.0.1:5432/mti360_test
+  pnpm test:backend      # REQUIRE_DATABASE_TESTS=1 turns skips into failures (CI)
+  ```
+
+  Never point these variables at a database with data you want to keep: the tests migrate it up and down.
 
 ## 7. Object storage (SeaweedFS)
 

@@ -3,7 +3,8 @@
 # MTI 360 backend image (T00-03) — production-shaped, multi-stage.
 #
 # Build context: backend/        docker build -t mti360-api backend
-# Runs:          uvicorn app.main:create_app (FastAPI)
+# Runs:          uvicorn app.main:create_app (FastAPI) — default command
+#                alembic upgrade head               — "migrate" (T01-01, compose)
 #
 # - Locked, production-only dependencies (uv sync --locked --no-dev).
 # - Runtime runs as a dedicated non-root user; application files are root-owned
@@ -34,6 +35,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev --no-install-project
 
 COPY app ./app
+COPY alembic.ini ./
+COPY migrations ./migrations
 
 # --- runtime ------------------------------------------------------------------
 FROM ${PYTHON_IMAGE} AS runtime
@@ -50,6 +53,8 @@ WORKDIR /app
 
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/app /app/app
+COPY --from=builder /app/alembic.ini /app/alembic.ini
+COPY --from=builder /app/migrations /app/migrations
 
 USER 10001:10001
 
@@ -59,4 +64,6 @@ EXPOSE 8000
 HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=3 \
   CMD ["python", "-c", "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).status == 200 else 1)"]
 
-CMD ["uvicorn", "app.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--no-server-header"]
+# --no-access-log: the application logs every request as JSON without the query
+# string (app/core/middleware.py); uvicorn's access log would include it.
+CMD ["uvicorn", "app.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--no-server-header", "--no-access-log"]

@@ -69,18 +69,19 @@ MTI360/
 │
 ├── backend/                           ✅ README, .env.example
 │   ├── pyproject.toml  uv.lock  .python-version                       ✅ T00-02
-│   ├── alembic.ini                    first database task (decision D5)
-│   ├── Dockerfile  .dockerignore      ✅ T00-03 api image; worker/migrate entrypoints added later (D4)
-│   ├── migrations/                    Alembic, single linear history
+│   ├── alembic.ini                    ✅ T01-01 (owner role; URL from validated settings)
+│   ├── Dockerfile  .dockerignore      ✅ T00-03 api image; migrations + `migrate` command (T01-01); worker later
+│   ├── migrations/                    ✅ Alembic, single linear history; 0001 baseline (T01-01)
 │   ├── app/
-│   │   ├── main.py                    ✅ create_app() + GET /health (T00-02)
-│   │   ├── core/                      ✅ config.py (T00-02); later: logging, errors, ids, context, db/, security/,
-│   │   │                              authz/, tenancy/, audit/, events/, jobs/, storage/, cache/
-│   │   ├── api/                       platform.py, tenant.py, student.py, public.py, webhooks.py
-│   │   ├── modules/                   business domains (§3)
+│   │   ├── main.py                    ✅ create_app() + GET /health (T00-02); wiring (T01-01)
+│   │   ├── core/                      ✅ config.py (T00-02); ids, context, errors, logging, middleware, schemas,
+│   │   │                              pagination, db/ (T01-01); later: security/, authz/, tenancy/, audit/,
+│   │   │                              events/, jobs/, storage/, cache/
+│   │   ├── api/                       ✅ realms.py + platform, tenant, student, public, webhooks (T01-01, deny by default)
+│   │   ├── modules/                   business domains (§3); package created in T01-01, first module T01-02
 │   │   ├── integrations/              whatsapp, email, sms, voice, payments, llm, storage adapters
 │   │   └── workers/                   worker entrypoint, job registry
-│   └── tests/                         ✅ conftest.py, unit/ (T00-02); later integration/, api/, security/
+│   └── tests/                         ✅ conftest.py, unit/ (T00-02); api/, security/, integration/ (T01-01)
 │
 ├── database/                          ✅ README only
 │   ├── init/                          ✅ 01-roles.sh: owner / app / readonly roles (T00-03)

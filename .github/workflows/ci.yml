@@ -117,17 +117,21 @@ jobs:
         run: pnpm run build
 
   # ---------------------------------------------------------------------------
-  # Backend: locked uv environment, lock check, Ruff, mypy, pytest
+  # Backend: locked uv environment, lock check, Ruff, import contracts, mypy,
+  # pytest — including the integration tests against PostgreSQL (T01-01)
   # ---------------------------------------------------------------------------
   backend:
     name: backend
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      - name: Start PostgreSQL test database (compose, fresh volume, generated passwords)
+        run: bash scripts/ci/start-test-database.sh
 
       - name: Set up Node.js (.nvmrc) for the root scripts
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -161,8 +165,12 @@ jobs:
       - name: Typecheck
         run: pnpm run typecheck:backend
 
-      - name: Tests
+      - name: Tests (unit, API, security and PostgreSQL integration)
         run: pnpm run test:backend
+
+      - name: Stop PostgreSQL
+        if: always()
+        run: docker compose --profile infra down --volumes
 
   # ---------------------------------------------------------------------------
   # Secrets: gitleaks over the FULL history of every ref, plus a self-test

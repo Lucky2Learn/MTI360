@@ -39,6 +39,10 @@ Recommended reading order (CLAUDE.md §2):
 | [0006](adr/0006-api-prefixes.md) | API prefixes | Accepted |
 | [0007](adr/0007-styling-tailwind-semantic-tokens.md) | Styling: Tailwind CSS v4 with semantic design tokens | Accepted |
 | [0008](adr/0008-headless-primitives-and-icons.md) | Headless accessible primitives (React Aria Components) and icons (Lucide) | Accepted |
+| 0009 | Reserved: marketing website hosting (INC-26) | — |
+| [0010](adr/0010-sessions-credentials-and-csrf.md) | Sessions, credentials (identity separated from credentials) and CSRF | Accepted |
+| [0011](adr/0011-rbac-model.md) | Role-based access control model | Accepted |
+| [0012](adr/0012-application-level-encryption.md) | Application-level encryption of secrets at rest | Accepted |
 
 ADR format: Status, Context, Decision, Consequences, Alternatives considered. ADRs are immutable once accepted; a change is made by a new ADR that supersedes the old one.
 
@@ -48,6 +52,7 @@ ADR format: Status, Context, Decision, Consequences, Alternatives considered. AD
 |---|---|
 | [repository-structure.md](architecture/repository-structure.md) | Repository tree, frontend and backend architecture, testing layout, environment files, local infrastructure, Git workflow |
 | [tenancy.md](architecture/tenancy.md) | Tenant identification, enforcement layers, leakage vectors, isolation test gate, database conventions |
+| [backend-foundation.md](architecture/backend-foundation.md) | Backend foundation: layers and import contracts, database access and transactions, migrations, post-commit side effects, realm routers, API conventions, logging, testing, T01-00 decision record (T01-01) |
 | [security.md](architecture/security.md) | Realm boundaries, authentication, authorization, secrets, files, audit, AI tool authorization |
 | [environments.md](architecture/environments.md) | Environment matrix: configuration sources, per-environment rules, secret handling, `pnpm check:env` (T00-04) |
 | [toolchain.md](architecture/toolchain.md) | Exact runtime and dependency versions, version holds, supply-chain controls, commands, update policy (T00-02) |

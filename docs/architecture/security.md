@@ -1,6 +1,6 @@
 # Security Foundation
 
-- **Status:** Approved design (T00-01). Nothing in this document is implemented yet.
+- **Status:** Approved design (T00-01), refined by ADR-0010 … ADR-0012 (T01-00). Implemented in T01-01: realm guards (deny by default), the error envelope without internals (§8), `extra="forbid"` request schemas and bounded pagination (§8), and redacted structured logging (§13); see [backend-foundation.md](backend-foundation.md). Authentication, CSRF, RBAC, rate limiting and audit follow in T01-02 … T01-06.
 - **Decisions:** [ADR-0004](../adr/0004-tenant-isolation.md), [ADR-0005](../adr/0005-identity-and-session-realms.md), [ADR-0006](../adr/0006-api-prefixes.md)
 - **Related:** CLAUDE.md §5–§11, §42–§51, §65, §94; ARCHITECTURE.md §48–§52; PLATFORM-ADMIN.md §15–§16, §65–§67, §93
 

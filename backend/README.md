@@ -1,6 +1,6 @@
 # backend/
 
-**Status:** Toolchain foundation (T00-02) with validated per-environment settings (T00-04). Contains only the application factory (`create_app()`), typed `Settings` and a `GET /health` liveness endpoint, plus tests. No database, cache, storage, authentication, tenancy or business modules yet.
+**Status:** Backend foundation (T01-01) on top of the toolchain (T00-02) and validated settings (T00-04). It provides async SQLAlchemy and Alembic (baseline migration), a transaction per request with `SET LOCAL` context, the request context, the error envelope, JSON logging, deny-by-default realm routers, and API and pagination conventions. There is no authentication, tenancy or business module yet. Contract: [docs/architecture/backend-foundation.md](../docs/architecture/backend-foundation.md).
 
 ## Commands
 
@@ -9,11 +9,14 @@ Run from the repository root (`pnpm dev:backend`, `pnpm lint:backend`, …) or i
 | Command | Purpose |
 |---|---|
 | `uv sync --locked` | Create `.venv` with Python 3.14 (uv-managed) from `uv.lock` |
-| `uv run --locked uvicorn app.main:create_app --factory --reload --host 127.0.0.1 --port 8000 --no-server-header` | Dev server; `GET /health` → `{"status": "ok"}`; `/docs` only when `APP_ENV=development` |
+| `uv run --locked uvicorn app.main:create_app --factory --reload --host 127.0.0.1 --port 8000 --no-server-header --no-access-log` | Dev server; `GET /health` → `{"status": "ok"}`; `/docs` only when `APP_ENV=development` |
 | `uv run --locked ruff check .` | Lint (includes import sorting and bandit security rules) |
 | `uv run --locked ruff format .` | Format (`--check` in CI) |
 | `uv run --locked mypy` | Strict type checking (pydantic plugin) |
-| `uv run --locked pytest` | Tests (AnyIO plugin, asyncio backend) |
+| `uv run --locked lint-imports` | Architecture contracts (import-linter) |
+| `uv run --locked alembic upgrade head` | Apply migrations (owner role, `MIGRATIONS_DATABASE_URL`) |
+| `uv run --locked alembic check` | Fail when models and migrations differ |
+| `uv run --locked pytest` | Tests (AnyIO plugin, asyncio backend). PostgreSQL tests need `TEST_*_DATABASE_URL` (runbook §6) |
 
 Settings (`app/core/config.py`) are read from environment variables and, **in development only**, `backend/.env` (copy `backend/.env.example`; optional — development works with no file). Test, staging and production never read `.env`. Invalid settings stop startup with a `ConfigurationError` that names variables, never values. Rules: [docs/architecture/environments.md](../docs/architecture/environments.md). Toolchain versions and rationale: [docs/architecture/toolchain.md](../docs/architecture/toolchain.md).
 
