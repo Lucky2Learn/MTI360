@@ -27,18 +27,18 @@ from sqlalchemy import CheckConstraint, DateTime, Index, String, func, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.core.audit.events import AuditCategory
+from app.core.audit.events import (
+    EVENT_TYPE_MAX_LENGTH,
+    EVENT_TYPE_PATTERN,
+    TARGET_TYPE_MAX_LENGTH,
+    TARGET_TYPE_PATTERN,
+    AuditCategory,
+)
 from app.core.context import Realm
 from app.core.db.base import Base, UUIDPrimaryKeyMixin
 
-EVENT_TYPE_MAX_LENGTH = 100
-TARGET_TYPE_MAX_LENGTH = 64
 METADATA_MAX_DATABASE_BYTES = 8192
 """Database ceiling for the serialized metadata; the writer's own limit is lower."""
-
-EVENT_TYPE_PATTERN = r"^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$"
-"""Dotted lower-case names such as ``auth.login_failed``."""
-TARGET_TYPE_PATTERN = r"^[a-z][a-z0-9_]*$"
 
 
 def _in(column: str, values: list[str]) -> str:
