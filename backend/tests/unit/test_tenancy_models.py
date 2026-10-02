@@ -35,7 +35,9 @@ def test_every_tenant_scoped_table_is_a_composite_foreign_key_target() -> None:
         ]
 
         assert not tenant_id.nullable, table.name
-        assert [fk.target_fullname for fk in tenant_id.foreign_keys] == ["tenants.id"], table.name
+        # tenant_id references tenants; it may also be part of composite keys
+        # to tenant-scoped parents (tenant_foreign_key), always RESTRICT.
+        assert "tenants.id" in [fk.target_fullname for fk in tenant_id.foreign_keys], table.name
         assert all(fk.ondelete == "RESTRICT" for fk in tenant_id.foreign_keys), table.name
         assert ["tenant_id", "id"] in targets, table.name
 
