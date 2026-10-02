@@ -26,7 +26,7 @@ The only trusted sources of tenant identity:
 
 | Realm | Source of `tenant_id` |
 |---|---|
-| Tenant / Student | Server-side session: authenticated principal → validated membership → active tenant and campus stored in the session |
+| Tenant / Student | Server-side session: authenticated principal → validated membership → active tenant and campus stored in the session (tenant realm implemented in T01-04: the realm guard re-validates the session on every request, ADR-0015) |
 | Platform | None by default. Available only through an active support session record |
 | Tenant Public Website | Request `Host` → `tenant_domains` (verified domains only) → tenant with status `ACTIVE` or `TRIAL` |
 | Webhooks | Provider channel identifier (e.g. WhatsApp phone-number ID, payment merchant ID) → tenant channel configuration, **after** signature verification |
@@ -79,7 +79,7 @@ Session campus semantics (T01-04 decision D04, locked; [identity-authentication.
 | Surface | Rule |
 |---|---|
 | Object storage | Private bucket. Keys `tenants/{tenant_id}/{module}/{uuid}`; the client filename is never part of the key. Upload/download via an authorized API issuing short-lived presigned URLs. The storage wrapper rejects keys outside the context tenant prefix. |
-| Cache / rate limits | Only the `core/cache` wrapper touches Redis; it prefixes `t:{tenant_id}:` automatically. Raw client use is lint-banned. |
+| Cache / rate limits | Only the `core/cache` wrapper touches Redis; it prefixes `t:{tenant_id}:` automatically. Raw client use is lint-banned. Authentication rate limits run before any tenant exists and use their own `auth:` namespace with hashed identifiers (`core/ratelimit.py`, T01-04 D09). |
 | Audit logs | `audit_events` (T01-02, [ADR-0013](../adr/0013-audit-events.md)): `tenant_id` nullable (null = platform, system or pre-authentication event) with no foreign key; rows carry `realm` (`support_session_id` is added with support sessions in Phase 02). Append-only: the application role has INSERT/SELECT only, the read-only role has no access, and triggers reject UPDATE/DELETE/TRUNCATE. RLS: tenants read only their own rows, the platform realm reads all, and inserts must match the trusted tenant and realm. |
 | AI / RAG | Knowledge chunks and embeddings carry `tenant_id` under RLS; retrieval filters by tenant and publication state. Tools run **as the invoking principal**. |
 | SQL / Data Agent | Read-only database role, RLS, allow-listed views, statement timeout, row limit (ARCHITECTURE.md §24). |

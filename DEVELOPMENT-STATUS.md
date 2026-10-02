@@ -108,7 +108,7 @@ M0 — Foundation Ready: reached 2026-09-30 (Phase 00 complete)
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-09-30:** Phase 00 is `COMPLETED`: T00-01 … T00-10A are merged to `main` (T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12, T00-10A via PR #13). Phase 01 is `IN_PROGRESS`: the T01-00 architecture review is approved (D1–D22 with the D10 and D14 amendments) T01-01 (Backend, Database & API Foundation) is `COMPLETED` (PR #14), and T01-02 (Audit Foundation) is `COMPLETED` (PR #16). T01-03 (Tenancy Core) is `READY_FOR_REVIEW` (branch `feat/T01-03-tenancy-core`, not pushed). All are infrastructure only: database access, migrations, request context, error envelope, logging, deny-by-default realm routers, the append-only audit table with its writers, and the `tenants` and `campuses` tables with their isolation layers. No authentication, user or business tables and no product functionality exist yet, so product implementation completion remains 0%.
+> **2026-09-30:** Phase 00 is `COMPLETED`: T00-01 … T00-10A are merged to `main` (T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12, T00-10A via PR #13). Phase 01 is `IN_PROGRESS`: the T01-00 architecture review is approved (D1–D22 with the D10 and D14 amendments) T01-01 (Backend, Database & API Foundation) is `COMPLETED` (PR #14), and T01-02 (Audit Foundation) is `COMPLETED` (PR #16). T01-03 (Tenancy Core) is `COMPLETED` (PR #19). T01-04 (Tenant Identity & Authentication) is `READY_FOR_REVIEW` (branch `feat/T01-04-identity-authentication`, not pushed). All are infrastructure only: database access, migrations, request context, error envelope, logging, realm routers, the append-only audit table with its writers, the `tenants` and `campuses` tables with their isolation layers, and the tenant authentication backend (no screens). No business tables and no product functionality exist yet, so product implementation completion remains 0%.
 
 ---
 
@@ -804,7 +804,7 @@ IN_PROGRESS
 ## Phase Completion
 
 ```text
-3 / 11 tasks completed (T01-00, T01-01 and T01-02 COMPLETED; T01-03 READY_FOR_REVIEW)
+4 / 11 tasks completed (T01-00 … T01-03 COMPLETED; T01-04 READY_FOR_REVIEW)
 ```
 
 Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TASKS.md, Phase 01).
@@ -814,8 +814,8 @@ Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TAS
 | T01-00 | Architecture Review | `COMPLETED` (approved 2026-09-30) |
 | T01-01 | Backend, Database & API Foundation | `COMPLETED` (PR #14, `42bc8b1`) |
 | T01-02 | Audit Foundation | `COMPLETED` (PR #16, `91d0180`) |
-| T01-03 | Tenancy Core | `READY_FOR_REVIEW` (branch `feat/T01-03-tenancy-core`; not pushed) |
-| T01-04 | Tenant Identity & Authentication | `NOT_STARTED` |
+| T01-03 | Tenancy Core | `COMPLETED` (PR #19, `f602631`) |
+| T01-04 | Tenant Identity & Authentication | `READY_FOR_REVIEW` (branch `feat/T01-04-identity-authentication`; not pushed) |
 | T01-05 | Authorization & RBAC | `NOT_STARTED` |
 | T01-06 | Platform Identity & MFA | `NOT_STARTED` |
 | T01-07 | Platform Administration Foundation (API) | `NOT_STARTED` |
@@ -910,7 +910,7 @@ lifecycle tests.
 
 ### T01-03 — Tenancy Core
 
-**Status:** `READY_FOR_REVIEW` (branch `feat/T01-03-tenancy-core`, based on `main` at `2b153dc`; not pushed)
+**Status:** `COMPLETED` (merged to `main` by PR #19, merge commit `f602631`)
 
 **Implementation:**
 
@@ -948,6 +948,53 @@ ruff, ruff format, mypy (strict), import-linter (2 kept): pass. pnpm check
 smoke test: pass. Negative control: with the ORM filter disabled, 9 tests
 fail (owner-role ORM isolation, bulk UPDATE/DELETE, fail-closed). CI not
 run (not pushed).
+```
+
+### T01-04 — Tenant Identity & Authentication
+
+**Status:** `READY_FOR_REVIEW` (branch `feat/T01-04-identity-authentication`, based on the frozen UI contract `30511bc` on `main` at `f602631`; not pushed)
+
+**Implementation:**
+
+```text
+Database: migration 0004 - users, user_credentials, tenant_memberships,
+  membership_campuses, user_sessions, password_reset_tokens,
+  user_invitations; composite FKs (membership campus in the membership's
+  tenant; session tenant among the user's memberships; session campus in
+  the session tenant); mti_app SELECT/INSERT/UPDATE (no DELETE), no access
+  for mti_readonly; RLS on every table (21 policies incl. tenants_member_
+  read), pre-authentication lookup keys app.auth_email / app.auth_token_hash
+  / app.session_token_hash matched by equality; no SECURITY DEFINER
+Code: app/modules/identity (domain, tokens, passwords, lookup, models,
+  repository, service, schemas, router, events, templates); core/ratelimit
+  (Redis, auth: namespace, fail closed), core/net (TRUSTED_PROXY_HOPS),
+  integrations/email (SMTP + fake); realm guard resolves sessions
+  (Access.AUTHENTICATED / SESSION / ANONYMOUS), CSRF token and same-origin
+  checks; errors SESSION_REFRESH_REQUIRED, SERVICE_UNAVAILABLE, Retry-After;
+  settings APP_BASE_URL, TRUSTED_PROXY_HOPS, ARGON2_*, SMTP_TIMEOUT_SECONDS;
+  middleware clears the request context after the request
+Dependencies: argon2-cffi 25.1.0 (bindings 26.1.0), redis 8.1.0 (7-day
+  cooldown respected); blocklist SecLists 10k (MIT, pinned commit)
+Infra: compose api REDIS_URL + Mailpit; CI starts Redis (TEST_REDIS_URL)
+Docs: ADR-0015, identity-authentication.md, backend-foundation §14,
+  security, tenancy, environments, repository-structure, runbook,
+  INC-42/INC-43
+No frontend, RBAC, platform identity, MFA, provisioning or administration
+```
+
+**Verification:**
+
+```text
+Backend 538 tests (was 410): 170 PostgreSQL/Redis integration tests (was 99)
+with REQUIRE_DATABASE_TESTS=1; without the database and Redis variables
+368 passed, 170 skipped. New: identity schema/RLS 13, authentication API
+23, session/recovery API 32, rate limiting 4, identity rules 40, email 5,
+security boundaries 4, settings 6, API conventions 1. ruff, ruff format,
+mypy (strict), import-linter (2 kept): pass. pnpm check (frontend 783 tests
+and build included): pass. API image build + docker smoke test: pass.
+Compose config: valid. gitleaks (full history + tree): no leaks. Negative
+control: with the CSRF/same-origin gate disabled, 5 tests fail. CI not run
+(not pushed).
 ```
 
 ---
@@ -1923,6 +1970,9 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-10-01 | T01-02 Audit Foundation implemented | `READY_FOR_REVIEW` on `feat/T01-02-audit-foundation`; audit_events, append-only, first RLS policies, audit and security-event writers |
 | 2026-10-02 | T01-02 merged to `main` (PR #16, `91d0180`) | `COMPLETED` |
 | 2026-10-02 | T01-03 Tenancy Core implemented | `READY_FOR_REVIEW` on `feat/T01-03-tenancy-core`; tenants, campuses, RLS, ORM filter, tenant-scoped repository, system_context, ADR-0014 |
+| 2026-10-02 | T01-03 merged to `main` (PR #19, `f602631`) | `COMPLETED` |
+| 2026-10-02 | T01-04 UI contract frozen (`30511bc`) | AUTH-01 … AUTH-08 specification; decisions D04, D19 |
+| 2026-10-02 | T01-04 Tenant Identity & Authentication implemented | `READY_FOR_REVIEW` on `feat/T01-04-identity-authentication`; identity tables, RLS with pre-authentication lookup keys, sessions, CSRF, rate limits, lockout, reset, invitations, email, ADR-0015 |
 
 ---
 
@@ -3117,15 +3167,100 @@ Authentication
 
 ---
 
+## 2026-10-02 — T01-04 Tenant Identity & Authentication
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+The tenant authentication backend (ADR-0015; decisions D01–D19; UI contract frozen in `30511bc`):
+- seven identity tables with Row-Level Security, reached before sign-in only through equality-matched `SET LOCAL` lookup keys;
+- sign-in with generic failures, dummy-hash timing, Redis rate limits and a database lockout;
+- sessions stored as HMACs and re-validated on every request, with institute and campus selection per D04;
+- password reset and invitations per D19, with email after commit and response;
+- CSRF tokens on session routes and a same-origin check on anonymous routes.
+
+T01-03 was merged to `main` by PR #19 (`f602631`); its status is corrected to `COMPLETED` (D18).
+
+**Files:**
+
+```text
+Created: backend/app/modules/identity/{__init__, domain, tokens,
+  passwords, lookup, models, repository, service, schemas, router, events,
+  templates}.py and data/common-passwords.{txt,LICENSE};
+  backend/app/core/{net, ratelimit}.py; backend/app/integrations/
+  {__init__, email/{__init__, sender, smtp, fake}}.py;
+  backend/migrations/versions/0004_identity_authentication.py;
+  backend/tests/identity_support.py; tests/integration/test_{identity_
+  schema, authentication_api, session_recovery_api, rate_limiting}.py;
+  tests/unit/test_{identity_rules, email_integration}.py;
+  tests/security/test_identity_boundaries.py; docs/adr/0015-identity-
+  authentication.md
+Changed: backend/app/api/{realms, tenant}.py; backend/app/main.py;
+  backend/app/core/{config, context, errors, middleware}.py;
+  backend/app/core/tenancy/mixins.py (optional FK name);
+  backend/.env.example; backend/pyproject.toml, uv.lock; compose.yaml;
+  scripts/ci/start-test-database.sh; .github/workflows/ci.yml (step names);
+  tests (conftest Redis fixture, settings, CI script, API conventions,
+  T01-03 schema/model tests scoped to T01-03 objects); docs
+  (identity-authentication, backend-foundation, security, tenancy,
+  environments, repository-structure, runbook, spec-inconsistencies,
+  README); TASKS.md; DEVELOPMENT-STATUS.md
+Unchanged (verified): frontend, frozen UI contract, migrations 0001-0003,
+  database/init, ADR-0001 … ADR-0014, specification documents, marketing
+  site; ACRS
+```
+
+**Database / API / UI:**
+
+```text
+Database: migration 0004 (7 tables, RLS with 21 policies, grants). API:
+9 routes (6 under /api/v1/auth, 3 under /api/v1/session). UI: none
+(T01-09).
+```
+
+**Tests:**
+
+```text
+Backend 538 passed with the PostgreSQL test database, Redis and
+REQUIRE_DATABASE_TESTS=1 (368 passed + 170 skipped without them). pnpm
+check passed (frontend 783 tests, build). Import contracts: 2 kept.
+gitleaks: no leaks. CI not run.
+```
+
+**Known Issues:**
+
+```text
+The approved 10k blocklist adds little beyond the 12-character minimum
+(INC-42). Sign-in security events carry no principal or tenant (anonymous
+request; the user is the target, D13). Each authenticated request runs two
+short extra transactions for session re-validation (measure before caching).
+Invitation creation belongs to T01-07/T01-08 (only system fixtures create
+invitations now). Sessions and tokens are never deleted (retention later).
+```
+
+**Next:**
+
+```text
+Review T01-04 -> push, PR, CI (PostgreSQL + Redis), merge commit -> T01-05
+Authorization & RBAC
+```
+
+---
+
 # 40. NEXT TASK
 
 The next step is:
 
 ```text
-Review T01-03 (READY_FOR_REVIEW, branch feat/T01-03-tenancy-core): push,
-open the pull request, verify CI on GitHub (PostgreSQL integration tests
-required) and merge with a merge commit. Then continue with T01-04 — Tenant
-Identity & Authentication.
+Review T01-04 (READY_FOR_REVIEW, branch feat/T01-04-identity-authentication):
+push, open the pull request, verify CI on GitHub (PostgreSQL and Redis
+integration tests required) and merge with a merge commit. Then continue
+with T01-05 — Authorization & RBAC.
 ```
 
 The completed-task description below is retained for reference.

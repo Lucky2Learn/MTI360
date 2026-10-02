@@ -340,3 +340,19 @@
 - **Issue:** Format, case and uniqueness were unspecified.
 - **Current handling:** The code is required, upper case (`^[A-Z0-9][A-Z0-9-]*$`, at most 32 characters) and unique per tenant; the same code may exist in different tenants.
 - **Proposed resolution:** Reflect it in PLATFORM-ADMIN.md §30 when the campus screens are specified (ADMIN-03/04).
+
+## INC-42 — Blocklist coverage under the 12-character minimum
+
+- **Status:** `OPEN` (T01-04)
+- **Where:** ADR-0010 §7 and T01-04 decision D06 (bundled ~10k common-password list) vs the 12-character minimum of the same policy
+- **Issue:** Only 10 of the 10,001 entries of the approved SecLists 10k list are 12 characters or longer, so the length rule rejects almost all of the list on its own. Common long passwords (passphrases, keyboard walks, "password" + digits) are not covered.
+- **Current handling:** The approved list is bundled unmodified (identity-authentication.md §5); the file can be replaced without code changes.
+- **Proposed resolution:** Choose a larger permissively licensed list filtered to 12+ characters, or an offline breached-password corpus, in a security hardening task (Phase 16), or with the deferred breached-password check.
+
+## INC-43 — Sign-out access level
+
+- **Status:** `DECIDED-BY-ADR` ([ADR-0015](../adr/0015-identity-authentication.md); identity-authentication.md §4.4)
+- **Where:** T01-04 decision D12 (sign-out among the `Access.SESSION` routes) vs the frozen UI contract (sign-out answers `204` even without a valid session)
+- **Issue:** A session-only route answers `401` when the session has already ended, so sign-out would not be idempotent.
+- **Current handling:** `POST /api/v1/auth/logout` is an anonymous route with the same-origin check; it revokes the presented session when there is one and always clears the cookie with `204`.
+- **Proposed resolution:** None required.

@@ -44,12 +44,13 @@ Settings are validated when the process starts. An invalid configuration stops s
 | `CORS_ALLOWED_ORIGINS` contains `*` | rejected | rejected | rejected | rejected |
 | `CORS_ALLOWED_ORIGINS` must be `https://` | no | no | yes | yes |
 | `S3_ENDPOINT_URL` must be empty (provider default) or `https://` | no | no | yes | yes |
+| `APP_BASE_URL` must be an origin (no path); `https://` | origin: yes; https: no | origin: yes; https: no | yes | yes |
 | Session idle timeout ≤ absolute timeout (tenant and platform realms) | yes | yes | yes | yes |
 | OpenAPI `/docs` and `/openapi.json` exposed | yes | no | no | no |
 
 Placeholders are empty values and template values such as `change-me` (case-insensitive). Staging is exactly as strict as production except that `LOG_LEVEL=DEBUG` is allowed (decision D3).
 
-**Settings that must be explicit in staging/production:** `DATABASE_URL`, `MIGRATIONS_DATABASE_URL`, `READONLY_DATABASE_URL`, `REDIS_URL`, `S3_ENDPOINT_URL` (may be explicitly empty), `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `SESSION_SECRET`, `CSRF_SECRET`, `CORS_ALLOWED_ORIGINS`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `EMAIL_FROM_ADDRESS`, `AI_PROVIDER`, `AI_PROVIDER_API_KEY`. `APP_DEBUG` and `LOG_LEVEL` have secure defaults (`false`, `INFO`). The session timeouts and `S3_PRESIGNED_URL_TTL_SECONDS` have safe defaults.
+**Settings that must be explicit in staging/production:** `DATABASE_URL`, `MIGRATIONS_DATABASE_URL`, `READONLY_DATABASE_URL`, `REDIS_URL`, `S3_ENDPOINT_URL` (may be explicitly empty), `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `SESSION_SECRET`, `CSRF_SECRET`, `CORS_ALLOWED_ORIGINS`, `APP_BASE_URL`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `EMAIL_FROM_ADDRESS`, `AI_PROVIDER`, `AI_PROVIDER_API_KEY`. `APP_DEBUG` and `LOG_LEVEL` have secure defaults (`false`, `INFO`). The session timeouts, `S3_PRESIGNED_URL_TTL_SECONDS`, `TRUSTED_PROXY_HOPS` (0), `ARGON2_TIME_COST` / `ARGON2_MEMORY_COST_KIB` / `ARGON2_PARALLELISM` (argon2-cffi defaults) and `SMTP_TIMEOUT_SECONDS` (10) have safe defaults (T01-04).
 
 ### Database connection settings
 
@@ -65,7 +66,7 @@ Requiring three different users means the application can never run as the schem
 
 ### Validated but not yet used
 
-Redis, S3, SMTP, session/CSRF, CORS and AI settings are typed and validated, but their clients and middleware arrive with later tasks (the first task that uses each one). T00-04 adds no Redis, S3 or SMTP client, no session or CSRF code and no CORS middleware.
+Redis, S3, SMTP, session/CSRF, CORS and AI settings are typed and validated, but their clients and middleware arrive with later tasks (the first task that uses each one). T00-04 adds no Redis, S3 or SMTP client, no session or CSRF code and no CORS middleware. Since T01-04, Redis (authentication rate limits), SMTP (password-reset email), the session and CSRF secrets and `CORS_ALLOWED_ORIGINS` (allow-list of the same-origin check) are used; S3 and AI are not yet.
 
 ## 3. Frontend rules
 

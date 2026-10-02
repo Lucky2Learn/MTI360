@@ -1,15 +1,31 @@
 # Tenant Identity & Authentication (T01-04) — Decision Record and Contract
 
-- **Status:** Pre-implementation. This record holds the T01-04 decisions that are **locked** so that the backend (T01-04) and the frontend (T01-09) build against the same contract. The other decisions of the T01-04 second-pass architecture review (D01–D18) are **not yet approved**; T01-04 records them here, and in its ADR, when they are.
-- **Related:** [ADR-0005](../adr/0005-identity-and-session-realms.md), [ADR-0006](../adr/0006-api-prefixes.md), [ADR-0010](../adr/0010-sessions-credentials-and-csrf.md), [ADR-0014](../adr/0014-tenancy-core.md), [tenancy.md](tenancy.md) §5, [security.md](security.md) §2, [backend-foundation.md](backend-foundation.md) §7, UI contract [T01-04-IDENTITY-AUTHENTICATION-UI.md](../ui/T01-04-IDENTITY-AUTHENTICATION-UI.md)
+- **Status:** Implemented in T01-04 (branch `feat/T01-04-identity-authentication`). All decisions D01–D19 are locked; the architecture is recorded in [ADR-0015](../adr/0015-identity-authentication.md). The frontend (T01-09) builds against this contract and the frozen UI contract.
+- **Related:** [ADR-0015](../adr/0015-identity-authentication.md), [ADR-0005](../adr/0005-identity-and-session-realms.md), [ADR-0006](../adr/0006-api-prefixes.md), [ADR-0010](../adr/0010-sessions-credentials-and-csrf.md), [ADR-0014](../adr/0014-tenancy-core.md), [tenancy.md](tenancy.md) §5, [security.md](security.md) §2, [backend-foundation.md](backend-foundation.md) §7, UI contract [T01-04-IDENTITY-AUTHENTICATION-UI.md](../ui/T01-04-IDENTITY-AUTHENTICATION-UI.md)
 
 ## 1. Decision register
 
 | ID | Decision | Status |
 |---|---|---|
-| D04 | Campus selection semantics (§2) | **Locked** (2026-10-02) |
-| D19 | Invitation preview (§3) | **Locked** (2026-10-02) |
-| D01–D03, D05–D18 | Remaining T01-04 review decisions (pre-authentication lookup path, authentication transactions, membership discovery, invitation TTL, blocklist, Argon2 parameters, client IP, Redis namespace, compose/CI, SMTP, guard access mode, login security-event attribution, anonymous CSRF, link building, read-only grants, thresholds, status correction) | Open — approved and recorded by T01-04 |
+| D01 | Pre-authentication lookups: one `SET LOCAL` key per lookup transaction, equality policies, no `SECURITY DEFINER` (ADR-0015 §1) | Locked, implemented |
+| D02 | Explicit sequential transactions; Argon2 outside transactions (ADR-0015 §2) | Locked, implemented |
+| D03 | Membership discovery in the identity repository; Core statements with explicit predicates before a tenant is active | Locked, implemented |
+| D04 | Campus selection semantics (§2) | Locked, implemented |
+| D05 | Invitations: 7 days, `invited_by` nullable, existing credentials never overwritten, no automatic sign-in | Locked, implemented |
+| D06 | Common-password blocklist: SecLists 10k (MIT, pinned commit; §5) | Locked, implemented |
+| D07 | Argon2id via `argon2-cffi`, configurable, rehash detection | Locked, implemented |
+| D08 | `TRUSTED_PROXY_HOPS` (default 0) | Locked, implemented |
+| D09 | Redis rate limits in a dedicated `auth:` namespace | Locked, implemented |
+| D10 | Compose `api` gets `REDIS_URL` and Mailpit; CI starts Redis | Locked, implemented |
+| D11 | Stdlib SMTP `EmailSender` with a bounded timeout, plus a fake | Locked, implemented |
+| D12 | `Access.SESSION` (§4.2) | Locked, implemented |
+| D13 | Sign-in security events in the anonymous context; user as target | Locked, implemented |
+| D14 | CSRF token on session routes; same-origin check on anonymous routes | Locked, implemented |
+| D15 | `APP_BASE_URL`; plain-text emails; tokens only in URL fragments and bodies | Locked, implemented |
+| D16 | No read-only access to identity tables; no DELETE | Locked, implemented |
+| D17 | 20/IP/5 min, 10/account/15 min, lockout 1/5/15/60 min, fail closed, `Retry-After` | Locked, implemented |
+| D18 | T01-03 status correction | Done (TASKS.md, DEVELOPMENT-STATUS.md) |
+| D19 | Invitation preview (§3) | Locked, implemented |
 
 ## 2. D04 — Campus selection semantics
 
@@ -115,3 +131,78 @@ The invitation screen (AUTH-06) must know, before it asks for a password, whethe
 - It is looked up by its hash (stored hashed, never in plain text).
 - It is never logged, never echoed in a response or error, and never put in audit metadata.
 - The lookup uses the pre-authentication lookup path that T01-04 approves (review D01). This contract does not depend on which option is chosen.
+
+## 4. Implementation (T01-04)
+
+### 4.1 Code
+
+| Area | Location |
+|---|---|
+| Models, domain rules, tokens, passwords, lookup and subject transactions, repository, services, schemas, routes, security events, email templates | `backend/app/modules/identity/` |
+| Bundled blocklist and its licence | `backend/app/modules/identity/data/common-passwords.{txt,LICENSE}` |
+| Rate limiter (Redis, fail closed) | `backend/app/core/ratelimit.py` |
+| Client IP behind trusted proxies | `backend/app/core/net.py` |
+| `EmailSender`, SMTP adapter, fake | `backend/app/integrations/email/` |
+| Session resolution, access levels, CSRF and origin checks | `backend/app/api/realms.py` (guard), `backend/app/api/tenant.py` (mounting) |
+| Migration | `backend/migrations/versions/0004_identity_authentication.py` |
+
+### 4.2 API
+
+All routes are in the tenant realm (`/api/v1/*`); request bodies reject unknown fields.
+
+| Route | Access | Integrity check | Success | Failures |
+|---|---|---|---|---|
+| `POST /auth/login` `{email, password}` | Anonymous | Same origin | `200` session read + cookie | `401` generic, `422`, `429` (+`Retry-After`), `503` |
+| `POST /auth/logout` | Anonymous (revokes the presented session, if any) | Same origin | `204`, cookie cleared (always) | — |
+| `POST /auth/password-reset` `{email}` | Anonymous | Same origin | `202` (always) | `422`, `429`, `503` |
+| `POST /auth/password-reset/confirm` `{token, new_password}` | Anonymous | Same origin | `204` | `404` generic, `422` (`password_too_short` / `_long` / `_common`), `429` |
+| `POST /auth/invitations/preview` `{token}` | Anonymous | Same origin | `200` `{institute_name, email_masked, account}` | `404` generic, `429` |
+| `POST /auth/invitations/accept` `{token, display_name?, password?}` | Anonymous | Same origin | `204` (no sign-in) | `404` generic, `422`, `429` |
+| `GET /session` | Session | — | `200` session read | `401` |
+| `PUT /session/tenant` `{tenant_id}` | Session | `X-CSRF-Token` | `200` session read + rotated cookie | `404`, `401` |
+| `PUT /session/campus` `{campus_id or null}` | Session (needs an active institute) | `X-CSRF-Token` | `200` session read | `404`, `401` |
+
+Session read: `status` (`ready`, `institute_selection_required`, `campus_selection_required`), `user {display_name, email}`, `active_institute`, `institutes [{id, name, is_trial}]`, `active_campus`, `campus_options`, `all_campuses_allowed`, `campus_selection_required`, `csrf_token`.
+
+New error codes: `SESSION_REFRESH_REQUIRED` (403) for a failed CSRF or same-origin check (the UI contract's OQ-5 default already treats any `403` from `/auth/*` and `/session/*` this way), and `SERVICE_UNAVAILABLE` (503) when Redis cannot protect a sign-in.
+
+### 4.3 Data and Row-Level Security
+
+The tables are `users`, `user_credentials`, `tenant_memberships`, `membership_campuses`, `user_sessions`, `password_reset_tokens` and `user_invitations`.
+
+- RLS is enabled on every table (not forced), and there are no `SECURITY DEFINER` functions.
+- `mti_app` has SELECT, INSERT and UPDATE (`membership_campuses`: SELECT and INSERT). There is no DELETE anywhere, and `mti_readonly` has no access.
+
+| Table | Visible to |
+|---|---|
+| `users` | Own row (`app.user_id`), members of the active tenant, the email lookup key, system. Updates: own row or system. Inserts: system only (identities are created by provisioning and administration, T01-07/T01-08, or the seed) |
+| `user_credentials` | Own row, the email lookup key, system. **Never** a tenant context |
+| `tenant_memberships` | Active tenant, own memberships (tenant discovery), the invitation token key, system |
+| `membership_campuses` | Active tenant, own memberships, system |
+| `user_sessions` | Own sessions, the session token key, system |
+| `password_reset_tokens` | Own, the reset token key (read), system |
+| `user_invitations` | Active tenant, the invitation token key (read), system |
+| `tenants` (new `tenants_member_read`) | Tenants of the user's own memberships, and the tenant of the invitation being looked up |
+
+Composite foreign keys keep a membership campus inside its membership's tenant, a session's active tenant among the user's memberships, and its active campus inside the active tenant.
+
+### 4.4 Deviations and clarifications
+
+- **Sign-out is an anonymous route** with the same-origin check. It revokes the presented session if there is one. D12 allowed it on `Access.SESSION`, but the frozen UI contract requires sign-out to answer `204` even without a valid session; an anonymous route gives both.
+- **`PUT /session/campus` is a session route**, as D04 §2.2 requires: a user whose campus choice is pending can only reach session routes.
+- **Invited people already have a `users` row** (`INVITED`) when they are invited. The membership references it, and the inviter (T01-07/T01-08) creates it. Accepting a "new account" invitation activates that row, sets the name and creates the credential. An "existing account" is one with a credential.
+- **The identity repository reads the `tenants` and `campuses` tables directly** (joins for institute choices and campus options) instead of calling those modules' services, which do not exist yet. This is a read-only, documented exception to "modules call each other only through services".
+- **The request middleware clears the request context when the request ends** (`clear_context`). Found by the T01-04 tests: when the application runs in the caller's task (tests, ASGI transports), the context bound by the realm guard would otherwise outlive the request.
+
+## 5. Password blocklist provenance
+
+| Item | Value |
+|---|---|
+| Source | SecLists, `Passwords/Common-Credentials/10k-most-common.txt` |
+| Repository | https://github.com/danielmiessler/SecLists |
+| Commit | `913b327317496d062bcc7cace524aaad8a693be2` (2026-09-08) |
+| SHA-256 | `68782d6a4a19a4768d5f15dd66bd534e7a33055cc755411e33f16d18c50fdcce` |
+| Licence | MIT (Copyright (c) 2018 Daniel Miessler), reproduced in `common-passwords.LICENSE` |
+| Use | Unmodified; compared case-insensitively after the 12–128 length rule |
+
+Only 10 entries are 12 characters or longer, so the length rule rejects almost all of the list on its own (INC-42).

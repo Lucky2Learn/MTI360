@@ -1,6 +1,6 @@
 # Backend Foundation (T01-01)
 
-- **Status:** Implemented in T01-01; the audit foundation was added in T01-02 (§12, [ADR-0013](../adr/0013-audit-events.md)) and the tenancy core in T01-03 (§13, [ADR-0014](../adr/0014-tenancy-core.md)). Authentication and RBAC build on it in T01-04 … T01-10.
+- **Status:** Implemented in T01-01; the audit foundation was added in T01-02 (§12, [ADR-0013](../adr/0013-audit-events.md)) the tenancy core in T01-03 (§13, [ADR-0014](../adr/0014-tenancy-core.md)) and tenant identity and authentication in T01-04 (§14, [ADR-0015](../adr/0015-identity-authentication.md)). RBAC and platform identity build on it in T01-05 … T01-10.
 - **Decisions:** T01-00 decisions D1–D22 (§10), [ADR-0001](../adr/0001-stack.md), [ADR-0004](../adr/0004-tenant-isolation.md)–[ADR-0006](../adr/0006-api-prefixes.md), [ADR-0010](../adr/0010-sessions-credentials-and-csrf.md)–[ADR-0014](../adr/0014-tenancy-core.md)
 - **Related:** [repository-structure.md](repository-structure.md) §3, [tenancy.md](tenancy.md), [security.md](security.md), [ci.md](ci.md), [runbook](../runbooks/local-development.md)
 
@@ -17,9 +17,13 @@ backend/app/
     db/             base.py (Base, mixins) engine.py settings.py (SET LOCAL) session.py (DbSession, context_transaction)
     audit/          audit_events model, writers, metadata safety, security-event buffer (T01-02, §12)
     tenancy/        TenantScopedMixin, ORM filter, tenant-scoped repository, system_context (T01-03, §13)
+    net.py ratelimit.py  client IP behind trusted proxies; Redis rate limiter (T01-04, §14)
   modules/          business domains
     tenants/        Tenant model, lifecycle rules and status access policy (T01-03)
     institute/      Campus model (T01-03); institute profile in Phase 03
+    identity/       users, credentials, memberships, sessions, reset, invitations, authentication (T01-04, §14)
+  integrations/
+    email/          EmailSender protocol, SMTP adapter, fake (T01-04)
 backend/migrations/ Alembic env, helpers, versions/0001_baseline.py … 0003_tenancy_core.py
 ```
 
@@ -66,7 +70,8 @@ import-linter enforces `app.main → app.api → app.modules → app.integration
 - `migrations.helpers.database_roles()` gives migrations the runtime role names (from the `DATABASE_URL` and `READONLY_DATABASE_URL` users), so grants and RLS never hard-code them.
 - **Baseline `0001`:** no tables. It revokes write access to `alembic_version` from the runtime roles, which keep SELECT only.
 - **`0002` (T01-02):** `audit_events`, its privileges, append-only triggers and the first Row-Level Security policies (§12).
-- **`0003` (T01-03):** `tenants` and `campuses`, their constraints, privileges without DELETE and Row-Level Security (§13). A migration overrides the default privileges of `database/init/01-roles.sh` explicitly whenever a table must not get full DML.
+- **`0003` (T01-03):** `tenants` and `campuses`, their constraints, privileges without DELETE and Row-Level Security (§13).
+- **`0004` (T01-04):** the seven identity tables, privileges without DELETE (none for the read-only role) and Row-Level Security with the pre-authentication lookup keys (§14). A migration overrides the default privileges of `database/init/01-roles.sh` explicitly whenever a table must not get full DML.
 - `env.py` also imports the core table modules listed in `CORE_MODEL_MODULES` (`app.core.audit.models`).
 - **Review checklist** (in the revision template):
   - tenant tables use `TenantScopedMixin` with an RLS policy and composite foreign keys;
@@ -91,7 +96,7 @@ External side effects — email first (password reset, invitations; T01-04, T01-
 | Realm | Prefix (ADR-0006) | Router access in T01-01 | Becomes |
 |---|---|---|---|
 | Platform | `/api/v1/platform/*` | **denied** (401) | platform sessions + MFA (T01-06) |
-| Tenant | `/api/v1/*` (remaining paths) | **denied** (401) | tenant sessions (T01-04), permissions (T01-05) |
+| Tenant | `/api/v1/*` (remaining paths) | sessions since T01-04 (§14): `ANONYMOUS` sign-in routes, `SESSION` session routes, `AUTHENTICATED` everything else | permissions (T01-05) |
 | Student | `/api/v1/student/*` | **denied** (401) | student sessions (Phase 04/13) |
 | Public | `/api/v1/public/*` | anonymous | tenant from a verified host (Phase 14) |
 | Webhooks | `/api/v1/webhooks/*` | **denied** (401) | signature verifier per provider (Phase 09) |
@@ -107,7 +112,7 @@ External side effects — email first (password reset, invitations; T01-04, T01-
 |---|---|
 | Success | `{"data": …, "meta": {…}}` (`Envelope`); lists `ListEnvelope` with `meta.page = {limit, offset, total}` |
 | Errors | `{"error": {"code", "message", "details": [{field, code, message}], "request_id"}}` |
-| Codes | `VALIDATION_ERROR` 422 · `AUTHENTICATION_REQUIRED` 401 · `PERMISSION_DENIED` 403 · `NOT_FOUND` 404 (also for other tenants' resources) · `METHOD_NOT_ALLOWED` 405 · `CONFLICT` 409 · `RATE_LIMITED` 429 · `INTERNAL_ERROR` 500 |
+| Codes | `VALIDATION_ERROR` 422 · `AUTHENTICATION_REQUIRED` 401 · `PERMISSION_DENIED` 403 · `NOT_FOUND` 404 (also for other tenants' resources) · `METHOD_NOT_ALLOWED` 405 · `CONFLICT` 409 · `RATE_LIMITED` 429 (with `Retry-After` when known) · `SESSION_REFRESH_REQUIRED` 403 (CSRF or same-origin check, T01-04) · `SERVICE_UNAVAILABLE` 503 (a protecting dependency is down, T01-04) · `INTERNAL_ERROR` 500 |
 | Messages | Written for users; never input values, stack traces, SQL, infrastructure details or credentials |
 | Requests | `RequestModel`: `extra="forbid"` (no mass assignment of `tenant_id`, status, role or version), strings stripped and bounded; fields declare tighter limits |
 | Responses | `ResponseModel` (`from_attributes`) |
@@ -225,3 +230,17 @@ Decision record: [ADR-0014](../adr/0014-tenancy-core.md). Code: `app/core/tenanc
 - **Tenant domain.** Suspend (`TRIAL`/`ACTIVE`/`PAST_DUE` → `SUSPENDED`) and reactivate (`SUSPENDED` → `ACTIVE`); access policy: tenant and student realms in `TRIAL`, `ACTIVE` and `PAST_DUE`, the public website in `TRIAL` and `ACTIVE`. Enforced from T01-04/T01-05.
 - **Not in T01-03:** API routes, authentication, memberships, campus scope, provisioning, a platform write path into tenant-owned rows (INC-39), an `unscoped()` block (INC-38), audit producers, institute profile and campus details.
 - **Tests.** The ORM filter and the repository are also tested as the owner, which bypasses RLS, so each layer is proven alone; RLS is tested with raw SQL through the runtime roles. Tests create their own tenants and never count whole tables.
+
+## 14. Tenant identity and authentication (T01-04)
+
+Decision record: [ADR-0015](../adr/0015-identity-authentication.md) and [identity-authentication.md](identity-authentication.md) (locked decisions D01–D19, API, RLS, deviations). Code: `app/modules/identity/`, `app/core/ratelimit.py`, `app/core/net.py`, `app/integrations/email/`.
+
+- **Tables (migration `0004`):** `users`, `user_credentials`, `tenant_memberships`, `membership_campuses`, `user_sessions`, `password_reset_tokens`, `user_invitations`. No DELETE for the runtime roles; `mti_readonly` has no access.
+- **Pre-authentication lookups (D01).** A lookup transaction publishes one extra `SET LOCAL` key (`app.auth_email`, `app.auth_token_hash` or `app.session_token_hash`), matched by equality in the policies; then a subject transaction acts as the resolved user (and tenant). No `SECURITY DEFINER`, no RLS exception.
+- **Transactions (D02).** Authentication runs in short sequential `context_transaction`s, never two at once; Argon2id runs between them. A failed sign-in commits its lockout counter and answers 401.
+- **Session resolution.** The tenant realm guard re-validates the `__Host-mti360_tsid` session on every request, in its own transactions before `DbSession`, and builds `RequestContext` (principal, tenant) from it. Access levels: `AUTHENTICATED` (institute and, if required, campus), `SESSION` (session routes), `ANONYMOUS`. The context never changes during a request; switches apply from the next one.
+- **Integrity (D14).** `X-CSRF-Token` on unsafe session routes; a same-origin signal (`Origin` allow-list or `Sec-Fetch-Site: same-origin`) on unsafe anonymous tenant routes; failures are `403 SESSION_REFRESH_REQUIRED` plus a security event.
+- **Rate limits and lockout (D09, D17).** Redis fixed windows (`auth:<kind>:<action>:<sha256>`, 20/IP/5 min, 10/account/15 min), fail closed (`503`), `Retry-After` on `429`; database lockout 1/5/15/60 minutes after 5 failures. Client IP behind `TRUSTED_PROXY_HOPS` (D08).
+- **Email (D11, D15).** `EmailSender` (stdlib SMTP in a worker thread, bounded by `SMTP_TIMEOUT_SECONDS`; fake for tests). Sent as a background task after commit and response; a failure is logged (`email.send_failed`: request ID, template, exception class) and never undoes the commit. Links use `APP_BASE_URL` with the token in the URL fragment.
+- **Request context lifetime.** The request middleware clears the context when the request ends, so it never outlives the request when the application runs in the caller's task.
+- **Tests.** RLS matrix with raw SQL through the runtime roles; the API suite against the PostgreSQL test database and a real Redis (`TEST_REDIS_URL`, per-test namespace) with a fake email sender; static boundaries (lookup keys only in `lookup.py`, no tokens in route paths, route access levels).
