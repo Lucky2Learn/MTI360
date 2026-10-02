@@ -6,14 +6,29 @@ and emails per world, because the shared test database keeps every row.
 """
 
 import uuid
-from dataclasses import dataclass, field
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import insert
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from conftest import TEST_CSRF_SECRET, DatabaseUnderTest
+from fastapi import FastAPI
+from httpx import ASGITransport, AsyncClient
+from pydantic import SecretStr
+from sqlalchemy import insert, select, text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 
+from app.api.realms import REALM_PREFIXES, Access, realm_router
+from app.core.audit.writer import AUDIT_TABLE
+from app.core.config import Settings
+from app.core.context import Realm, RequestContext, current_context
+from app.core.db.session import context_transaction
+from app.core.ratelimit import RedisRateLimiter
 from app.core.tenancy import system_context
+from app.integrations.email import FakeEmailSender
+from app.main import create_app
 from app.modules.identity.models import (
     MembershipCampus,
     PasswordResetToken,
@@ -24,6 +39,7 @@ from app.modules.identity.models import (
     UserSession,
 )
 from app.modules.identity.passwords import PasswordHasher
+from app.modules.identity.service import IdentityService
 from app.modules.identity.tokens import TokenPurpose, new_token, token_hash
 from app.modules.institute.models import Campus
 from app.modules.tenants.models import Tenant
@@ -277,3 +293,105 @@ async def add_invitation(
             )
         )
     return invitation_id, token
+
+
+# --- HTTP harness (API tests) -----------------------------------------------------------
+
+ORIGIN = "http://localhost:3000"
+COOKIE = "__Host-mti360_tsid"
+
+
+@dataclass
+class Harness:
+    app: FastAPI
+    client: AsyncClient
+    world: World
+    factory: async_sessionmaker[AsyncSession]
+    email: FakeEmailSender
+    database: DatabaseUnderTest
+
+    @property
+    def service(self) -> IdentityService:
+        service: IdentityService = self.app.state.identity
+        return service
+
+    async def login(self, user: str, password: str = PASSWORD) -> Any:
+        return await self.client.post(
+            "/api/v1/auth/login", json={"email": self.world.email(user), "password": password}
+        )
+
+    async def audit(self, response: Any) -> list[Any]:
+        """Audit rows of one response (by its request ID), read as the platform."""
+        context = RequestContext(realm=Realm.PLATFORM, request_id=uuid.uuid7())
+        async with context_transaction(self.factory, context) as db:
+            result = await db.execute(
+                select(AUDIT_TABLE)
+                .where(AUDIT_TABLE.c.request_id == uuid.UUID(response.headers["X-Request-ID"]))
+                .order_by(AUDIT_TABLE.c.id)
+            )
+            return list(result.all())
+
+    async def owner(self, sql: str, **params: Any) -> Any:
+        """Run SQL as the owner (bypasses RLS) for test setup and inspection."""
+        engine = create_async_engine(self.database.owner_url, poolclass=NullPool)
+        try:
+            async with engine.begin() as connection:
+                result = await connection.execute(text(sql), params)
+                return result.all() if result.returns_rows else []
+        finally:
+            await engine.dispose()
+
+
+def auth_settings(database: DatabaseUnderTest, redis_url: str) -> Settings:
+    return Settings(
+        _env_file=None,
+        app_env="test",
+        session_secret=SecretStr(TEST_SESSION_SECRET),
+        csrf_secret=SecretStr(TEST_CSRF_SECRET),
+        database_url=SecretStr(database.app_url),
+        migrations_database_url=SecretStr(database.owner_url),
+        readonly_database_url=SecretStr(database.readonly_url),
+        redis_url=SecretStr(redis_url),
+        argon2_time_cost=1,
+        argon2_memory_cost_kib=8,
+        argon2_parallelism=1,
+    )
+
+
+def _probe_router() -> Any:
+    """A test-only tenant route that needs a ready session (Access.AUTHENTICATED)."""
+    probe = realm_router(Realm.TENANT, access=Access.AUTHENTICATED)
+
+    @probe.get("/probe/context", tags=["probe"])
+    async def probe_context() -> dict[str, str | None]:
+        context = current_context()
+        return {
+            "user": str(context.principal_id),
+            "tenant": str(context.tenant_id) if context.tenant_id else None,
+        }
+
+    return probe
+
+
+@asynccontextmanager
+async def auth_harness(database: DatabaseUnderTest, redis_url: str) -> AsyncIterator[Harness]:
+    app = create_app(auth_settings(database, redis_url))
+    app.include_router(_probe_router(), prefix=REALM_PREFIXES[Realm.TENANT])
+    service: IdentityService = app.state.identity
+    await service.rate_limiter.close()
+    service.rate_limiter = RedisRateLimiter.from_url(
+        redis_url, namespace=f"test:{uuid.uuid7().hex}:auth"
+    )
+    email = FakeEmailSender()
+    service.email_sender = email
+    service.config = replace(service.config, reset_response_floor_seconds=0.0)
+    world = await build_world(app.state.sessionmaker)
+    transport = ASGITransport(app=app, raise_app_exceptions=False)
+    try:
+        async with AsyncClient(
+            transport=transport, base_url="https://testserver", headers={"Origin": ORIGIN}
+        ) as client:
+            yield Harness(app, client, world, app.state.sessionmaker, email, database)
+    finally:
+        await service.rate_limiter.close()
+        await app.state.engine.dispose()
