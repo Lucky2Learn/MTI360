@@ -1,6 +1,6 @@
 # Backend Foundation (T01-01)
 
-- **Status:** Implemented in T01-01; the audit foundation was added in T01-02 (§12, [ADR-0013](../adr/0013-audit-events.md)) the tenancy core in T01-03 (§13, [ADR-0014](../adr/0014-tenancy-core.md)) and tenant identity and authentication in T01-04 (§14, [ADR-0015](../adr/0015-identity-authentication.md)). RBAC and platform identity build on it in T01-05 … T01-10.
+- **Status:** Implemented in T01-01; the audit foundation was added in T01-02 (§12, [ADR-0013](../adr/0013-audit-events.md)) the tenancy core in T01-03 (§13, [ADR-0014](../adr/0014-tenancy-core.md)) tenant identity and authentication in T01-04 (§14, [ADR-0015](../adr/0015-identity-authentication.md)) and authorization and RBAC in T01-05 (§15, [ADR-0016](../adr/0016-authorization-rbac.md)). Platform identity and administration build on it in T01-06 … T01-10.
 - **Decisions:** T01-00 decisions D1–D22 (§10), [ADR-0001](../adr/0001-stack.md), [ADR-0004](../adr/0004-tenant-isolation.md)–[ADR-0006](../adr/0006-api-prefixes.md), [ADR-0010](../adr/0010-sessions-credentials-and-csrf.md)–[ADR-0014](../adr/0014-tenancy-core.md)
 - **Related:** [repository-structure.md](repository-structure.md) §3, [tenancy.md](tenancy.md), [security.md](security.md), [ci.md](ci.md), [runbook](../runbooks/local-development.md)
 
@@ -96,7 +96,7 @@ External side effects — email first (password reset, invitations; T01-04, T01-
 | Realm | Prefix (ADR-0006) | Router access in T01-01 | Becomes |
 |---|---|---|---|
 | Platform | `/api/v1/platform/*` | **denied** (401) | platform sessions + MFA (T01-06) |
-| Tenant | `/api/v1/*` (remaining paths) | sessions since T01-04 (§14): `ANONYMOUS` sign-in routes, `SESSION` session routes, `AUTHENTICATED` everything else | permissions (T01-05) |
+| Tenant | `/api/v1/*` (remaining paths) | sessions since T01-04 (§14): `ANONYMOUS` sign-in routes, `SESSION` session routes, `AUTHENTICATED` everything else | `require_permission` or a reviewed exemption (T01-05, §15) |
 | Student | `/api/v1/student/*` | **denied** (401) | student sessions (Phase 04/13) |
 | Public | `/api/v1/public/*` | anonymous | tenant from a verified host (Phase 14) |
 | Webhooks | `/api/v1/webhooks/*` | **denied** (401) | signature verifier per provider (Phase 09) |
@@ -244,3 +244,21 @@ Decision record: [ADR-0015](../adr/0015-identity-authentication.md) and [identit
 - **Email (D11, D15).** `EmailSender` (stdlib SMTP in a worker thread, bounded by `SMTP_TIMEOUT_SECONDS`; fake for tests). Sent as a background task after commit and response; a failure is logged (`email.send_failed`: request ID, template, exception class) and never undoes the commit. Links use `APP_BASE_URL` with the token in the URL fragment.
 - **Request context lifetime.** The request middleware clears the context when the request ends, so it never outlives the request when the application runs in the caller's task.
 - **Tests.** RLS matrix with raw SQL through the runtime roles; the API suite against the PostgreSQL test database and a real Redis (`TEST_REDIS_URL`, per-test namespace) with a fake email sender; static boundaries (lookup keys only in `lookup.py`, no tokens in route paths, route access levels).
+
+## 15. Authorization and RBAC (T01-05)
+
+Decision record: [ADR-0016](../adr/0016-authorization-rbac.md) and [authorization.md](authorization.md) (locked decisions D-B1 … D-B4, catalogue, roles, RLS, status codes, tests).
+
+Code:
+
+- `app/core/authz/` — registry, `authorize`, `require_permission`;
+- `app/modules/*/permissions.py` — the permission declarations;
+- `app/modules/access/` — models, catalogue, templates, repository, service, events;
+- `app/modules/platform_identity/roles.py` — the platform role map;
+- `app/api/coverage.py` — route coverage.
+
+- **Tables (migration `0005`):** `permissions` (catalogue, read-only at runtime), `roles`, `role_permissions` and `membership_roles`, with RLS and system-role triggers. `mti_readonly` may read the catalogue only.
+- **Effective permissions** are resolved with the session (one query inside the session-resolution transaction) and carried by `RequestContext.permissions`, `all_campuses` and `campus_ids`. `authorize` does no I/O.
+- **Routes:** every route has exactly one `require_permission(CONSTANT)`, or a reviewed `public_route` / `authenticated_only` exemption in `REVIEWED_EXEMPTIONS`. Handlers that load a resource call `authorize(context, permission, resource)` again.
+- **Import direction:** `core/authz` imports no module. `access` reads `identity` models; `identity` calls the `access` service for session permissions.
+- **Tests:** registry and engine unit tests; schema and RLS with raw SQL (D-B2 triggers proven for the system realm and the table owner); registry ↔ database drift (D-B4); HTTP authorization matrix; access service; route coverage; static boundaries.

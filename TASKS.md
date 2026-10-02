@@ -671,7 +671,7 @@ Every slice is delivered as five commits:
 | T01-02 | Audit Foundation | COMPLETED |
 | T01-03 | Tenancy Core (Tenant, Campus, isolation layers) | COMPLETED |
 | T01-04 | Tenant Identity & Authentication | COMPLETED |
-| T01-05 | Authorization & RBAC | NOT_STARTED |
+| T01-05 | Authorization & RBAC | READY_FOR_REVIEW |
 | T01-06 | Platform Identity & MFA | NOT_STARTED |
 | T01-07 | Platform Administration Foundation (API) | NOT_STARTED |
 | T01-08 | Tenant Administration Foundation (API) and development seed | NOT_STARTED |
@@ -890,6 +890,43 @@ Tenant scope
 Campus scope where required
 Resource permissions
 ```
+
+**Priority:** P0
+
+**Status:** READY_FOR_REVIEW (implemented and verified on `feat/T01-05-authorization-rbac`; not merged).
+
+**Implemented** (decisions D-B1 … D-B4, ADR-0016, `docs/architecture/authorization.md`):
+
+* **Permission registry:** `(realm, code)` identity, `resource.action` codes and no wildcards, `TENANT` or `CAMPUS` scope for tenant permissions, and a fail-closed step-up hook. The T01 baseline is declared in the modules' `permissions.py`: 15 tenant and 10 platform permissions.
+* **Migration `0005`:**
+  * `permissions` (read-only at runtime, seeded from a frozen copy), `roles`, `role_permissions` (generated `permission_realm` inside the catalogue foreign key) and `membership_roles`;
+  * RLS per tenant, and triggers that keep system roles immutable for every database role;
+  * `INSTITUTE_OWNER` and `ADMIN` cloned for existing tenants, with no assignments.
+* **Effective permissions:** the union of the roles, resolved with the session. Tenant-wide permissions are kept only with all-campus access (D-B1). They are carried by `RequestContext`.
+* **`authorize` and `require_permission`:** `authorize(context, permission, resource=None)` answers 401, 403, or 404 for another tenant's or an unpermitted campus's resource. `require_permission` records `authz.denied`.
+* **Session:** `permissions` (sorted) and `roles` (`{name, is_system}`) for the active institute.
+* **Route coverage:** every API route has one permission or a reviewed `public_route` / `authenticated_only` exemption.
+* **Access service:** custom roles and role assignment, with no escalation, system-role refusal, optimistic versions and audit events. The API follows in T01-08.
+* **Platform roles:** the platform role map in code (`SUPER_ADMIN`, `SECURITY_AUDIT_ADMIN`; the others empty).
+
+**Acceptance criteria:**
+
+* Migration `0005` upgrades, downgrades to `0004` without leftovers and upgrades again; no model drift; the database catalogue and the system role clones equal the code.
+* D-B2 is refused by the database for tenant contexts, the system realm and the table owner. A tenant role cannot hold a platform, unknown or wildcard permission.
+* The HTTP matrix holds:
+  * 401 without a session; 403 without the permission;
+  * 404 for another tenant's or an unpermitted campus's resource, identical to a missing one;
+  * tenant-wide permissions refused to campus-restricted members;
+  * the active campus is not the authorization boundary.
+* The session exposes sorted permissions and roles without IDs. A tenant switch changes them, a campus switch does not, and a role change is visible on the next read.
+* The route-coverage meta-test passes and detects an unprotected route.
+* All T01-01 … T01-04 tests pass; import contracts are kept; there are no frontend changes.
+
+**Deviations:**
+
+* Platform role assignment storage is deferred to T01-06, because there are no platform users before then.
+* Role administration is service-only until T01-08.
+* Feature entitlements are not checked (Phase 15).
 
 ---
 

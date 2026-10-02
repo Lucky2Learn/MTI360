@@ -4,7 +4,7 @@
 - **Decision:** [ADR-0004 — Tenant Isolation](../adr/0004-tenant-isolation.md), refined by [ADR-0014 — Tenancy Core](../adr/0014-tenancy-core.md)
 - **Related:** [ADR-0005](../adr/0005-identity-and-session-realms.md), [ADR-0006](../adr/0006-api-prefixes.md), CLAUDE.md §5–§8, §55
 
-Implemented so far (T01-01): the request context (§3; realm, request ID, principal and tenant fields) bound by deny-by-default realm guards, and the transaction-scoped `SET LOCAL app.tenant_id / app.user_id / app.realm` publication that RLS policies will read ([backend-foundation.md](backend-foundation.md) §3, §6). Implemented in T01-03 ([ADR-0014](../adr/0014-tenancy-core.md), [backend-foundation.md](backend-foundation.md) §13): `tenants` and `campuses`, `TenantScopedMixin`, the tenant-scoped repository, the automatic ORM filter, Row-Level Security on both tables, the composite foreign-key helper, `system_context` and the tenant status access policy (layers 2–5 of §4). Session-based tenant resolution (T01-04), the authorization dependency (T01-05) and the route-level isolation gate (T01-10) follow.
+Implemented so far (T01-01): the request context (§3; realm, request ID, principal and tenant fields) bound by deny-by-default realm guards, and the transaction-scoped `SET LOCAL app.tenant_id / app.user_id / app.realm` publication that RLS policies will read ([backend-foundation.md](backend-foundation.md) §3, §6). Implemented in T01-03 ([ADR-0014](../adr/0014-tenancy-core.md), [backend-foundation.md](backend-foundation.md) §13): `tenants` and `campuses`, `TenantScopedMixin`, the tenant-scoped repository, the automatic ORM filter, Row-Level Security on both tables, the composite foreign-key helper, `system_context` and the tenant status access policy (layers 2–5 of §4). Session-based tenant resolution was implemented in T01-04 ([identity-authentication.md](identity-authentication.md)) and the authorization dependency (layer 1) in T01-05 ([authorization.md](authorization.md)); the route-level isolation gate (T01-10) follows.
 
 ## 1. Model
 
@@ -39,7 +39,7 @@ A `tenant_id` from a request body, query string or header is **never** used for 
 
 A FastAPI dependency builds a `RequestContext` once per request and stores it in a context variable:
 
-Implemented fields (T01-01): `realm`, `request_id`, `principal_id`, `tenant_id`. The others are added by the tasks that establish them: campus scope and permissions in T01-05, the support session in Phase 02; `correlation_id` is the existing `request_id` (INC-35). The realm of background jobs is `system`.
+Implemented fields (T01-01): `realm`, `request_id`, `principal_id`, `tenant_id`. T01-05 added `permissions`, `all_campuses` and `campus_ids`: the effective permissions and the permitted campuses, resolved with the session ([authorization.md](authorization.md)). The support session follows in Phase 02; `correlation_id` is the existing `request_id` (INC-35). The realm of background jobs is `system`.
 
 ```text
 realm                 platform | tenant | student | public | webhook | job
@@ -54,7 +54,7 @@ correlation_id
 
 ## 4. Enforcement layers
 
-1. **Authorization dependency** — `require_permission("lead.read")` checks realm, permission, tenant status and feature entitlement.
+1. **Authorization dependency** — `require_permission("lead.read")` checks realm, permission, tenant status and feature entitlement. Implemented in T01-05 as `require_permission(LEAD_READ)` with a declared permission constant: it checks principal, realm, tenant, permission and campus scope. Tenant status is validated when the session is resolved; feature entitlements arrive with subscriptions (Phase 15). Resources are checked with `authorize(context, permission, resource)`: another tenant's or an unpermitted campus's resource is **404** ([authorization.md](authorization.md)).
 2. **`TenantScopedRepository`** — every query filtered by `context.tenant_id`; inserts stamped automatically; get-by-id is `WHERE id = :id AND tenant_id = :ctx`; a miss returns **404**, not 403.
 3. **Automatic ORM filter** — a SQLAlchemy `do_orm_execute` hook applies `with_loader_criteria` to every `TenantScoped` model; a query without tenant context **raises**, except inside an explicit, named, platform-only, audited `unscoped()` block. T01-03 implements the filter (SELECT, UPDATE and DELETE, aliases and joins, tenant read from `session.info`) with no `unscoped()` block yet (INC-38).
 4. **PostgreSQL Row-Level Security** — policy `tenant_id = current_setting('app.tenant_id')::uuid` on each tenant table (implemented as `nullif(current_setting('app.tenant_id', true), '')::uuid`, so an unset setting matches nothing; the first policies are on `audit_events`, T01-02); `SET LOCAL app.tenant_id` in every transaction (API and workers); the application role is not the table owner and has no `BYPASSRLS`. Tenant-owned tables use one realm-agnostic policy for every command (USING and WITH CHECK), for `mti_app`, and a SELECT policy for `mti_readonly`; `tenants` is realm-aware (ADR-0014 §2).
