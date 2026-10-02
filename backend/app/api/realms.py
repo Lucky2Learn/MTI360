@@ -94,7 +94,7 @@ class Access(StrEnum):
 
 _ANONYMOUS_REALMS: Final = frozenset({Realm.PUBLIC, Realm.TENANT, Realm.STUDENT, Realm.PLATFORM})
 _SESSION_REALMS: Final = frozenset({Realm.TENANT, Realm.PLATFORM})
-_MFA_PENDING_REALMS: Final = frozenset({Realm.PLATFORM})
+_MFA_PENDING_REALMS: Final = frozenset({Realm.TENANT, Realm.PLATFORM})
 
 _ERROR_RESPONSES: Final[dict[int | str, dict[str, object]]] = {
     status: {"model": ErrorEnvelope} for status in (401, 403, 404, 422, 429, 500, 503)
@@ -151,6 +151,8 @@ def _make_guard(realm: Realm, access: Access) -> Guard:
         # request transaction (D02).
         if session_backed and realm is Realm.TENANT:
             resolved: ResolvedSession = await _resolve_tenant_session(request, request_id)
+            if resolved.mfa_pending is not (access is Access.MFA_PENDING):
+                raise AuthenticationRequiredError()
             if access is Access.AUTHENTICATED and not resolved.ready:
                 raise AuthenticationRequiredError()
             context = RequestContext(
@@ -161,6 +163,7 @@ def _make_guard(realm: Realm, access: Access) -> Guard:
                 permissions=resolved.permissions,
                 all_campuses=resolved.all_campuses,
                 campus_ids=resolved.campus_ids,
+                mfa_verified_at=resolved.mfa_verified_at,
             )
             request.state.auth_session = resolved
             session_id = resolved.session_id

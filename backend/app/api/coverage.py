@@ -77,6 +77,22 @@ REVIEWED_EXEMPTIONS: Final = MappingProxyType(
         ("PUT", f"{API_PREFIX}/session/campus"): ReviewedExemption(
             _OWN_SESSION, "Selects one of the caller's permitted campuses (T01-04)."
         ),
+        # --- Optional tenant MFA (T01-06) ------------------------------------------------
+        ("POST", f"{API_PREFIX}/auth/mfa/verify"): ReviewedExemption(
+            _MFA_PENDING, "Completes the caller's own sign-in with a TOTP code."
+        ),
+        ("POST", f"{API_PREFIX}/auth/mfa/recovery"): ReviewedExemption(
+            _MFA_PENDING, "Completes the caller's own sign-in with a recovery code."
+        ),
+        ("POST", f"{API_PREFIX}/session/mfa/enrolment"): ReviewedExemption(
+            _OWN_SESSION, "Starts the caller's own optional MFA enrolment."
+        ),
+        ("POST", f"{API_PREFIX}/session/mfa/enrolment/confirm"): ReviewedExemption(
+            _OWN_SESSION, "Confirms the caller's own MFA enrolment."
+        ),
+        ("POST", f"{API_PREFIX}/session/mfa/remove"): ReviewedExemption(
+            _OWN_SESSION, "Turns off the caller's own MFA with a current code."
+        ),
         # --- Platform realm (T01-06) ------------------------------------------------------
         ("POST", f"{_PLATFORM}/auth/login"): ReviewedExemption(
             _PUBLIC, "Platform sign-in: password step, opens an MFA-pending session."

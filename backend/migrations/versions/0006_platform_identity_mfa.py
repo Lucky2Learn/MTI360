@@ -456,6 +456,17 @@ def upgrade() -> None:
 def downgrade() -> None:
     for table, name, *_ in reversed(POLICIES):
         op.execute(f"DROP POLICY {name} ON {table}")
+    # Before 0006 a session cannot be MFA-pending: end every live pending
+    # session (it would otherwise become a session that skipped MFA), and map
+    # the reasons 0005 does not know.
+    op.execute(
+        "UPDATE user_sessions SET revoked_at = now(), revoke_reason = 'logout' "
+        "WHERE mfa_pending AND revoked_at IS NULL"
+    )
+    op.execute(
+        "UPDATE user_sessions SET revoke_reason = 'logout' "
+        f"WHERE revoke_reason NOT IN ({', '.join(repr(r) for r in TENANT_REVOKE_REASONS_BEFORE)})"
+    )
     op.drop_constraint(op.f("ck_user_sessions_revoke_reason"), "user_sessions", type_="check")
     op.create_check_constraint(
         op.f("ck_user_sessions_revoke_reason"),

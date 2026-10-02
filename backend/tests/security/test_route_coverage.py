@@ -35,6 +35,15 @@ T01_04_ROUTES = {
     ("PUT", "/api/v1/session/tenant"),
     ("PUT", "/api/v1/session/campus"),
 }
+T01_06_TENANT_MFA_PENDING = {
+    ("POST", "/api/v1/auth/mfa/verify"),
+    ("POST", "/api/v1/auth/mfa/recovery"),
+}
+T01_06_TENANT_MFA_SESSION = {
+    ("POST", "/api/v1/session/mfa/enrolment"),
+    ("POST", "/api/v1/session/mfa/enrolment/confirm"),
+    ("POST", "/api/v1/session/mfa/remove"),
+}
 T01_06_PLATFORM_PUBLIC = {
     ("POST", "/api/v1/platform/auth/login"),
     ("POST", "/api/v1/platform/auth/logout"),
@@ -76,6 +85,8 @@ def test_every_route_of_the_application_is_covered(app: FastAPI) -> None:
 def test_the_reviewed_exemptions_are_the_authentication_routes_with_reasons() -> None:
     assert set(REVIEWED_EXEMPTIONS) == (
         T01_04_ROUTES
+        | T01_06_TENANT_MFA_PENDING
+        | T01_06_TENANT_MFA_SESSION
         | T01_06_PLATFORM_PUBLIC
         | T01_06_PLATFORM_MFA_PENDING
         | T01_06_PLATFORM_SESSION
@@ -94,8 +105,9 @@ def test_the_reviewed_exemptions_are_the_authentication_routes_with_reasons() ->
             ("PUT", "/api/v1/session/campus"),
         }
         | T01_06_PLATFORM_SESSION
+        | T01_06_TENANT_MFA_SESSION
     )
-    assert kind(Exemption.MFA_PENDING) == T01_06_PLATFORM_MFA_PENDING
+    assert kind(Exemption.MFA_PENDING) == (T01_06_PLATFORM_MFA_PENDING | T01_06_TENANT_MFA_PENDING)
 
 
 def test_mfa_pending_exemptions_need_an_mfa_pending_route(app: FastAPI) -> None:

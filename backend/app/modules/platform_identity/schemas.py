@@ -6,30 +6,37 @@ recovery codes appear only in the responses that create them (once).
 """
 
 from datetime import datetime
-from typing import Annotated, Literal
-
-from pydantic import StringConstraints
+from typing import Literal
 
 from app.core.schemas import RequestModel, ResponseModel
-from app.modules.identity.schemas import Email, Secret, Token
+from app.modules.identity.schemas import (
+    Email,
+    MfaCodeRequest,
+    MfaEnrolmentOut,
+    RecoveryCodeRequest,
+    RecoveryCodesOut,
+    Secret,
+    Token,
+)
 
-MfaCode = Annotated[str, StringConstraints(strip_whitespace=True, min_length=6, max_length=7)]
-RecoveryCode = Annotated[
-    str, StringConstraints(strip_whitespace=True, min_length=10, max_length=13)
+__all__ = [
+    "MfaCodeRequest",
+    "MfaEnrolmentConfirmedOut",
+    "MfaEnrolmentOut",
+    "PlatformLoginRequest",
+    "PlatformMfaOut",
+    "PlatformPasswordResetConfirmRequest",
+    "PlatformPasswordResetRequest",
+    "PlatformSessionOut",
+    "PlatformUserOut",
+    "RecoveryCodeRequest",
+    "RecoveryCodesOut",
 ]
 
 
 class PlatformLoginRequest(RequestModel):
     email: Email
     password: Secret
-
-
-class MfaCodeRequest(RequestModel):
-    code: MfaCode
-
-
-class RecoveryCodeRequest(RequestModel):
-    recovery_code: RecoveryCode
 
 
 class PlatformPasswordResetRequest(RequestModel):
@@ -63,17 +70,6 @@ class PlatformSessionOut(ResponseModel):
     csrf_token: str
 
 
-class MfaEnrolmentOut(ResponseModel):
-    """Shown once: the secret for manual setup and the ``otpauth://`` URI (no QR, D6-4)."""
-
-    secret: str
-    otpauth_uri: str
-
-
 class MfaEnrolmentConfirmedOut(ResponseModel):
     recovery_codes: list[str]
     session: PlatformSessionOut
-
-
-class RecoveryCodesOut(ResponseModel):
-    recovery_codes: list[str]

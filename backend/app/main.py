@@ -105,6 +105,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         hasher=hasher,
         rate_limiter=rate_limiter,
         email_sender=email_sender,
+        keyring=keyring,
     )
     # A separate rate-limit namespace for the platform realm (T01-06).
     platform_identity = PlatformIdentityService(

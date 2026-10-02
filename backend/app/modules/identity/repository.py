@@ -89,6 +89,8 @@ class SessionRow:
     idle_expires_at: datetime
     absolute_expires_at: datetime
     revoked_at: datetime | None
+    mfa_pending: bool = False
+    mfa_verified_at: datetime | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -301,6 +303,8 @@ def _session_row(row: object) -> SessionRow:
         row.idle_expires_at,  # type: ignore[attr-defined]
         row.absolute_expires_at,  # type: ignore[attr-defined]
         row.revoked_at,  # type: ignore[attr-defined]
+        row.mfa_pending,  # type: ignore[attr-defined]
+        row.mfa_verified_at,  # type: ignore[attr-defined]
     )
 
 
@@ -313,6 +317,8 @@ _SESSION_COLUMNS = (
     SESSIONS.c.idle_expires_at,
     SESSIONS.c.absolute_expires_at,
     SESSIONS.c.revoked_at,
+    SESSIONS.c.mfa_pending,
+    SESSIONS.c.mfa_verified_at,
 )
 
 
@@ -335,6 +341,8 @@ async def create_session(
     absolute_expires_at: datetime,
     ip: str | None,
     user_agent: str | None,
+    mfa_pending: bool = False,
+    mfa_verified_at: datetime | None = None,
 ) -> uuid.UUID:
     session_id = uuid.uuid7()
     await session.execute(
@@ -351,9 +359,34 @@ async def create_session(
             absolute_expires_at=absolute_expires_at,
             ip=ip,
             user_agent=user_agent[:256] if user_agent else None,
+            mfa_pending=mfa_pending,
+            mfa_verified_at=mfa_verified_at,
         )
     )
     return session_id
+
+
+async def record_session_mfa_failure(session: AsyncSession, session_id: uuid.UUID) -> int:
+    """One wrong MFA code on a session (T01-06); the new count."""
+    count = (
+        await session.execute(
+            update(SESSIONS)
+            .where(SESSIONS.c.id == session_id, SESSIONS.c.revoked_at.is_(None))
+            .values(mfa_failed_attempts=SESSIONS.c.mfa_failed_attempts + 1)
+            .returning(SESSIONS.c.mfa_failed_attempts)
+        )
+    ).scalar_one_or_none()
+    return int(count or 0)
+
+
+async def mark_session_mfa_verified(
+    session: AsyncSession, session_id: uuid.UUID, now: datetime
+) -> None:
+    await session.execute(
+        update(SESSIONS)
+        .where(SESSIONS.c.id == session_id, SESSIONS.c.revoked_at.is_(None))
+        .values(mfa_verified_at=now, mfa_failed_attempts=0)
+    )
 
 
 async def touch_session(

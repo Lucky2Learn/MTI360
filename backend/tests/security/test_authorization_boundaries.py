@@ -13,9 +13,12 @@ from pathlib import Path
 from app.modules.access.catalog import all_permissions
 
 APP = Path(__file__).resolve().parents[2] / "app"
+# Where roles are defined, or assigned by the D6-1 bootstrap (never authorization decisions).
 ROLE_DEFINITIONS = {
     APP / "modules" / "access" / "templates.py",
     APP / "modules" / "platform_identity" / "roles.py",
+    APP / "modules" / "platform_identity" / "bootstrap.py",
+    APP / "cli.py",
 }
 ROLE_WORDS = re.compile(
     r"INSTITUTE_OWNER|SUPER_ADMIN|SECURITY_AUDIT_ADMIN|PLATFORM_OPERATIONS_ADMIN|"
