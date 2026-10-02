@@ -254,3 +254,20 @@ def migrated_database(test_database: DatabaseUnderTest) -> DatabaseUnderTest:
 
     command.upgrade(test_database.alembic_config(), "head")
     return test_database
+
+
+# --- Redis (T01-04: authentication rate limits) -------------------------------------------
+
+
+@pytest.fixture(scope="session")
+def redis_url() -> str:
+    """``TEST_REDIS_URL`` (database 1 locally and in CI). Same skip/fail rule as the database."""
+    url = os.environ.get("TEST_REDIS_URL", "")
+    if not url:
+        message = (
+            "Redis not configured (set TEST_REDIS_URL; see docs/runbooks/local-development.md)"
+        )
+        if os.environ.get("REQUIRE_DATABASE_TESTS") == "1":
+            pytest.fail(message)
+        pytest.skip(message)
+    return url

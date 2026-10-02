@@ -76,6 +76,7 @@ _EXPLICIT_IN_DEPLOYED: tuple[str, ...] = (
     "session_secret",
     "csrf_secret",
     "cors_allowed_origins",
+    "app_base_url",
     "smtp_host",
     "smtp_port",
     "smtp_username",
@@ -209,7 +210,7 @@ class Settings(BaseSettings):
     # Upper bound is the S3 maximum for presigned URLs (7 days).
     s3_presigned_url_ttl_seconds: int = Field(default=300, gt=0, le=604_800)
 
-    # --- Sessions and CSRF (ADR-0005). Validated only: no session code yet. ---------------
+    # --- Sessions and CSRF (ADR-0005, ADR-0010; implemented in T01-04) -----------------
     session_secret: SecretStr = SecretStr("change-me")
     csrf_secret: SecretStr = SecretStr("change-me")
     session_idle_timeout_minutes: int = Field(default=30, gt=0)
@@ -218,6 +219,18 @@ class Settings(BaseSettings):
     platform_session_absolute_timeout_minutes: int = Field(default=240, gt=0)
     # Comma-separated in the environment. Validated only: no CORS middleware yet.
     cors_allowed_origins: Annotated[tuple[str, ...], NoDecode] = ("http://localhost:3000",)
+    # Origin of the frontend; reset and invitation links point here (T01-04, D15).
+    app_base_url: str = "http://localhost:3000"
+    # Proxies in front of the API whose X-Forwarded-For entries are trusted (D08).
+    # 0 = ignore X-Forwarded-For and use the socket peer.
+    trusted_proxy_hops: int = Field(default=0, ge=0, le=5)
+
+    # --- Password hashing: Argon2id (ADR-0010, T01-04 D07) -------------------------------
+    # argon2-cffi defaults (RFC 9106 low-memory profile). Raising them makes
+    # existing hashes report "needs rehash", and they are upgraded at sign-in.
+    argon2_time_cost: int = Field(default=3, ge=1, le=10)
+    argon2_memory_cost_kib: int = Field(default=65_536, ge=8, le=1_048_576)
+    argon2_parallelism: int = Field(default=4, ge=1, le=16)
 
     # --- Email ---------------------------------------------------------------------------
     smtp_host: str = Field(default="localhost", min_length=1)
@@ -225,6 +238,8 @@ class Settings(BaseSettings):
     smtp_username: str = ""
     smtp_password: SecretStr = SecretStr("")
     email_from_address: str = "no-reply@mti360.local"
+    # Upper bound for one SMTP delivery (connect + send), in seconds (T01-04, D11).
+    smtp_timeout_seconds: int = Field(default=10, ge=1, le=60)
 
     # --- AI provider (CLAUDE.md §46) ----------------------------------------------------
     # `fake` is the deterministic provider for development and tests.
@@ -306,6 +321,21 @@ class Settings(BaseSettings):
                 raise ValueError("each entry must be an origin such as https://app.example.com")
         return value
 
+    @field_validator("app_base_url")
+    @classmethod
+    def _check_app_base_url(cls, value: str) -> str:
+        parts = urlsplit(value)
+        if (
+            parts.scheme not in {"http", "https"}
+            or not parts.hostname
+            or parts.username is not None
+            or parts.path not in {"", "/"}
+            or parts.query
+            or parts.fragment
+        ):
+            raise ValueError("must be an origin such as https://app.example.com")
+        return value.rstrip("/")
+
     @field_validator("email_from_address")
     @classmethod
     def _check_email_from_address(cls, value: str) -> str:
@@ -377,6 +407,8 @@ class Settings(BaseSettings):
                 if not origin.startswith("https://"):
                     problems.append(f"CORS_ALLOWED_ORIGINS: every origin must use https in {env}")
                     break
+            if not self.app_base_url.startswith("https://"):
+                problems.append(f"APP_BASE_URL: must use https in {env}")
             if self.s3_endpoint_url and not self.s3_endpoint_url.startswith("https://"):
                 problems.append(f"S3_ENDPOINT_URL: must be empty or use https in {env}")
 

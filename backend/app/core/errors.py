@@ -60,9 +60,17 @@ class AppError(Exception):
     code: ClassVar[str] = "INTERNAL_ERROR"
     default_message: ClassVar[str] = "Something went wrong. Please try again."
 
-    def __init__(self, message: str | None = None, details: Sequence[ErrorDetail] = ()) -> None:
+    def __init__(
+        self,
+        message: str | None = None,
+        details: Sequence[ErrorDetail] = (),
+        *,
+        headers: dict[str, str] | None = None,
+    ) -> None:
         self.message = message or self.default_message
         self.details = tuple(details)
+        # Response headers (for example Retry-After). Never user input or secrets.
+        self.headers = dict(headers or {})
         super().__init__(self.message)
 
 
@@ -98,10 +106,32 @@ class ConflictError(AppError):
     default_message = "The resource was changed by someone else. Reload it and try again."
 
 
+class SessionRefreshRequiredError(AppError):
+    """A browser-security check failed: missing or invalid CSRF token, or a
+    cross-site request to an anonymous authentication route (T01-04, D14).
+    The client recovers by reloading (UI contract §10, OQ-5)."""
+
+    status_code = 403
+    code = "SESSION_REFRESH_REQUIRED"
+    default_message = "Your session needs to be refreshed. Reload the page and try again."
+
+
 class RateLimitedError(AppError):
     status_code = 429
     code = "RATE_LIMITED"
     default_message = "Too many requests. Please wait and try again."
+
+    def __init__(self, *, retry_after: int | None = None) -> None:
+        headers = {"Retry-After": str(max(1, retry_after))} if retry_after is not None else None
+        super().__init__(headers=headers)
+
+
+class ServiceUnavailableError(AppError):
+    """A dependency that protects the operation is unavailable (fail closed)."""
+
+    status_code = 503
+    code = "SERVICE_UNAVAILABLE"
+    default_message = "This service is temporarily unavailable. Please try again shortly."
 
 
 def _request_id(request: Request) -> str | None:
@@ -162,6 +192,7 @@ async def _handle_app_error(request: Request, exc: Exception) -> JSONResponse:
         code=exc.code,
         message=exc.message,
         details=exc.details,
+        headers=exc.headers,
     )
 
 
