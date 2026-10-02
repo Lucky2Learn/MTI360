@@ -125,6 +125,9 @@ def _make_guard(realm: Realm, access: Access) -> Guard:
                 request_id=request_id,
                 principal_id=resolved.user_id,
                 tenant_id=resolved.tenant_id,
+                permissions=resolved.permissions,
+                all_campuses=resolved.all_campuses,
+                campus_ids=resolved.campus_ids,
             )
             request.state.auth_session = resolved
         bind_context(request, context)

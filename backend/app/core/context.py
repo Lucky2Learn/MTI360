@@ -40,6 +40,12 @@ class RequestContext:
     request_id: uuid.UUID
     principal_id: uuid.UUID | None = None
     tenant_id: uuid.UUID | None = None
+    # Authorization (T01-05), resolved server-side with the session. Effective
+    # permission codes in the active tenant (tenant-wide ones only with
+    # all-campus access, D-B1) and the member's permitted campuses.
+    permissions: frozenset[str] = frozenset()
+    all_campuses: bool = False
+    campus_ids: frozenset[uuid.UUID] = frozenset()
 
 
 class MissingContextError(RuntimeError):

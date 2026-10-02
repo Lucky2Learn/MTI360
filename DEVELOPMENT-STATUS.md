@@ -108,7 +108,7 @@ M0 — Foundation Ready: reached 2026-09-30 (Phase 00 complete)
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-09-30:** Phase 00 is `COMPLETED`: T00-01 … T00-10A are merged to `main` (T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12, T00-10A via PR #13). Phase 01 is `IN_PROGRESS`: the T01-00 architecture review is approved (D1–D22 with the D10 and D14 amendments) T01-01 (Backend, Database & API Foundation) is `COMPLETED` (PR #14), and T01-02 (Audit Foundation) is `COMPLETED` (PR #16). T01-03 (Tenancy Core) is `COMPLETED` (PR #19). T01-04 (Tenant Identity & Authentication) is `READY_FOR_REVIEW` (branch `feat/T01-04-identity-authentication`, not pushed). All are infrastructure only: database access, migrations, request context, error envelope, logging, realm routers, the append-only audit table with its writers, the `tenants` and `campuses` tables with their isolation layers, and the tenant authentication backend (no screens). No business tables and no product functionality exist yet, so product implementation completion remains 0%.
+> **2026-09-30:** Phase 00 is `COMPLETED`: T00-01 … T00-10A are merged to `main` (T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12, T00-10A via PR #13). Phase 01 is `IN_PROGRESS`: the T01-00 architecture review is approved (D1–D22 with the D10 and D14 amendments) T01-01 (Backend, Database & API Foundation) is `COMPLETED` (PR #14), and T01-02 (Audit Foundation) is `COMPLETED` (PR #16). T01-03 (Tenancy Core) is `COMPLETED` (PR #19). T01-04 (Tenant Identity & Authentication) is `COMPLETED` (PR #20). T01-05 (Authorization & RBAC) is implemented and `READY_FOR_REVIEW` on `feat/T01-05-authorization-rbac` (not merged). All are infrastructure only: database access, migrations, request context, error envelope, logging, realm routers, the append-only audit table with its writers, the `tenants` and `campuses` tables with their isolation layers, the tenant authentication backend, and the permission catalogue, roles and authorization layer (no screens). No business tables and no product functionality exist yet, so product implementation completion remains 0%.
 
 ---
 
@@ -804,7 +804,7 @@ IN_PROGRESS
 ## Phase Completion
 
 ```text
-4 / 11 tasks completed (T01-00 … T01-03 COMPLETED; T01-04 READY_FOR_REVIEW)
+5 / 11 tasks completed (T01-00 … T01-04 COMPLETED)
 ```
 
 Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TASKS.md, Phase 01).
@@ -815,8 +815,8 @@ Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TAS
 | T01-01 | Backend, Database & API Foundation | `COMPLETED` (PR #14, `42bc8b1`) |
 | T01-02 | Audit Foundation | `COMPLETED` (PR #16, `91d0180`) |
 | T01-03 | Tenancy Core | `COMPLETED` (PR #19, `f602631`) |
-| T01-04 | Tenant Identity & Authentication | `READY_FOR_REVIEW` (branch `feat/T01-04-identity-authentication`; not pushed) |
-| T01-05 | Authorization & RBAC | `NOT_STARTED` |
+| T01-04 | Tenant Identity & Authentication | `COMPLETED` (PR #20, `daa6526`) |
+| T01-05 | Authorization & RBAC | `READY_FOR_REVIEW` (`feat/T01-05-authorization-rbac`, not merged) |
 | T01-06 | Platform Identity & MFA | `NOT_STARTED` |
 | T01-07 | Platform Administration Foundation (API) | `NOT_STARTED` |
 | T01-08 | Tenant Administration Foundation (API) | `NOT_STARTED` |
@@ -952,7 +952,7 @@ run (not pushed).
 
 ### T01-04 — Tenant Identity & Authentication
 
-**Status:** `READY_FOR_REVIEW` (branch `feat/T01-04-identity-authentication`, based on the frozen UI contract `30511bc` on `main` at `f602631`; not pushed)
+**Status:** `COMPLETED` (merged to `main` by PR #20, merge commit `daa6526`)
 
 **Implementation:**
 
@@ -995,6 +995,50 @@ and build included): pass. API image build + docker smoke test: pass.
 Compose config: valid. gitleaks (full history + tree): no leaks. Negative
 control: with the CSRF/same-origin gate disabled, 5 tests fail. CI not run
 (not pushed).
+```
+
+### T01-05 — Authorization & RBAC
+
+**Status:** `READY_FOR_REVIEW` (implemented and verified on `feat/T01-05-authorization-rbac`; not merged)
+
+**Implementation:**
+
+```text
+Database: migration 0005 - permissions (catalogue: 15 tenant + 10 platform
+  permissions; SELECT only at runtime, also mti_readonly), roles,
+  role_permissions (generated permission_realm = 'tenant' in the FK to the
+  catalogue), membership_roles; composite tenant FKs; RLS (10 policies +
+  permissions_read); triggers roles_protect_system and
+  role_permissions_protect_system (SECURITY INVOKER) keep system roles
+  immutable for every role incl. the owner (D-B2); INSTITUTE_OWNER and ADMIN
+  cloned for existing tenants; no assignments
+Code: app/core/authz (registry, authorize, require_permission,
+  authz.denied); RequestContext permissions / all_campuses / campus_ids;
+  modules' permissions.py (institute, identity, access, tenants, audit,
+  platform_identity); app/modules/access (models, catalog, templates,
+  repository, service, events); platform_identity/roles.py (platform role
+  map); identity session resolution computes effective permissions (union,
+  D-B1 filter); session permissions + roles; app/api/coverage.py (reviewed
+  exemptions public_route / authenticated_only)
+Docs: ADR-0016, authorization.md, security §5, tenancy §3/§4,
+  backend-foundation §15, repository-structure, docs index
+Deferred: platform_user_roles (T01-06), role administration API (T01-08),
+  provisioning clone call (T01-07), entitlements (Phase 15), frontend (T01-09)
+```
+
+**Verification:**
+
+```text
+Backend 644 tests (was 538): 229 PostgreSQL/Redis integration tests (was
+170) with REQUIRE_DATABASE_TESTS=1; without the database and Redis variables
+415 passed, 229 skipped. New: RBAC schema/RLS 21, permission sync 3, session
+permissions 7, authorization API 12, access service 16, registry 23, engine
+11, route coverage 10, authorization boundaries 3. ruff, ruff format, mypy
+(strict), import-linter (2 kept): pass. pnpm check (frontend 783 tests and
+build included): pass. API image build + docker smoke test: pass. Compose
+config: valid. gitleaks (full history): no leaks. Negative controls:
+without the engine's tenant-scope check 1 test fails; without the
+resource-campus check 2 tests fail. CI not run.
 ```
 
 ---
@@ -1973,6 +2017,10 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-10-02 | T01-03 merged to `main` (PR #19, `f602631`) | `COMPLETED` |
 | 2026-10-02 | T01-04 UI contract frozen (`30511bc`) | AUTH-01 … AUTH-08 specification; decisions D04, D19 |
 | 2026-10-02 | T01-04 Tenant Identity & Authentication implemented | `READY_FOR_REVIEW` on `feat/T01-04-identity-authentication`; identity tables, RLS with pre-authentication lookup keys, sessions, CSRF, rate limits, lockout, reset, invitations, email, ADR-0015 |
+| 2026-10-02 | T01-04 merged to `main` (PR #20, `daa6526`) | `COMPLETED` |
+| 2026-10-02 | T01-05 architecture review; decisions D-B1 … D-B4 locked | Campus authorization, system-role mutability, permission identity and baseline, permission sync |
+| 2026-10-02 | T01-05 UI contract frozen | AUTHZ-01, RESOURCE-01/02, NAV-01/02, SESSION-01, CAMPUS-01, DASH-01 (`docs/ui/T01-05-AUTHORIZATION-RBAC-UI.md`) |
+| 2026-10-02 | T01-05 Authorization & RBAC implemented | `READY_FOR_REVIEW` on `feat/T01-05-authorization-rbac`; permission catalogue, tenant roles with database-enforced system-role immutability, effective permissions in the session and context, `authorize`/`require_permission`, route coverage, ADR-0016 |
 
 ---
 
@@ -3252,15 +3300,94 @@ Authorization & RBAC
 
 ---
 
+## 2026-10-02 — T01-05 Authorization & RBAC
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+The authorization backend (ADR-0016; locked decisions D-B1 … D-B4; UI contract frozen in `3372c32`):
+- the T01 permission catalogue, declared in code and migrated to a read-only table;
+- tenant system roles, immutable in the database (RLS and triggers), plus custom roles and multiple roles per membership;
+- effective permissions (union; tenant-wide permissions only with all-campus access) resolved with the session and exposed in it;
+- `authorize` and `require_permission` with 401/403/404 semantics, and route coverage with reviewed exemptions;
+- the role administration service (no escalation, audit), with its API in T01-08.
+
+**Files:**
+
+```text
+Created: backend/app/core/authz/{__init__, registry, engine,
+  dependencies}.py; backend/app/api/coverage.py; backend/app/modules/
+  access/{__init__, models, permissions, catalog, templates, repository,
+  service, events}.py; backend/app/modules/audit/{__init__,
+  permissions}.py; backend/app/modules/platform_identity/{__init__,
+  permissions, roles}.py; backend/app/modules/{identity, institute,
+  tenants}/permissions.py; backend/migrations/versions/
+  0005_authorization_rbac.py; backend/tests/integration/test_{rbac_schema,
+  permission_sync, session_permissions, authorization_api,
+  access_service}.py; backend/tests/unit/test_authz_{registry,
+  engine}.py; backend/tests/security/test_{route_coverage,
+  authorization_boundaries}.py; docs/adr/0016-authorization-rbac.md;
+  docs/architecture/authorization.md
+Changed: backend/app/core/context.py; backend/app/api/realms.py;
+  backend/app/modules/identity/{service, schemas, router}.py;
+  backend/tests/identity_support.py (roles in the test world); docs
+  (security, tenancy, backend-foundation, repository-structure, README);
+  TASKS.md; DEVELOPMENT-STATUS.md
+Unchanged (verified): frontend, frozen UI contract, migrations 0001-0004,
+  database/init, ADR-0001 … ADR-0015, specification documents, marketing
+  site; ACRS
+```
+
+**Database / API / UI:**
+
+```text
+Database: migration 0005 (4 tables, RLS with 11 policies, 2 triggers,
+grants). API: no new routes; the session response gains permissions and
+roles. UI: none (T01-09).
+```
+
+**Tests:**
+
+```text
+Backend 644 passed with the PostgreSQL test database, Redis and
+REQUIRE_DATABASE_TESTS=1 (415 passed + 229 skipped without them). pnpm
+check passed (frontend 783 tests, build). Import contracts: 2 kept.
+gitleaks: no leaks. CI not run.
+```
+
+**Known Issues:**
+
+```text
+Platform role assignment (platform_user_roles) waits for platform users
+(T01-06). Role administration has no API until T01-08, and tenant
+provisioning (T01-07) will call clone_system_roles. Existing members have
+no roles until assigned (migration 0005 assigns none, by design). Feature
+entitlements are not checked (Phase 15). Session resolution runs one more
+query per authenticated request (role permissions).
+```
+
+**Next:**
+
+```text
+Review T01-05 -> push, PR, CI (PostgreSQL + Redis), merge commit -> T01-06
+Platform Identity & MFA
+```
+
+---
+
 # 40. NEXT TASK
 
 The next step is:
 
 ```text
-Review T01-04 (READY_FOR_REVIEW, branch feat/T01-04-identity-authentication):
-push, open the pull request, verify CI on GitHub (PostgreSQL and Redis
-integration tests required) and merge with a merge commit. Then continue
-with T01-05 — Authorization & RBAC.
+Review and merge T01-05 (Authorization & RBAC, READY_FOR_REVIEW on
+feat/T01-05-authorization-rbac), then T01-06 — Platform Identity & MFA.
+T01-04 is COMPLETED (PR #20, merge commit daa6526).
 ```
 
 The completed-task description below is retained for reference.

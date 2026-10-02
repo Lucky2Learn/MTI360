@@ -30,6 +30,7 @@ from app.modules.identity.schemas import (
     LoginRequest,
     PasswordResetConfirmRequest,
     PasswordResetRequest,
+    RoleOut,
     SessionOut,
     TenantSelectionRequest,
     UserOut,
@@ -99,6 +100,8 @@ def session_out(view: SessionView) -> SessionOut:
         all_campuses_allowed=view.all_campuses_allowed,
         campus_selection_required=view.campus_selection_required,
         csrf_token=view.csrf_token,
+        permissions=list(view.permissions),
+        roles=[RoleOut(name=role.name, is_system=role.is_system) for role in view.roles],
     )
 
 

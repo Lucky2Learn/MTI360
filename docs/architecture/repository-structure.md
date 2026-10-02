@@ -72,16 +72,19 @@ MTI360/
 │   ├── alembic.ini                    ✅ T01-01 (owner role; URL from validated settings)
 │   ├── Dockerfile  .dockerignore      ✅ T00-03 api image; migrations + `migrate` command (T01-01); worker later
 │   ├── migrations/                    ✅ Alembic, single linear history; 0001 baseline (T01-01), 0002 audit
-│   │                                  (T01-02), 0003 tenancy core (T01-03)
+│   │                                  (T01-02), 0003 tenancy core (T01-03), 0004 identity (T01-04),
+│   │                                  0005 authorization and RBAC (T01-05)
 │   ├── app/
 │   │   ├── main.py                    ✅ create_app() + GET /health (T00-02); wiring (T01-01)
 │   │   ├── core/                      ✅ config.py (T00-02); ids, context, errors, logging, middleware, schemas,
 │   │   │                              pagination, db/ (T01-01); audit/ (T01-02); tenancy/ (T01-03);
-│   │   │                              net, ratelimit (T01-04);
-│   │   │                              later: security/, authz/, events/, jobs/, storage/, cache/
-│   │   ├── api/                       ✅ realms.py + platform, tenant, student, public, webhooks (T01-01, deny by default)
+│   │   │                              net, ratelimit (T01-04); authz/ (T01-05);
+│   │   │                              later: security/, events/, jobs/, storage/, cache/
+│   │   ├── api/                       ✅ realms.py + platform, tenant, student, public, webhooks (T01-01, deny by default);
+│   │   │                              coverage.py: route authorization coverage (T01-05)
 │   │   ├── modules/                   business domains (§3); tenants (Tenant, lifecycle) and institute (Campus) since
-│   │   │                              T01-03; identity since T01-04; audit lives in core (T01-02)
+│   │   │                              T01-03; identity since T01-04; access (roles), platform_identity (role map) and
+│   │   │                              permissions.py in each module since T01-05; the audit writer lives in core (T01-02)
 │   │   ├── integrations/              email (T01-04); later whatsapp, sms, voice, payments, llm, storage adapters
 │   │   └── workers/                   worker entrypoint, job registry
 │   └── tests/                         ✅ conftest.py, unit/ (T00-02); api/, security/, integration/ (T01-01)

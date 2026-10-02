@@ -1140,7 +1140,7 @@ Support:
 * unauthorized access
 * insufficient permissions
 
-The session states (expired, ended, signed out) are specified for T01-04. Insufficient permissions is designed with authorization (T01-05).
+The session states (expired, ended, signed out) are specified for T01-04. Insufficient permissions is AUTHZ-01 (T01-05).
 
 ---
 
@@ -1168,6 +1168,38 @@ Institute selection after sign-in when the person has access to more than one in
 **Priority:** P0
 
 Mandatory only for a restricted (selected-campus) membership with two or more permitted campuses. All-campus access starts at "All campuses", and a single permitted campus is selected automatically. The options come only from the server. Added by the T01-04 UI specification (decision D04).
+
+---
+
+# 14A. TENANT AUTHORIZATION (T01-05)
+
+Detailed UI/UX specification: [docs/ui/T01-05-AUTHORIZATION-RBAC-UI.md](docs/ui/T01-05-AUTHORIZATION-RBAC-UI.md). Role and permission administration (ADMIN-07) is not part of it (T01-08, Phase 03).
+
+## AUTHZ-01 — Access Denied
+
+**Template:** state inside the tenant shell (ErrorState, permission presentation)
+**Priority:** P0
+
+A signed-in member opens a page their permissions don't include. Rendered at the requested URL; never names a permission, role, institute or campus.
+
+---
+
+## RESOURCE-02 — Not Found (in the shell)
+
+**Template:** state inside the tenant shell (EmptyState)
+**Priority:** P0
+
+One answer for missing, cross-tenant and out-of-scope-campus resources and for unknown or unreleased pages.
+
+---
+
+## Authorization states and modifications (T01-05)
+
+* RESOURCE-01 — Action denied (inline Alert in forms, toast otherwise; state only)
+* NAV-01 / NAV-02 — Permission-aware navigation, desktop and mobile (modification of the shell navigation)
+* SESSION-01 — Roles line in the account menu (modification of UserMenu)
+* CAMPUS-01 — Active campus is a view filter, not an access boundary (behaviour rules)
+* DASH-01 — Dashboard sections hidden without permission; empty-dashboard state (convention)
 
 ---
 

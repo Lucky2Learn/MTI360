@@ -46,6 +46,7 @@ Recommended reading order (CLAUDE.md §2):
 | [0013](adr/0013-audit-events.md) | Audit events: one append-only table, in-transaction and post-request writers | Accepted |
 | [0014](adr/0014-tenancy-core.md) | Tenancy core: tenants, campuses, Row-Level Security and trusted tenant context | Accepted |
 | [0015](adr/0015-identity-authentication.md) | Tenant identity and authentication: pre-authentication lookups and session resolution | Accepted |
+| [0016](adr/0016-authorization-rbac.md) | Authorization and RBAC implementation: registry, system-role immutability, effective permissions, route coverage | Accepted |
 
 ADR format: Status, Context, Decision, Consequences, Alternatives considered. ADRs are immutable once accepted; a change is made by a new ADR that supersedes the old one.
 
@@ -53,6 +54,7 @@ ADR format: Status, Context, Decision, Consequences, Alternatives considered. AD
 
 | Document | Contents |
 |---|---|
+| [T01-05-AUTHORIZATION-RBAC-UI.md](ui/T01-05-AUTHORIZATION-RBAC-UI.md) | Permission-aware navigation and actions, access denied versus not found, session permissions and roles, campus-aware access, permission changes during a session, error matrix (T01-05 design, built in T01-09) |
 | [T01-04-IDENTITY-AUTHENTICATION-UI.md](ui/T01-04-IDENTITY-AUTHENTICATION-UI.md) | Tenant sign-in, password recovery, invitation, institute and campus selection, session states: journeys, routes, screens, states, errors, security UX, responsive, accessibility (T01-04 design, built in T01-09) |
 
 ## Architecture notes
@@ -61,8 +63,9 @@ ADR format: Status, Context, Decision, Consequences, Alternatives considered. AD
 |---|---|
 | [repository-structure.md](architecture/repository-structure.md) | Repository tree, frontend and backend architecture, testing layout, environment files, local infrastructure, Git workflow |
 | [tenancy.md](architecture/tenancy.md) | Tenant identification, enforcement layers, leakage vectors, isolation test gate, database conventions |
-| [backend-foundation.md](architecture/backend-foundation.md) | Backend foundation: layers and import contracts, database access and transactions, migrations, post-commit side effects, realm routers, API conventions, logging, testing, T01-00 decision record (T01-01), audit (T01-02), tenancy core (T01-03), identity and authentication (T01-04) |
+| [backend-foundation.md](architecture/backend-foundation.md) | Backend foundation: layers and import contracts, database access and transactions, migrations, post-commit side effects, realm routers, API conventions, logging, testing, T01-00 decision record (T01-01), audit (T01-02), tenancy core (T01-03), identity and authentication (T01-04), authorization and RBAC (T01-05) |
 | [identity-authentication.md](architecture/identity-authentication.md) | T01-04 decision record, API contract, RLS, deviations and blocklist provenance (decisions D01–D19) |
+| [authorization.md](architecture/authorization.md) | T01-05 permission catalogue, roles, RLS and triggers, request flow, status codes, session fields, route coverage, tests (decisions D-B1 … D-B4) |
 | [security.md](architecture/security.md) | Realm boundaries, authentication, authorization, secrets, files, audit, AI tool authorization |
 | [environments.md](architecture/environments.md) | Environment matrix: configuration sources, per-environment rules, secret handling, `pnpm check:env` (T00-04) |
 | [toolchain.md](architecture/toolchain.md) | Exact runtime and dependency versions, version holds, supply-chain controls, commands, update policy (T00-02) |

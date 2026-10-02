@@ -1,6 +1,6 @@
 # Security Foundation
 
-- **Status:** Approved design (T00-01), refined by ADR-0010 … ADR-0012 (T01-00). Implemented in T01-01: realm guards (deny by default), the error envelope without internals (§8), `extra="forbid"` request schemas and bounded pagination (§8), and redacted structured logging (§13); see [backend-foundation.md](backend-foundation.md). The audit foundation followed in T01-02 (§11) the tenancy core in T01-03 (§1a, [ADR-0014](../adr/0014-tenancy-core.md)) and tenant authentication, CSRF and rate limiting in T01-04 (§2, §3, §6, §7; [ADR-0015](../adr/0015-identity-authentication.md)). RBAC and platform identity follow in T01-05 and T01-06.
+- **Status:** Approved design (T00-01), refined by ADR-0010 … ADR-0012 (T01-00). Implemented in T01-01: realm guards (deny by default), the error envelope without internals (§8), `extra="forbid"` request schemas and bounded pagination (§8), and redacted structured logging (§13); see [backend-foundation.md](backend-foundation.md). The audit foundation followed in T01-02 (§11) the tenancy core in T01-03 (§1a, [ADR-0014](../adr/0014-tenancy-core.md)) and tenant authentication, CSRF and rate limiting in T01-04 (§2, §3, §6, §7; [ADR-0015](../adr/0015-identity-authentication.md)) and authorization and RBAC in T01-05 (§5; [ADR-0016](../adr/0016-authorization-rbac.md), [authorization.md](authorization.md)). Platform identity follows in T01-06.
 - **Decisions:** [ADR-0004](../adr/0004-tenant-isolation.md), [ADR-0005](../adr/0005-identity-and-session-realms.md), [ADR-0006](../adr/0006-api-prefixes.md)
 - **Related:** CLAUDE.md §5–§11, §42–§51, §65, §94; ARCHITECTURE.md §48–§52; PLATFORM-ADMIN.md §15–§16, §65–§67, §93
 
@@ -25,7 +25,7 @@ A platform principal never holds a tenant role; a tenant principal can never hol
 
 ## 1a. Tenant isolation (T01-03)
 
-- **Implemented:** layers 2–5 of [tenancy.md §4](tenancy.md#4-enforcement-layers) ([ADR-0014](../adr/0014-tenancy-core.md)). The authorization layer follows in T01-05.
+- **Implemented:** layers 2–5 of [tenancy.md §4](tenancy.md#4-enforcement-layers) ([ADR-0014](../adr/0014-tenancy-core.md)). Layer 1, the authorization dependency, followed in T01-05 ([authorization.md](authorization.md)).
 - **Trusted tenant.** The tenant comes only from the server-side `RequestContext`, published by `context_transaction` with `SET LOCAL` and recorded in `session.info`. It never comes from a request body, query, header or frontend state.
 - **Defence in depth.** Three independent layers each prevent cross-tenant access, and the tests prove each one alone:
   - the tenant-scoped repository (`id AND tenant_id`; another tenant's row is a 404);
@@ -66,6 +66,13 @@ A platform principal never holds a tenant role; a tenant principal can never hol
 - Single `authorize(context, permission, resource?)` covering realm, tenant status, feature entitlement, permission, campus scope and resource ownership.
 - Applied as FastAPI dependencies on every router/handler.
 - `PermissionGate` in the UI is **cosmetic only**; the API independently rejects unauthorized requests.
+- **Implemented (T01-05, [ADR-0016](../adr/0016-authorization-rbac.md)):**
+  - the T01 permission baseline in the modules' `permissions.py`, migrated to a read-only `permissions` table (D-B3, D-B4);
+  - tenant system roles `INSTITUTE_OWNER` and `ADMIN`, immutable in the database by RLS and triggers (D-B2), and custom roles;
+  - effective permissions (union of roles; tenant-wide permissions only with all-campus access, D-B1) resolved with the session;
+  - `authorize()` and `require_permission()` (401 / 403 / 404 without leakage), and the route-coverage meta-test with reviewed exemptions;
+  - no escalation in role administration.
+  - **Not yet:** feature entitlements (Phase 15) and platform role assignment (T01-06).
 
 ## 6. CSRF and browser security
 
