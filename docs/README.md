@@ -53,6 +53,7 @@ ADR format: Status, Context, Decision, Consequences, Alternatives considered. AD
 
 | Document | Contents |
 |---|---|
+| [T01-05-AUTHORIZATION-RBAC-UI.md](ui/T01-05-AUTHORIZATION-RBAC-UI.md) | Permission-aware navigation and actions, access denied versus not found, session permissions and roles, campus-aware access, permission changes during a session, error matrix (T01-05 design, built in T01-09) |
 | [T01-04-IDENTITY-AUTHENTICATION-UI.md](ui/T01-04-IDENTITY-AUTHENTICATION-UI.md) | Tenant sign-in, password recovery, invitation, institute and campus selection, session states: journeys, routes, screens, states, errors, security UX, responsive, accessibility (T01-04 design, built in T01-09) |
 
 ## Architecture notes

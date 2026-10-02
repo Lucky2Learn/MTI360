@@ -108,7 +108,7 @@ M0 — Foundation Ready: reached 2026-09-30 (Phase 00 complete)
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-09-30:** Phase 00 is `COMPLETED`: T00-01 … T00-10A are merged to `main` (T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12, T00-10A via PR #13). Phase 01 is `IN_PROGRESS`: the T01-00 architecture review is approved (D1–D22 with the D10 and D14 amendments) T01-01 (Backend, Database & API Foundation) is `COMPLETED` (PR #14), and T01-02 (Audit Foundation) is `COMPLETED` (PR #16). T01-03 (Tenancy Core) is `COMPLETED` (PR #19). T01-04 (Tenant Identity & Authentication) is `READY_FOR_REVIEW` (branch `feat/T01-04-identity-authentication`, not pushed). All are infrastructure only: database access, migrations, request context, error envelope, logging, realm routers, the append-only audit table with its writers, the `tenants` and `campuses` tables with their isolation layers, and the tenant authentication backend (no screens). No business tables and no product functionality exist yet, so product implementation completion remains 0%.
+> **2026-09-30:** Phase 00 is `COMPLETED`: T00-01 … T00-10A are merged to `main` (T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12, T00-10A via PR #13). Phase 01 is `IN_PROGRESS`: the T01-00 architecture review is approved (D1–D22 with the D10 and D14 amendments) T01-01 (Backend, Database & API Foundation) is `COMPLETED` (PR #14), and T01-02 (Audit Foundation) is `COMPLETED` (PR #16). T01-03 (Tenancy Core) is `COMPLETED` (PR #19). T01-04 (Tenant Identity & Authentication) is `COMPLETED` (PR #20). The T01-05 UI contract is frozen; T01-05 implementation is next. All are infrastructure only: database access, migrations, request context, error envelope, logging, realm routers, the append-only audit table with its writers, the `tenants` and `campuses` tables with their isolation layers, and the tenant authentication backend (no screens). No business tables and no product functionality exist yet, so product implementation completion remains 0%.
 
 ---
 
@@ -804,7 +804,7 @@ IN_PROGRESS
 ## Phase Completion
 
 ```text
-4 / 11 tasks completed (T01-00 … T01-03 COMPLETED; T01-04 READY_FOR_REVIEW)
+5 / 11 tasks completed (T01-00 … T01-04 COMPLETED)
 ```
 
 Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TASKS.md, Phase 01).
@@ -815,7 +815,7 @@ Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TAS
 | T01-01 | Backend, Database & API Foundation | `COMPLETED` (PR #14, `42bc8b1`) |
 | T01-02 | Audit Foundation | `COMPLETED` (PR #16, `91d0180`) |
 | T01-03 | Tenancy Core | `COMPLETED` (PR #19, `f602631`) |
-| T01-04 | Tenant Identity & Authentication | `READY_FOR_REVIEW` (branch `feat/T01-04-identity-authentication`; not pushed) |
+| T01-04 | Tenant Identity & Authentication | `COMPLETED` (PR #20, `daa6526`) |
 | T01-05 | Authorization & RBAC | `NOT_STARTED` |
 | T01-06 | Platform Identity & MFA | `NOT_STARTED` |
 | T01-07 | Platform Administration Foundation (API) | `NOT_STARTED` |
@@ -952,7 +952,7 @@ run (not pushed).
 
 ### T01-04 — Tenant Identity & Authentication
 
-**Status:** `READY_FOR_REVIEW` (branch `feat/T01-04-identity-authentication`, based on the frozen UI contract `30511bc` on `main` at `f602631`; not pushed)
+**Status:** `COMPLETED` (merged to `main` by PR #20, merge commit `daa6526`)
 
 **Implementation:**
 
@@ -1973,6 +1973,9 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-10-02 | T01-03 merged to `main` (PR #19, `f602631`) | `COMPLETED` |
 | 2026-10-02 | T01-04 UI contract frozen (`30511bc`) | AUTH-01 … AUTH-08 specification; decisions D04, D19 |
 | 2026-10-02 | T01-04 Tenant Identity & Authentication implemented | `READY_FOR_REVIEW` on `feat/T01-04-identity-authentication`; identity tables, RLS with pre-authentication lookup keys, sessions, CSRF, rate limits, lockout, reset, invitations, email, ADR-0015 |
+| 2026-10-02 | T01-04 merged to `main` (PR #20, `daa6526`) | `COMPLETED` |
+| 2026-10-02 | T01-05 architecture review; decisions D-B1 … D-B4 locked | Campus authorization, system-role mutability, permission identity and baseline, permission sync |
+| 2026-10-02 | T01-05 UI contract frozen | AUTHZ-01, RESOURCE-01/02, NAV-01/02, SESSION-01, CAMPUS-01, DASH-01 (`docs/ui/T01-05-AUTHORIZATION-RBAC-UI.md`) |
 
 ---
 
@@ -3257,10 +3260,10 @@ Authorization & RBAC
 The next step is:
 
 ```text
-Review T01-04 (READY_FOR_REVIEW, branch feat/T01-04-identity-authentication):
-push, open the pull request, verify CI on GitHub (PostgreSQL and Redis
-integration tests required) and merge with a merge commit. Then continue
-with T01-05 — Authorization & RBAC.
+T01-05 — Authorization & RBAC implementation, against the locked
+decisions D-B1 … D-B4 and the frozen UI contract
+docs/ui/T01-05-AUTHORIZATION-RBAC-UI.md. T01-04 is COMPLETED (PR #20,
+merge commit daa6526).
 ```
 
 The completed-task description below is retained for reference.

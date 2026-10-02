@@ -670,7 +670,7 @@ Every slice is delivered as five commits:
 | T01-01 | Backend, Database & API Foundation | COMPLETED |
 | T01-02 | Audit Foundation | COMPLETED |
 | T01-03 | Tenancy Core (Tenant, Campus, isolation layers) | COMPLETED |
-| T01-04 | Tenant Identity & Authentication | READY_FOR_REVIEW |
+| T01-04 | Tenant Identity & Authentication | COMPLETED |
 | T01-05 | Authorization & RBAC | NOT_STARTED |
 | T01-06 | Platform Identity & MFA | NOT_STARTED |
 | T01-07 | Platform Administration Foundation (API) | NOT_STARTED |
@@ -855,7 +855,7 @@ Contract: locked decisions D04 (campus selection) and D19 (invitation preview) i
 
 **Priority:** P0
 
-**Status:** READY_FOR_REVIEW (branch `feat/T01-04-identity-authentication`, based on the frozen UI contract `30511bc` on `main` at `f602631`; not pushed).
+**Status:** COMPLETED (merged to `main` by PR #20, merge commit `daa6526`).
 
 **Implemented** (decisions D01–D19, ADR-0015, `docs/architecture/identity-authentication.md`):
 
@@ -879,6 +879,8 @@ Contract: locked decisions D04 (campus selection) and D19 (invitation preview) i
 ## T01-05 — Authorization & RBAC
 
 Permission registry, tenant roles and templates, `role_permissions` with the realm foreign key, membership roles, `authorize()` and `require_permission`, and the route-coverage meta-test extended to permissions (ADR-0011).
+
+Architecture review: decisions D-B1 (campus authorization semantics), D-B2 (system roles immutable to tenants), D-B3 (permission identity `(realm, code)` and the T01 baseline) and D-B4 (migration-based permission sync) are locked. UI contract: `docs/ui/T01-05-AUTHORIZATION-RBAC-UI.md` (AUTHZ-01, RESOURCE-01/02, NAV-01/02, SESSION-01, CAMPUS-01, DASH-01; built in T01-09).
 
 Must support:
 
