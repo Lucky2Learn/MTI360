@@ -1,4 +1,4 @@
-"""Shared T01-04 test data: a two-institute world built through the system realm.
+"""Shared T01-04/T01-05 test data: a two-institute world built through the system realm.
 
 Everything is created with ``system_context`` as the application role (the
 system realm is the only one allowed to create identities), with unique names
@@ -29,6 +29,8 @@ from app.core.ratelimit import RedisRateLimiter
 from app.core.tenancy import system_context
 from app.integrations.email import FakeEmailSender
 from app.main import create_app
+from app.modules.access.models import MembershipRole, Role, RolePermission
+from app.modules.access.service import clone_system_roles
 from app.modules.identity.models import (
     MembershipCampus,
     PasswordResetToken,
@@ -65,6 +67,8 @@ class World:
     users: dict[str, uuid.UUID] = field(default_factory=dict)
     emails: dict[str, str] = field(default_factory=dict)
     memberships: dict[str, uuid.UUID] = field(default_factory=dict)
+    roles: dict[str, uuid.UUID] = field(default_factory=dict)
+    """``owner_a``, ``admin_a``, ``owner_b``, ``admin_b`` and custom roles by key."""
 
     def email(self, name: str) -> str:
         return self.emails[name]
@@ -145,14 +149,69 @@ async def add_membership(
     return membership_id
 
 
+async def add_role(
+    factory: async_sessionmaker[AsyncSession],
+    world: World,
+    key: str,
+    *,
+    tenant_id: uuid.UUID,
+    permissions: tuple[str, ...],
+    name: str | None = None,
+) -> uuid.UUID:
+    """A custom role (system realm) with explicit permissions."""
+    role_id = uuid.uuid7()
+    async with system_context(factory, tenant_id=tenant_id) as db:
+        await db.execute(
+            insert(_table(Role)).values(
+                id=role_id,
+                tenant_id=tenant_id,
+                name=name or f"{key.replace('_', ' ').title()} {world.suffix}",
+                is_system=False,
+                version=1,
+            )
+        )
+        for code in permissions:
+            await db.execute(
+                insert(_table(RolePermission)).values(
+                    id=uuid.uuid7(), tenant_id=tenant_id, role_id=role_id, permission_code=code
+                )
+            )
+    world.roles[key] = role_id
+    return role_id
+
+
+async def assign_role(
+    factory: async_sessionmaker[AsyncSession], world: World, membership: str, role: str
+) -> None:
+    async with system_context(factory) as db:
+        tenant_id = await db.scalar(
+            select(_table(TenantMembership).c.tenant_id).where(
+                _table(TenantMembership).c.id == world.memberships[membership]
+            )
+        )
+    async with system_context(factory, tenant_id=tenant_id) as db:
+        await db.execute(
+            insert(_table(MembershipRole)).values(
+                id=uuid.uuid7(),
+                tenant_id=tenant_id,
+                membership_id=world.memberships[membership],
+                role_id=world.roles[role],
+            )
+        )
+
+
 async def build_world(factory: async_sessionmaker[AsyncSession]) -> World:
     """Institutes A (two campuses) and B (one campus) and these people:
 
-    * ``alice`` — A only, all campuses;
-    * ``bob`` — A (selected: A1) and B (all campuses);
-    * ``carol`` — B only;
+    * ``alice`` — A only, all campuses; Institute owner;
+    * ``bob`` — A (selected: A1; Administrator) and B (all campuses;
+      Administrator);
+    * ``carol`` — B only; Institute owner;
     * ``dave`` — A, selected campuses A1 and A2 (campus choice required);
+      custom role ``coordinator_a`` (campus.read, campus.update, member.read);
     * ``erin`` — no membership.
+
+    Both institutes have their system roles (``owner_*``, ``admin_*``).
     """
     suffix = uuid.uuid7().hex[-8:]
     async with system_context(factory) as db:
@@ -169,6 +228,18 @@ async def build_world(factory: async_sessionmaker[AsyncSession]) -> World:
                 campuses[code] = campus.id
     world = World(
         suffix, tenant_a.id, tenant_b.id, campuses["MUM"], campuses["PUNE"], campuses["GOA"]
+    )
+    for tenant, label in ((tenant_a, "a"), (tenant_b, "b")):
+        async with system_context(factory, tenant_id=tenant.id) as db:
+            system_roles = await clone_system_roles(db, tenant.id)
+        world.roles[f"owner_{label}"] = system_roles["INSTITUTE_OWNER"]
+        world.roles[f"admin_{label}"] = system_roles["ADMIN"]
+    await add_role(
+        factory,
+        world,
+        "coordinator_a",
+        tenant_id=world.tenant_a,
+        permissions=("campus.read", "campus.update", "member.read"),
     )
     async with system_context(factory) as db:
         for name in ("alice", "bob", "carol", "dave", "erin"):
@@ -194,6 +265,14 @@ async def build_world(factory: async_sessionmaker[AsyncSession]) -> World:
         scope="SELECTED",
         campuses=(world.campus_a1, world.campus_a2),
     )
+    for membership, role in (
+        ("alice_a", "owner_a"),
+        ("bob_a", "admin_a"),
+        ("bob_b", "admin_b"),
+        ("carol_b", "owner_b"),
+        ("dave_a", "coordinator_a"),
+    ):
+        await assign_role(factory, world, membership, role)
     return world
 
 

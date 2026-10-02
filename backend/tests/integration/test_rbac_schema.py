@@ -161,25 +161,18 @@ async def _role(
     tenant: uuid.UUID,
     name: str,
     *,
-    template: str | None = None,
     codes: tuple[str, ...] = ("campus.read",),
 ) -> uuid.UUID:
-    """A role with permissions, created by the system realm."""
+    """A custom role with permissions, created by the system realm."""
     role_id = uuid.uuid7()
     context = RequestContext(realm=Realm.SYSTEM, request_id=uuid.uuid7(), tenant_id=tenant)
     async with context_transaction(factory, context) as db:
         await db.execute(
             text(
-                "INSERT INTO roles (id, tenant_id, name, template_code, is_system, version) "
-                "VALUES (:id, :tenant, :name, :template, :system, 1)"
+                "INSERT INTO roles (id, tenant_id, name, is_system, version) "
+                "VALUES (:id, :tenant, :name, false, 1)"
             ),
-            {
-                "id": role_id,
-                "tenant": tenant,
-                "name": name,
-                "template": template,
-                "system": template is not None,
-            },
+            {"id": role_id, "tenant": tenant, "name": name},
         )
         for code in codes:
             await db.execute(
@@ -359,7 +352,7 @@ async def test_a_tenant_context_cannot_touch_system_roles(
     app_db: async_sessionmaker[AsyncSession], world: World
 ) -> None:
     tenant = world.tenant_a
-    owner = await _role(app_db, tenant, f"Owner {world.suffix}", template="INSTITUTE_OWNER")
+    owner = world.roles["owner_a"]  # cloned from the template by the test world
     params: dict[str, Any] = {"tenant": tenant, "realm": Realm.TENANT, "role": owner}
     # Hidden from UPDATE and DELETE by the policies: nothing changes.
     assert await _run(app_db, "UPDATE roles SET name = 'Captain' WHERE id = :role", **params) == 0
@@ -379,7 +372,7 @@ async def test_a_tenant_context_cannot_touch_system_roles(
         _run(app_db, create_system, id=uuid.uuid7(), tenant=tenant)
     )
     names = await _run(app_db, "SELECT name FROM roles WHERE id = :role", **params)
-    assert names == {f"Owner {world.suffix}"}
+    assert names == {"Institute owner"}
 
 
 @pytest.mark.parametrize(
@@ -398,7 +391,7 @@ async def test_the_database_rejects_system_role_changes_for_everyone(
     world: World,
     sql: str,
 ) -> None:
-    role = await _role(app_db, world.tenant_a, f"Admin {uuid.uuid7().hex}", template="ADMIN")
+    role = world.roles["admin_a"]
     # The system realm passes RLS but the trigger refuses ...
     system_error = await _error(_run(app_db, sql, realm=Realm.SYSTEM, role=role))
     # ... and so it does for the table owner, who bypasses RLS.

@@ -44,6 +44,7 @@ from app.core.ratelimit import (
     RateLimitExceededError,
 )
 from app.integrations.email import EmailMessage, EmailSender
+from app.modules.access.service import NO_ACCESS, MembershipAccess, RoleSummary, membership_access
 from app.modules.identity import events
 from app.modules.identity import repository as repo
 from app.modules.identity.domain import (
@@ -138,6 +139,10 @@ class SessionView:
     all_campuses_allowed: bool
     campus_selection_required: bool
     csrf_token: str
+    # Authorization in the active institute (T01-05): sorted effective
+    # permission codes and the member's roles; empty without an institute.
+    permissions: tuple[str, ...] = ()
+    roles: tuple[RoleSummary, ...] = ()
 
     @property
     def status(self) -> LoginStatus:
@@ -150,13 +155,22 @@ class SessionView:
 
 @dataclass(frozen=True, slots=True)
 class ResolvedSession:
-    """A valid session, re-validated for this request (guard → handlers)."""
+    """A valid session, re-validated for this request (guard → handlers).
+
+    The authorization fields (T01-05) are resolved with it, server-side: the
+    effective permissions in the active tenant, whether the member has
+    all-campus access (``campus_scope`` ``ALL``) and the permitted campuses.
+    The active campus is a view filter and plays no part in them (D-B1).
+    """
 
     session_id: uuid.UUID
     user_id: uuid.UUID
     tenant_id: uuid.UUID | None
     campus_id: uuid.UUID | None
     campus_selection_required: bool
+    permissions: frozenset[str] = frozenset()
+    all_campuses: bool = False
+    campus_ids: frozenset[uuid.UUID] = frozenset()
 
     @property
     def ready(self) -> bool:
@@ -271,6 +285,20 @@ class IdentityService:
             return None
         return _CampusResolution(membership, options, state)
 
+    async def _access(
+        self, db: AsyncSession, resolution: _CampusResolution | None
+    ) -> MembershipAccess:
+        """Effective permissions and roles in the resolution's tenant (T01-05)."""
+        if resolution is None:
+            return NO_ACCESS
+        membership = resolution.membership
+        return await membership_access(
+            db,
+            tenant_id=membership.tenant_id,
+            membership_id=membership.membership_id,
+            all_campuses=membership.campus_scope is CampusScope.ALL,
+        )
+
     async def _view(
         self,
         db: AsyncSession,
@@ -298,6 +326,7 @@ class IdentityService:
             active_campus = next((c for c in options if c.id == state.active_campus_id), None)
             all_allowed = state.all_campuses_allowed
             selection_required = state.selection_required
+        access = await self._access(db, resolution)
         return SessionView(
             display_name=display_name,
             email=email,
@@ -308,6 +337,8 @@ class IdentityService:
             all_campuses_allowed=all_allowed,
             campus_selection_required=selection_required,
             csrf_token=self.csrf_token(session_id),
+            permissions=access.sorted_permissions,
+            roles=access.roles,
         )
 
     async def _issue(
@@ -494,6 +525,7 @@ class IdentityService:
             if identity is None or identity[2] is not UserStatus.ACTIVE:
                 raise AuthenticationRequiredError()
             tenant_id, campus_id, required = row.active_tenant_id, row.active_campus_id, False
+            resolution = None
             if tenant_id is not None:
                 memberships = await repo.memberships_of_user(db, row.user_id)
                 resolution = await self._campus_resolution(db, memberships, tenant_id, campus_id)
@@ -502,12 +534,23 @@ class IdentityService:
                 else:
                     campus_id = resolution.state.active_campus_id
                     required = resolution.state.selection_required
+            access = await self._access(db, resolution)
             if (tenant_id, campus_id) != (row.active_tenant_id, row.active_campus_id):
                 await repo.set_session_context(db, row.id, tenant_id=tenant_id, campus_id=campus_id)
             if now - row.last_seen_at >= TOUCH_INTERVAL:
                 idle = min(now + self.config.idle_timeout, row.absolute_expires_at)
                 await repo.touch_session(db, row.id, now=now, idle_expires_at=idle)
-        return ResolvedSession(row.id, row.user_id, tenant_id, campus_id, required)
+        return ResolvedSession(
+            row.id,
+            row.user_id,
+            tenant_id,
+            campus_id,
+            required,
+            permissions=access.permissions,
+            all_campuses=resolution is not None
+            and resolution.membership.campus_scope is CampusScope.ALL,
+            campus_ids=frozenset(c.id for c in resolution.options) if resolution else frozenset(),
+        )
 
     async def view(self, db: AsyncSession, resolved: ResolvedSession) -> SessionView:
         """The session read (``GET /session``) in the request's own transaction."""

@@ -72,6 +72,13 @@ class CampusOut(ResponseModel):
     code: str
 
 
+class RoleOut(ResponseModel):
+    """A role for display (T01-05 UI contract §8.5): no ID."""
+
+    name: str
+    is_system: bool
+
+
 class SessionOut(ResponseModel):
     status: Literal["ready", "institute_selection_required", "campus_selection_required"]
     user: UserOut
@@ -82,6 +89,9 @@ class SessionOut(ResponseModel):
     all_campuses_allowed: bool
     campus_selection_required: bool
     csrf_token: str
+    permissions: list[str]
+    """Sorted permission codes in the active institute (T01-05); empty without one."""
+    roles: list[RoleOut]
 
 
 class InvitationPreviewOut(ResponseModel):
