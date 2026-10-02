@@ -2021,6 +2021,7 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-10-02 | T01-05 architecture review; decisions D-B1 … D-B4 locked | Campus authorization, system-role mutability, permission identity and baseline, permission sync |
 | 2026-10-02 | T01-05 UI contract frozen | AUTHZ-01, RESOURCE-01/02, NAV-01/02, SESSION-01, CAMPUS-01, DASH-01 (`docs/ui/T01-05-AUTHORIZATION-RBAC-UI.md`) |
 | 2026-10-02 | T01-05 Authorization & RBAC implemented | `READY_FOR_REVIEW` on `feat/T01-05-authorization-rbac`; permission catalogue, tenant roles with database-enforced system-role immutability, effective permissions in the session and context, `authorize`/`require_permission`, route coverage, ADR-0016 |
+| 2026-10-02 | T01-06 architecture review; decisions D6-1 … D6-5 locked | First platform administrator CLI, platform password recovery, lost-MFA reset, TOTP + recovery codes only, step-up permissions and 10-minute window (`docs/architecture/platform-identity.md`) |
 
 ---
 
@@ -3385,9 +3386,9 @@ Platform Identity & MFA
 The next step is:
 
 ```text
-Review and merge T01-05 (Authorization & RBAC, READY_FOR_REVIEW on
-feat/T01-05-authorization-rbac), then T01-06 — Platform Identity & MFA.
-T01-04 is COMPLETED (PR #20, merge commit daa6526).
+T01-06 — Platform Identity & MFA implementation, against the locked
+decisions D6-1 … D6-5 (docs/architecture/platform-identity.md). T01-05 was
+merged to main by PR #21 (merge commit ee956e5).
 ```
 
 The completed-task description below is retained for reference.

@@ -65,6 +65,7 @@ ADR format: Status, Context, Decision, Consequences, Alternatives considered. AD
 | [tenancy.md](architecture/tenancy.md) | Tenant identification, enforcement layers, leakage vectors, isolation test gate, database conventions |
 | [backend-foundation.md](architecture/backend-foundation.md) | Backend foundation: layers and import contracts, database access and transactions, migrations, post-commit side effects, realm routers, API conventions, logging, testing, T01-00 decision record (T01-01), audit (T01-02), tenancy core (T01-03), identity and authentication (T01-04), authorization and RBAC (T01-05) |
 | [identity-authentication.md](architecture/identity-authentication.md) | T01-04 decision record, API contract, RLS, deviations and blocklist provenance (decisions D01–D19) |
+| [platform-identity.md](architecture/platform-identity.md) | T01-06 locked decisions D6-1 … D6-5 (first administrator, password recovery, lost MFA device, MFA mechanisms, step-up) and architecture constraints; implementation pending |
 | [authorization.md](architecture/authorization.md) | T01-05 permission catalogue, roles, RLS and triggers, request flow, status codes, session fields, route coverage, tests (decisions D-B1 … D-B4) |
 | [security.md](architecture/security.md) | Realm boundaries, authentication, authorization, secrets, files, audit, AI tool authorization |
 | [environments.md](architecture/environments.md) | Environment matrix: configuration sources, per-environment rules, secret handling, `pnpm check:env` (T00-04) |
