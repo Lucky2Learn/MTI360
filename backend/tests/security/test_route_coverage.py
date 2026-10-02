@@ -35,6 +35,23 @@ T01_04_ROUTES = {
     ("PUT", "/api/v1/session/tenant"),
     ("PUT", "/api/v1/session/campus"),
 }
+T01_06_PLATFORM_PUBLIC = {
+    ("POST", "/api/v1/platform/auth/login"),
+    ("POST", "/api/v1/platform/auth/logout"),
+    ("POST", "/api/v1/platform/auth/password-reset"),
+    ("POST", "/api/v1/platform/auth/password-reset/confirm"),
+}
+T01_06_PLATFORM_MFA_PENDING = {
+    ("POST", "/api/v1/platform/auth/mfa/enrolment"),
+    ("POST", "/api/v1/platform/auth/mfa/enrolment/confirm"),
+    ("POST", "/api/v1/platform/auth/mfa/verify"),
+    ("POST", "/api/v1/platform/auth/mfa/recovery"),
+}
+T01_06_PLATFORM_SESSION = {
+    ("GET", "/api/v1/platform/session"),
+    ("POST", "/api/v1/platform/session/step-up"),
+    ("POST", "/api/v1/platform/session/mfa/recovery-codes"),
+}
 
 
 @pytest.fixture
@@ -56,16 +73,42 @@ def test_every_route_of_the_application_is_covered(app: FastAPI) -> None:
     assert coverage_violations(app) == []
 
 
-def test_the_reviewed_exemptions_are_the_t01_04_routes_with_reasons() -> None:
-    assert set(REVIEWED_EXEMPTIONS) == T01_04_ROUTES
+def test_the_reviewed_exemptions_are_the_authentication_routes_with_reasons() -> None:
+    assert set(REVIEWED_EXEMPTIONS) == (
+        T01_04_ROUTES
+        | T01_06_PLATFORM_PUBLIC
+        | T01_06_PLATFORM_MFA_PENDING
+        | T01_06_PLATFORM_SESSION
+    )
     for exemption in REVIEWED_EXEMPTIONS.values():
         assert len(exemption.reason) >= 20
-    kinds = {key[1]: value.kind for key, value in REVIEWED_EXEMPTIONS.items()}
-    assert {p for p, k in kinds.items() if k is Exemption.AUTHENTICATED_ONLY} == {
-        "/api/v1/session",
-        "/api/v1/session/tenant",
-        "/api/v1/session/campus",
-    }
+
+    def kind(kind: Exemption) -> set[tuple[str, str]]:
+        return {key for key, value in REVIEWED_EXEMPTIONS.items() if value.kind is kind}
+
+    assert (
+        kind(Exemption.AUTHENTICATED_ONLY)
+        == {
+            ("GET", "/api/v1/session"),
+            ("PUT", "/api/v1/session/tenant"),
+            ("PUT", "/api/v1/session/campus"),
+        }
+        | T01_06_PLATFORM_SESSION
+    )
+    assert kind(Exemption.MFA_PENDING) == T01_06_PLATFORM_MFA_PENDING
+
+
+def test_mfa_pending_exemptions_need_an_mfa_pending_route(app: FastAPI) -> None:
+    _mount(app, Access.AUTHENTICATED, path="/probe/pending")
+    exemptions = MappingProxyType(
+        {
+            **REVIEWED_EXEMPTIONS,
+            ("GET", "/api/v1/probe/pending"): ReviewedExemption(Exemption.MFA_PENDING, "test"),
+        }
+    )
+    assert coverage_violations(app, exemptions) == [
+        "GET /api/v1/probe/pending: mfa_pending on a authenticated route"
+    ]
 
 
 def test_an_accidentally_unprotected_route_fails(app: FastAPI) -> None:

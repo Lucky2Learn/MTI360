@@ -29,6 +29,13 @@ from app.core.ratelimit import RedisRateLimiter
 from app.integrations.email import SmtpEmailSender
 from app.modules.identity.passwords import PasswordHasher
 from app.modules.identity.service import IdentityConfig, IdentityService
+from app.modules.platform_identity.service import (
+    RATE_LIMIT_NAMESPACE as PLATFORM_RATE_LIMIT_NAMESPACE,
+)
+from app.modules.platform_identity.service import (
+    PlatformIdentityConfig,
+    PlatformIdentityService,
+)
 
 
 class HealthResponse(BaseModel):
@@ -46,6 +53,17 @@ def identity_config(settings: Settings) -> IdentityConfig:
         absolute_timeout=timedelta(minutes=settings.session_absolute_timeout_minutes),
         app_base_url=settings.app_base_url,
         allowed_origins=frozenset({*settings.cors_allowed_origins, settings.app_base_url}),
+    )
+
+
+def platform_identity_config(settings: Settings) -> PlatformIdentityConfig:
+    """Platform authentication settings (T01-06): shorter sessions (ADR-0005)."""
+    return PlatformIdentityConfig(
+        session_secret=settings.session_secret.get_secret_value(),
+        csrf_secret=settings.csrf_secret.get_secret_value(),
+        idle_timeout=timedelta(minutes=settings.platform_session_idle_timeout_minutes),
+        absolute_timeout=timedelta(minutes=settings.platform_session_absolute_timeout_minutes),
+        app_base_url=settings.app_base_url,
     )
 
 
@@ -67,29 +85,44 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     sessionmaker = create_sessionmaker(engine)
     # Neither client opens a connection before it is used (/health stays dependency-free).
     rate_limiter = RedisRateLimiter.from_url(settings.redis_url.get_secret_value())
+    hasher = PasswordHasher(
+        time_cost=settings.argon2_time_cost,
+        memory_cost_kib=settings.argon2_memory_cost_kib,
+        parallelism=settings.argon2_parallelism,
+    )
+    email_sender = SmtpEmailSender(
+        host=settings.smtp_host,
+        port=settings.smtp_port,
+        username=settings.smtp_username,
+        password=settings.smtp_password.get_secret_value(),
+        from_address=settings.email_from_address,
+        timeout_seconds=settings.smtp_timeout_seconds,
+    )
+    keyring = settings.encryption_keyring()
     identity = IdentityService(
         factory=sessionmaker,
         config=identity_config(settings),
-        hasher=PasswordHasher(
-            time_cost=settings.argon2_time_cost,
-            memory_cost_kib=settings.argon2_memory_cost_kib,
-            parallelism=settings.argon2_parallelism,
-        ),
+        hasher=hasher,
         rate_limiter=rate_limiter,
-        email_sender=SmtpEmailSender(
-            host=settings.smtp_host,
-            port=settings.smtp_port,
-            username=settings.smtp_username,
-            password=settings.smtp_password.get_secret_value(),
-            from_address=settings.email_from_address,
-            timeout_seconds=settings.smtp_timeout_seconds,
+        email_sender=email_sender,
+    )
+    # A separate rate-limit namespace for the platform realm (T01-06).
+    platform_identity = PlatformIdentityService(
+        factory=sessionmaker,
+        config=platform_identity_config(settings),
+        hasher=hasher,
+        rate_limiter=RedisRateLimiter.from_url(
+            settings.redis_url.get_secret_value(), namespace=PLATFORM_RATE_LIMIT_NAMESPACE
         ),
+        email_sender=email_sender,
+        keyring=keyring,
     )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         yield
         await app.state.identity.rate_limiter.close()
+        await app.state.platform_identity.rate_limiter.close()
         await engine.dispose()
 
     app = FastAPI(
@@ -106,6 +139,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.engine = engine
     app.state.sessionmaker = sessionmaker
     app.state.identity = identity
+    app.state.platform_identity = platform_identity
 
     install_exception_handlers(app)
     app.add_middleware(RequestContextMiddleware)
