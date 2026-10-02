@@ -108,7 +108,7 @@ M0 — Foundation Ready: reached 2026-09-30 (Phase 00 complete)
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-09-30:** Phase 00 is `COMPLETED`: T00-01 … T00-10A are merged to `main` (T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12, T00-10A via PR #13). Phase 01 is `IN_PROGRESS`: the T01-00 architecture review is approved (D1–D22 with the D10 and D14 amendments) T01-01 (Backend, Database & API Foundation) is `COMPLETED` (PR #14), and T01-02 (Audit Foundation) is `READY_FOR_REVIEW`. Both are infrastructure only: database access, migrations, request context, error envelope, logging, deny-by-default realm routers and the append-only audit table with its writers. No authentication, tenancy, user or business tables and no product functionality exist yet, so product implementation completion remains 0%.
+> **2026-09-30:** Phase 00 is `COMPLETED`: T00-01 … T00-10A are merged to `main` (T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12, T00-10A via PR #13). Phase 01 is `IN_PROGRESS`: the T01-00 architecture review is approved (D1–D22 with the D10 and D14 amendments) T01-01 (Backend, Database & API Foundation) is `COMPLETED` (PR #14), and T01-02 (Audit Foundation) is `COMPLETED` (PR #16). T01-03 (Tenancy Core) is `READY_FOR_REVIEW` (branch `feat/T01-03-tenancy-core`, not pushed). All are infrastructure only: database access, migrations, request context, error envelope, logging, deny-by-default realm routers, the append-only audit table with its writers, and the `tenants` and `campuses` tables with their isolation layers. No authentication, user or business tables and no product functionality exist yet, so product implementation completion remains 0%.
 
 ---
 
@@ -804,7 +804,7 @@ IN_PROGRESS
 ## Phase Completion
 
 ```text
-2 / 11 tasks completed (T01-00 and T01-01 COMPLETED; T01-02 READY_FOR_REVIEW)
+3 / 11 tasks completed (T01-00, T01-01 and T01-02 COMPLETED; T01-03 READY_FOR_REVIEW)
 ```
 
 Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TASKS.md, Phase 01).
@@ -813,8 +813,8 @@ Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TAS
 |---|---|---|
 | T01-00 | Architecture Review | `COMPLETED` (approved 2026-09-30) |
 | T01-01 | Backend, Database & API Foundation | `COMPLETED` (PR #14, `42bc8b1`) |
-| T01-02 | Audit Foundation | `READY_FOR_REVIEW` |
-| T01-03 | Tenancy Core | `NOT_STARTED` |
+| T01-02 | Audit Foundation | `COMPLETED` (PR #16, `91d0180`) |
+| T01-03 | Tenancy Core | `READY_FOR_REVIEW` (branch `feat/T01-03-tenancy-core`; not pushed) |
 | T01-04 | Tenant Identity & Authentication | `NOT_STARTED` |
 | T01-05 | Authorization & RBAC | `NOT_STARTED` |
 | T01-06 | Platform Identity & MFA | `NOT_STARTED` |
@@ -871,7 +871,7 @@ gate list.
 
 ### T01-02 — Audit Foundation
 
-**Status:** `READY_FOR_REVIEW` (branch `feat/T01-02-audit-foundation`, based on `main` at `42bc8b1`; not pushed)
+**Status:** `COMPLETED` (merged to `main` by PR #16, merge commit `91d0180`)
 
 **Implementation:**
 
@@ -906,6 +906,48 @@ database variables: 258 passed, 49 skipped. ruff, ruff format, mypy
 (strict), import-linter (2 kept): pass. Negative control: a request-scoped
 DbSession makes the flush time out on the one-connection pool and fails the
 lifecycle tests.
+```
+
+### T01-03 — Tenancy Core
+
+**Status:** `READY_FOR_REVIEW` (branch `feat/T01-03-tenancy-core`, based on `main` at `2b153dc`; not pushed)
+
+**Implementation:**
+
+```text
+Database: migration 0003 - tenants (UUIDv7 id, name, status CHECK on the 8
+  lifecycle states, timestamps, version) and campuses (TenantScopedMixin,
+  name, required upper-case code unique per tenant, UNIQUE (tenant_id, id),
+  FK to tenants ON DELETE RESTRICT); mti_app SELECT/INSERT/UPDATE (no
+  DELETE), mti_readonly SELECT; RLS enabled (not forced): campuses
+  realm-agnostic tenant_id = app.tenant_id (ALL, USING + WITH CHECK),
+  tenants realm-aware (platform/system read all and write, any other
+  context reads its own row only); roles unchanged, NOBYPASSRLS
+Code: app/core/tenancy - TenantScopedMixin, tenant_foreign_key(), ORM
+  filter (do_orm_execute + with_loader_criteria, include_aliases; SELECT,
+  UPDATE, DELETE; fails closed), TenantScopedRepository (select/find/get/
+  list/count/add, no delete, cross-tenant = 404), system_context (SYSTEM
+  realm, refused inside HTTP); context_transaction records the context in
+  session.info; context_scope() binds a context outside HTTP.
+  app/modules/tenants - Tenant model, TenantStatus, suspend/reactivate,
+  status access policy; app/modules/institute - Campus model
+Docs: ADR-0014; backend-foundation §13; tenancy, security §1a,
+  repository-structure; INC-36 … INC-41 (INC-32 updated); script.py.mako
+No API, authentication, users, memberships, provisioning, audit producers,
+  frontend or dependency changes
+```
+
+**Verification:**
+
+```text
+Backend 410 tests (was 307): 99 PostgreSQL integration tests (was 49) with
+REQUIRE_DATABASE_TESTS=1; without the database variables 311 passed, 99
+skipped. New: tenancy schema/migration (17), isolation (33), unit (53).
+ruff, ruff format, mypy (strict), import-linter (2 kept): pass. pnpm check
+(frontend 783 tests and build included): pass. API image build + docker
+smoke test: pass. Negative control: with the ORM filter disabled, 9 tests
+fail (owner-role ORM isolation, bulk UPDATE/DELETE, fail-closed). CI not
+run (not pushed).
 ```
 
 ---
@@ -1879,6 +1921,8 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-09-30 | T01-01 Backend, Database & API Foundation implemented | `READY_FOR_REVIEW` on `feat/T01-01-backend-foundation`; database/migrations, context, errors, logging, realm routers, CI PostgreSQL |
 | 2026-10-01 | T01-01 merged to `main` (PR #14, `42bc8b1`) | `COMPLETED` |
 | 2026-10-01 | T01-02 Audit Foundation implemented | `READY_FOR_REVIEW` on `feat/T01-02-audit-foundation`; audit_events, append-only, first RLS policies, audit and security-event writers |
+| 2026-10-02 | T01-02 merged to `main` (PR #16, `91d0180`) | `COMPLETED` |
+| 2026-10-02 | T01-03 Tenancy Core implemented | `READY_FOR_REVIEW` on `feat/T01-03-tenancy-core`; tenants, campuses, RLS, ORM filter, tenant-scoped repository, system_context, ADR-0014 |
 
 ---
 
@@ -2999,14 +3043,89 @@ Review T01-02 -> push, PR, CI, merge commit -> T01-03 Tenancy Core
 
 ---
 
+## 2026-10-02 — T01-03 Tenancy Core
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+The tenancy core (ADR-0014; T01-03 locked decisions, D15):
+- `tenants` (global registry) and `campuses` (the first tenant-owned table) in migration `0003`, without hard delete;
+- Row-Level Security: realm-agnostic `tenant_id = app.tenant_id` on tenant-owned tables, realm-aware on `tenants`;
+- `TenantScopedMixin` and the composite foreign-key helper;
+- the automatic ORM tenant filter and the tenant-scoped repository, both failing closed without a trusted tenant;
+- `system_context` for trusted work outside HTTP;
+- the tenant lifecycle rules for T01 and the status access policy.
+
+**Files:**
+
+```text
+Created: backend/app/core/tenancy/{__init__, context, filter, mixins,
+  repository, system}.py; backend/app/modules/tenants/{__init__, domain,
+  models}.py; backend/app/modules/institute/{__init__, models}.py;
+  backend/migrations/versions/0003_tenancy_core.py;
+  backend/tests/integration/test_tenancy_{schema, isolation}.py;
+  backend/tests/unit/test_tenancy_{models, core, domain}.py;
+  docs/adr/0014-tenancy-core.md
+Changed: backend/app/core/context.py (context_scope);
+  backend/app/core/db/session.py (session.info context, session_context);
+  backend/migrations/script.py.mako (checklist); docs (backend-foundation,
+  tenancy, security, repository-structure, spec-inconsistencies, README);
+  TASKS.md; DEVELOPMENT-STATUS.md
+Unchanged (verified): frontend, dependencies (pyproject.toml, uv.lock),
+  compose, Dockerfiles, CI workflow, database/init, migrations 0001/0002,
+  app/core/audit, app/api, ADR-0001 … ADR-0013, specification documents,
+  index.html, app.js, styles.css; ACRS
+```
+
+**Database / API / UI:**
+
+```text
+Database: migration 0003 (2 tables, 7 constraints, 4 indexes, grants,
+RLS with 6 policies). API: none. UI: none.
+```
+
+**Tests:**
+
+```text
+Backend 410 passed with the PostgreSQL test database and
+REQUIRE_DATABASE_TESTS=1 (311 passed + 99 skipped without it). pnpm check
+passed (frontend 783 tests, build). Import contracts: 2 kept. CI not run.
+```
+
+**Known Issues:**
+
+```text
+No platform write path into tenant-owned rows (INC-39, T01-07) and no
+unscoped() block (INC-38). Campus status, address, contact and timezone are
+deferred (INC-40, T01-08). T01-04 must let a signed-in user list the
+tenants of their memberships before a tenant is active (tenants RLS reads
+only the trusted tenant). Test tenants accumulate in the shared test
+database (no DELETE), as audit rows do.
+```
+
+**Next:**
+
+```text
+Review T01-03 -> push, PR, CI, merge commit -> T01-04 Tenant Identity &
+Authentication
+```
+
+---
+
 # 40. NEXT TASK
 
 The next step is:
 
 ```text
-Review T01-02 (READY_FOR_REVIEW): push, open the pull request, verify CI on
-GitHub (PostgreSQL integration tests required) and merge with a merge
-commit. Then continue with T01-03 — Tenancy Core.
+Review T01-03 (READY_FOR_REVIEW, branch feat/T01-03-tenancy-core): push,
+open the pull request, verify CI on GitHub (PostgreSQL integration tests
+required) and merge with a merge commit. Then continue with T01-04 — Tenant
+Identity & Authentication.
 ```
 
 The completed-task description below is retained for reference.
