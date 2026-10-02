@@ -3,6 +3,7 @@
 Every rule in docs/architecture/environments.md has a failing and a passing case.
 """
 
+import base64
 import logging
 from pathlib import Path
 from typing import Any
@@ -20,6 +21,8 @@ from app.core.config import (
 # Fixed, fake test values (>= 32 characters, distinct).
 TEST_SESSION_SECRET = "mti360-test-session-secret-0123456789abcdef"
 TEST_CSRF_SECRET = "mti360-test-csrf-secret-0123456789abcdef"
+# Base64 of a fixed 32-byte test key (T01-06). Not a real secret.
+TEST_DATA_ENCRYPTION_KEY = base64.b64encode(b"mti360-test-data-encryption-key!").decode()
 
 DEPLOYED = ("staging", "production")
 NON_DEVELOPMENT = ("test", "staging", "production")
@@ -45,6 +48,7 @@ def deployed_values() -> dict[str, Any]:
         "s3_secret_access_key": SecretStr("fake-secret-access-key-7d1e"),
         "session_secret": SecretStr(TEST_SESSION_SECRET),
         "csrf_secret": SecretStr(TEST_CSRF_SECRET),
+        "data_encryption_key": SecretStr(TEST_DATA_ENCRYPTION_KEY),
         "cors_allowed_origins": ("https://app.mti360.example",),
         "app_base_url": "https://app.mti360.example",
         "smtp_host": "smtp.mti360.example",
@@ -65,6 +69,7 @@ def build(env: str, **overrides: Any) -> Settings:
         values |= {
             "session_secret": SecretStr(TEST_SESSION_SECRET),
             "csrf_secret": SecretStr(TEST_CSRF_SECRET),
+            "data_encryption_key": SecretStr(TEST_DATA_ENCRYPTION_KEY),
         }
     values |= overrides
     return load_settings(_env_file=None, **values)

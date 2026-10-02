@@ -38,6 +38,16 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
+from app.core.security.encryption import (
+    DEVELOPMENT_KEY_ID,
+    KEY_ID_PATTERN,
+    EncryptionKeyError,
+    KeyRing,
+    decode_key,
+    development_key,
+    parse_retired_keys,
+)
+
 type AppEnv = Literal["development", "test", "staging", "production"]
 type LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR"]
 
@@ -75,6 +85,7 @@ _EXPLICIT_IN_DEPLOYED: tuple[str, ...] = (
     "s3_secret_access_key",
     "session_secret",
     "csrf_secret",
+    "data_encryption_key",
     "cors_allowed_origins",
     "app_base_url",
     "smtp_host",
@@ -93,6 +104,7 @@ _SECRETS_IN_DEPLOYED: tuple[str, ...] = (
     "s3_secret_access_key",
     "session_secret",
     "csrf_secret",
+    "data_encryption_key",
     "smtp_password",
     "ai_provider_api_key",
 )
@@ -224,6 +236,14 @@ class Settings(BaseSettings):
     # Proxies in front of the API whose X-Forwarded-For entries are trusted (D08).
     # 0 = ignore X-Forwarded-For and use the socket peer.
     trusted_proxy_hops: int = Field(default=0, ge=0, le=5)
+
+    # --- Encryption of recoverable secrets: TOTP (ADR-0012, T01-06) ----------------------
+    # Base64 of 32 random bytes. Required outside development; while it is a
+    # placeholder in development, a public development-only key is used.
+    data_encryption_key: SecretStr = SecretStr("change-me")
+    data_encryption_key_id: str = Field(default="k1", pattern=KEY_ID_PATTERN)
+    # Decrypt-only keys after a rotation: "id:base64,id:base64" (empty = none).
+    data_encryption_retired_keys: SecretStr = SecretStr("")
 
     # --- Password hashing: Argon2id (ADR-0010, T01-04 D07) -------------------------------
     # argon2-cffi defaults (RFC 9106 low-memory profile). Raising them makes
@@ -374,8 +394,12 @@ class Settings(BaseSettings):
                     f"{_env_name(prefix)}_ABSOLUTE_TIMEOUT_MINUTES"
                 )
 
+        problems.extend(self._encryption_problems())
+
         # Test, staging and production.
         if env != "development":
+            if is_placeholder(self._secret("data_encryption_key")):
+                problems.append(f"DATA_ENCRYPTION_KEY: must be set in {env}")
             if self.app_debug:
                 problems.append(f"APP_DEBUG: must be false in {env}")
             for name in ("session_secret", "csrf_secret"):
@@ -417,6 +441,34 @@ class Settings(BaseSettings):
             problems.append("LOG_LEVEL: DEBUG is not allowed in production")
 
         return problems
+
+    def _encryption_problems(self) -> list[str]:
+        problems = []
+        key = self._secret("data_encryption_key")
+        if not is_placeholder(key):
+            try:
+                decode_key(key)
+            except EncryptionKeyError:
+                problems.append("DATA_ENCRYPTION_KEY: must be base64 of 32 random bytes")
+        try:
+            retired = parse_retired_keys(self._secret("data_encryption_retired_keys"))
+        except EncryptionKeyError:
+            problems.append("DATA_ENCRYPTION_RETIRED_KEYS: must be id:base64 pairs of 32-byte keys")
+        else:
+            if self.data_encryption_key_id in retired:
+                problems.append(
+                    "DATA_ENCRYPTION_RETIRED_KEYS: must not contain DATA_ENCRYPTION_KEY_ID"
+                )
+        return problems
+
+    def encryption_keyring(self) -> KeyRing:
+        """The key ring for ADR-0012 encryption (validated with the settings)."""
+        key = self._secret("data_encryption_key")
+        if is_placeholder(key):  # development only: other environments fail validation
+            return KeyRing(DEVELOPMENT_KEY_ID, {DEVELOPMENT_KEY_ID: development_key()})
+        keys = parse_retired_keys(self._secret("data_encryption_retired_keys"))
+        keys[self.data_encryption_key_id] = decode_key(key)
+        return KeyRing(self.data_encryption_key_id, keys)
 
     def _deployed_database_problems(self, name: str, env: str) -> list[str]:
         parts = urlsplit(self._secret(name))

@@ -3,8 +3,13 @@
 The permission registry, ``authorize`` and ``require_permission``.
 """
 
-from app.core.authz.dependencies import AUTHZ_DENIED, require_permission, route_permissions
-from app.core.authz.engine import AuthzResource, authorize
+from app.core.authz.dependencies import (
+    AUTHZ_DENIED,
+    AUTHZ_STEP_UP_REQUIRED,
+    require_permission,
+    route_permissions,
+)
+from app.core.authz.engine import STEP_UP_WINDOW, AuthzResource, authorize, require_fresh_mfa
 from app.core.authz.registry import (
     REGISTRY,
     DuplicatePermissionError,
@@ -16,7 +21,9 @@ from app.core.authz.registry import (
 
 __all__ = [
     "AUTHZ_DENIED",
+    "AUTHZ_STEP_UP_REQUIRED",
     "REGISTRY",
+    "STEP_UP_WINDOW",
     "AuthzResource",
     "DuplicatePermissionError",
     "Permission",
@@ -24,6 +31,7 @@ __all__ = [
     "PermissionScope",
     "authorize",
     "permission",
+    "require_fresh_mfa",
     "require_permission",
     "route_permissions",
 ]

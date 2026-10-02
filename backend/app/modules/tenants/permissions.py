@@ -19,7 +19,15 @@ TENANT_PROFILE_READ = permission(
 
 TENANT_READ = permission("tenant.read", Realm.PLATFORM, None, "View tenants", module=_M)
 TENANT_CREATE = permission("tenant.create", Realm.PLATFORM, None, "Provision tenants", module=_M)
-TENANT_SUSPEND = permission("tenant.suspend", Realm.PLATFORM, None, "Suspend tenants", module=_M)
+# Step-up (D6-5): suspending and reactivating a tenant need a fresh MFA verification.
+TENANT_SUSPEND = permission(
+    "tenant.suspend", Realm.PLATFORM, None, "Suspend tenants", module=_M, requires_step_up=True
+)
 TENANT_REACTIVATE = permission(
-    "tenant.reactivate", Realm.PLATFORM, None, "Reactivate tenants", module=_M
+    "tenant.reactivate",
+    Realm.PLATFORM,
+    None,
+    "Reactivate tenants",
+    module=_M,
+    requires_step_up=True,
 )

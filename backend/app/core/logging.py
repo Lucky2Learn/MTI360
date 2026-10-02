@@ -32,7 +32,9 @@ REDACTED: Final = "[REDACTED]"
 MAX_VALUE_LENGTH: Final = 1000
 
 SENSITIVE_NAME = re.compile(
-    r"pass|secret|token|cookie|authori[sz]|csrf|session(?!_id)|api[_-]?key|credential|otp|mfa_code",
+    # recovery / totp: MFA material (T01-06).
+    r"pass|secret|token|cookie|authori[sz]|csrf|session(?!_id)|api[_-]?key|credential|otp|mfa_code"
+    r"|recovery_code|totp",
     re.IGNORECASE,
 )
 

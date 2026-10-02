@@ -13,8 +13,8 @@ the ``permissions.py`` of the module that owns it::
 * Tenant permissions carry a scope (decision D-B1): ``TENANT`` (tenant-wide;
   requires all-campus access) or ``CAMPUS`` (checked against the resource's
   campus). Platform permissions have no scope.
-* ``requires_step_up`` is the MFA hook (T01-06); such permissions are refused
-  until step-up authentication exists (fail closed).
+* ``requires_step_up`` (T01-06, D6-5): the permission also needs an MFA
+  verification within the step-up window (``authorize`` step 5).
 
 The registry is read-only data: it never writes to the database. Permissions
 reach the ``permissions`` table only through Alembic migrations (decision

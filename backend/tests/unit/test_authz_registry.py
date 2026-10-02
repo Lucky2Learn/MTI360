@@ -105,7 +105,13 @@ def test_the_catalogue_is_exactly_the_t01_baseline() -> None:
     assert tenant == TENANT_BASELINE
     assert platform == PLATFORM_BASELINE
     assert len(all_permissions()) == len({p.key for p in all_permissions()})
-    assert not any(p.requires_step_up for p in all_permissions())
+    # D6-5 (T01-06): exactly these permissions require step-up.
+    assert {p.code for p in all_permissions() if p.requires_step_up} == {
+        "tenant.suspend",
+        "tenant.reactivate",
+        "platform_user.create",
+        "platform_user.update",
+    }
 
 
 def test_every_module_permissions_file_is_in_the_catalogue() -> None:
