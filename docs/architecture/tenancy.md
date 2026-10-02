@@ -1,10 +1,10 @@
 # Multi-Tenancy Architecture
 
-- **Status:** Approved design (T00-01). Implementation: Phase 01 (T01-05 … T01-12).
-- **Decision:** [ADR-0004 — Tenant Isolation](../adr/0004-tenant-isolation.md)
+- **Status:** Approved design (T00-01). Implementation: Phase 01 (T01-01 context plumbing, T01-03 tenancy core, T01-04 session tenant, T01-05 authorization, T01-10 isolation gate; task IDs re-baselined, INC-31).
+- **Decision:** [ADR-0004 — Tenant Isolation](../adr/0004-tenant-isolation.md), refined by [ADR-0014 — Tenancy Core](../adr/0014-tenancy-core.md)
 - **Related:** [ADR-0005](../adr/0005-identity-and-session-realms.md), [ADR-0006](../adr/0006-api-prefixes.md), CLAUDE.md §5–§8, §55
 
-Implemented so far (T01-01): the request context (§3; realm, request ID, principal and tenant fields) bound by deny-by-default realm guards, and the transaction-scoped `SET LOCAL app.tenant_id / app.user_id / app.realm` publication that RLS policies will read ([backend-foundation.md](backend-foundation.md) §3, §6). Tenant tables, the repository and ORM filters, RLS policies and the isolation test gate follow in T01-03 onwards.
+Implemented so far (T01-01): the request context (§3; realm, request ID, principal and tenant fields) bound by deny-by-default realm guards, and the transaction-scoped `SET LOCAL app.tenant_id / app.user_id / app.realm` publication that RLS policies will read ([backend-foundation.md](backend-foundation.md) §3, §6). Implemented in T01-03 ([ADR-0014](../adr/0014-tenancy-core.md), [backend-foundation.md](backend-foundation.md) §13): `tenants` and `campuses`, `TenantScopedMixin`, the tenant-scoped repository, the automatic ORM filter, Row-Level Security on both tables, the composite foreign-key helper, `system_context` and the tenant status access policy (layers 2–5 of §4). Session-based tenant resolution (T01-04), the authorization dependency (T01-05) and the route-level isolation gate (T01-10) follow.
 
 ## 1. Model
 
@@ -31,12 +31,15 @@ The only trusted sources of tenant identity:
 | Tenant Public Website | Request `Host` → `tenant_domains` (verified domains only) → tenant with status `ACTIVE` or `TRIAL` |
 | Webhooks | Provider channel identifier (e.g. WhatsApp phone-number ID, payment merchant ID) → tenant channel configuration, **after** signature verification |
 | Background jobs | Server-written job envelope, re-validated in the worker (tenant exists and status permits the work) |
+| System (seed, CLI, jobs) | The trusted caller of `system_context(sessionmaker, tenant_id=…)` (T01-03); refused inside an HTTP request |
 
 A `tenant_id` from a request body, query string or header is **never** used for authorization. Tenant-scoped write schemas do not contain `tenant_id`.
 
 ## 3. Request context
 
 A FastAPI dependency builds a `RequestContext` once per request and stores it in a context variable:
+
+Implemented fields (T01-01): `realm`, `request_id`, `principal_id`, `tenant_id`. The others are added by the tasks that establish them: campus scope and permissions in T01-05, the support session in Phase 02; `correlation_id` is the existing `request_id` (INC-35). The realm of background jobs is `system`.
 
 ```text
 realm                 platform | tenant | student | public | webhook | job
@@ -53,8 +56,8 @@ correlation_id
 
 1. **Authorization dependency** — `require_permission("lead.read")` checks realm, permission, tenant status and feature entitlement.
 2. **`TenantScopedRepository`** — every query filtered by `context.tenant_id`; inserts stamped automatically; get-by-id is `WHERE id = :id AND tenant_id = :ctx`; a miss returns **404**, not 403.
-3. **Automatic ORM filter** — a SQLAlchemy `do_orm_execute` hook applies `with_loader_criteria` to every `TenantScoped` model; a query without tenant context **raises**, except inside an explicit, named, platform-only, audited `unscoped()` block.
-4. **PostgreSQL Row-Level Security** — policy `tenant_id = current_setting('app.tenant_id')::uuid` on each tenant table (implemented as `nullif(current_setting('app.tenant_id', true), '')::uuid`, so an unset setting matches nothing; the first policies are on `audit_events`, T01-02); `SET LOCAL app.tenant_id` in every transaction (API and workers); the application role is not the table owner and has no `BYPASSRLS`.
+3. **Automatic ORM filter** — a SQLAlchemy `do_orm_execute` hook applies `with_loader_criteria` to every `TenantScoped` model; a query without tenant context **raises**, except inside an explicit, named, platform-only, audited `unscoped()` block. T01-03 implements the filter (SELECT, UPDATE and DELETE, aliases and joins, tenant read from `session.info`) with no `unscoped()` block yet (INC-38).
+4. **PostgreSQL Row-Level Security** — policy `tenant_id = current_setting('app.tenant_id')::uuid` on each tenant table (implemented as `nullif(current_setting('app.tenant_id', true), '')::uuid`, so an unset setting matches nothing; the first policies are on `audit_events`, T01-02); `SET LOCAL app.tenant_id` in every transaction (API and workers); the application role is not the table owner and has no `BYPASSRLS`. Tenant-owned tables use one realm-agnostic policy for every command (USING and WITH CHECK), for `mti_app`, and a SELECT policy for `mti_readonly`; `tenants` is realm-aware (ADR-0014 §2).
 5. **Composite foreign keys** — parents have `UNIQUE (tenant_id, id)`; children reference `(tenant_id, parent_id)`.
 
 ## 5. Campus context
@@ -117,7 +120,7 @@ The automated suite must prove **Tenant A cannot access Tenant B**. It is a mand
 | Primary keys | Application-generated **UUIDv7**; sequential IDs never exposed; human-facing numbers (e.g. admission number) are separate per-tenant sequences |
 | `TimestampMixin` | `created_at`, `updated_at` (`timestamptz`, UTC) — all tables |
 | `ActorMixin` | `created_by`, `updated_by` — business tables |
-| `TenantScopedMixin` | `tenant_id NOT NULL`, `UNIQUE (tenant_id, id)`, RLS policy — every tenant-owned table |
+| `TenantScopedMixin` | `tenant_id NOT NULL`, `UNIQUE (tenant_id, id)`, RLS policy — every tenant-owned table (`app/core/tenancy/mixins.py`, T01-03; the table declares the unique constraint, a unit test enforces it; `tenant_foreign_key()` builds composite foreign keys) |
 | `CampusScopedMixin` | `campus_id` — campus-aware entities |
 | `SoftDeleteMixin` | `deleted_at` — business records that need history; **not** audit logs (never deleted) or financial records (reversed, not deleted) |
 | `VersionedMixin` | `version` (optimistic locking; stale edit → 409) — concurrently edited aggregates such as applications, students, invoices, fee structures, workflows |
@@ -125,5 +128,5 @@ The automated suite must prove **Tenant A cannot access Tenant B**. It is a mand
 | Foreign keys | Always declared; composite within the tenant boundary; `ON DELETE RESTRICT` by default |
 | Status fields | `text` + CHECK constraints; transitions enforced in `domain.py` |
 | Migrations | Alembic in `backend/migrations/`; one linear history; autogenerated output always reviewed; RLS policies, roles and grants in migrations or `database/init` |
-| Global tables (no RLS, platform services only) | `tenants`, `tenant_domains`, `plans`, `features`, `plan_features`, `platform_users`, `platform_roles`, `support_sessions`, `feature_flags` |
+| Global tables (platform services) | `tenants`, `tenant_domains`, `plans`, `features`, `plan_features`, `platform_users`, `platform_roles`, `support_sessions`, `feature_flags`. `tenants` has realm-aware RLS (ADR-0014 §2, INC-36): platform and system read all and write; any other context reads only its trusted tenant's row. Each other global table decides its policy when it is created. |
 | Database roles | `mti_owner` (migrations), `mti_app` (DML, RLS applies), `mti_readonly` (SELECT, RLS applies) |

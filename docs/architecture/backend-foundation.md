@@ -1,10 +1,10 @@
 # Backend Foundation (T01-01)
 
-- **Status:** Implemented in T01-01; the audit foundation was added in T01-02 (§12, [ADR-0013](../adr/0013-audit-events.md)). Tenancy, authentication and RBAC build on it in T01-03 … T01-10.
-- **Decisions:** T01-00 decisions D1–D22 (§10), [ADR-0001](../adr/0001-stack.md), [ADR-0004](../adr/0004-tenant-isolation.md)–[ADR-0006](../adr/0006-api-prefixes.md), [ADR-0010](../adr/0010-sessions-credentials-and-csrf.md)–[ADR-0013](../adr/0013-audit-events.md)
+- **Status:** Implemented in T01-01; the audit foundation was added in T01-02 (§12, [ADR-0013](../adr/0013-audit-events.md)) and the tenancy core in T01-03 (§13, [ADR-0014](../adr/0014-tenancy-core.md)). Authentication and RBAC build on it in T01-04 … T01-10.
+- **Decisions:** T01-00 decisions D1–D22 (§10), [ADR-0001](../adr/0001-stack.md), [ADR-0004](../adr/0004-tenant-isolation.md)–[ADR-0006](../adr/0006-api-prefixes.md), [ADR-0010](../adr/0010-sessions-credentials-and-csrf.md)–[ADR-0014](../adr/0014-tenancy-core.md)
 - **Related:** [repository-structure.md](repository-structure.md) §3, [tenancy.md](tenancy.md), [security.md](security.md), [ci.md](ci.md), [runbook](../runbooks/local-development.md)
 
-This is the engineering contract for every backend module: where code lives, how a request reaches the database, how errors, logs and pages look, and how it is tested. **No business tables and no authentication exist yet**; the only table is `audit_events` (§12). Every authenticated realm denies every request (§6).
+This is the engineering contract for every backend module: where code lives, how a request reaches the database, how errors, logs and pages look, and how it is tested. **No business tables and no authentication exist yet**; the tables are `audit_events` (§12), `tenants` and `campuses` (§13). Every authenticated realm denies every request (§6).
 
 ## 1. Layout and boundaries
 
@@ -16,8 +16,11 @@ backend/app/
     config.py ids.py context.py errors.py logging.py middleware.py schemas.py pagination.py
     db/             base.py (Base, mixins) engine.py settings.py (SET LOCAL) session.py (DbSession, context_transaction)
     audit/          audit_events model, writers, metadata safety, security-event buffer (T01-02, §12)
-  modules/          business domains (none yet)
-backend/migrations/ Alembic env, helpers, versions/0001_baseline.py
+    tenancy/        TenantScopedMixin, ORM filter, tenant-scoped repository, system_context (T01-03, §13)
+  modules/          business domains
+    tenants/        Tenant model, lifecycle rules and status access policy (T01-03)
+    institute/      Campus model (T01-03); institute profile in Phase 03
+backend/migrations/ Alembic env, helpers, versions/0001_baseline.py … 0003_tenancy_core.py
 ```
 
 import-linter enforces `app.main → app.api → app.modules → app.integrations → app.core` (a lower layer never imports a higher one), and keeps `core.config` / `core.ids` dependency-free. It runs in `pnpm lint:backend` and in CI. Inside a module the layering stays `router → service → (domain, repository) → models`.
@@ -31,7 +34,8 @@ import-linter enforces `app.main → app.api → app.modules → app.integration
 | Optimistic locking | `VersionedMixin`: `version` column; a stale write raises `StaleDataError` → `409 CONFLICT` |
 | Constraint names | `NAMING_CONVENTION` (`pk_`, `uq_`, `ix_`, `fk_`, `ck_`), deterministic for reviewable migrations |
 | Relationships | Must declare `lazy="raise"` (ADR-0001); a test inspects every mapper |
-| Later mixins | `TenantScopedMixin` (T01-03), campus and actor mixins with their first consumers; `SoftDeleteMixin` only when a module needs it |
+| Tenant mixin | `TenantScopedMixin` (`app/core/tenancy`, T01-03, §13): UUIDv7 `id`, `tenant_id` → `tenants` (RESTRICT); the table declares `UNIQUE (tenant_id, id)` |
+| Later mixins | Campus and actor mixins with their first consumers; `SoftDeleteMixin` only when a module needs it |
 
 ## 3. Database access and transactions
 
@@ -49,7 +53,7 @@ import-linter enforces `app.main → app.api → app.modules → app.integration
   5. On success the transaction **commits before the response is sent** (FastAPI `scope="function"`). A failed commit becomes an error response, never a false success. On any exception it rolls back.
 - **No context leakage:** the settings are transaction-local; the next transaction on the same pooled connection sees none of them (tested). RLS policies read them with `nullif(current_setting('app.tenant_id', true), '')`.
 - **No session without context:** `DbSession` on a route outside the realm routers raises `MissingContextError` → 500.
-- **Short transactions outside the request:** `context_transaction(sessionmaker, context)` is the same transaction setup for code that runs with a trusted context but outside the request transaction. The post-request security-event flush uses it (§12), and system jobs will (T01-03).
+- **Short transactions outside the request:** `context_transaction(sessionmaker, context)` is the same transaction setup for code that runs with a trusted context but outside the request transaction. The post-request security-event flush uses it (§12), and so does `system_context` (§13). It records the context in `session.info` (`session_context()`), so the tenant ORM filter and repositories use exactly the published context (T01-03).
 - **Guard ordering (T01-02):** the realm guard is a function-scoped `yield` dependency resolved before every other one, so it exits **after** `DbSession` has committed or rolled back and released its connection, and **before** the response is sent. Its exit flushes the request's security events (§12).
 
 ## 4. Migrations
@@ -61,7 +65,8 @@ import-linter enforces `app.main → app.api → app.modules → app.integration
 - `env.py` runs as the owner and discovers every `app/modules/*/models.py`. It takes the URL from the validated settings (or from test attributes), never from `alembic.ini`.
 - `migrations.helpers.database_roles()` gives migrations the runtime role names (from the `DATABASE_URL` and `READONLY_DATABASE_URL` users), so grants and RLS never hard-code them.
 - **Baseline `0001`:** no tables. It revokes write access to `alembic_version` from the runtime roles, which keep SELECT only.
-- **`0002` (T01-02):** `audit_events`, its privileges, append-only triggers and the first Row-Level Security policies (§12). A migration overrides the default privileges of `database/init/01-roles.sh` explicitly whenever a table must not get full DML.
+- **`0002` (T01-02):** `audit_events`, its privileges, append-only triggers and the first Row-Level Security policies (§12).
+- **`0003` (T01-03):** `tenants` and `campuses`, their constraints, privileges without DELETE and Row-Level Security (§13). A migration overrides the default privileges of `database/init/01-roles.sh` explicitly whenever a table must not get full DML.
 - `env.py` also imports the core table modules listed in `CORE_MODEL_MODULES` (`app.core.audit.models`).
 - **Review checklist** (in the revision template):
   - tenant tables use `TenantScopedMixin` with an RLS policy and composite foreign keys;
@@ -200,3 +205,23 @@ Decision record: [ADR-0013](../adr/0013-audit-events.md). Code: `app/core/audit/
   - Anything else raises `AuditMetadataError` with no values in the message.
 - **Not in T01-02:** outbox, queue, worker, retry and dead-letter handling; producers for real events (they arrive with authentication and administration); support-session, campus, IP and result fields (INC-35).
 - **Tests.** Test rows are identified by unique request IDs, never by counting the table, because nobody can delete audit rows. One test runs the request lifecycle on a pool of **one** connection (`pool_timeout=3`). If the flush and the request transaction ever needed two connections at once, it would fail.
+
+## 13. Tenancy core (T01-03)
+
+Decision record: [ADR-0014](../adr/0014-tenancy-core.md). Code: `app/core/tenancy/`, `app/modules/tenants/`, `app/modules/institute/`.
+
+- **Tables (migration `0003`).**
+  - `tenants`: UUIDv7 `id`, `name`, `status` (CHECK on the eight lifecycle states, upper case; new tenants start in `TRIAL`), timestamps, `version`.
+  - `campuses`: `TenantScopedMixin`, `name`, `code` (required, `^[A-Z0-9][A-Z0-9-]*$`, unique per tenant), timestamps, `version`; `UNIQUE (tenant_id, id)`; `tenant_id` → `tenants` `ON DELETE RESTRICT`.
+  - `mti_app` has SELECT, INSERT and UPDATE; `mti_readonly` has SELECT under RLS. Nobody but the owner can delete. RLS is enabled, not forced.
+- **Row-Level Security.**
+  - `campuses` (the tenant-table pattern): one realm-agnostic policy for every command, `tenant_id = app.tenant_id` (USING and WITH CHECK), plus the same rule for reads by `mti_readonly`. No tenant context, no rows, in every realm.
+  - `tenants`: the platform and system realms read every row and are the only realms that insert or update; any context reads its trusted tenant's row.
+- **Trusted tenant.** Only `RequestContext.tenant_id`, published by `context_transaction` (`SET LOCAL` and `session.info`). `trusted_tenant_id(session)` raises `MissingTenantContextError` when there is none.
+- **ORM filter.** A `do_orm_execute` listener on every `Session` adds `with_loader_criteria(TenantScopedMixin, …, include_aliases=True)` to ORM SELECT, UPDATE and DELETE (joins, aliases, refreshes, bulk statements). Without a tenant, a statement on a tenant-scoped entity raises; other ORM statements get a false criterion. Core statements are left to RLS. The listener is installed by importing `app.core.tenancy`.
+- **`TenantScopedRepository[Model]`.** `select`, `find`, `get` (another tenant's row is a 404), `list`, `count` and `add` (stamps the trusted tenant, rejects a conflicting one). No delete.
+- **`system_context(sessionmaker, tenant_id=None)`.** A SYSTEM-realm transaction with a new request ID and no principal, bound through `context_scope()` (contextvar token, restored on error), for the seed, command-line tools and jobs. Refused inside an HTTP request context.
+- **Composite foreign keys.** `tenant_foreign_key(column, parent)` → `(tenant_id, column) → parent(tenant_id, id)`, `ON DELETE RESTRICT`.
+- **Tenant domain.** Suspend (`TRIAL`/`ACTIVE`/`PAST_DUE` → `SUSPENDED`) and reactivate (`SUSPENDED` → `ACTIVE`); access policy: tenant and student realms in `TRIAL`, `ACTIVE` and `PAST_DUE`, the public website in `TRIAL` and `ACTIVE`. Enforced from T01-04/T01-05.
+- **Not in T01-03:** API routes, authentication, memberships, campus scope, provisioning, a platform write path into tenant-owned rows (INC-39), an `unscoped()` block (INC-38), audit producers, institute profile and campus details.
+- **Tests.** The ORM filter and the repository are also tested as the owner, which bypasses RLS, so each layer is proven alone; RLS is tested with raw SQL through the runtime roles. Tests create their own tenants and never count whole tables.

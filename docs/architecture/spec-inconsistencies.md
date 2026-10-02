@@ -263,7 +263,7 @@
 - **Status:** `OPEN` (T01-00)
 - **Where:** PLATFORM-ADMIN.md §5–§6 and PRD.md §13: a linear diagram plus SUSPENDED → ACTIVE
 - **Issue:** The allowed transitions are not specified (for example TRIAL → CANCELLED, PAST_DUE → ACTIVE, or reactivating a CANCELLED tenant).
-- **Current handling:** Decision D15: T01 defines all eight states. T01 implements only create, suspend and reactivate. Access is allowed in TRIAL, ACTIVE and PAST_DUE.
+- **Current handling:** Decision D15: T01 defines all eight states. T01 implements only create, suspend and reactivate. Access is allowed in TRIAL, ACTIVE and PAST_DUE. T01-03 ([ADR-0014](../adr/0014-tenancy-core.md) §5): a new tenant starts in TRIAL; suspend is TRIAL, ACTIVE or PAST_DUE → SUSPENDED; reactivate is SUSPENDED → ACTIVE (so a suspended TRIAL tenant reactivates to ACTIVE).
 - **Proposed resolution:** Define the transition matrix in T02-05.
 
 ## INC-33 — Login identifier
@@ -293,3 +293,50 @@
   - Support session, campus, role, IP, session reference, reason and risk are not columns yet; a producer may put non-sensitive context in metadata.
   - The realm check uses the complete existing `Realm` vocabulary, including `webhook`, so that a future webhook signature failure can be recorded.
 - **Proposed resolution:** Each task that introduces a trusted source adds its column with a migration: `support_session_id` in T02-04 and campus in T01-05 if needed. Align security.md, tenancy.md and PLATFORM-ADMIN.md §74 when PLAT-36 (Platform Audit Logs) is designed.
+
+## INC-36 — Row-Level Security on `tenants`
+
+- **Status:** `CLOSED` in T01-03 ([ADR-0014](../adr/0014-tenancy-core.md) §2; tenancy.md §9 updated)
+- **Where:** tenancy.md §9 ("Global tables (no RLS, platform services only)") vs `database/init/01-roles.sh` (the read-only role gets SELECT on every table) and the realm-aware RLS of `audit_events` (ADR-0013)
+- **Issue:** Without RLS, any tenant-realm bug, raw query or the read-only role could list every institute.
+- **Resolution:** `tenants` has realm-aware RLS: the platform and system realms read every row and are the only realms that insert or update; any other context reads only its trusted tenant's row. The other global tables listed in tenancy.md §9 decide when they are created.
+
+## INC-37 — Accessible tenant statuses differ by surface
+
+- **Status:** `DECIDED-BY-ADR` ([ADR-0014](../adr/0014-tenancy-core.md) §5)
+- **Where:** tenancy.md §2 (public host resolution: ACTIVE or TRIAL) vs decision D15 (access in TRIAL, ACTIVE and PAST_DUE)
+- **Issue:** The two lists differ, and no document says whether the difference is intended.
+- **Current handling:** The status access policy keeps both: the tenant and student realms in TRIAL, ACTIVE and PAST_DUE; the public website in TRIAL and ACTIVE.
+- **Proposed resolution:** Confirm with the public-website design (Phase 14).
+
+## INC-38 — `unscoped()` has no consumer
+
+- **Status:** `OPEN` (T01-03)
+- **Where:** ADR-0004 layer 3 and tenancy.md §4 (an explicit, platform-only, audited `unscoped()` block) vs ADR-0011 §7 (no platform path to tenant data before support sessions)
+- **Issue:** Nothing needs the escape hatch yet, and RLS would return nothing for a platform context without a tenant anyway.
+- **Current handling:** T01-03 implements no unscoped path; the ORM filter always fails closed.
+- **Proposed resolution:** The first platform consumer (T01-07 or T02-04) adds it, with its audit event and RLS design.
+
+## INC-39 — Platform provisioning cannot write tenant-owned rows
+
+- **Status:** `OPEN` (T01-03)
+- **Where:** TASKS.md T01-07 (provisioning creates the primary campus and roles) and security.md §1 ("set at provisioning") vs the realm-agnostic tenant RLS of ADR-0014
+- **Issue:** A platform request has no trusted tenant, so RLS rejects its inserts into `campuses` and later tenant tables.
+- **Current handling:** No platform write policy on tenant-owned tables in T01-03.
+- **Proposed resolution:** T01-07 designs the provisioning write path (for example a named, audited scope that publishes the new tenant in the same transaction) with an ADR.
+
+## INC-40 — Campus status vocabulary
+
+- **Status:** `OPEN` (T01-03)
+- **Where:** PLATFORM-ADMIN.md §30 (campus "Status") and UI-SCREENS.md ADMIN-03/04 (no content)
+- **Issue:** No campus status values or archival semantics are defined.
+- **Current handling:** `campuses` has no status column in T01-03.
+- **Proposed resolution:** Define the vocabulary with the campus API (T01-08).
+
+## INC-41 — Campus code uniqueness
+
+- **Status:** `DECIDED-BY-ADR` ([ADR-0014](../adr/0014-tenancy-core.md) §1)
+- **Where:** PLATFORM-ADMIN.md §30 lists a campus "Code" without format or uniqueness
+- **Issue:** Format, case and uniqueness were unspecified.
+- **Current handling:** The code is required, upper case (`^[A-Z0-9][A-Z0-9-]*$`, at most 32 characters) and unique per tenant; the same code may exist in different tenants.
+- **Proposed resolution:** Reflect it in PLATFORM-ADMIN.md §30 when the campus screens are specified (ADMIN-03/04).

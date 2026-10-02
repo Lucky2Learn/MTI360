@@ -669,7 +669,7 @@ Every slice is delivered as five commits:
 | T01-00 | Architecture Review | COMPLETED (approved 2026-09-30) |
 | T01-01 | Backend, Database & API Foundation | COMPLETED |
 | T01-02 | Audit Foundation | COMPLETED |
-| T01-03 | Tenancy Core (Tenant, Campus, isolation layers) | NOT_STARTED |
+| T01-03 | Tenancy Core (Tenant, Campus, isolation layers) | READY_FOR_REVIEW |
 | T01-04 | Tenant Identity & Authentication | NOT_STARTED |
 | T01-05 | Authorization & RBAC | NOT_STARTED |
 | T01-06 | Platform Identity & MFA | NOT_STARTED |
@@ -785,6 +785,61 @@ Output: the T01 architecture, the data model, the authentication, RBAC and isola
 ## T01-03 — Tenancy Core
 
 `tenants`, `campuses`, `TenantScopedMixin`, the tenant-scoped repository, the ORM auto-filter, RLS policies, composite foreign keys, `system_context`, and the tenant status access policy (D15). Isolation tests at the database and repository layers.
+
+**Priority:** P0
+
+**Status:** READY_FOR_REVIEW (branch `feat/T01-03-tenancy-core`, based on `main` at `2b153dc`; not pushed).
+
+**Implemented** (locked decisions recorded in ADR-0014):
+
+* Migration `0003`:
+  * `tenants`: UUIDv7 `id`, `name`, `status` (CHECK on the eight lifecycle states; new tenants start in `TRIAL`), timestamps, `version`.
+  * `campuses`: `TenantScopedMixin`, a required upper-case `code` unique per tenant, `UNIQUE (tenant_id, id)`, and an FK to `tenants` with `ON DELETE RESTRICT`.
+  * Privileges: `mti_app` SELECT/INSERT/UPDATE (no DELETE), `mti_readonly` SELECT under RLS.
+  * RLS, enabled but not forced:
+    * `campuses`: realm-agnostic `tenant_id = app.tenant_id`;
+    * `tenants`: platform and system read all and write, any other context reads only its own row.
+* `app/core/tenancy`:
+  * `TenantScopedMixin` and `tenant_foreign_key()`;
+  * the ORM filter (`with_loader_criteria`, aliases, joins, bulk UPDATE/DELETE; fails closed);
+  * `TenantScopedRepository` (no delete; another tenant's row is a 404);
+  * `system_context` (system realm, refused inside HTTP).
+  * The context published by `context_transaction` is also recorded in `session.info`; `context_scope()` binds a context outside HTTP.
+* `app/modules/tenants`:
+  * the `Tenant` model;
+  * lifecycle rules: suspend TRIAL/ACTIVE/PAST_DUE → SUSPENDED, reactivate SUSPENDED → ACTIVE;
+  * status access policy: tenant/student TRIAL, ACTIVE, PAST_DUE; public TRIAL, ACTIVE.
+* `app/modules/institute`: the `Campus` model.
+* ADR-0014; INC-36 … INC-41.
+
+**Acceptance criteria:**
+
+* Migration:
+  * `0003` upgrades, downgrades to `0002` with no T01-03 objects left, and upgrades again;
+  * `alembic check` shows no drift;
+  * the tests derive the head.
+* Constraints:
+  * the status CHECK accepts exactly the eight states;
+  * the campus code is required, upper case and unique per tenant;
+  * a tenant with campuses cannot be deleted;
+  * `UNIQUE (tenant_id, id)` exists.
+* Privileges: the runtime roles have no DELETE, `mti_readonly` has no writes, both stay NOBYPASSRLS and own nothing.
+* RLS (raw SQL):
+  * each tenant sees only its campuses;
+  * no tenant context sees nothing;
+  * cross-tenant insert, update and move are rejected;
+  * only platform and system read all tenants and write them.
+* Application layers, also tested as the owner, which bypasses RLS:
+  * the ORM filter and the repository isolate tenants on their own;
+  * tenant-scoped ORM queries without a tenant raise;
+  * `add()` stamps the trusted tenant and rejects another.
+* Composite foreign keys reject cross-tenant links.
+* `system_context`:
+  * publishes the system realm and tenant to both PostgreSQL and the ORM;
+  * leaks nothing after success or failure;
+  * restores nested contexts;
+  * is refused inside an HTTP request.
+* The T01-02 tests pass unchanged. There is no API, authentication, memberships, provisioning, frontend, dependency or `audit_events` change.
 
 ### Critical Requirement
 

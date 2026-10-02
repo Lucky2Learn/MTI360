@@ -71,14 +71,16 @@ MTI360/
 │   ├── pyproject.toml  uv.lock  .python-version                       ✅ T00-02
 │   ├── alembic.ini                    ✅ T01-01 (owner role; URL from validated settings)
 │   ├── Dockerfile  .dockerignore      ✅ T00-03 api image; migrations + `migrate` command (T01-01); worker later
-│   ├── migrations/                    ✅ Alembic, single linear history; 0001 baseline (T01-01)
+│   ├── migrations/                    ✅ Alembic, single linear history; 0001 baseline (T01-01), 0002 audit
+│   │                                  (T01-02), 0003 tenancy core (T01-03)
 │   ├── app/
 │   │   ├── main.py                    ✅ create_app() + GET /health (T00-02); wiring (T01-01)
 │   │   ├── core/                      ✅ config.py (T00-02); ids, context, errors, logging, middleware, schemas,
-│   │   │                              pagination, db/ (T01-01); later: security/, authz/, tenancy/, audit/,
-│   │   │                              events/, jobs/, storage/, cache/
+│   │   │                              pagination, db/ (T01-01); audit/ (T01-02); tenancy/ (T01-03);
+│   │   │                              later: security/, authz/, events/, jobs/, storage/, cache/
 │   │   ├── api/                       ✅ realms.py + platform, tenant, student, public, webhooks (T01-01, deny by default)
-│   │   ├── modules/                   business domains (§3); package created in T01-01, no module yet (audit lives in core, T01-02)
+│   │   ├── modules/                   business domains (§3); tenants (Tenant, lifecycle) and institute (Campus) since
+│   │   │                              T01-03; audit lives in core (T01-02)
 │   │   ├── integrations/              whatsapp, email, sms, voice, payments, llm, storage adapters
 │   │   └── workers/                   worker entrypoint, job registry
 │   └── tests/                         ✅ conftest.py, unit/ (T00-02); api/, security/, integration/ (T01-01)
@@ -163,7 +165,7 @@ Files are created only when needed. Dependency direction: `router → service �
 | `audit` | audit queries (writer in `core/audit`) | platform; tenant (own) |
 | `grievance` | student and staff grievances (PRD.md §64) | tenant; student |
 
-**Mapping from ARCHITECTURE.md §12:** every domain listed there is retained. `auth` + `users` → `identity`; `tenancy` → `core/tenancy` + `tenants`; `roles` → `access`; `courses`, `batches`, `timetable`, `attendance`, `faculty`, `examinations`, `certificates` → `academics` sub-packages; `leads` + `counselling` → `crm`; `applications` → `admissions`; `communications` → `communication`; `workflows` → `automation`; `agents` → `ai`; `integrations` → `app/integrations/`; `core` → `app/core/`.
+**Mapping from ARCHITECTURE.md §12:** every domain listed there is retained. `auth` + `users` → `identity`; `tenancy` → `core/tenancy` (mixin, ORM filter, repository, `system_context`) + `tenants` (registry and lifecycle), with campuses in `institute` (T01-03, ADR-0014); `roles` → `access`; `courses`, `batches`, `timetable`, `attendance`, `faculty`, `examinations`, `certificates` → `academics` sub-packages; `leads` + `counselling` → `crm`; `applications` → `admissions`; `communications` → `communication`; `workflows` → `automation`; `agents` → `ai`; `integrations` → `app/integrations/`; `core` → `app/core/`.
 
 ### API realms (ADR-0006)
 
