@@ -13,6 +13,7 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from app.core.config import Settings
+from app.core.context import optional_context
 
 pytestmark = pytest.mark.anyio
 
@@ -182,3 +183,10 @@ async def test_openapi_uses_operation_ids_and_documents_the_error_envelope() -> 
         assert operation["responses"][status]["content"]["application/json"]["schema"] == {
             "$ref": "#/components/schemas/ErrorEnvelope"
         }
+
+
+async def test_the_request_context_ends_with_the_request(probe_client: AsyncClient) -> None:
+    response = await probe_client.get("/api/v1/public/probe/context")
+
+    assert response.status_code == 200
+    assert optional_context() is None

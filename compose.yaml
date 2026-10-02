@@ -52,7 +52,7 @@ services:
     restart: unless-stopped
 
   # --------------------------------------------------------------------------
-  # Redis 8.8 (cache / sessions / future queue). No application client yet.
+  # Redis 8.8: authentication rate limits (T01-04); cache and queue later.
   # --------------------------------------------------------------------------
   redis:
     image: redis:8.8-alpine
@@ -121,7 +121,7 @@ services:
     restart: "no"
 
   # --------------------------------------------------------------------------
-  # Mailpit 1.31 — local SMTP catcher and web UI. No application email code yet.
+  # Mailpit 1.31 — local SMTP catcher and web UI (password-reset email, T01-04).
   # --------------------------------------------------------------------------
   mailpit:
     image: axllent/mailpit:v1.31
@@ -179,6 +179,11 @@ services:
       # in the separate "migrate" service).
       DATABASE_URL: *app-database-url
       READONLY_DATABASE_URL: *readonly-database-url
+      # Authentication rate limits and local email (T01-04, D10): container
+      # network names; neither service needs credentials locally.
+      REDIS_URL: redis://redis:6379/0
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
     ports:
       - "127.0.0.1:${API_PORT:-8000}:8000"
     read_only: true

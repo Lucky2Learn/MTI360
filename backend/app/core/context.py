@@ -87,6 +87,16 @@ def context_scope(context: RequestContext) -> Iterator[RequestContext]:
         _context.reset(token)
 
 
+def clear_context() -> None:
+    """Forget the request's context when the request ends (request middleware).
+
+    Production serves every request in its own task, but an in-process caller
+    (tests, ASGI transports) runs the application in its own task: without
+    this, the context would outlive the request.
+    """
+    _context.set(None)
+
+
 def current_context() -> RequestContext:
     """The context of the current request; raises if there is none."""
     context = _context.get()
