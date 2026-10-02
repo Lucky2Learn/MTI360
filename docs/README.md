@@ -48,6 +48,12 @@ Recommended reading order (CLAUDE.md §2):
 
 ADR format: Status, Context, Decision, Consequences, Alternatives considered. ADRs are immutable once accepted; a change is made by a new ADR that supersedes the old one.
 
+## UI specifications
+
+| Document | Contents |
+|---|---|
+| [T01-04-IDENTITY-AUTHENTICATION-UI.md](ui/T01-04-IDENTITY-AUTHENTICATION-UI.md) | Tenant sign-in, password recovery, invitation, institute and campus selection, session states: journeys, routes, screens, states, errors, security UX, responsive, accessibility (T01-04 design, built in T01-09) |
+
 ## Architecture notes
 
 | Document | Contents |
@@ -55,6 +61,7 @@ ADR format: Status, Context, Decision, Consequences, Alternatives considered. AD
 | [repository-structure.md](architecture/repository-structure.md) | Repository tree, frontend and backend architecture, testing layout, environment files, local infrastructure, Git workflow |
 | [tenancy.md](architecture/tenancy.md) | Tenant identification, enforcement layers, leakage vectors, isolation test gate, database conventions |
 | [backend-foundation.md](architecture/backend-foundation.md) | Backend foundation: layers and import contracts, database access and transactions, migrations, post-commit side effects, realm routers, API conventions, logging, testing, T01-00 decision record (T01-01), audit (T01-02), tenancy core (T01-03) |
+| [identity-authentication.md](architecture/identity-authentication.md) | T01-04 decision record and contract: locked decisions D04 (campus selection) and D19 (invitation preview); the remaining T01-04 decisions are added on approval |
 | [security.md](architecture/security.md) | Realm boundaries, authentication, authorization, secrets, files, audit, AI tool authorization |
 | [environments.md](architecture/environments.md) | Environment matrix: configuration sources, per-environment rules, secret handling, `pnpm check:env` (T00-04) |
 | [toolchain.md](architecture/toolchain.md) | Exact runtime and dependency versions, version holds, supply-chain controls, commands, update policy (T00-02) |

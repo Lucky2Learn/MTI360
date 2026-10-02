@@ -849,7 +849,9 @@ Never trust arbitrary client-supplied tenant IDs for authorization.
 
 ## T01-04 — Tenant Identity & Authentication
 
-`users` (identity) separated from `user_credentials` (ADR-0010, D14 amended); memberships and campus scope; `user_sessions`; login, logout, session, and tenant and campus switching; CSRF; rate limits and lockout; password reset and invitation acceptance with post-commit email (D10 amended). UI AUTH-01 … AUTH-05 follows in T01-09.
+`users` (identity) separated from `user_credentials` (ADR-0010, D14 amended); memberships and campus scope; `user_sessions`; login, logout, session, and tenant and campus switching; CSRF; rate limits and lockout; password reset and invitation acceptance (with an invitation preview) with post-commit email (D10 amended). UI AUTH-01 … AUTH-03 and AUTH-05 … AUTH-08 follows in T01-09.
+
+Contract: locked decisions D04 (campus selection) and D19 (invitation preview) in `docs/architecture/identity-authentication.md`; UI contract in `docs/ui/T01-04-IDENTITY-AUTHENTICATION-UI.md`.
 
 ---
 

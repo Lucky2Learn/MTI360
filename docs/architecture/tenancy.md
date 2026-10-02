@@ -64,6 +64,16 @@ correlation_id
 
 Campus-aware entities carry `campus_id`. Repositories apply `campus_id IN context.campus_scope` unless the principal has tenant-wide scope. Campus switching is a server-validated session update. Reporting supports tenant-wide, campus-level and permitted cross-campus aggregation (PRD.md §12).
 
+Session campus semantics (T01-04 decision D04, locked; [identity-authentication.md](identity-authentication.md) §2):
+
+- A membership's permitted campuses are every campus of its tenant (`ALL`) or its `membership_campuses` rows (`SELECTED`).
+- For `ALL`, an active campus of `NULL` means all campuses, and no campus step is required.
+- Exactly one permitted campus is selected automatically.
+- `SELECTED` with two or more permitted campuses requires a choice, and never uses `NULL`. Until a campus is chosen, the session reaches only the session routes.
+- `SELECTED` with no permitted campus makes the membership unusable.
+- Options come only from the server and never include another tenant's campus. A value outside them returns `404`.
+- A switch applies from the next request; the current request context never changes.
+
 ## 6. Other surfaces
 
 | Surface | Rule |

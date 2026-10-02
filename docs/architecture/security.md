@@ -42,6 +42,7 @@ A platform principal never holds a tenant role; a tenant principal can never hol
 - Session identifier rotation on login, privilege change and MFA completion.
 - Idle and absolute timeouts; shorter for the platform realm.
 - Generic responses that never reveal whether an account exists.
+- Reset and invitation tokens travel only in request bodies and URL fragments, never in paths or query strings. The request log records paths, so a token there would be logged. The invitation preview is therefore `POST /api/v1/auth/invitations/preview`. Unusable tokens get one generic `404` ([identity-authentication.md](identity-authentication.md) §3, decision D19).
 - Progressive back-off and rate limiting on authentication endpoints.
 
 ## 3. Passwords
