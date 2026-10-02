@@ -11,6 +11,8 @@ session in Phase 02.
 """
 
 import uuid
+from collections.abc import Iterator
+from contextlib import contextmanager
 from contextvars import ContextVar, Token
 from dataclasses import dataclass
 from enum import StrEnum
@@ -69,6 +71,20 @@ def bind_context(connection: HTTPConnection, context: RequestContext) -> None:
     """Attach the context to the request and the current execution context."""
     connection.state.context = context
     _context.set(context)
+
+
+@contextmanager
+def context_scope(context: RequestContext) -> Iterator[RequestContext]:
+    """Bind ``context`` outside an HTTP request; restore the previous one on exit.
+
+    For trusted server-side code only (``app.core.tenancy.system_context``,
+    T01-03). The previous context is restored even when the block raises.
+    """
+    token = _context.set(context)
+    try:
+        yield context
+    finally:
+        _context.reset(token)
 
 
 def current_context() -> RequestContext:

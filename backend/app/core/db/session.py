@@ -18,7 +18,9 @@ after a successful commit; see docs/architecture/backend-foundation.md §5.
 
 :func:`context_transaction` is the same transaction for code that runs
 outside the request transaction with a trusted context (the post-request
-security-event flush, T01-02; system jobs later).
+security-event flush, T01-02; ``system_context``, T01-03). It also records the
+context in ``session.info`` (:func:`session_context`) for the tenant ORM
+filter and tenant-scoped repositories (T01-03).
 """
 
 from collections.abc import AsyncIterator
@@ -27,11 +29,26 @@ from typing import Annotated
 
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.orm import Session
 
 from app.core.context import Realm, RequestContext, request_context
 from app.core.db.settings import apply_transaction_settings
 
 _USER_REALMS = frozenset({Realm.TENANT, Realm.STUDENT})
+
+CONTEXT_INFO_KEY = "mti360.context"
+"""``session.info`` key of the context a transaction published (T01-03)."""
+
+
+def session_context(session: AsyncSession | Session) -> RequestContext | None:
+    """The trusted context published by :func:`context_transaction` for ``session``.
+
+    The tenant ORM filter and tenant-scoped repositories read the tenant from
+    here, so they always use exactly the context that ``SET LOCAL`` gave
+    PostgreSQL for the same transaction. ``None`` outside ``context_transaction``.
+    """
+    context = session.info.get(CONTEXT_INFO_KEY)
+    return context if isinstance(context, RequestContext) else None
 
 
 @asynccontextmanager
@@ -44,6 +61,7 @@ async def context_transaction(
     the connection to the pool when it ends.
     """
     async with factory() as session, session.begin():
+        session.info[CONTEXT_INFO_KEY] = context
         await apply_transaction_settings(
             session,
             realm=context.realm.value,
