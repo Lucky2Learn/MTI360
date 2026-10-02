@@ -118,7 +118,8 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # Backend: locked uv environment, lock check, Ruff, import contracts, mypy,
-  # pytest — including the integration tests against PostgreSQL (T01-01)
+  # pytest — including the integration tests against PostgreSQL (T01-01) and
+  # Redis (authentication rate limits, T01-04)
   # ---------------------------------------------------------------------------
   backend:
     name: backend
@@ -130,7 +131,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Start PostgreSQL test database (compose, fresh volume, generated passwords)
+      - name: Start PostgreSQL test database and Redis (compose, fresh volumes, generated passwords)
         run: bash scripts/ci/start-test-database.sh
 
       - name: Set up Node.js (.nvmrc) for the root scripts
@@ -165,10 +166,10 @@ jobs:
       - name: Typecheck
         run: pnpm run typecheck:backend
 
-      - name: Tests (unit, API, security and PostgreSQL integration)
+      - name: Tests (unit, API, security, PostgreSQL and Redis integration)
         run: pnpm run test:backend
 
-      - name: Stop PostgreSQL
+      - name: Stop PostgreSQL and Redis
         if: always()
         run: docker compose --profile infra down --volumes
 

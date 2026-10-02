@@ -18,7 +18,7 @@ import time
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from app.core.context import bind_request_id, reset_request_id
+from app.core.context import bind_request_id, clear_context, reset_request_id
 from app.core.errors import REQUEST_ID_HEADER
 from app.core.ids import new_id
 
@@ -69,3 +69,5 @@ class RequestContextMiddleware:
                     },
                 )
             reset_request_id(token)
+            # The realm guard bound the request context; it ends with the request.
+            clear_context()

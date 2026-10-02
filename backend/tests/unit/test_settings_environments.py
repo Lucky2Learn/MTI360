@@ -46,6 +46,7 @@ def deployed_values() -> dict[str, Any]:
         "session_secret": SecretStr(TEST_SESSION_SECRET),
         "csrf_secret": SecretStr(TEST_CSRF_SECRET),
         "cors_allowed_origins": ("https://app.mti360.example",),
+        "app_base_url": "https://app.mti360.example",
         "smtp_host": "smtp.mti360.example",
         "smtp_port": 587,
         "smtp_username": "mailer",
@@ -261,6 +262,20 @@ def test_cors_origins_must_use_https(env: str) -> None:
     message = problems_for(env, cors_allowed_origins=("http://app.mti360.example",))
 
     assert "CORS_ALLOWED_ORIGINS: every origin must use https" in message
+
+
+@pytest.mark.parametrize("env", DEPLOYED)
+def test_app_base_url_must_use_https(env: str) -> None:
+    message = problems_for(env, app_base_url="http://app.mti360.example")
+
+    assert "APP_BASE_URL: must use https" in message
+
+
+@pytest.mark.parametrize(
+    "value", ["app.mti360.example", "https://app.mti360.example/login", "https://u@host", "ftp://x"]
+)
+def test_app_base_url_must_be_an_origin(value: str) -> None:
+    assert "APP_BASE_URL" in problems_for("development", app_base_url=value)
 
 
 @pytest.mark.parametrize("env", DEPLOYED)

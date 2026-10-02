@@ -1,6 +1,6 @@
 # Security Foundation
 
-- **Status:** Approved design (T00-01), refined by ADR-0010 … ADR-0012 (T01-00). Implemented in T01-01: realm guards (deny by default), the error envelope without internals (§8), `extra="forbid"` request schemas and bounded pagination (§8), and redacted structured logging (§13); see [backend-foundation.md](backend-foundation.md). The audit foundation followed in T01-02 (§11) and the tenancy core in T01-03 (§1a, [ADR-0014](../adr/0014-tenancy-core.md)). Authentication, CSRF, RBAC and rate limiting follow in T01-04 … T01-06.
+- **Status:** Approved design (T00-01), refined by ADR-0010 … ADR-0012 (T01-00). Implemented in T01-01: realm guards (deny by default), the error envelope without internals (§8), `extra="forbid"` request schemas and bounded pagination (§8), and redacted structured logging (§13); see [backend-foundation.md](backend-foundation.md). The audit foundation followed in T01-02 (§11) the tenancy core in T01-03 (§1a, [ADR-0014](../adr/0014-tenancy-core.md)) and tenant authentication, CSRF and rate limiting in T01-04 (§2, §3, §6, §7; [ADR-0015](../adr/0015-identity-authentication.md)). RBAC and platform identity follow in T01-05 and T01-06.
 - **Decisions:** [ADR-0004](../adr/0004-tenant-isolation.md), [ADR-0005](../adr/0005-identity-and-session-realms.md), [ADR-0006](../adr/0006-api-prefixes.md)
 - **Related:** CLAUDE.md §5–§11, §42–§51, §65, §94; ARCHITECTURE.md §48–§52; PLATFORM-ADMIN.md §15–§16, §65–§67, §93
 
@@ -42,12 +42,14 @@ A platform principal never holds a tenant role; a tenant principal can never hol
 - Session identifier rotation on login, privilege change and MFA completion.
 - Idle and absolute timeouts; shorter for the platform realm.
 - Generic responses that never reveal whether an account exists.
+- Reset and invitation tokens travel only in request bodies and URL fragments, never in paths or query strings. The request log records paths, so a token there would be logged. The invitation preview is therefore `POST /api/v1/auth/invitations/preview`. Unusable tokens get one generic `404` ([identity-authentication.md](identity-authentication.md) §3, decision D19).
 - Progressive back-off and rate limiting on authentication endpoints.
+- **Implemented for the tenant realm (T01-04):** `__Host-mti360_tsid` sessions (256-bit token, HMAC-SHA256 at rest, re-validated on every request: revocation, idle and absolute expiry, user, membership, tenant status, campus); rotation on sign-in, institute switch and password reset; one generic 401 for every sign-in failure with a dummy Argon2 verification for unknown accounts; pre-authentication lookups through equality-matched `SET LOCAL` keys ([identity-authentication.md](identity-authentication.md), ADR-0015). Platform sessions and MFA: T01-06.
 
 ## 3. Passwords
 
-- **Argon2id** hashing.
-- Minimum length and breached-password checks.
+- **Argon2id** hashing (`argon2-cffi`, configurable `ARGON2_*`, rehash at sign-in when parameters change).
+- 12–128 characters plus a bundled common-password blocklist (SecLists 10k, MIT; provenance in identity-authentication.md §5); no composition rules (ADR-0010 §7). An external breached-password check remains deferred.
 - Password-reset tokens: single-use, short-lived, **stored hashed**.
 - Passwords, tokens and secrets are never logged.
 
@@ -67,13 +69,15 @@ A platform principal never holds a tenant role; a tenant principal can never hol
 
 ## 6. CSRF and browser security
 
-- SameSite cookies plus a CSRF token or required custom header on unsafe methods.
+- SameSite cookies plus a CSRF token or required custom header on unsafe methods. **Implemented (T01-04):** `X-CSRF-Token = HMAC(CSRF_SECRET, session id)` on unsafe session routes; a same-origin signal (`Origin` in `CORS_ALLOWED_ORIGINS` + `APP_BASE_URL`, or `Sec-Fetch-Site: same-origin`) on unsafe anonymous routes; failures `403 SESSION_REFRESH_REQUIRED`.
 - Headers: HSTS, nonce-based CSP, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`, `frame-ancestors` — from the Next.js proxy (`src/proxy.ts`, formerly "middleware") and the API.
 - CORS allow-list only; never `*` with credentials.
 
 ## 7. Rate limiting
 
 Redis-backed, keyed per IP, account, tenant and endpoint class. Applies to login, OTP, password reset, public forms, AI endpoints, webhooks, uploads and bulk sends (ARCHITECTURE.md §52). Tenant-level limits are configurable.
+
+**Implemented for authentication (T01-04, D17):** 20 attempts per IP per 5 minutes and 10 per account per 15 minutes on sign-in, password reset and invitations; keys `auth:<kind>:<action>:<sha256 of the identifier>` (no personal data in Redis); `Retry-After` on 429; **fail closed** (503) when Redis is unavailable. The client IP ignores `X-Forwarded-For` unless `TRUSTED_PROXY_HOPS` says how many proxies to trust (D08). The database lockout locks an account for 1, 5, 15, then 60 minutes after 5 consecutive failures.
 
 ## 8. API validation and errors
 

@@ -39,7 +39,7 @@ All host ports bind to **127.0.0.1**. Defaults can be overridden in the local `.
 | Service | Container | Default host port | Endpoint (from the host) | Notes |
 |---|---|---|---|---|
 | PostgreSQL 18.6 | `mti360-postgres-1` | 5432 (`POSTGRES_PORT`) | `127.0.0.1:5432/mti360` | Roles `mti_owner`, `mti_app`, `mti_readonly` |
-| Redis 8.8 | `mti360-redis-1` | 6379 (`REDIS_PORT`) | `redis://127.0.0.1:6379/0` | No application client yet |
+| Redis 8.8 | `mti360-redis-1` | 6379 (`REDIS_PORT`) | `redis://127.0.0.1:6379/0` | Authentication rate limits (T01-04); tests use database 1 |
 | SeaweedFS 4.47 (S3) | `mti360-object-storage-1` | 8333 (`S3_PORT`) | `http://127.0.0.1:8333` | Private bucket `S3_BUCKET` (default `mti360-local`); signed requests only |
 | Mailpit 1.31 | `mti360-mailpit-1` | 1025 SMTP, 8025 UI | `http://127.0.0.1:8025` | Catches all outgoing mail |
 | API (app profile) | `mti360-api-1` | 8000 (`API_PORT`) | `http://127.0.0.1:8000/health` | |
@@ -88,6 +88,7 @@ Another SaaS project (ACRS) may run on the same machine with its own Compose pro
   export TEST_DATABASE_URL=postgresql+asyncpg://mti_app:<MTI_APP_PASSWORD>@127.0.0.1:5432/mti360_test
   export TEST_MIGRATIONS_DATABASE_URL=postgresql+asyncpg://mti_owner:<MTI_OWNER_PASSWORD>@127.0.0.1:5432/mti360_test
   export TEST_READONLY_DATABASE_URL=postgresql+asyncpg://mti_readonly:<MTI_READONLY_PASSWORD>@127.0.0.1:5432/mti360_test
+  export TEST_REDIS_URL=redis://127.0.0.1:6379/1   # T01-04 rate-limit and API tests (per-test key namespace)
   pnpm test:backend      # REQUIRE_DATABASE_TESTS=1 turns skips into failures (CI)
   ```
 

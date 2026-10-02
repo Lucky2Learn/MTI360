@@ -669,8 +669,8 @@ Every slice is delivered as five commits:
 | T01-00 | Architecture Review | COMPLETED (approved 2026-09-30) |
 | T01-01 | Backend, Database & API Foundation | COMPLETED |
 | T01-02 | Audit Foundation | COMPLETED |
-| T01-03 | Tenancy Core (Tenant, Campus, isolation layers) | READY_FOR_REVIEW |
-| T01-04 | Tenant Identity & Authentication | NOT_STARTED |
+| T01-03 | Tenancy Core (Tenant, Campus, isolation layers) | COMPLETED |
+| T01-04 | Tenant Identity & Authentication | READY_FOR_REVIEW |
 | T01-05 | Authorization & RBAC | NOT_STARTED |
 | T01-06 | Platform Identity & MFA | NOT_STARTED |
 | T01-07 | Platform Administration Foundation (API) | NOT_STARTED |
@@ -788,7 +788,7 @@ Output: the T01 architecture, the data model, the authentication, RBAC and isola
 
 **Priority:** P0
 
-**Status:** READY_FOR_REVIEW (branch `feat/T01-03-tenancy-core`, based on `main` at `2b153dc`; not pushed).
+**Status:** COMPLETED (merged to `main` by PR #19, merge commit `f602631`).
 
 **Implemented** (locked decisions recorded in ADR-0014):
 
@@ -849,7 +849,30 @@ Never trust arbitrary client-supplied tenant IDs for authorization.
 
 ## T01-04 — Tenant Identity & Authentication
 
-`users` (identity) separated from `user_credentials` (ADR-0010, D14 amended); memberships and campus scope; `user_sessions`; login, logout, session, and tenant and campus switching; CSRF; rate limits and lockout; password reset and invitation acceptance with post-commit email (D10 amended). UI AUTH-01 … AUTH-05 follows in T01-09.
+`users` (identity) separated from `user_credentials` (ADR-0010, D14 amended); memberships and campus scope; `user_sessions`; login, logout, session, and tenant and campus switching; CSRF; rate limits and lockout; password reset and invitation acceptance (with an invitation preview) with post-commit email (D10 amended). UI AUTH-01 … AUTH-03 and AUTH-05 … AUTH-08 follows in T01-09.
+
+Contract: locked decisions D04 (campus selection) and D19 (invitation preview) in `docs/architecture/identity-authentication.md`; UI contract in `docs/ui/T01-04-IDENTITY-AUTHENTICATION-UI.md`.
+
+**Priority:** P0
+
+**Status:** READY_FOR_REVIEW (branch `feat/T01-04-identity-authentication`, based on the frozen UI contract `30511bc` on `main` at `f602631`; not pushed).
+
+**Implemented** (decisions D01–D19, ADR-0015, `docs/architecture/identity-authentication.md`):
+
+* Migration `0004`: `users`, `user_credentials`, `tenant_memberships`, `membership_campuses`, `user_sessions`, `password_reset_tokens`, `user_invitations`; composite foreign keys; no DELETE; no read-only access; RLS on every table with equality-matched pre-authentication lookup keys (no `SECURITY DEFINER`).
+* Services: sign-in (rate limits, dummy-hash timing, lockout, rehash, membership discovery, D04 campus resolution, HMAC-only session, rotation), per-request session re-validation, session read, institute switch (rotates), campus switch, sign-out, password reset (generic request, 30-minute single-use token, sessions revoked), invitation preview and acceptance (D19).
+* API: `/api/v1/auth/{login,logout,password-reset,password-reset/confirm,invitations/preview,invitations/accept}` (anonymous, same-origin check) and `/api/v1/session` (`GET`, `PUT /tenant`, `PUT /campus`; `Access.SESSION`, CSRF token).
+* Infrastructure: Redis rate limiter (`auth:` namespace, fail closed, `Retry-After`), `TRUSTED_PROXY_HOPS`, `EmailSender` (SMTP + fake, post-response), `APP_BASE_URL`, `ARGON2_*`, `SMTP_TIMEOUT_SECONDS`; compose `api` uses Redis and Mailpit; CI starts Redis.
+* Security events for every authentication outcome (no secrets in metadata).
+
+**Acceptance criteria:**
+
+* Migration `0004` upgrades, downgrades to `0003` without leftovers and upgrades again; `alembic check` shows no drift.
+* RLS matrix (raw SQL): credentials never visible to a tenant context; each lookup key reaches exactly its row; memberships by active tenant or own user; identities created only by the system realm.
+* One generic 401 for every sign-in failure; lockout 1/5/15/60 minutes; 20/IP and 10/account rate limits with `Retry-After`; fail closed without Redis.
+* Sessions re-validated on every request; rotation on sign-in and institute switch; campus semantics per D04; tenant and campus IDOR answer 404.
+* Password reset and invitations per the UI contract; tokens never in paths, logs or audit rows; email after commit and response, failures do not roll back.
+* All T01-01, T01-02 and T01-03 tests pass; import contracts kept; no frontend changes.
 
 ---
 

@@ -13,6 +13,7 @@ deny-by-default guards (``app/api``); modules add their routes to them.
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from datetime import timedelta
 from typing import Literal
 
 from fastapi import FastAPI
@@ -24,12 +25,28 @@ from app.core.db import create_engine, create_sessionmaker
 from app.core.errors import install_exception_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import RequestContextMiddleware
+from app.core.ratelimit import RedisRateLimiter
+from app.integrations.email import SmtpEmailSender
+from app.modules.identity.passwords import PasswordHasher
+from app.modules.identity.service import IdentityConfig, IdentityService
 
 
 class HealthResponse(BaseModel):
     """Liveness response. Deliberately reveals no version, environment or host detail."""
 
     status: Literal["ok"] = "ok"
+
+
+def identity_config(settings: Settings) -> IdentityConfig:
+    """Authentication settings (T01-04). Secrets stay inside the service."""
+    return IdentityConfig(
+        session_secret=settings.session_secret.get_secret_value(),
+        csrf_secret=settings.csrf_secret.get_secret_value(),
+        idle_timeout=timedelta(minutes=settings.session_idle_timeout_minutes),
+        absolute_timeout=timedelta(minutes=settings.session_absolute_timeout_minutes),
+        app_base_url=settings.app_base_url,
+        allowed_origins=frozenset({*settings.cors_allowed_origins, settings.app_base_url}),
+    )
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -47,10 +64,32 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     configure_logging(settings.log_level)
 
     engine = create_engine(settings)
+    sessionmaker = create_sessionmaker(engine)
+    # Neither client opens a connection before it is used (/health stays dependency-free).
+    rate_limiter = RedisRateLimiter.from_url(settings.redis_url.get_secret_value())
+    identity = IdentityService(
+        factory=sessionmaker,
+        config=identity_config(settings),
+        hasher=PasswordHasher(
+            time_cost=settings.argon2_time_cost,
+            memory_cost_kib=settings.argon2_memory_cost_kib,
+            parallelism=settings.argon2_parallelism,
+        ),
+        rate_limiter=rate_limiter,
+        email_sender=SmtpEmailSender(
+            host=settings.smtp_host,
+            port=settings.smtp_port,
+            username=settings.smtp_username,
+            password=settings.smtp_password.get_secret_value(),
+            from_address=settings.email_from_address,
+            timeout_seconds=settings.smtp_timeout_seconds,
+        ),
+    )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         yield
+        await app.state.identity.rate_limiter.close()
         await engine.dispose()
 
     app = FastAPI(
@@ -65,7 +104,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.settings = settings
     app.state.engine = engine
-    app.state.sessionmaker = create_sessionmaker(engine)
+    app.state.sessionmaker = sessionmaker
+    app.state.identity = identity
 
     install_exception_handlers(app)
     app.add_middleware(RequestContextMiddleware)

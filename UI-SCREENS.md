@@ -1097,6 +1097,8 @@ Tenant users must never see another tenant's data.
 
 # 14. TENANT AUTHENTICATION
 
+Detailed UI/UX specification for AUTH-01 … AUTH-03 and AUTH-05 … AUTH-08 (T01-04 design, implemented in T01-09): [docs/ui/T01-04-IDENTITY-AUTHENTICATION-UI.md](docs/ui/T01-04-IDENTITY-AUTHENTICATION-UI.md).
+
 ## AUTH-01 — Tenant Login
 
 **Template:** T16
@@ -1123,6 +1125,8 @@ Tenant users must never see another tenant's data.
 **Template:** T16
 **Priority:** P0
 
+Designed with platform identity and MFA (T01-06), not in the T01-04 specification.
+
 ---
 
 ## AUTH-05 — Session / Access Denied
@@ -1135,6 +1139,35 @@ Support:
 * expired session
 * unauthorized access
 * insufficient permissions
+
+The session states (expired, ended, signed out) are specified for T01-04. Insufficient permissions is designed with authorization (T01-05).
+
+---
+
+## AUTH-06 — Accept Invitation
+
+**Template:** T16
+**Priority:** P0
+
+Invitation acceptance after a server preview (institute name, masked email, new or existing account). A new account sets a name and password; an existing account never sets a password. No automatic sign-in. Added by the T01-04 UI specification (decision D19).
+
+---
+
+## AUTH-07 — Choose Institute
+
+**Template:** T16
+**Priority:** P0
+
+Institute selection after sign-in when the person has access to more than one institute. Added by the T01-04 UI specification.
+
+---
+
+## AUTH-08 — Choose Campus
+
+**Template:** T16
+**Priority:** P0
+
+Mandatory only for a restricted (selected-campus) membership with two or more permitted campuses. All-campus access starts at "All campuses", and a single permitted campus is selected automatically. The options come only from the server. Added by the T01-04 UI specification (decision D04).
 
 ---
 

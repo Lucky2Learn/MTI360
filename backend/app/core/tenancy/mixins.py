@@ -34,16 +34,20 @@ class TenantScopedMixin(UUIDPrimaryKeyMixin):
     )
 
 
-def tenant_foreign_key(column: str, parent_table: str) -> ForeignKeyConstraint:
+def tenant_foreign_key(
+    column: str, parent_table: str, *, name: str | None = None
+) -> ForeignKeyConstraint:
     """Composite foreign key from a tenant-scoped child to a tenant-scoped parent.
 
     ``(tenant_id, <column>) → <parent_table>(tenant_id, id)``, ``ON DELETE
     RESTRICT``: the database rejects a child that points at another tenant's
     parent, whatever the application does. The parent must declare
-    ``UNIQUE (tenant_id, id)``.
+    ``UNIQUE (tenant_id, id)``. ``name`` overrides the naming convention when
+    the generated name would exceed PostgreSQL's 63-character limit.
     """
     return ForeignKeyConstraint(
         ["tenant_id", column],
         [f"{parent_table}.tenant_id", f"{parent_table}.id"],
         ondelete="RESTRICT",
+        name=name,
     )

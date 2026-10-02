@@ -1,16 +1,27 @@
 """Tenant Application API (``/api/v1/*``): institute staff.
 
 Tenant context comes only from the server-side session → validated membership
-(ADR-0004); a ``tenant_id`` in a request is never used. Sign-in (anonymous) and
-session routes arrive in T01-04, tenant administration in T01-08, business
-modules from Phase 04.
+(ADR-0004); a ``tenant_id`` in a request is never used as authority.
+
+* ``anonymous``: sign-in, sign-out, password reset and invitations (T01-04);
+* ``session``: the session read and institute/campus selection — a valid
+  session, institute optional (T01-04, ``Access.SESSION``);
+* ``router``: every other tenant route — a session with an institute
+  (tenant administration in T01-08, business modules from Phase 04).
 """
 
 from fastapi import APIRouter
 
 from app.api.realms import Access, realm_router
 from app.core.context import Realm
+from app.modules.identity.router import anonymous_routes, session_routes
+
+anonymous = realm_router(Realm.TENANT, access=Access.ANONYMOUS)
+anonymous.include_router(anonymous_routes)
+
+session = realm_router(Realm.TENANT, access=Access.SESSION)
+session.include_router(session_routes)
 
 router = realm_router(Realm.TENANT, access=Access.AUTHENTICATED)
 
-ROUTERS: tuple[APIRouter, ...] = (router,)
+ROUTERS: tuple[APIRouter, ...] = (anonymous, session, router)

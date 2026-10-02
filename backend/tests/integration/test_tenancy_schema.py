@@ -101,10 +101,21 @@ async def _insert_campus(
     )
 
 
+# The policies created by 0003. Later migrations may add policies to these
+# tables (0004: tenants_member_read); they are tested with their own migration.
+T01_03_POLICIES = [
+    "campuses_readonly_tenant_read",
+    "campuses_tenant_isolation",
+    "tenants_own_read",
+    "tenants_platform_insert",
+    "tenants_platform_read",
+    "tenants_platform_update",
+]
+
 T01_03_OBJECTS = (
-    "SELECT (SELECT count(*) FROM pg_class WHERE relname IN ('tenants', 'campuses') "
-    "    OR relname LIKE 'pk_tenants%' OR relname LIKE '%_campuses%') "
-    "+ (SELECT count(*) FROM pg_policies WHERE tablename IN ('tenants', 'campuses')) "
+    "SELECT (SELECT count(*) FROM pg_class WHERE relname IN ('tenants', 'campuses', "
+    "    'pk_tenants', 'pk_campuses', 'uq_campuses_tenant_id_id', 'uq_campuses_tenant_id_code')) "
+    "+ (SELECT count(*) FROM pg_policies WHERE policyname = ANY(:policies)) "
     "+ (SELECT count(*) FROM pg_constraint c JOIN pg_class t ON t.oid = c.conrelid "
     "    WHERE t.relname IN ('tenants', 'campuses') AND c.contype <> 'n')"
 )
@@ -112,6 +123,10 @@ T01_03_OBJECTS = (
 # 2 tables + 4 indexes (pk_tenants, pk_campuses, 2 unique) + 6 policies
 # + 7 constraints (2 pk, 2 unique, 2 check, 1 fk)
 T01_03_OBJECT_COUNT = 2 + 4 + 6 + 7
+
+
+async def _t01_03_objects(database: DatabaseUnderTest) -> int:
+    return int(await _owner_scalar(database, T01_03_OBJECTS, policies=T01_03_POLICIES))
 
 
 # --- Migration ------------------------------------------------------------------------
@@ -126,10 +141,10 @@ async def test_the_tenancy_migration_downgrades_and_upgrades_cleanly(
     assert tenancy is not None
     head = scripts.get_current_head()
 
-    assert await _owner_scalar(migrated_database, T01_03_OBJECTS) == T01_03_OBJECT_COUNT
+    assert await _t01_03_objects(migrated_database) == T01_03_OBJECT_COUNT
     await anyio.to_thread.run_sync(command.downgrade, config, str(tenancy.down_revision))
     try:
-        assert await _owner_scalar(migrated_database, T01_03_OBJECTS) == 0
+        assert await _t01_03_objects(migrated_database) == 0
         assert (
             await _owner_scalar(migrated_database, "SELECT version_num FROM alembic_version")
             == tenancy.down_revision
@@ -137,7 +152,7 @@ async def test_the_tenancy_migration_downgrades_and_upgrades_cleanly(
     finally:
         await anyio.to_thread.run_sync(command.upgrade, config, "head")
 
-    assert await _owner_scalar(migrated_database, T01_03_OBJECTS) == T01_03_OBJECT_COUNT
+    assert await _t01_03_objects(migrated_database) == T01_03_OBJECT_COUNT
     assert await _owner_scalar(migrated_database, "SELECT version_num FROM alembic_version") == head
     await anyio.to_thread.run_sync(command.check, config)
 
@@ -344,7 +359,8 @@ async def test_rls_is_enabled_not_forced_with_the_six_policies(
     policies = await _owner_scalar(
         migrated_database,
         "SELECT string_agg(policyname || ':' || cmd || ':' || array_to_string(roles, '+'), ',' "
-        "ORDER BY policyname) FROM pg_policies WHERE tablename IN ('tenants', 'campuses')",
+        "ORDER BY policyname) FROM pg_policies WHERE policyname = ANY(:policies)",
+        policies=T01_03_POLICIES,
     )
     app, readonly = migrated_database.roles["app"], migrated_database.roles["readonly"]
 
