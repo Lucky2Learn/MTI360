@@ -668,7 +668,7 @@ Every slice is delivered as five commits:
 |---|---|---|
 | T01-00 | Architecture Review | COMPLETED (approved 2026-09-30) |
 | T01-01 | Backend, Database & API Foundation | COMPLETED |
-| T01-02 | Audit Foundation | READY_FOR_REVIEW |
+| T01-02 | Audit Foundation | COMPLETED |
 | T01-03 | Tenancy Core (Tenant, Campus, isolation layers) | NOT_STARTED |
 | T01-04 | Tenant Identity & Authentication | NOT_STARTED |
 | T01-05 | Authorization & RBAC | NOT_STARTED |
@@ -747,7 +747,7 @@ Output: the T01 architecture, the data model, the authentication, RBAC and isola
 
 **Priority:** P0
 
-**Status:** READY_FOR_REVIEW (branch `feat/T01-02-audit-foundation`, based on `main` at `42bc8b1`).
+**Status:** COMPLETED (merged to `main` by PR #16, merge commit `91d0180`).
 
 **Objective:** `audit_events` (append-only grants, RLS, redacted metadata), the audit writer and the security-event writer (D22), with the locked decisions 1.1–1.9 of the T01-02 specification recorded in ADR-0013.
 

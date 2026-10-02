@@ -108,7 +108,7 @@ M0 — Foundation Ready: reached 2026-09-30 (Phase 00 complete)
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-09-30:** Phase 00 is `COMPLETED`: T00-01 … T00-10A are merged to `main` (T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12, T00-10A via PR #13). Phase 01 is `IN_PROGRESS`: the T01-00 architecture review is approved (D1–D22 with the D10 and D14 amendments) T01-01 (Backend, Database & API Foundation) is `COMPLETED` (PR #14), and T01-02 (Audit Foundation) is `READY_FOR_REVIEW`. Both are infrastructure only: database access, migrations, request context, error envelope, logging, deny-by-default realm routers and the append-only audit table with its writers. No authentication, tenancy, user or business tables and no product functionality exist yet, so product implementation completion remains 0%.
+> **2026-09-30:** Phase 00 is `COMPLETED`: T00-01 … T00-10A are merged to `main` (T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12, T00-10A via PR #13). Phase 01 is `IN_PROGRESS`: the T01-00 architecture review is approved (D1–D22 with the D10 and D14 amendments) T01-01 (Backend, Database & API Foundation) is `COMPLETED` (PR #14), and T01-02 (Audit Foundation) is `COMPLETED` (PR #16). Both are infrastructure only: database access, migrations, request context, error envelope, logging, deny-by-default realm routers and the append-only audit table with its writers. No authentication, tenancy, user or business tables and no product functionality exist yet, so product implementation completion remains 0%.
 
 ---
 
@@ -804,7 +804,7 @@ IN_PROGRESS
 ## Phase Completion
 
 ```text
-2 / 11 tasks completed (T01-00 and T01-01 COMPLETED; T01-02 READY_FOR_REVIEW)
+3 / 11 tasks completed (T01-00, T01-01 and T01-02 COMPLETED)
 ```
 
 Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TASKS.md, Phase 01).
@@ -813,7 +813,7 @@ Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TAS
 |---|---|---|
 | T01-00 | Architecture Review | `COMPLETED` (approved 2026-09-30) |
 | T01-01 | Backend, Database & API Foundation | `COMPLETED` (PR #14, `42bc8b1`) |
-| T01-02 | Audit Foundation | `READY_FOR_REVIEW` |
+| T01-02 | Audit Foundation | `COMPLETED` (PR #16, `91d0180`) |
 | T01-03 | Tenancy Core | `NOT_STARTED` |
 | T01-04 | Tenant Identity & Authentication | `NOT_STARTED` |
 | T01-05 | Authorization & RBAC | `NOT_STARTED` |
@@ -871,7 +871,7 @@ gate list.
 
 ### T01-02 — Audit Foundation
 
-**Status:** `READY_FOR_REVIEW` (branch `feat/T01-02-audit-foundation`, based on `main` at `42bc8b1`; not pushed)
+**Status:** `COMPLETED` (merged to `main` by PR #16, merge commit `91d0180`)
 
 **Implementation:**
 
@@ -1879,6 +1879,7 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-09-30 | T01-01 Backend, Database & API Foundation implemented | `READY_FOR_REVIEW` on `feat/T01-01-backend-foundation`; database/migrations, context, errors, logging, realm routers, CI PostgreSQL |
 | 2026-10-01 | T01-01 merged to `main` (PR #14, `42bc8b1`) | `COMPLETED` |
 | 2026-10-01 | T01-02 Audit Foundation implemented | `READY_FOR_REVIEW` on `feat/T01-02-audit-foundation`; audit_events, append-only, first RLS policies, audit and security-event writers |
+| 2026-10-02 | T01-02 merged to `main` (PR #16, `91d0180`) | `COMPLETED` |
 
 ---
 
@@ -3004,9 +3005,8 @@ Review T01-02 -> push, PR, CI, merge commit -> T01-03 Tenancy Core
 The next step is:
 
 ```text
-Review T01-02 (READY_FOR_REVIEW): push, open the pull request, verify CI on
-GitHub (PostgreSQL integration tests required) and merge with a merge
-commit. Then continue with T01-03 — Tenancy Core.
+T01-03 — Tenancy Core. T01-02 (Audit Foundation) is COMPLETED (PR #16,
+merge commit 91d0180).
 ```
 
 The completed-task description below is retained for reference.
