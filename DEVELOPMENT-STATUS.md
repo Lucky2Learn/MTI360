@@ -2060,6 +2060,7 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-10-02 | T01-05 Authorization & RBAC implemented | `READY_FOR_REVIEW` on `feat/T01-05-authorization-rbac`; permission catalogue, tenant roles with database-enforced system-role immutability, effective permissions in the session and context, `authorize`/`require_permission`, route coverage, ADR-0016 |
 | 2026-10-02 | T01-06 architecture review; decisions D6-1 … D6-5 locked | First platform administrator CLI, platform password recovery, lost-MFA reset, TOTP + recovery codes only, step-up permissions and 10-minute window (`docs/architecture/platform-identity.md`) |
 | 2026-10-03 | T01-06 Platform Identity & MFA implemented | `READY_FOR_REVIEW` on `feat/T01-06-platform-identity-mfa`; platform identity and sessions, TOTP + recovery codes, step-up, password and MFA reset, optional tenant MFA, bootstrap CLI, ADR-0017 |
+| 2026-10-03 | T01-07 architecture review; decisions D7-1 … D7-10 locked | Provisioning write path, platform user administration RLS, platform user invitations, suspend/reactivate step-up, self-protection, tenant suspension revokes sessions, recorded defaults (`docs/architecture/platform-administration.md`) |
 
 ---
 
