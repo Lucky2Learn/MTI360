@@ -89,6 +89,17 @@ Pinned on 2026-09-27; each release was at least 7 days old.
 - **Audit:** `pnpm audit` (locked frontend dependencies) and `pip-audit --strict --require-hashes --disable-pip` against a hashed `uv export --locked --all-groups` of the backend.
 - Neither is part of `ci-ok` or a required check. Making them required is a later, explicit decision.
 
+### Audit exceptions
+
+Exceptions live in `pnpm-workspace.yaml` under `audit.ignore` (pnpm 11; the older
+`auditConfig.ignoreGhsas` is deprecated). One advisory ID per entry, each with a
+justification and the condition for removing it. Never ignore a package name, a
+severity level or the audit itself — those would hide unrelated findings.
+
+| Advisory | Package | Severity | Path | Why excepted | Revisit when |
+|---|---|---|---|---|---|
+| [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) | `braces@3.0.3` (stack-exhaustion denial of service through deeply nested patterns) | high | `@mti360/frontend` → `eslint-config-next@16.3.6` → `@next/eslint-plugin-next@16.3.6` → `fast-glob@3.3.1` → `micromatch@4.0.8` → `braces@3.0.3` | **No patched braces release currently exists** upstream (advisory: “Patched versions: None”), and updating the chain does not remove it. It is a development/tooling dependency and is not included in the production frontend bundle or runtime image. Pinning or overriding braces is therefore not an option, and the hold mirrors the ESLint 9 hold in [toolchain.md §3](toolchain.md#3-deliberate-version-holds). | A patched `braces` is published — remove the entry and re-run `pnpm audit`. Re-checked with the monthly dependency batch ([toolchain.md §8](toolchain.md#8-update-policy)). |
+
 ## 6. Dependabot (decision D7)
 
 | Ecosystem | Enabled | Notes |
