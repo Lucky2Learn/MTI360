@@ -37,4 +37,4 @@ Backend engineering, with security review for anything touching database roles o
 |---|---|
 | T00-03 ✅ | `init/01-roles.sh` role bootstrap for the local Postgres container (extensions are enabled later, e.g. pgvector in the AI phase) |
 | T01-01 ✅ | `init/02-test-database.sh`: idempotent `${POSTGRES_DB}_test` database with the same roles, ownership and default privileges, for the backend integration tests |
-| T01-08 | `seeds/dev.json` development fixtures (decision D16) |
+| T01-08 ✅ | `seeds/dev.json` development fixtures (decision D16), loaded with `python -m app.cli seed` (development only; one-time passwords printed once) |

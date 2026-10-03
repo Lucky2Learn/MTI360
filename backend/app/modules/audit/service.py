@@ -1,10 +1,15 @@
-"""Platform audit read (T01-07, D7-9; ADR-0013).
+"""Platform (T01-07, D7-9) and tenant (T01-08, D8-2) audit reads (ADR-0013).
 
 ``GET /api/v1/platform/audit-events`` under ``audit.read`` (platform realm).
 Row-Level Security already lets the platform realm read every event
 (``audit_events_platform_read``); this service adds the filters, offset
 pagination (D13) and newest-first ordering. Metadata was redacted when it was
 written. Reading is not itself audited in T01.
+
+``GET /api/v1/audit-events`` under the tenant ``audit.read`` (D8-2): only
+events written **in the tenant realm** for the trusted tenant. The
+``audit_events_tenant_read`` policy enforces it in the database (migration
+0008); the query states the same predicate explicitly.
 """
 
 import uuid
@@ -17,9 +22,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.audit import AuditCategory, AuditEvent
 from app.core.authz import authorize
-from app.core.context import current_context
+from app.core.context import Realm, current_context
 from app.core.db.session import context_transaction
-from app.modules.audit.permissions import PLATFORM_AUDIT_READ
+from app.modules.audit.permissions import PLATFORM_AUDIT_READ, TENANT_AUDIT_READ
 
 EVENTS = cast(Table, AuditEvent.__table__)
 
@@ -79,9 +84,14 @@ def _conditions(filters: AuditFilters) -> list[ColumnElement[bool]]:
 
 
 async def _page(
-    db: AsyncSession, filters: AuditFilters, *, limit: int, offset: int
+    db: AsyncSession,
+    filters: AuditFilters,
+    *,
+    limit: int,
+    offset: int,
+    extra: list[ColumnElement[bool]] | None = None,
 ) -> tuple[list[AuditEventRow], int]:
-    conditions = _conditions(filters)
+    conditions = [*_conditions(filters), *(extra or [])]
     total_query = select(func.count()).select_from(EVENTS)
     query = select(
         EVENTS.c.id,
@@ -114,3 +124,28 @@ async def list_platform_events(
     authorize(context, PLATFORM_AUDIT_READ)
     async with context_transaction(factory, context) as db:
         return await _page(db, filters, limit=limit, offset=offset)
+
+
+async def list_tenant_events(
+    factory: async_sessionmaker[AsyncSession], filters: AuditFilters, *, limit: int, offset: int
+) -> tuple[list[AuditEventRow], int]:
+    """The active institute's tenant-realm events (D8-2); ``filters.tenant_id`` is ignored."""
+    context = current_context()
+    authorize(context, TENANT_AUDIT_READ)
+    scoped = AuditFilters(
+        category=filters.category,
+        event_type=filters.event_type,
+        principal_id=filters.principal_id,
+        target_type=filters.target_type,
+        target_id=filters.target_id,
+        created_from=filters.created_from,
+        created_to=filters.created_to,
+    )
+    async with context_transaction(factory, context) as db:
+        return await _page(
+            db,
+            scoped,
+            limit=limit,
+            offset=offset,
+            extra=[EVENTS.c.realm == Realm.TENANT.value, EVENTS.c.tenant_id == context.tenant_id],
+        )

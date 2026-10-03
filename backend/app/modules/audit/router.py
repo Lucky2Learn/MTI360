@@ -1,6 +1,8 @@
-"""Platform audit read route (T01-07, D7-9). Mounted by ``app.api.platform``.
+"""Audit read routes. Mounted by ``app.api.platform`` and ``app.api.tenant``.
 
-``GET /api/v1/platform/audit-events`` — ``audit.read`` in the platform realm.
+* ``GET /api/v1/platform/audit-events`` — ``audit.read`` in the platform realm (T01-07, D7-9);
+* ``GET /api/v1/audit-events`` — ``audit.read`` in the tenant realm: the active institute's
+  tenant-realm events only (T01-08, D8-2; enforced by RLS).
 """
 
 import uuid
@@ -14,8 +16,8 @@ from app.core.audit.events import EVENT_TYPE_MAX_LENGTH, TARGET_TYPE_MAX_LENGTH
 from app.core.authz import require_permission
 from app.core.pagination import Pagination
 from app.core.schemas import ListEnvelope, ResponseModel
-from app.modules.audit.permissions import PLATFORM_AUDIT_READ
-from app.modules.audit.service import AuditFilters, list_platform_events
+from app.modules.audit.permissions import PLATFORM_AUDIT_READ, TENANT_AUDIT_READ
+from app.modules.audit.service import AuditFilters, list_platform_events, list_tenant_events
 
 
 class AuditEventOut(ResponseModel):
@@ -56,6 +58,44 @@ async def list_audit_events(
             category=category,
             event_type=event_type,
             tenant_id=tenant_id,
+            principal_id=principal_id,
+            target_type=target_type,
+            target_id=target_id,
+            created_from=created_from,
+            created_to=created_to,
+        ),
+        limit=page.limit,
+        offset=page.offset,
+    )
+    return ListEnvelope.build(
+        [AuditEventOut.model_validate(row) for row in rows],
+        total=total,
+        limit=page.limit,
+        offset=page.offset,
+    )
+
+
+tenant_audit_routes = APIRouter(prefix="/audit-events", tags=["tenant-audit"])
+
+
+@tenant_audit_routes.get("", dependencies=[require_permission(TENANT_AUDIT_READ)])
+async def list_tenant_audit_events(
+    request: Request,
+    page: Pagination,
+    category: AuditCategory | None = None,
+    event_type: Annotated[str | None, Query(max_length=EVENT_TYPE_MAX_LENGTH)] = None,
+    principal_id: uuid.UUID | None = None,
+    target_type: Annotated[str | None, Query(max_length=TARGET_TYPE_MAX_LENGTH)] = None,
+    target_id: uuid.UUID | None = None,
+    created_from: datetime | None = None,
+    created_to: datetime | None = None,
+) -> ListEnvelope[AuditEventOut]:
+    """The institute's audit events, newest first (platform-written events are never shown)."""
+    rows, total = await list_tenant_events(
+        request.app.state.sessionmaker,
+        AuditFilters(
+            category=category,
+            event_type=event_type,
             principal_id=principal_id,
             target_type=target_type,
             target_id=target_id,

@@ -9,9 +9,9 @@ membership is simply not found.
 import uuid
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import cast
+from typing import Any, Final, cast
 
-from sqlalchemy import Table, delete, exists, func, insert, select, update
+from sqlalchemy import Table, delete, exists, func, insert, literal, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.ids import new_id
@@ -33,6 +33,7 @@ class RoleRow:
     is_system: bool
     version: int
     campus_id: uuid.UUID | None = None  # roles are tenant-wide (AuthzResource)
+    template_code: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -40,6 +41,7 @@ class MembershipRow:
     id: uuid.UUID
     tenant_id: uuid.UUID
     campus_id: uuid.UUID | None = None  # memberships are tenant-wide (AuthzResource)
+    user_id: uuid.UUID | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,12 +61,21 @@ async def role(db: AsyncSession, tenant_id: uuid.UUID, role_id: uuid.UUID) -> Ro
                 ROLES.c.description,
                 ROLES.c.is_system,
                 ROLES.c.version,
+                ROLES.c.template_code,
             ).where(ROLES.c.tenant_id == tenant_id, ROLES.c.id == role_id)
         )
     ).one_or_none()
     if row is None:
         return None
-    return RoleRow(row.id, row.tenant_id, row.name, row.description, row.is_system, row.version)
+    return RoleRow(
+        row.id,
+        row.tenant_id,
+        row.name,
+        row.description,
+        row.is_system,
+        row.version,
+        template_code=row.template_code,
+    )
 
 
 async def role_name_taken(
@@ -204,12 +215,12 @@ async def membership(
 ) -> MembershipRow | None:
     row = (
         await db.execute(
-            select(MEMBERSHIPS.c.id, MEMBERSHIPS.c.tenant_id).where(
+            select(MEMBERSHIPS.c.id, MEMBERSHIPS.c.tenant_id, MEMBERSHIPS.c.user_id).where(
                 MEMBERSHIPS.c.tenant_id == tenant_id, MEMBERSHIPS.c.id == membership_id
             )
         )
     ).one_or_none()
-    return None if row is None else MembershipRow(row.id, row.tenant_id)
+    return None if row is None else MembershipRow(row.id, row.tenant_id, user_id=row.user_id)
 
 
 async def membership_has_role(
@@ -275,3 +286,127 @@ async def assigned_roles(
     )
     rows = (await db.execute(statement)).all()
     return [AssignedRole(row.name, row.is_system, row.permission_code) for row in rows]
+
+
+# --- Owner protection (T01-08, D8-4) ----------------------------------------------------------
+
+OWNER_LOCK_CLASS: Final = 70_080_001
+"""First key of the per-tenant transaction advisory lock that serialises changes able to
+remove the last active owner (D8-4). The second key is derived from the tenant ID (both
+``int4``); a hash collision between two tenants only serialises them."""
+
+
+def _active_owner_memberships(tenant_id: uuid.UUID, owner_template: str) -> Any:
+    return (
+        select(MEMBERSHIP_ROLES.c.membership_id)
+        .select_from(
+            MEMBERSHIP_ROLES.join(
+                ROLES,
+                (ROLES.c.tenant_id == MEMBERSHIP_ROLES.c.tenant_id)
+                & (ROLES.c.id == MEMBERSHIP_ROLES.c.role_id),
+            ).join(
+                MEMBERSHIPS,
+                (MEMBERSHIPS.c.tenant_id == MEMBERSHIP_ROLES.c.tenant_id)
+                & (MEMBERSHIPS.c.id == MEMBERSHIP_ROLES.c.membership_id),
+            )
+        )
+        .where(
+            MEMBERSHIP_ROLES.c.tenant_id == tenant_id,
+            ROLES.c.is_system,
+            ROLES.c.template_code == owner_template,
+            MEMBERSHIPS.c.status == "ACTIVE",
+        )
+    )
+
+
+async def is_active_owner(
+    db: AsyncSession, tenant_id: uuid.UUID, membership_id: uuid.UUID, owner_template: str
+) -> bool:
+    owners = _active_owner_memberships(tenant_id, owner_template).subquery()
+    return bool(await db.scalar(select(exists().where(owners.c.membership_id == membership_id))))
+
+
+async def active_owner_count(
+    db: AsyncSession, tenant_id: uuid.UUID, owner_template: str, *, excluding: uuid.UUID
+) -> int:
+    owners = _active_owner_memberships(tenant_id, owner_template).subquery()
+    query = (
+        select(func.count(func.distinct(owners.c.membership_id)))
+        .select_from(owners)
+        .where(owners.c.membership_id != excluding)
+    )
+    return int((await db.execute(query)).scalar_one())
+
+
+async def lock_owners(db: AsyncSession, tenant_id: uuid.UUID) -> None:
+    await db.execute(
+        select(func.pg_advisory_xact_lock(OWNER_LOCK_CLASS, func.hashtext(literal(str(tenant_id)))))
+    )
+
+
+# --- Role directory (T01-08 API) -------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class RoleDetail:
+    id: uuid.UUID
+    name: str
+    description: str | None
+    is_system: bool
+    template_code: str | None
+    version: int
+    permissions: tuple[str, ...]
+    member_count: int
+
+
+async def roles_of_tenant(
+    db: AsyncSession, tenant_id: uuid.UUID, *, role_id: uuid.UUID | None = None
+) -> list[RoleDetail]:
+    """The tenant's roles (system first, then by name) with permissions and member counts."""
+    members = (
+        select(func.count())
+        .select_from(MEMBERSHIP_ROLES)
+        .where(
+            MEMBERSHIP_ROLES.c.tenant_id == ROLES.c.tenant_id,
+            MEMBERSHIP_ROLES.c.role_id == ROLES.c.id,
+        )
+        .scalar_subquery()
+    )
+    statement = select(
+        ROLES.c.id,
+        ROLES.c.name,
+        ROLES.c.description,
+        ROLES.c.is_system,
+        ROLES.c.template_code,
+        ROLES.c.version,
+        members.label("member_count"),
+    ).where(ROLES.c.tenant_id == tenant_id)
+    if role_id is not None:
+        statement = statement.where(ROLES.c.id == role_id)
+    rows = (
+        await db.execute(statement.order_by(ROLES.c.is_system.desc(), ROLES.c.name, ROLES.c.id))
+    ).all()
+    codes: dict[uuid.UUID, list[str]] = {row.id: [] for row in rows}
+    if codes:
+        for row in await db.execute(
+            select(ROLE_PERMISSIONS.c.role_id, ROLE_PERMISSIONS.c.permission_code)
+            .where(
+                ROLE_PERMISSIONS.c.tenant_id == tenant_id,
+                ROLE_PERMISSIONS.c.role_id.in_(list(codes)),
+            )
+            .order_by(ROLE_PERMISSIONS.c.permission_code)
+        ):
+            codes[row.role_id].append(row.permission_code)
+    return [
+        RoleDetail(
+            row.id,
+            row.name,
+            row.description,
+            row.is_system,
+            row.template_code,
+            row.version,
+            tuple(codes[row.id]),
+            int(row.member_count),
+        )
+        for row in rows
+    ]

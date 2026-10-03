@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit import AuditTarget, record_security_event, write_audit_event
-from app.core.authz import REGISTRY, PermissionScope, authorize
+from app.core.authz import REGISTRY, Permission, PermissionScope, authorize
 from app.core.context import Realm, RequestContext, current_context
 from app.core.errors import (
     ConflictError,
@@ -35,9 +35,16 @@ from app.core.errors import (
 )
 from app.modules.access import events
 from app.modules.access import repository as repo
+from app.modules.access.catalog import tenant_permissions
 from app.modules.access.models import ROLE_DESCRIPTION_MAX_LENGTH, ROLE_NAME_MAX_LENGTH
-from app.modules.access.permissions import ROLE_ASSIGN, ROLE_CREATE, ROLE_DELETE, ROLE_UPDATE
-from app.modules.access.templates import system_role_templates
+from app.modules.access.permissions import (
+    ROLE_ASSIGN,
+    ROLE_CREATE,
+    ROLE_DELETE,
+    ROLE_READ,
+    ROLE_UPDATE,
+)
+from app.modules.access.templates import OWNER_TEMPLATE, system_role_templates
 
 
 @dataclass(frozen=True, slots=True)
@@ -104,6 +111,28 @@ async def clone_system_roles(db: AsyncSession, tenant_id: uuid.UUID) -> dict[str
 
 
 # --- custom roles and assignments (service foundation; API in T01-08) ---------------------
+
+
+async def list_roles(db: AsyncSession) -> list[repo.RoleDetail]:
+    """The institute's roles with their permissions and member counts (T01-08)."""
+    context = current_context()
+    authorize(context, ROLE_READ)
+    return await repo.roles_of_tenant(db, _tenant(context))
+
+
+async def get_role(db: AsyncSession, role_id: uuid.UUID) -> repo.RoleDetail:
+    context = current_context()
+    authorize(context, ROLE_READ)
+    found = await repo.roles_of_tenant(db, _tenant(context), role_id=role_id)
+    if not found:
+        raise NotFoundError()
+    return found[0]
+
+
+def permission_catalogue() -> list[Permission]:
+    """The tenant permissions a custom role may hold (``role.read``; T01-08)."""
+    authorize(current_context(), ROLE_READ)
+    return sorted(tenant_permissions(), key=lambda permission: permission.code)
 
 
 def _tenant(context: RequestContext) -> uuid.UUID:
@@ -295,10 +324,49 @@ async def assign_role(db: AsyncSession, membership_id: uuid.UUID, role_id: uuid.
     )
 
 
+# --- self-protection and owner protection (T01-08, D8-4) --------------------------------------
+
+
+def refuse_self(
+    context: RequestContext, member_user_id: uuid.UUID | None, membership_id: uuid.UUID, action: str
+) -> None:
+    """403 for a member administration action on the caller's own membership (D8-4)."""
+    if member_user_id is not None and member_user_id == context.principal_id:
+        record_security_event(
+            events.SELF_ACTION_REFUSED,
+            target=AuditTarget("tenant_membership", membership_id),
+            metadata={"action": action},
+        )
+        raise PermissionDeniedError()
+
+
+async def keep_an_owner(db: AsyncSession, membership_id: uuid.UUID) -> None:
+    """409 if ``membership_id`` is the institute's last ACTIVE owner (D8-4).
+
+    Call it before a change that ends the membership's ownership (suspension,
+    revocation, removal of the owner role), in the same transaction. A
+    per-tenant advisory lock serialises the check, so two concurrent changes
+    cannot both remove an owner.
+    """
+    tenant_id = _tenant(current_context())
+    owner = OWNER_TEMPLATE.value
+    if not await repo.is_active_owner(db, tenant_id, membership_id, owner):
+        return
+    await repo.lock_owners(db, tenant_id)
+    if await repo.active_owner_count(db, tenant_id, owner, excluding=membership_id) == 0:
+        raise ConflictError("The institute must keep at least one active owner.")
+
+
 async def remove_role(db: AsyncSession, membership_id: uuid.UUID, role_id: uuid.UUID) -> None:
-    """Take a role away from a member (404 if the member does not have it)."""
+    """Take a role away from a member (404 if the member does not have it).
+
+    Never from one's own membership (403), never the last active owner's owner role (409).
+    """
     context = current_context()
     membership, role = await _assignment(db, context, membership_id, role_id)
+    refuse_self(context, membership.user_id, membership.id, "remove_role")
+    if role.is_system and role.template_code == OWNER_TEMPLATE.value:
+        await keep_an_owner(db, membership.id)
     if not await repo.unassign(db, membership.tenant_id, membership.id, role.id):
         raise NotFoundError()
     await write_audit_event(

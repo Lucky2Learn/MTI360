@@ -291,8 +291,19 @@ class IdentityService:
 
     # --- helpers ------------------------------------------------------------------------
 
+    @property
+    def factory(self) -> async_sessionmaker[AsyncSession]:
+        return self._factory
+
+    def now(self) -> datetime:
+        return self._clock()
+
     def _hash(self, purpose: TokenPurpose, token: str) -> str:
         return token_hash(self.config.session_secret, purpose, token)
+
+    def hash_token(self, purpose: TokenPurpose, token: str) -> str:
+        """The stored HMAC of a token (shared with T01-08 member administration)."""
+        return self._hash(purpose, token)
 
     def csrf_token(self, session_id: uuid.UUID) -> str:
         return csrf_token(self.config.csrf_secret, session_id)

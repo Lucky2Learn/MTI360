@@ -48,6 +48,7 @@ Recommended reading order (CLAUDE.md §2):
 | [0015](adr/0015-identity-authentication.md) | Tenant identity and authentication: pre-authentication lookups and session resolution | Accepted |
 | [0016](adr/0016-authorization-rbac.md) | Authorization and RBAC implementation: registry, system-role immutability, effective permissions, route coverage | Accepted |
 | [0017](adr/0017-platform-identity-mfa.md) | Platform identity and MFA implementation: schema and RLS, encryption, TOTP and recovery codes, platform sessions, step-up, MFA reset, tenant MFA, bootstrap CLI | Accepted |
+| [0019](adr/0019-tenant-administration.md) | Tenant administration implementation: migration 0008 (invitee key, tenant audit visibility, campus-scope `removed_at`), member invitations and lifecycle, owner protection, roles, campuses, tenant audit read, development seed | Accepted |
 | [0018](adr/0018-platform-administration.md) | Platform administration implementation: migration 0007 keys and policies, provisioning, tenant suspension, platform user administration and invitations, audit read, refinements of D7-1 … D7-10 | Accepted |
 
 ADR format: Status, Context, Decision, Consequences, Alternatives considered. ADRs are immutable once accepted; a change is made by a new ADR that supersedes the old one.
@@ -69,7 +70,7 @@ ADR format: Status, Context, Decision, Consequences, Alternatives considered. AD
 | [identity-authentication.md](architecture/identity-authentication.md) | T01-04 decision record, API contract, RLS, deviations and blocklist provenance (decisions D01–D19) |
 | [platform-identity.md](architecture/platform-identity.md) | T01-06 locked decisions D6-1 … D6-5 (first administrator, password recovery, lost MFA device, MFA mechanisms, step-up) and architecture constraints; implemented by ADR-0017 |
 | [platform-administration.md](architecture/platform-administration.md) | T01-07 locked decisions D7-1 … D7-10 (provisioning write path, platform user administration RLS, platform user invitations, suspend/reactivate step-up, self-protection, tenant suspension revokes sessions, defaults for owner invitations, resend, audit read, no `unscoped()`) and architecture constraints; implemented by ADR-0018 |
-| [tenant-administration.md](architecture/tenant-administration.md) | T01-08 locked decisions D8-1 … D8-4 (new invitee identity, tenant audit visibility, member lifecycle and sessions, self-protection and last owner), rationale, RLS and migration impact; implementation pending |
+| [tenant-administration.md](architecture/tenant-administration.md) | T01-08 locked decisions D8-1 … D8-4 (new invitee identity, tenant audit visibility, member lifecycle and sessions, self-protection and last owner), rationale, RLS and migration impact; implemented by ADR-0019 |
 | [authorization.md](architecture/authorization.md) | T01-05 permission catalogue, roles, RLS and triggers, request flow, status codes, session fields, route coverage, tests (decisions D-B1 … D-B4) |
 | [security.md](architecture/security.md) | Realm boundaries, authentication, authorization, secrets, files, audit, AI tool authorization |
 | [environments.md](architecture/environments.md) | Environment matrix: configuration sources, per-environment rules, secret handling, `pnpm check:env` (T00-04) |

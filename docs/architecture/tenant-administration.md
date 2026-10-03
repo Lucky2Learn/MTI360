@@ -1,6 +1,6 @@
 # Tenant Administration Foundation (API)
 
-- **Status:** Decisions D8-1 … D8-4 locked (T01-08 architecture review, 2026-10-03); implementation not started. The implementation ADR (ADR-0019) is written with the implementation.
+- **Status:** Decisions D8-1 … D8-4 locked (T01-08 architecture review, 2026-10-03); implemented and verified (`READY_FOR_REVIEW` on `feat/T01-08-tenant-administration`); see [ADR-0019](../adr/0019-tenant-administration.md), which records the implementation refinements (§10).
 - **Builds on:**
   - [ADR-0004](../adr/0004-tenant-isolation.md) and [ADR-0014](../adr/0014-tenancy-core.md): realm-agnostic tenant RLS; `system_context` refuses to run inside an HTTP request.
   - [ADR-0013](../adr/0013-audit-events.md): the audit writers and the `audit_events` policies.

@@ -15,7 +15,11 @@ from fastapi import APIRouter
 
 from app.api.realms import Access, realm_router
 from app.core.context import Realm
+from app.modules.access.router import role_routes
+from app.modules.audit.router import tenant_audit_routes
+from app.modules.identity.members_router import member_routes
 from app.modules.identity.router import anonymous_routes, mfa_routes, session_routes
+from app.modules.institute.router import institute_routes
 
 anonymous = realm_router(Realm.TENANT, access=Access.ANONYMOUS)
 anonymous.include_router(anonymous_routes)
@@ -27,5 +31,9 @@ session = realm_router(Realm.TENANT, access=Access.SESSION)
 session.include_router(session_routes)
 
 router = realm_router(Realm.TENANT, access=Access.AUTHENTICATED)
+router.include_router(institute_routes)
+router.include_router(member_routes)
+router.include_router(role_routes)
+router.include_router(tenant_audit_routes)
 
 ROUTERS: tuple[APIRouter, ...] = (anonymous, mfa_pending, session, router)
