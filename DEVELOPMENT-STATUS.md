@@ -2101,6 +2101,7 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-10-03 | T01-06 Platform Identity & MFA implemented | `READY_FOR_REVIEW` on `feat/T01-06-platform-identity-mfa`; platform identity and sessions, TOTP + recovery codes, step-up, password and MFA reset, optional tenant MFA, bootstrap CLI, ADR-0017 |
 | 2026-10-03 | T01-07 architecture review; decisions D7-1 … D7-10 locked | Provisioning write path, platform user administration RLS, platform user invitations, suspend/reactivate step-up, self-protection, tenant suspension revokes sessions, recorded defaults (`docs/architecture/platform-administration.md`) |
 | 2026-10-03 | T01-07 Platform Administration Foundation implemented | `READY_FOR_REVIEW` on `feat/T01-07-platform-administration`; provisioning, tenant suspension with session revocation, platform user administration and invitations, audit read, migration 0007, ADR-0018 |
+| 2026-10-03 | T01-08 architecture review; decisions D8-1 … D8-4 locked | New invitee identity (narrow key), tenant audit visibility (tenant-realm events only), member lifecycle without global session revocation, self-protection and last owner (`docs/architecture/tenant-administration.md`) |
 
 ---
 
