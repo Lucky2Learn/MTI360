@@ -47,6 +47,7 @@ Recommended reading order (CLAUDE.md §2):
 | [0014](adr/0014-tenancy-core.md) | Tenancy core: tenants, campuses, Row-Level Security and trusted tenant context | Accepted |
 | [0015](adr/0015-identity-authentication.md) | Tenant identity and authentication: pre-authentication lookups and session resolution | Accepted |
 | [0016](adr/0016-authorization-rbac.md) | Authorization and RBAC implementation: registry, system-role immutability, effective permissions, route coverage | Accepted |
+| [0017](adr/0017-platform-identity-mfa.md) | Platform identity and MFA implementation: schema and RLS, encryption, TOTP and recovery codes, platform sessions, step-up, MFA reset, tenant MFA, bootstrap CLI | Accepted |
 
 ADR format: Status, Context, Decision, Consequences, Alternatives considered. ADRs are immutable once accepted; a change is made by a new ADR that supersedes the old one.
 
