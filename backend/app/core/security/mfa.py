@@ -101,7 +101,7 @@ class MfaStore:
                 factor.secret_ciphertext, associated_data=self._associated(factor.id)
             ).decode()
         except DecryptionError:
-            logger.error("mfa.secret_undecryptable", extra={"factor_id": str(factor.id)})
+            logger.error("mfa.factor_undecryptable", extra={"factor_id": str(factor.id)})
             return None
 
     async def enabled(self, db: AsyncSession, owner_id: uuid.UUID) -> bool:
