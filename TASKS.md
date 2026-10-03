@@ -934,6 +934,15 @@ Resource permissions
 
 `platform_users` separated from `platform_user_credentials`; platform roles and sessions; TOTP and recovery codes (mandatory for platform users, optional enrolment for tenant users); a step-up hook; `DATA_ENCRYPTION_KEY` (ADR-0012). UI PLAT-01 and PLAT-02 follow in T01-09.
 
+Architecture review approved; decisions **D6-1 … D6-5 are locked** in `docs/architecture/platform-identity.md`:
+
+* **D6-1 First administrator.** The `create-platform-admin` system-realm CLI creates the first `SUPER_ADMIN`, who must enrol MFA at first sign-in. The CLI never exposes the password and is also the break-glass path.
+* **D6-2 Password recovery.** Self-service email reset on the T01-04 model. A reset never bypasses MFA.
+* **D6-3 Lost MFA device.** Another `SUPER_ADMIN` resets it under `platform_user.update` (no new permission). It needs step-up and a reason, is audited, revokes the user's sessions and forces re-enrolment.
+* **D6-4 MFA mechanisms.** TOTP plus recovery codes only. SMS and email OTP, OTP resend, trusted devices and WebAuthn/passkeys are deferred; the model stays extensible.
+* **D6-5 Step-up.** `tenant.suspend`, `tenant.reactivate`, `platform_user.create` and `platform_user.update` require step-up: a 10-minute window, otherwise `403 STEP_UP_REQUIRED`, enforced in `authorize()`.
+* **QR code.** No QR dependency; manual setup with the secret and the `otpauth://` URI.
+
 ---
 
 ## T01-07 — Platform Administration Foundation (API)
