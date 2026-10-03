@@ -11,10 +11,12 @@ The platform realm has its own identity store, never linked to ``users``
   ``mfa_verified_at`` is **MFA-pending** (5 minutes, no permissions);
 * ``platform_mfa_factors`` / ``platform_recovery_codes`` — TOTP factors with
   encrypted secrets and single-use recovery codes stored as HMACs;
-* ``platform_password_reset_tokens`` — single-use reset tokens (HMAC).
+* ``platform_password_reset_tokens`` — single-use reset tokens (HMAC);
+* ``platform_user_invitations`` — single-use onboarding tokens (HMAC; T01-07,
+  D7-3): the invited user sets a password, then enrols MFA at first sign-in.
 
 Row-Level Security, grants and the pre-authentication lookup keys are in
-migration ``0006``. Nothing is hard-deleted except role assignments.
+migrations ``0006`` and ``0007``. Nothing is hard-deleted except role assignments.
 """
 
 import uuid
@@ -182,3 +184,24 @@ class PlatformPasswordResetToken(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     invalidated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class PlatformUserInvitation(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "platform_user_invitations"
+    __table_args__ = (
+        UniqueConstraint("token_hash"),
+        CheckConstraint(f"token_hash ~ '{TOKEN_HASH_PATTERN}'", name="token_hash"),
+        CheckConstraint("accepted_at IS NULL OR revoked_at IS NULL", name="outcome"),
+        Index(
+            "ix_platform_user_invitations_platform_user_id_open",
+            "platform_user_id",
+            postgresql_where=text("accepted_at IS NULL AND revoked_at IS NULL"),
+        ),
+    )
+
+    platform_user_id: Mapped[uuid.UUID] = mapped_column(_platform_user(), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(TOKEN_HASH_LENGTH), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    invited_by: Mapped[uuid.UUID | None] = mapped_column(_platform_user())
