@@ -171,6 +171,28 @@ class PlatformHarness:
     async def post(self, path: str, csrf: str, body: dict[str, Any] | None = None) -> Any:
         return await self.client.post(path, json=body or {}, headers={"X-CSRF-Token": csrf})
 
+    async def send(
+        self, method: str, path: str, csrf: str, body: dict[str, Any] | None = None
+    ) -> Any:
+        """Any unsafe method with the CSRF token (T01-07 administration routes)."""
+        return await self.client.request(
+            method, path, json=body or {}, headers={"X-CSRF-Token": csrf}
+        )
+
+    async def admin(self, name: str = "nora") -> str:
+        """Enrol ``name`` (a fresh MFA verification); returns the session's CSRF token."""
+        confirmed, _ = await self.enrol(name)
+        token: str = confirmed.json()["data"]["session"]["csrf_token"]
+        return token
+
+    async def stale(self, name: str) -> None:
+        """Age ``name``'s MFA verification beyond the 10-minute step-up window."""
+        await self.owner(
+            "UPDATE platform_sessions SET mfa_verified_at = now() - interval '11 minutes' "
+            "WHERE platform_user_id = :u AND revoked_at IS NULL AND mfa_verified_at IS NOT NULL",
+            u=self.world.users[name],
+        )
+
     async def enrol(self, name: str) -> tuple[Any, list[str]]:
         """Sign in and enrol ``name``; returns the full-session response and recovery codes."""
         login = await self.login(name)

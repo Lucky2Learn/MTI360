@@ -127,6 +127,13 @@ REVIEWED_EXEMPTIONS: Final = MappingProxyType(
         ("POST", f"{_PLATFORM}/session/mfa/recovery-codes"): ReviewedExemption(
             _OWN_SESSION, "Regenerates the caller's own recovery codes; needs step-up."
         ),
+        # --- Platform invitations (T01-07, D7-3) ------------------------------------------
+        ("POST", f"{_PLATFORM}/auth/invitations/preview"): ReviewedExemption(
+            _PUBLIC, "Platform invitation preview with a single-use token; generic 404."
+        ),
+        ("POST", f"{_PLATFORM}/auth/invitations/accept"): ReviewedExemption(
+            _PUBLIC, "Platform invitation acceptance: sets the first password; MFA follows."
+        ),
     }
 )
 

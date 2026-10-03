@@ -214,8 +214,23 @@ class PlatformIdentityService:
 
     # --- helpers ------------------------------------------------------------------------
 
+    @property
+    def factory(self) -> async_sessionmaker[AsyncSession]:
+        return self._factory
+
+    def now(self) -> datetime:
+        return self._clock()
+
     def _hash(self, purpose: TokenPurpose, token: str) -> str:
         return token_hash(self.config.session_secret, purpose, token)
+
+    def hash_token(self, purpose: TokenPurpose, token: str) -> str:
+        """The stored HMAC of a token (shared with T01-07 administration)."""
+        return self._hash(purpose, token)
+
+    async def rate_limit(self, kind: str, action: str, identifier: str) -> None:
+        """Apply the platform authentication limits (``auth:platform`` namespace)."""
+        await self._limit(kind, action, identifier)
 
     def csrf_token(self, session_id: uuid.UUID) -> str:
         return csrf_token(self.config.csrf_secret, session_id)
@@ -727,7 +742,7 @@ class PlatformIdentityService:
                 metadata={"reason": "password_reset", "session_count": revoked},
             )
 
-    # --- MFA reset for a lost device (D6-3; exposed by T01-07) -----------------------------
+    # --- MFA reset for a lost device (D6-3; exposed by T01-07 through the admin API) --------
 
     async def reset_mfa(self, target_user_id: uuid.UUID, reason: str) -> MfaResetResult:
         """Disable another platform user's MFA, revoke their sessions, force re-enrolment.

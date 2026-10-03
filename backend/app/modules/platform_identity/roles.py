@@ -69,6 +69,13 @@ PLATFORM_ROLE_PERMISSIONS: Final[MappingProxyType[PlatformRole, frozenset[Permis
 )
 
 
+GUARDIAN_ROLE: Final = PlatformRole.SUPER_ADMIN
+"""The role the platform must always keep at least one active holder of (D7-5).
+
+A role invariant, not an authorization rule: permissions still come only from
+:data:`PLATFORM_ROLE_PERMISSIONS`."""
+
+
 def platform_permissions(roles: frozenset[PlatformRole]) -> frozenset[str]:
     """Effective platform permission codes of a set of roles (union)."""
     return frozenset(p.code for role in roles for p in PLATFORM_ROLE_PERMISSIONS[role])

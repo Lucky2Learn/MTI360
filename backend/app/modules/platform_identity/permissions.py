@@ -14,9 +14,20 @@ PLATFORM_USER_CREATE = permission(
 PLATFORM_USER_UPDATE = permission(
     "platform_user.update", _P, None, "Edit platform users", module=_M, requires_step_up=True
 )
+# Step-up (D7-4, extends D6-5): suspending and reactivating platform users.
 PLATFORM_USER_SUSPEND = permission(
-    "platform_user.suspend", _P, None, "Suspend platform users", module=_M
+    "platform_user.suspend",
+    _P,
+    None,
+    "Suspend platform users",
+    module=_M,
+    requires_step_up=True,
 )
 PLATFORM_USER_REACTIVATE = permission(
-    "platform_user.reactivate", _P, None, "Reactivate platform users", module=_M
+    "platform_user.reactivate",
+    _P,
+    None,
+    "Reactivate platform users",
+    module=_M,
+    requires_step_up=True,
 )
