@@ -18,6 +18,7 @@ The probe application mounts test-only routes through the real realm routers
 exactly as production routes will use them.
 """
 
+import base64
 import os
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
@@ -50,6 +51,8 @@ from app.main import create_app
 # Fixed, non-placeholder test values (>= 32 characters, distinct). Not real secrets.
 TEST_SESSION_SECRET = "mti360-test-session-secret-0123456789abcdef"
 TEST_CSRF_SECRET = "mti360-test-csrf-secret-0123456789abcdef"
+# Base64 of a fixed 32-byte test key (T01-06, ADR-0012). Not a real secret.
+TEST_DATA_ENCRYPTION_KEY = base64.b64encode(b"mti360-test-data-encryption-key!").decode()
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 
@@ -73,6 +76,7 @@ def test_settings() -> Settings:
         app_env="test",
         session_secret=SecretStr(TEST_SESSION_SECRET),
         csrf_secret=SecretStr(TEST_CSRF_SECRET),
+        data_encryption_key=SecretStr(TEST_DATA_ENCRYPTION_KEY),
     )
 
 
@@ -207,6 +211,7 @@ class DatabaseUnderTest:
             app_env="test",
             session_secret=SecretStr(TEST_SESSION_SECRET),
             csrf_secret=SecretStr(TEST_CSRF_SECRET),
+            data_encryption_key=SecretStr(TEST_DATA_ENCRYPTION_KEY),
             database_url=SecretStr(self.app_url),
             migrations_database_url=SecretStr(self.owner_url),
             readonly_database_url=SecretStr(self.readonly_url),

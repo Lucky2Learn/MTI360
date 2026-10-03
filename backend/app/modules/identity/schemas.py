@@ -20,6 +20,10 @@ Email = Annotated[str, StringConstraints(min_length=3, max_length=EMAIL_MAX_LENG
 Secret = Annotated[str, StringConstraints(strip_whitespace=False, min_length=1, max_length=1024)]
 Token = Annotated[str, StringConstraints(strip_whitespace=False, pattern=TOKEN_PATTERN)]
 DisplayName = Annotated[str, StringConstraints(min_length=1, max_length=200)]
+MfaCode = Annotated[str, StringConstraints(strip_whitespace=True, min_length=6, max_length=7)]
+RecoveryCode = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=10, max_length=13)
+]
 
 
 class LoginRequest(RequestModel):
@@ -44,6 +48,14 @@ class InvitationAcceptRequest(RequestModel):
     token: Token
     display_name: DisplayName | None = None
     password: Secret | None = None
+
+
+class MfaCodeRequest(RequestModel):
+    code: MfaCode
+
+
+class RecoveryCodeRequest(RequestModel):
+    recovery_code: RecoveryCode
 
 
 class TenantSelectionRequest(RequestModel):
@@ -80,7 +92,9 @@ class RoleOut(ResponseModel):
 
 
 class SessionOut(ResponseModel):
-    status: Literal["ready", "institute_selection_required", "campus_selection_required"]
+    status: Literal[
+        "ready", "institute_selection_required", "campus_selection_required", "mfa_required"
+    ]
     user: UserOut
     active_institute: InstituteOut | None
     institutes: list[InstituteOut]
@@ -92,6 +106,19 @@ class SessionOut(ResponseModel):
     permissions: list[str]
     """Sorted permission codes in the active institute (T01-05); empty without one."""
     roles: list[RoleOut]
+    mfa_enabled: bool
+    """The user has a confirmed TOTP factor (T01-06)."""
+
+
+class MfaEnrolmentOut(ResponseModel):
+    """Shown once: the secret for manual setup and the ``otpauth://`` URI (no QR, D6-4)."""
+
+    secret: str
+    otpauth_uri: str
+
+
+class RecoveryCodesOut(ResponseModel):
+    recovery_codes: list[str]
 
 
 class InvitationPreviewOut(ResponseModel):

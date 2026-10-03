@@ -671,8 +671,8 @@ Every slice is delivered as five commits:
 | T01-02 | Audit Foundation | COMPLETED |
 | T01-03 | Tenancy Core (Tenant, Campus, isolation layers) | COMPLETED |
 | T01-04 | Tenant Identity & Authentication | COMPLETED |
-| T01-05 | Authorization & RBAC | READY_FOR_REVIEW |
-| T01-06 | Platform Identity & MFA | NOT_STARTED |
+| T01-05 | Authorization & RBAC | COMPLETED |
+| T01-06 | Platform Identity & MFA | READY_FOR_REVIEW |
 | T01-07 | Platform Administration Foundation (API) | NOT_STARTED |
 | T01-08 | Tenant Administration Foundation (API) and development seed | NOT_STARTED |
 | T01-09 | Frontend Authentication & Session Integration | NOT_STARTED |
@@ -893,7 +893,7 @@ Resource permissions
 
 **Priority:** P0
 
-**Status:** READY_FOR_REVIEW (implemented and verified on `feat/T01-05-authorization-rbac`; not merged).
+**Status:** COMPLETED (PR #21, merge commit `ee956e5`).
 
 **Implemented** (decisions D-B1 … D-B4, ADR-0016, `docs/architecture/authorization.md`):
 
@@ -942,6 +942,36 @@ Architecture review approved; decisions **D6-1 … D6-5 are locked** in `docs/ar
 * **D6-4 MFA mechanisms.** TOTP plus recovery codes only. SMS and email OTP, OTP resend, trusted devices and WebAuthn/passkeys are deferred; the model stays extensible.
 * **D6-5 Step-up.** `tenant.suspend`, `tenant.reactivate`, `platform_user.create` and `platform_user.update` require step-up: a 10-minute window, otherwise `403 STEP_UP_REQUIRED`, enforced in `authorize()`.
 * **QR code.** No QR dependency; manual setup with the secret and the `otpauth://` URI.
+
+**Priority:** P0
+
+**Status:** READY_FOR_REVIEW (implemented and verified on `feat/T01-06-platform-identity-mfa`; not merged).
+
+**Implemented** (locked decisions D6-1 … D6-5 in `docs/architecture/platform-identity.md`; ADR-0017):
+
+* **Migration `0006`:** platform users, credentials, roles, sessions, MFA factors, recovery codes and reset tokens; tenant `user_mfa_factors`, `user_recovery_codes` and MFA-pending sessions. RLS keyed on the platform realm, `app.platform_user_id` and equality-matched lookup keys; tenant contexts and `mti_readonly` see nothing; no `SECURITY DEFINER`.
+* **Security primitives:** AES-256-GCM with `DATA_ENCRYPTION_KEY` and row-bound associated data; RFC 6238 TOTP with replay protection; ten single-use HMAC recovery codes; a realm-neutral `MfaStore`.
+* **Platform API:** sign-in, MFA-pending session, enrolment (secret and `otpauth://` URI, no QR), verification, recovery codes, session, step-up, recovery-code regeneration, password reset; `auth:platform` rate limits, lockout, CSRF and the same-origin check.
+* **Step-up (D6-5):** `authorize()` requires an MFA verification within 10 minutes for the four step-up permissions, otherwise `403 STEP_UP_REQUIRED`.
+* **Lost-MFA reset (D6-3):** service capability under `platform_user.update` with step-up and a reason; the route belongs to T01-07.
+* **Tenant MFA:** opt-in enrolment, MFA-pending sign-in, recovery codes and removal with a current code; users without MFA are unaffected.
+* **Bootstrap (D6-1):** `python -m app.cli create-platform-admin`, with `--break-glass --reason`.
+* **Audit:** `platform.auth.*`, `platform.mfa.*` and tenant `auth.mfa.*` security events, without secrets.
+
+**Acceptance criteria:**
+
+* Migration `0006` upgrades, downgrades to `0005` and upgrades again; no model drift.
+* Tenant and platform sessions, cookies, credentials and factors never cross realms; a platform session sees no tenant rows.
+* Generic sign-in and reset responses, the dummy hash, lockout and rate limits hold for the platform realm.
+* TOTP replay, brute force, pending-session restrictions, session rotation and secret encryption are tested; the secret and codes never appear in later responses, logs or audit metadata.
+* Step-up, the MFA reset and the bootstrap CLI behave as locked in D6-1 … D6-5.
+* All T01-01 … T01-05 tests pass; route coverage passes; there are no frontend changes.
+
+**Deviations:**
+
+* The MFA reset has no HTTP route until T01-07 (platform user management).
+* Step-up and recovery-code regeneration exist for the platform realm only; no tenant permission requires step-up yet.
+* No key re-encryption job; a retired key stays in `DATA_ENCRYPTION_RETIRED_KEYS` until one exists.
 
 ---
 

@@ -68,8 +68,9 @@ async def context_transaction(
             request_id=context.request_id,
             tenant_id=context.tenant_id,
             # app.user_id identifies a `users` row; platform principals are a
-            # separate identity (ADR-0005) and never set it.
+            # separate identity (ADR-0005) published as app.platform_user_id (T01-06).
             user_id=context.principal_id if context.realm in _USER_REALMS else None,
+            platform_user_id=context.principal_id if context.realm is Realm.PLATFORM else None,
         )
         yield session
 

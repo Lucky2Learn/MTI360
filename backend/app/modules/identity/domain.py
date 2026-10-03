@@ -39,7 +39,17 @@ class SessionRevokeReason(StrEnum):
     LOGOUT = "logout"
     ROTATED = "rotated"
     PASSWORD_RESET = "password_reset"  # noqa: S105 - a revoke reason, not a secret
+    MFA_FAILED = "mfa_failed"
 
+
+class MfaKind(StrEnum):
+    """MFA factor types (T01-06, D6-4: TOTP only; the column allows later kinds)."""
+
+    TOTP = "totp"
+
+
+MFA_PENDING_TTL: Final = timedelta(minutes=5)
+"""Lifetime of the restricted session between the password and the MFA step (T01-06)."""
 
 SESSION_REALM_TENANT: Final = "tenant"
 

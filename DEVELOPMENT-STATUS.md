@@ -108,7 +108,7 @@ M0 — Foundation Ready: reached 2026-09-30 (Phase 00 complete)
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-09-30:** Phase 00 is `COMPLETED`: T00-01 … T00-10A are merged to `main` (T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12, T00-10A via PR #13). Phase 01 is `IN_PROGRESS`: the T01-00 architecture review is approved (D1–D22 with the D10 and D14 amendments) T01-01 (Backend, Database & API Foundation) is `COMPLETED` (PR #14), and T01-02 (Audit Foundation) is `COMPLETED` (PR #16). T01-03 (Tenancy Core) is `COMPLETED` (PR #19). T01-04 (Tenant Identity & Authentication) is `COMPLETED` (PR #20). T01-05 (Authorization & RBAC) is implemented and `READY_FOR_REVIEW` on `feat/T01-05-authorization-rbac` (not merged). All are infrastructure only: database access, migrations, request context, error envelope, logging, realm routers, the append-only audit table with its writers, the `tenants` and `campuses` tables with their isolation layers, the tenant authentication backend, and the permission catalogue, roles and authorization layer (no screens). No business tables and no product functionality exist yet, so product implementation completion remains 0%.
+> **2026-09-30:** Phase 00 is `COMPLETED`: T00-01 … T00-10A are merged to `main` (T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12, T00-10A via PR #13). Phase 01 is `IN_PROGRESS`: the T01-00 architecture review is approved (D1–D22 with the D10 and D14 amendments) T01-01 (Backend, Database & API Foundation) is `COMPLETED` (PR #14), and T01-02 (Audit Foundation) is `COMPLETED` (PR #16). T01-03 (Tenancy Core) is `COMPLETED` (PR #19). T01-04 (Tenant Identity & Authentication) is `COMPLETED` (PR #20). T01-05 (Authorization & RBAC) is `COMPLETED` (PR #21). T01-06 (Platform Identity & MFA) is implemented and `READY_FOR_REVIEW` on `feat/T01-06-platform-identity-mfa` (not merged). All are infrastructure only: database access, migrations, request context, error envelope, logging, realm routers, the append-only audit table with its writers, the `tenants` and `campuses` tables with their isolation layers, the tenant authentication backend, and the permission catalogue, roles and authorization layer (no screens). No business tables and no product functionality exist yet, so product implementation completion remains 0%.
 
 ---
 
@@ -816,8 +816,8 @@ Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TAS
 | T01-02 | Audit Foundation | `COMPLETED` (PR #16, `91d0180`) |
 | T01-03 | Tenancy Core | `COMPLETED` (PR #19, `f602631`) |
 | T01-04 | Tenant Identity & Authentication | `COMPLETED` (PR #20, `daa6526`) |
-| T01-05 | Authorization & RBAC | `READY_FOR_REVIEW` (`feat/T01-05-authorization-rbac`, not merged) |
-| T01-06 | Platform Identity & MFA | `NOT_STARTED` |
+| T01-05 | Authorization & RBAC | `COMPLETED` (PR #21, `ee956e5`) |
+| T01-06 | Platform Identity & MFA | `READY_FOR_REVIEW` (`feat/T01-06-platform-identity-mfa`, not merged) |
 | T01-07 | Platform Administration Foundation (API) | `NOT_STARTED` |
 | T01-08 | Tenant Administration Foundation (API) | `NOT_STARTED` |
 | T01-09 | Frontend Authentication & Session Integration | `NOT_STARTED` |
@@ -999,7 +999,7 @@ control: with the CSRF/same-origin gate disabled, 5 tests fail. CI not run
 
 ### T01-05 — Authorization & RBAC
 
-**Status:** `READY_FOR_REVIEW` (implemented and verified on `feat/T01-05-authorization-rbac`; not merged)
+**Status:** `COMPLETED` (PR #21, merge commit `ee956e5`)
 
 **Implementation:**
 
@@ -1039,6 +1039,43 @@ build included): pass. API image build + docker smoke test: pass. Compose
 config: valid. gitleaks (full history): no leaks. Negative controls:
 without the engine's tenant-scope check 1 test fails; without the
 resource-campus check 2 tests fail. CI not run.
+```
+
+### T01-06 — Platform Identity & MFA
+
+**Status:** `READY_FOR_REVIEW` (implemented and verified on `feat/T01-06-platform-identity-mfa`; not merged)
+
+**Implementation:**
+
+```text
+Database: migration 0006 - platform_users, platform_user_credentials,
+  platform_user_roles, platform_sessions, platform_mfa_factors,
+  platform_recovery_codes, platform_password_reset_tokens; user_mfa_factors,
+  user_recovery_codes, user_sessions.mfa_pending / mfa_failed_attempts; RLS
+  on app.realm = 'platform', app.platform_user_id and equality-matched
+  lookup keys; nothing for tenant contexts or mti_readonly; no SECURITY
+  DEFINER
+Code: app/core/security (encryption, totp, mfa); authz step-up (10 min,
+  STEP_UP_REQUIRED); app/modules/platform_identity (models, lookup,
+  repository, service, router, schemas, events, templates, bootstrap);
+  tenant MFA in app/modules/identity; app/cli.py create-platform-admin;
+  realm guard Access.MFA_PENDING and the platform session cookie
+Docs: ADR-0017, TASKS.md, docs index (the locked decision record
+  platform-identity.md is on docs/T01-06-platform-identity-decisions)
+Deferred: MFA reset route and platform user management (T01-07), screens
+  (T01-09), WebAuthn / SMS / email OTP / trusted devices (D6-4)
+```
+
+**Verification:**
+
+```text
+Backend 729 tests (was 644): 290 PostgreSQL/Redis integration tests (was
+229) with REQUIRE_DATABASE_TESTS=1; without the database and Redis variables
+439 passed, 290 skipped. Migration head 0006. ruff, ruff format, mypy
+(strict), import-linter (2 kept): pass. pnpm check (frontend 783 tests and
+build included): pass. API image build + docker smoke test: pass. Compose
+config: valid. gitleaks (full history): no leaks. No frontend changes. CI
+not run.
 ```
 
 ---
@@ -2022,6 +2059,7 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-10-02 | T01-05 UI contract frozen | AUTHZ-01, RESOURCE-01/02, NAV-01/02, SESSION-01, CAMPUS-01, DASH-01 (`docs/ui/T01-05-AUTHORIZATION-RBAC-UI.md`) |
 | 2026-10-02 | T01-05 Authorization & RBAC implemented | `READY_FOR_REVIEW` on `feat/T01-05-authorization-rbac`; permission catalogue, tenant roles with database-enforced system-role immutability, effective permissions in the session and context, `authorize`/`require_permission`, route coverage, ADR-0016 |
 | 2026-10-02 | T01-06 architecture review; decisions D6-1 … D6-5 locked | First platform administrator CLI, platform password recovery, lost-MFA reset, TOTP + recovery codes only, step-up permissions and 10-minute window (`docs/architecture/platform-identity.md`) |
+| 2026-10-03 | T01-06 Platform Identity & MFA implemented | `READY_FOR_REVIEW` on `feat/T01-06-platform-identity-mfa`; platform identity and sessions, TOTP + recovery codes, step-up, password and MFA reset, optional tenant MFA, bootstrap CLI, ADR-0017 |
 
 ---
 
@@ -3381,14 +3419,58 @@ Platform Identity & MFA
 
 ---
 
+## 2026-10-03 — T01-06 Platform Identity & MFA
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+Platform identity and MFA (ADR-0017; locked decisions D6-1 … D6-5):
+- a separate platform realm with its own users, credentials, roles, sessions and Row-Level Security;
+- mandatory TOTP plus recovery codes for platform users, behind an MFA-pending session;
+- step-up for the four D6-5 permissions in `authorize()`;
+- platform password reset and the lost-MFA reset capability;
+- optional tenant MFA on the existing identity model;
+- the `create-platform-admin` bootstrap and break-glass CLI.
+
+**Tests:**
+
+```text
+Backend 729 passed with the PostgreSQL test database, Redis and
+REQUIRE_DATABASE_TESTS=1 (439 passed + 290 skipped without them). pnpm
+check passed (frontend 783 tests, build). Docker smoke test passed.
+gitleaks: no leaks. CI not run.
+```
+
+**Known Issues:**
+
+```text
+The MFA reset has no route until T01-07. No screens until T01-09. No key
+re-encryption job. The locked decision record platform-identity.md is on
+docs/T01-06-platform-identity-decisions and merges separately.
+```
+
+**Next:**
+
+```text
+Review T01-06 -> PR, CI (PostgreSQL + Redis), merge commit -> T01-07
+Platform Administration Foundation (API)
+```
+
+---
+
 # 40. NEXT TASK
 
 The next step is:
 
 ```text
-T01-06 — Platform Identity & MFA implementation, against the locked
-decisions D6-1 … D6-5 (docs/architecture/platform-identity.md). T01-05 was
-merged to main by PR #21 (merge commit ee956e5).
+Review and merge T01-06 (Platform Identity & MFA, READY_FOR_REVIEW on
+feat/T01-06-platform-identity-mfa), then T01-07 — Platform Administration
+Foundation (API). T01-05 is COMPLETED (PR #21, merge commit ee956e5).
 ```
 
 The completed-task description below is retained for reference.

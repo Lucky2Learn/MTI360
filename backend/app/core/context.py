@@ -15,6 +15,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar, Token
 from dataclasses import dataclass
+from datetime import datetime
 from enum import StrEnum
 
 from starlette.requests import HTTPConnection
@@ -46,6 +47,9 @@ class RequestContext:
     permissions: frozenset[str] = frozenset()
     all_campuses: bool = False
     campus_ids: frozenset[uuid.UUID] = frozenset()
+    # When the session last completed MFA (T01-06): sign-in or step-up. Read by
+    # authorize() for permissions that require a fresh MFA verification.
+    mfa_verified_at: datetime | None = None
 
 
 class MissingContextError(RuntimeError):

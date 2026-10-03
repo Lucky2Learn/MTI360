@@ -40,7 +40,14 @@ def test_authentication_routes_have_the_expected_realm_and_access(test_settings:
 
     anonymous = (Realm.TENANT, Access.ANONYMOUS)
     session = (Realm.TENANT, Access.SESSION)
+    pending = (Realm.TENANT, Access.MFA_PENDING)
     assert routes == {
+        # Optional tenant MFA (T01-06).
+        ("POST", "/api/v1/auth/mfa/verify"): pending,
+        ("POST", "/api/v1/auth/mfa/recovery"): pending,
+        ("POST", "/api/v1/session/mfa/enrolment"): session,
+        ("POST", "/api/v1/session/mfa/enrolment/confirm"): session,
+        ("POST", "/api/v1/session/mfa/remove"): session,
         ("POST", "/api/v1/auth/login"): anonymous,
         ("POST", "/api/v1/auth/logout"): anonymous,
         ("POST", "/api/v1/auth/password-reset"): anonymous,

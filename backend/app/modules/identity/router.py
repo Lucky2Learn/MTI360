@@ -28,8 +28,12 @@ from app.modules.identity.schemas import (
     InvitationPreviewOut,
     InvitationTokenRequest,
     LoginRequest,
+    MfaCodeRequest,
+    MfaEnrolmentOut,
     PasswordResetConfirmRequest,
     PasswordResetRequest,
+    RecoveryCodeRequest,
+    RecoveryCodesOut,
     RoleOut,
     SessionOut,
     TenantSelectionRequest,
@@ -102,6 +106,7 @@ def session_out(view: SessionView) -> SessionOut:
         csrf_token=view.csrf_token,
         permissions=list(view.permissions),
         roles=[RoleOut(name=role.name, is_system=role.is_system) for role in view.roles],
+        mfa_enabled=view.mfa_enabled,
     )
 
 
@@ -113,7 +118,12 @@ def _issued(
 
 
 anonymous_routes = APIRouter(prefix="/auth", tags=["authentication"])
+mfa_routes = APIRouter(prefix="/auth/mfa", tags=["authentication"])
 session_routes = APIRouter(prefix="/session", tags=["session"])
+
+
+def _no_store(response: Response) -> None:
+    response.headers["Cache-Control"] = "no-store"
 
 
 @anonymous_routes.post("/login")
@@ -165,6 +175,58 @@ async def preview_invitation(
 async def accept_invitation(body: InvitationAcceptRequest, service: Service, info: Info) -> None:
     """D19 §3.4: activates the membership; never signs in, never overwrites a password."""
     await service.accept_invitation(body.token, body.display_name, body.password, info)
+
+
+@mfa_routes.post("/verify")
+async def verify_mfa(
+    body: MfaCodeRequest, response: Response, service: Service, info: Info, resolved: Resolved
+) -> Envelope[SessionOut]:
+    """Complete sign-in with an authenticator code (T01-06); the session is rotated."""
+    issued = await service.verify_mfa(resolved, body.code, info)
+    return _issued(response, issued, service)
+
+
+@mfa_routes.post("/recovery")
+async def use_recovery_code(
+    body: RecoveryCodeRequest,
+    response: Response,
+    service: Service,
+    info: Info,
+    resolved: Resolved,
+) -> Envelope[SessionOut]:
+    """Complete sign-in with a single-use recovery code; the session is rotated."""
+    issued = await service.use_recovery_code(resolved, body.recovery_code, info)
+    return _issued(response, issued, service)
+
+
+@session_routes.post("/mfa/enrolment")
+async def start_mfa_enrolment(
+    response: Response, service: Service, info: Info, resolved: Resolved
+) -> Envelope[MfaEnrolmentOut]:
+    """Opt in to MFA: a TOTP secret and ``otpauth://`` URI (shown once)."""
+    _no_store(response)
+    enrolment = await service.start_enrolment(resolved, info)
+    return Envelope(
+        data=MfaEnrolmentOut(secret=enrolment.secret, otpauth_uri=enrolment.otpauth_uri)
+    )
+
+
+@session_routes.post("/mfa/enrolment/confirm")
+async def confirm_mfa_enrolment(
+    body: MfaCodeRequest, response: Response, service: Service, info: Info, resolved: Resolved
+) -> Envelope[RecoveryCodesOut]:
+    """Confirm with a first code; returns the recovery codes once."""
+    _no_store(response)
+    codes = await service.confirm_enrolment(resolved, body.code, info)
+    return Envelope(data=RecoveryCodesOut(recovery_codes=codes))
+
+
+@session_routes.post("/mfa/remove", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_mfa(
+    body: MfaCodeRequest, service: Service, info: Info, resolved: Resolved
+) -> None:
+    """Turn MFA off; needs a current authenticator code."""
+    await service.remove_mfa(resolved, body.code, info)
 
 
 @session_routes.get("")

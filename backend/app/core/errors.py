@@ -92,6 +92,14 @@ class PermissionDeniedError(AppError):
     default_message = "You do not have permission to do this."
 
 
+class StepUpRequiredError(AppError):
+    """The permission needs an MFA verification within the step-up window (T01-06, D6-5)."""
+
+    status_code = 403
+    code = "STEP_UP_REQUIRED"
+    default_message = "Confirm it's you with your authenticator code to continue."
+
+
 class NotFoundError(AppError):
     """Also used for other tenants' resources, so their existence is never revealed."""
 

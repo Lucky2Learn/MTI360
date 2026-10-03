@@ -10,6 +10,8 @@ code-reviewed: adding a route to it is a deliberate security decision.
 * ``authenticated_only`` — any valid session, no permission: the caller acts
   only on their own data, such as their session (``Access.SESSION`` or
   ``Access.AUTHENTICATED``).
+* ``mfa_pending`` (T01-06) — a session that passed the password step only;
+  the route completes the caller's own MFA step (``Access.MFA_PENDING``).
 
 :func:`coverage_violations` runs on the real application in
 ``tests/security/test_route_coverage.py``; it also rejects stale exemptions,
@@ -32,6 +34,7 @@ from app.core.authz import route_permissions
 class Exemption(StrEnum):
     PUBLIC_ROUTE = "public_route"
     AUTHENTICATED_ONLY = "authenticated_only"
+    MFA_PENDING = "mfa_pending"
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +45,8 @@ class ReviewedExemption:
 
 _PUBLIC = Exemption.PUBLIC_ROUTE
 _OWN_SESSION = Exemption.AUTHENTICATED_ONLY
+_MFA_PENDING = Exemption.MFA_PENDING
+_PLATFORM = f"{API_PREFIX}/platform"
 
 REVIEWED_EXEMPTIONS: Final = MappingProxyType(
     {
@@ -72,12 +77,63 @@ REVIEWED_EXEMPTIONS: Final = MappingProxyType(
         ("PUT", f"{API_PREFIX}/session/campus"): ReviewedExemption(
             _OWN_SESSION, "Selects one of the caller's permitted campuses (T01-04)."
         ),
+        # --- Optional tenant MFA (T01-06) ------------------------------------------------
+        ("POST", f"{API_PREFIX}/auth/mfa/verify"): ReviewedExemption(
+            _MFA_PENDING, "Completes the caller's own sign-in with a TOTP code."
+        ),
+        ("POST", f"{API_PREFIX}/auth/mfa/recovery"): ReviewedExemption(
+            _MFA_PENDING, "Completes the caller's own sign-in with a recovery code."
+        ),
+        ("POST", f"{API_PREFIX}/session/mfa/enrolment"): ReviewedExemption(
+            _OWN_SESSION, "Starts the caller's own optional MFA enrolment."
+        ),
+        ("POST", f"{API_PREFIX}/session/mfa/enrolment/confirm"): ReviewedExemption(
+            _OWN_SESSION, "Confirms the caller's own MFA enrolment."
+        ),
+        ("POST", f"{API_PREFIX}/session/mfa/remove"): ReviewedExemption(
+            _OWN_SESSION, "Turns off the caller's own MFA with a current code."
+        ),
+        # --- Platform realm (T01-06) ------------------------------------------------------
+        ("POST", f"{_PLATFORM}/auth/login"): ReviewedExemption(
+            _PUBLIC, "Platform sign-in: password step, opens an MFA-pending session."
+        ),
+        ("POST", f"{_PLATFORM}/auth/logout"): ReviewedExemption(
+            _PUBLIC, "Platform sign-out of the presented session; idempotent."
+        ),
+        ("POST", f"{_PLATFORM}/auth/password-reset"): ReviewedExemption(
+            _PUBLIC, "Platform password reset request; no account enumeration (D6-2)."
+        ),
+        ("POST", f"{_PLATFORM}/auth/password-reset/confirm"): ReviewedExemption(
+            _PUBLIC, "Platform password reset with a single-use token (D6-2)."
+        ),
+        ("POST", f"{_PLATFORM}/auth/mfa/enrolment"): ReviewedExemption(
+            _MFA_PENDING, "Starts TOTP enrolment for the caller's own pending session."
+        ),
+        ("POST", f"{_PLATFORM}/auth/mfa/enrolment/confirm"): ReviewedExemption(
+            _MFA_PENDING, "Confirms the caller's own TOTP enrolment and completes sign-in."
+        ),
+        ("POST", f"{_PLATFORM}/auth/mfa/verify"): ReviewedExemption(
+            _MFA_PENDING, "Completes the caller's own sign-in with a TOTP code."
+        ),
+        ("POST", f"{_PLATFORM}/auth/mfa/recovery"): ReviewedExemption(
+            _MFA_PENDING, "Completes the caller's own sign-in with a recovery code."
+        ),
+        ("GET", f"{_PLATFORM}/session"): ReviewedExemption(
+            _OWN_SESSION, "The caller's own platform session, permissions and MFA state."
+        ),
+        ("POST", f"{_PLATFORM}/session/step-up"): ReviewedExemption(
+            _OWN_SESSION, "Re-verifies the caller's own MFA for step-up (D6-5)."
+        ),
+        ("POST", f"{_PLATFORM}/session/mfa/recovery-codes"): ReviewedExemption(
+            _OWN_SESSION, "Regenerates the caller's own recovery codes; needs step-up."
+        ),
     }
 )
 
 _ALLOWED_ACCESS: Final = {
     Exemption.PUBLIC_ROUTE: frozenset({Access.ANONYMOUS}),
     Exemption.AUTHENTICATED_ONLY: frozenset({Access.SESSION, Access.AUTHENTICATED}),
+    Exemption.MFA_PENDING: frozenset({Access.MFA_PENDING}),
 }
 
 

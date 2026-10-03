@@ -12,7 +12,7 @@ from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from conftest import TEST_CSRF_SECRET, DatabaseUnderTest
+from conftest import TEST_CSRF_SECRET, TEST_DATA_ENCRYPTION_KEY, DatabaseUnderTest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from pydantic import SecretStr
@@ -427,6 +427,7 @@ def auth_settings(database: DatabaseUnderTest, redis_url: str) -> Settings:
         app_env="test",
         session_secret=SecretStr(TEST_SESSION_SECRET),
         csrf_secret=SecretStr(TEST_CSRF_SECRET),
+        data_encryption_key=SecretStr(TEST_DATA_ENCRYPTION_KEY),
         database_url=SecretStr(database.app_url),
         migrations_database_url=SecretStr(database.owner_url),
         readonly_database_url=SecretStr(database.readonly_url),

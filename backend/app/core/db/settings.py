@@ -24,6 +24,7 @@ REALM: Final = "app.realm"
 REQUEST_ID: Final = "app.request_id"
 TENANT_ID: Final = "app.tenant_id"
 USER_ID: Final = "app.user_id"
+PLATFORM_USER_ID: Final = "app.platform_user_id"
 
 _SET_LOCAL = text("SELECT set_config(:name, :value, true)")
 
@@ -35,6 +36,7 @@ async def apply_transaction_settings(
     request_id: uuid.UUID | None = None,
     tenant_id: uuid.UUID | None = None,
     user_id: uuid.UUID | None = None,
+    platform_user_id: uuid.UUID | None = None,
 ) -> None:
     """Publish the context to the current transaction (``SET LOCAL``).
 
@@ -46,6 +48,7 @@ async def apply_transaction_settings(
         REQUEST_ID: request_id,
         TENANT_ID: tenant_id,
         USER_ID: user_id,
+        PLATFORM_USER_ID: platform_user_id,
     }
     for name, value in values.items():
         if value is not None:

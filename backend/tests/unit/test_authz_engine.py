@@ -4,13 +4,25 @@ Pure unit tests: the context is built directly, as the realm guard would.
 """
 
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from app.core.authz import Permission, PermissionScope, authorize
+from app.core.authz import (
+    STEP_UP_WINDOW,
+    Permission,
+    PermissionScope,
+    authorize,
+    require_fresh_mfa,
+)
 from app.core.context import Realm, RequestContext
-from app.core.errors import AuthenticationRequiredError, NotFoundError, PermissionDeniedError
+from app.core.errors import (
+    AuthenticationRequiredError,
+    NotFoundError,
+    PermissionDeniedError,
+    StepUpRequiredError,
+)
 
 TENANT = uuid.uuid7()
 OTHER_TENANT = uuid.uuid7()
@@ -70,9 +82,27 @@ def test_a_tenant_permission_needs_an_active_tenant() -> None:
         authorize(context(tenant=None), MEMBER_READ)
 
 
-def test_step_up_permissions_are_refused_until_mfa_exists() -> None:
+def test_step_up_permissions_need_a_fresh_mfa_verification() -> None:
+    now = datetime.now(UTC)
+    # Never verified, verified 11 minutes ago, or a timestamp in the future: stale.
+    for verified in (None, now - timedelta(minutes=11), now + timedelta(minutes=1)):
+        with pytest.raises(StepUpRequiredError):
+            authorize(replace(context(), mfa_verified_at=verified), STEP_UP)
+    authorize(replace(context(), mfa_verified_at=now - timedelta(minutes=9)), STEP_UP)
+    # A caller without the permission is refused (403), never asked to step up.
     with pytest.raises(PermissionDeniedError):
-        authorize(context(), STEP_UP)
+        authorize(replace(context(permissions=()), mfa_verified_at=None), STEP_UP)
+    # Permissions without the flag ignore MFA freshness.
+    authorize(replace(context(), mfa_verified_at=None), MEMBER_READ)
+
+
+def test_the_step_up_window_is_ten_minutes() -> None:
+    assert timedelta(minutes=10) == STEP_UP_WINDOW
+    moment = datetime.now(UTC)
+    edge = replace(context(), mfa_verified_at=moment - STEP_UP_WINDOW)
+    require_fresh_mfa(edge, now=moment)
+    with pytest.raises(StepUpRequiredError):
+        require_fresh_mfa(edge, now=moment + timedelta(seconds=1))
 
 
 def test_a_missing_permission_is_403() -> None:
