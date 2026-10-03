@@ -40,6 +40,7 @@ class SessionRevokeReason(StrEnum):
     ROTATED = "rotated"
     PASSWORD_RESET = "password_reset"  # noqa: S105 - a revoke reason, not a secret
     MFA_FAILED = "mfa_failed"
+    TENANT_SUSPENDED = "tenant_suspended"  # T01-07, D7-6
 
 
 class MfaKind(StrEnum):

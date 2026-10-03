@@ -117,9 +117,11 @@ T01_03_OBJECTS = (
     "    'pk_tenants', 'pk_campuses', 'uq_campuses_tenant_id_id', 'uq_campuses_tenant_id_code')) "
     "+ (SELECT count(*) FROM pg_policies WHERE policyname = ANY(:policies)) "
     "+ (SELECT count(*) FROM pg_constraint c JOIN pg_class t ON t.oid = c.conrelid "
-    "    WHERE t.relname IN ('tenants', 'campuses') AND c.contype <> 'n')"
+    "    WHERE t.relname IN ('tenants', 'campuses') AND c.contype <> 'n' "
+    "    AND c.conname <> 'fk_tenants_owner_membership')"
 )
-# contype 'n' (NOT NULL, catalogued as constraints since PostgreSQL 18) is excluded.
+# contype 'n' (NOT NULL, catalogued as constraints since PostgreSQL 18) is excluded, and so is
+# the owner foreign key added by 0007 (tested with that migration).
 # 2 tables + 4 indexes (pk_tenants, pk_campuses, 2 unique) + 6 policies
 # + 7 constraints (2 pk, 2 unique, 2 check, 1 fk)
 T01_03_OBJECT_COUNT = 2 + 4 + 6 + 7
@@ -195,6 +197,8 @@ async def test_tables_columns_and_indexes_follow_the_contract(
         "tenants.created_at:timestamp with time zone:NO:-",
         "tenants.updated_at:timestamp with time zone:NO:-",
         "tenants.version:integer:NO:-",
+        # 0007 (T01-07, D7-1/D7-8): the primary administrator's membership.
+        "tenants.owner_membership_id:uuid:YES:-",
     ]
     assert indexes.split(",") == [
         "pk_campuses",

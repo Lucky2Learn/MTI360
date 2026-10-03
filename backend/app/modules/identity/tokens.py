@@ -33,6 +33,7 @@ class TokenPurpose(StrEnum):
     # Platform realm (T01-06): separate domains, so no hash of one realm matches the other.
     PLATFORM_SESSION = "platform_session"
     PLATFORM_PASSWORD_RESET = "platform_password_reset"  # noqa: S105 - a purpose label
+    PLATFORM_INVITATION = "platform_invitation"  # T01-07, D7-3
 
 
 def new_token() -> str:

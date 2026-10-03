@@ -20,6 +20,15 @@ server-resolved platform user (``app.platform_user_id``).
 authorized platform principal plus ``app.platform_mfa_reset_user_id``: opens
 exactly the target's MFA factors, recovery codes and sessions (D6-3).
 
+**Administration** (:func:`admin_target_transaction`, T01-07 D7-2) — the
+current, already authorized platform principal plus
+``app.platform_admin_target_user_id``: opens exactly that platform user's
+row (update; insert while ``INVITED``), roles, sessions and invitations.
+
+``app.platform_auth_token_hash`` also names a platform invitation (T01-07,
+D7-3): the lookup opens that invitation, its user and the user's first
+credential, so an invitee can set a password before having a session.
+
 Only this module publishes the platform keys (a test enforces it). Values come
 from the server: a canonical email, an HMAC computed by the server, or a
 target the service has authorized — never client input as such.
@@ -44,6 +53,7 @@ PLATFORM_AUTH_EMAIL: Final = "app.platform_auth_email"
 PLATFORM_AUTH_TOKEN_HASH: Final = "app.platform_auth_token_hash"  # noqa: S105 - a setting name
 PLATFORM_SESSION_TOKEN_HASH: Final = "app.platform_session_token_hash"  # noqa: S105 - a name
 PLATFORM_MFA_RESET_USER_ID: Final = "app.platform_mfa_reset_user_id"
+PLATFORM_ADMIN_TARGET_USER_ID: Final = "app.platform_admin_target_user_id"
 
 _SET_LOCAL = text("SELECT set_config(:name, :value, true)")
 _HASH = re.compile(TOKEN_HASH_PATTERN)
@@ -111,5 +121,25 @@ async def mfa_reset_transaction(
     async with context_transaction(factory, context) as session:
         await session.execute(
             _SET_LOCAL, {"name": PLATFORM_MFA_RESET_USER_ID, "value": str(target_user_id)}
+        )
+        yield session
+
+
+@asynccontextmanager
+async def admin_target_transaction(
+    factory: async_sessionmaker[AsyncSession],
+    *,
+    context: RequestContext,
+    target_user_id: uuid.UUID,
+) -> AsyncIterator[AsyncSession]:
+    """The authorized principal's transaction, opened to one platform user (D7-2).
+
+    The caller must have run ``authorize()`` (permission and step-up) first.
+    """
+    if context.realm is not Realm.PLATFORM or context.principal_id is None:
+        raise ValueError("platform administration runs as an authenticated platform principal")
+    async with context_transaction(factory, context) as session:
+        await session.execute(
+            _SET_LOCAL, {"name": PLATFORM_ADMIN_TARGET_USER_ID, "value": str(target_user_id)}
         )
         yield session

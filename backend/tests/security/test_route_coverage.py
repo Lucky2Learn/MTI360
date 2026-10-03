@@ -50,6 +50,10 @@ T01_06_PLATFORM_PUBLIC = {
     ("POST", "/api/v1/platform/auth/password-reset"),
     ("POST", "/api/v1/platform/auth/password-reset/confirm"),
 }
+T01_07_PLATFORM_PUBLIC = {
+    ("POST", "/api/v1/platform/auth/invitations/preview"),
+    ("POST", "/api/v1/platform/auth/invitations/accept"),
+}
 T01_06_PLATFORM_MFA_PENDING = {
     ("POST", "/api/v1/platform/auth/mfa/enrolment"),
     ("POST", "/api/v1/platform/auth/mfa/enrolment/confirm"),
@@ -88,6 +92,7 @@ def test_the_reviewed_exemptions_are_the_authentication_routes_with_reasons() ->
         | T01_06_TENANT_MFA_PENDING
         | T01_06_TENANT_MFA_SESSION
         | T01_06_PLATFORM_PUBLIC
+        | T01_07_PLATFORM_PUBLIC
         | T01_06_PLATFORM_MFA_PENDING
         | T01_06_PLATFORM_SESSION
     )

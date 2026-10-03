@@ -13,6 +13,7 @@ PLATFORM_KEYS = (
     "app.platform_auth_token_hash",
     "app.platform_session_token_hash",
     "app.platform_mfa_reset_user_id",
+    "app.platform_admin_target_user_id",  # T01-07, D7-2
 )
 SETTINGS_MODULE = APP_DIR / "core" / "db" / "settings.py"
 # The setting as a string literal (documentation mentions it in ``double backticks``).
