@@ -979,6 +979,16 @@ Architecture review approved; decisions **D6-1 … D6-5 are locked** in `docs/ar
 
 Tenant provisioning (tenant, primary campus, cloned roles, owner invitation); tenant list and detail; suspend and reactivate; platform users; platform audit read. The screens remain in Phase 02.
 
+Architecture review approved; decisions **D7-1 … D7-10 are locked** in `docs/architecture/platform-administration.md`:
+
+* **D7-1 Provisioning write path (INC-39).** A named provisioning transaction publishes only the new tenant's server-generated ID as the trusted tenant; one module only, statically enforced; a narrow `users` insert policy for the owner.
+* **D7-2 Platform user administration.** A target-key transaction opened after `authorize()`; the T01-06 own-row rules stay.
+* **D7-3 Onboarding.** A dedicated `platform_user_invitations` table (HMAC, single use, expiring); MFA enrolment at first sign-in.
+* **D7-4 Suspend and reactivate.** `platform_user.suspend` and `platform_user.reactivate` require step-up (extends D6-5), with a reason and the version; suspension revokes platform sessions.
+* **D7-5 Self-protection.** No action on one's own account; the last active `SUPER_ADMIN` is kept, under a row lock.
+* **D7-6 Tenant suspension.** Revokes sessions whose active institute is the tenant (`tenant_suspended`), in the same transaction.
+* **Defaults D7-7 … D7-10.** Owner with an existing account, owner invitation resend, platform audit read, no `unscoped()` (INC-38 open).
+
 ---
 
 ## T01-08 — Tenant Administration Foundation (API)
