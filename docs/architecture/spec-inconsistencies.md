@@ -319,11 +319,12 @@
 
 ## INC-39 — Platform provisioning cannot write tenant-owned rows
 
-- **Status:** `OPEN` (T01-03)
+- **Status:** `DECIDED-BY-ADR` ([ADR-0018](../adr/0018-platform-administration.md) §1-§2; D7-1)
 - **Where:** TASKS.md T01-07 (provisioning creates the primary campus and roles) and security.md §1 ("set at provisioning") vs the realm-agnostic tenant RLS of ADR-0014
 - **Issue:** A platform request has no trusted tenant, so RLS rejects its inserts into `campuses` and later tenant tables.
 - **Current handling:** No platform write policy on tenant-owned tables in T01-03.
 - **Proposed resolution:** T01-07 designs the provisioning write path (for example a named, audited scope that publishes the new tenant in the same transaction) with an ADR.
+- **Resolution:** A named provisioning transaction (`app.modules.tenants.scopes`) publishes only the new tenant's server-generated ID as the trusted tenant plus `app.provisioning_tenant_id`; migration 0007 adds narrow terms for system roles and the `INVITED` owner identity.
 
 ## INC-40 — Campus status vocabulary
 

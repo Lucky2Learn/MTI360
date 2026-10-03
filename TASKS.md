@@ -673,7 +673,7 @@ Every slice is delivered as five commits:
 | T01-04 | Tenant Identity & Authentication | COMPLETED |
 | T01-05 | Authorization & RBAC | COMPLETED |
 | T01-06 | Platform Identity & MFA | READY_FOR_REVIEW |
-| T01-07 | Platform Administration Foundation (API) | NOT_STARTED |
+| T01-07 | Platform Administration Foundation (API) | READY_FOR_REVIEW |
 | T01-08 | Tenant Administration Foundation (API) and development seed | NOT_STARTED |
 | T01-09 | Frontend Authentication & Session Integration | NOT_STARTED |
 | T01-10 | Security Verification Gate & Phase Close-out | NOT_STARTED |
@@ -988,6 +988,34 @@ Architecture review approved; decisions **D7-1 … D7-10 are locked** in `docs/a
 * **D7-5 Self-protection.** No action on one's own account; the last active `SUPER_ADMIN` is kept, under a row lock.
 * **D7-6 Tenant suspension.** Revokes sessions whose active institute is the tenant (`tenant_suspended`), in the same transaction.
 * **Defaults D7-7 … D7-10.** Owner with an existing account, owner invitation resend, platform audit read, no `unscoped()` (INC-38 open).
+
+**Priority:** P0
+
+**Status:** READY_FOR_REVIEW (implemented and verified on `feat/T01-07-platform-administration`; not merged).
+
+**Implemented** (ADR-0018):
+
+* **Migration `0007`:** `platform_user_invitations`, `tenants.owner_membership_id`, revoke reasons `tenant_suspended` and `admin_suspended`; existing policies altered in place with one narrow, equality-matched term per key (provisioning, suspension target, owner, administration target, invitation token).
+* **Tenants API:** list, detail (with the primary administrator), provisioning in one transaction (tenant, campus, system roles, owner membership and invitation), suspend and reactivate (step-up, reason, version; suspension revokes the institute's sessions), owner invitation resend.
+* **Platform users API:** directory, create by invitation, update (name, roles), suspend and reactivate (step-up; sessions revoked), invitation resend, MFA reset (D6-3); public invitation preview and acceptance.
+* **Self-protection and the last guardian (D7-5)**, with an advisory lock against concurrent changes.
+* **Platform audit read** with filters and pagination.
+* **Static boundaries:** the tenant scope keys and the administration key each have one publishing module; no `unscoped()`.
+
+**Acceptance criteria:**
+
+* Migration `0007` upgrades, downgrades to `0006` and upgrades again; no model drift.
+* Each new key opens only its target; tenant contexts and the read-only role gain nothing.
+* Provisioning produces a working institute whose owner accepts through the T01-04 flow; it never touches another tenant.
+* Step-up, reasons, versions, self-protection, session revocation and invitation single use are enforced and audited.
+* All T01-01 … T01-06 tests pass; route coverage passes; there are no frontend changes.
+
+**Deviations** (ADR-0018 §9 and Consequences):
+
+* Provisioning also needs narrow terms on `roles_insert` and `role_permissions_insert` (system roles are system-realm-only in 0005).
+* Guardian changes are serialised by an advisory lock, not a row lock.
+* Added `tenants.owner_membership_id` and the platform revoke reason `admin_suspended`.
+* No provisioning idempotency key (T02-12); no MFA or last sign-in in the platform user directory.
 
 ---
 
