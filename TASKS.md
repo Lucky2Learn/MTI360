@@ -1023,6 +1023,13 @@ Architecture review approved; decisions **D7-1 … D7-10 are locked** in `docs/a
 
 Campuses, members (invite, suspend, revoke), member roles and campus scope, custom roles, tenant audit read, and the development seed (D16). The screens remain in Phase 03.
 
+Architecture review approved; decisions **D8-1 … D8-4 are locked** in `docs/architecture/tenant-administration.md`:
+
+* **D8-1 New invitee identity.** `INVITED` identities of new invitees are created through a narrow invitee key published only by the tenant invitation module after authorization; existing accounts are reused unchanged; `DISABLED` → `409`; no tenant-realm-wide `users` INSERT. Migration 0008: `users_insert` term.
+* **D8-2 Tenant audit visibility.** Tenant audit reads return only tenant-realm events of the trusted tenant, enforced by `audit_events_tenant_read`; platform-written events, including provisioning, remain platform-only. Migration 0008: policy change.
+* **D8-3 Member lifecycle.** `INVITED → ACTIVE` (acceptance), `ACTIVE ⇄ SUSPENDED` (`member.suspend`), `INVITED | ACTIVE | SUSPENDED → REVOKED` (`member.revoke`, with open invitations), `REVOKED → INVITED` (re-invitation of the same row); versioned; no global session revocation (per-request membership re-check). No migration.
+* **D8-4 Self-protection and last owner.** No suspension, revocation, campus-scope change or role removal on one's own membership (`403`); at least one `ACTIVE` `INSTITUTE_OWNER` membership per institute (`409`), serialised by a per-tenant transaction advisory lock. No migration.
+
 ---
 
 ## T01-09 — Frontend Authentication & Session Integration
