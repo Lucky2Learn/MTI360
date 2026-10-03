@@ -20,3 +20,5 @@ ROLE_DELETED = AuditEventType("role.deleted", _A)
 ROLE_ASSIGNED = AuditEventType("membership.role_assigned", _A)
 ROLE_REMOVED = AuditEventType("membership.role_removed", _A)
 SYSTEM_ROLE_CHANGE_REJECTED = AuditEventType("role.system_change_rejected", _S)
+# T01-08, D8-4: a member administration action on one's own membership was refused.
+SELF_ACTION_REFUSED = AuditEventType("member.self_action_refused", _S)

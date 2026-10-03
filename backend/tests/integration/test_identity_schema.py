@@ -126,8 +126,10 @@ async def test_the_identity_migration_downgrades_and_upgrades_cleanly(
     assert revision is not None
     objects = (
         "SELECT (SELECT count(*) FROM pg_class WHERE relname = ANY(:tables)) "
-        "+ (SELECT count(*) FROM pg_policies WHERE tablename = ANY(:tables) "
-        "   OR policyname = 'tenants_member_read')"
+        "+ (SELECT count(*) FROM pg_policies WHERE (tablename = ANY(:tables) "
+        "   OR policyname = 'tenants_member_read') "
+        # 0008 (T01-08): campus-scope changes; tested with that migration.
+        "   AND policyname <> 'membership_campuses_update')"
     )
     present = await _owner_scalar(migrated_database, objects, tables=list(TABLES))
 
@@ -165,11 +167,8 @@ async def test_runtime_privileges_have_no_delete_and_readonly_has_nothing(
             }
             for key in ("app", "readonly")
         }
-        expected = (
-            {"SELECT", "INSERT"}
-            if table == "membership_campuses"
-            else {"SELECT", "INSERT", "UPDATE"}
-        )
+        # membership_campuses: UPDATE since 0008 (T01-08, ``removed_at``); never DELETE (D16).
+        expected = {"SELECT", "INSERT", "UPDATE"}
         assert granted == {"app": expected, "readonly": set()}, table
 
 

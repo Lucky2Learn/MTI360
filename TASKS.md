@@ -674,7 +674,7 @@ Every slice is delivered as five commits:
 | T01-05 | Authorization & RBAC | COMPLETED |
 | T01-06 | Platform Identity & MFA | READY_FOR_REVIEW |
 | T01-07 | Platform Administration Foundation (API) | READY_FOR_REVIEW |
-| T01-08 | Tenant Administration Foundation (API) and development seed | NOT_STARTED |
+| T01-08 | Tenant Administration Foundation (API) and development seed | READY_FOR_REVIEW |
 | T01-09 | Frontend Authentication & Session Integration | NOT_STARTED |
 | T01-10 | Security Verification Gate & Phase Close-out | NOT_STARTED |
 
@@ -1029,6 +1029,33 @@ Architecture review approved; decisions **D8-1 … D8-4 are locked** in `docs/ar
 * **D8-2 Tenant audit visibility.** Tenant audit reads return only tenant-realm events of the trusted tenant, enforced by `audit_events_tenant_read`; platform-written events, including provisioning, remain platform-only. Migration 0008: policy change.
 * **D8-3 Member lifecycle.** `INVITED → ACTIVE` (acceptance), `ACTIVE ⇄ SUSPENDED` (`member.suspend`), `INVITED | ACTIVE | SUSPENDED → REVOKED` (`member.revoke`, with open invitations), `REVOKED → INVITED` (re-invitation of the same row); versioned; no global session revocation (per-request membership re-check). No migration.
 * **D8-4 Self-protection and last owner.** No suspension, revocation, campus-scope change or role removal on one's own membership (`403`); at least one `ACTIVE` `INSTITUTE_OWNER` membership per institute (`409`), serialised by a per-tenant transaction advisory lock. No migration.
+
+**Priority:** P0
+
+**Status:** READY_FOR_REVIEW (implemented and verified on `feat/T01-08-tenant-administration`; not merged).
+
+**Implemented** (ADR-0019):
+
+* **Migration `0008`:** the `users_insert` invitee-key term (D8-1), `audit_events_tenant_read` restricted to tenant-realm events (D8-2), and `membership_campuses.removed_at` with UPDATE under the tenant rule (campus scope without DELETE, T01-04 D16).
+* **Members API:** list and detail, invitation of new or existing accounts with initial roles and campus scope, resend, suspend, reinstate, revoke, re-invite (same row), campus scope, role assignment and removal; versioned; no session revocation.
+* **Owner protection:** self-protection (`403`) and the last active owner (`409`) under a per-tenant advisory lock.
+* **Roles API** over the access service, the permission catalogue, campuses (list, detail, create, rename) and the read-only institute summary.
+* **Tenant audit read** (`GET /api/v1/audit-events`).
+* **Development seed (D16):** `python -m app.cli seed` with `database/seeds/dev.json`.
+
+**Acceptance criteria:**
+
+* Migration `0008` upgrades, downgrades to `0007` (removed campuses are not re-granted) and upgrades again; no model drift.
+* The invitee key admits one `INVITED` identity only; tenant readers never see platform-written events; identity rows are never deleted.
+* Cross-tenant and cross-campus access is `404`; tenant-wide administration needs all-campus access; no escalation through invitations or role changes.
+* Lifecycle transitions, versions, self-protection and the last owner (including concurrent changes) behave as locked.
+* All T01-01 … T01-07 tests pass; route coverage passes; there are no frontend changes.
+
+**Deviations** (ADR-0019 §10):
+
+* Campus scope uses `membership_campuses.removed_at` instead of DELETE (T01-04 D16).
+* The last-owner `409` on owner-role removal applies to callers holding every owner permission; Administrators are refused earlier by the no-escalation rule (`403`).
+* Campus status and archival remain undefined (INC-40).
 
 ---
 

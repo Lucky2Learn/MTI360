@@ -177,3 +177,42 @@ def membership_usable(
 ) -> bool:
     """A membership can open an institute: active, tenant accessible, campus usable."""
     return status is MembershipStatus.ACTIVE and tenant_accessible and campus.usable
+
+
+# --- Membership lifecycle (T01-08, D8-3) ----------------------------------------------------
+
+
+class MembershipAction(StrEnum):
+    SUSPEND = "suspend"
+    REINSTATE = "reinstate"
+    REVOKE = "revoke"
+    REINVITE = "reinvite"
+
+
+_MEMBERSHIP_TRANSITIONS: dict[
+    MembershipAction, tuple[frozenset[MembershipStatus], MembershipStatus]
+] = {
+    MembershipAction.SUSPEND: (frozenset({MembershipStatus.ACTIVE}), MembershipStatus.SUSPENDED),
+    MembershipAction.REINSTATE: (frozenset({MembershipStatus.SUSPENDED}), MembershipStatus.ACTIVE),
+    MembershipAction.REVOKE: (
+        frozenset({MembershipStatus.INVITED, MembershipStatus.ACTIVE, MembershipStatus.SUSPENDED}),
+        MembershipStatus.REVOKED,
+    ),
+    MembershipAction.REINVITE: (frozenset({MembershipStatus.REVOKED}), MembershipStatus.INVITED),
+}
+"""D8-3. ``INVITED → ACTIVE`` happens only through invitation acceptance (T01-04)."""
+
+
+class InvalidMembershipTransitionError(ValueError):
+    def __init__(self, action: MembershipAction, status: MembershipStatus) -> None:
+        super().__init__(f"cannot {action.value} a membership in status {status.value}")
+        self.action = action
+        self.status = status
+
+
+def membership_transition(status: MembershipStatus, action: MembershipAction) -> MembershipStatus:
+    """The status after ``action``; raises :class:`InvalidMembershipTransitionError`."""
+    sources, target = _MEMBERSHIP_TRANSITIONS[action]
+    if status not in sources:
+        raise InvalidMembershipTransitionError(action, status)
+    return target

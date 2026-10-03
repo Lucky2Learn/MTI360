@@ -126,6 +126,9 @@ class MembershipCampus(TenantScopedMixin, TimestampMixin, Base):
 
     membership_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
     campus_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
+    # T01-08: a campus taken out of a SELECTED scope is marked, never deleted (T01-04 D16:
+    # no DELETE on identity tables); only rows without ``removed_at`` are permitted campuses.
+    removed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class UserSession(UUIDPrimaryKeyMixin, TimestampMixin, Base):

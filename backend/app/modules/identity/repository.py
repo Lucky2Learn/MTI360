@@ -218,7 +218,10 @@ async def memberships_of_user(session: AsyncSession, user_id: uuid.UUID) -> list
     selected = (
         select(func.count())
         .select_from(MEMBERSHIP_CAMPUSES)
-        .where(MEMBERSHIP_CAMPUSES.c.membership_id == MEMBERSHIPS.c.id)
+        .where(
+            MEMBERSHIP_CAMPUSES.c.membership_id == MEMBERSHIPS.c.id,
+            MEMBERSHIP_CAMPUSES.c.removed_at.is_(None),
+        )
         .scalar_subquery()
     )
     rows = (
@@ -264,6 +267,7 @@ async def permitted_campuses(
                 select(MEMBERSHIP_CAMPUSES.c.campus_id).where(
                     MEMBERSHIP_CAMPUSES.c.membership_id == membership_id,
                     MEMBERSHIP_CAMPUSES.c.tenant_id == tenant_id,
+                    MEMBERSHIP_CAMPUSES.c.removed_at.is_(None),
                 )
             )
         )

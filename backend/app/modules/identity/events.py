@@ -33,3 +33,15 @@ MFA_RECOVERY_CODE_USED = AuditEventType("auth.mfa.recovery_code.used", _S)
 MFA_ENROLMENT_STARTED = AuditEventType("auth.mfa.enrolment.started", _S)
 MFA_ENROLLED = AuditEventType("auth.mfa.enrolment.confirmed", _S)
 MFA_REMOVED = AuditEventType("auth.mfa.removed", _S)
+
+# --- Member administration (T01-08; D8-1, D8-3, D8-4) ---------------------------------------
+# Written in the transaction of the change (ADR-0013 §4, D22).
+_A = AuditCategory.ADMIN
+
+MEMBER_INVITED = AuditEventType("member.invited", _A)
+MEMBER_INVITATION_RESENT = AuditEventType("member.invitation.resent", _A)
+MEMBER_REINVITED = AuditEventType("member.reinvited", _A)
+MEMBER_SUSPENDED = AuditEventType("member.suspended", _A)
+MEMBER_REINSTATED = AuditEventType("member.reinstated", _A)
+MEMBER_REVOKED = AuditEventType("member.revoked", _A)
+MEMBER_CAMPUS_SCOPE_CHANGED = AuditEventType("member.campus_scope_changed", _A)
