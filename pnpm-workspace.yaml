@@ -25,6 +25,19 @@ allowBuilds:
   unrs-resolver: false
 strictDepBuilds: true
 
+# pnpm audit exceptions. Narrowly scoped: one advisory ID per entry, each with a
+# justification and the condition for removing it. Never ignore a package, a
+# severity level or the audit itself. Rationale: docs/architecture/ci.md §5.
+audit:
+  ignore:
+    # GHSA-vfj7-8cjw-p6xm — braces <=3.0.3: stack-exhaustion denial of service
+    # through deeply nested patterns (high). Development/tooling dependency only:
+    # eslint-config-next 16.3.6 > @next/eslint-plugin-next 16.3.6 > fast-glob
+    # 3.3.1 > micromatch 4.0.8 > braces 3.0.3. No patched braces release exists
+    # upstream, and updating the chain does not remove it.
+    # Revisit: remove this entry as soon as a patched braces is published.
+    - GHSA-vfj7-8cjw-p6xm
+
 # Run package scripts with pnpm's cross-platform shell so the same POSIX-style
 # syntax (e.g. ${API_PORT:-8000}) works on Windows, macOS, Linux and CI.
 shellEmulator: true

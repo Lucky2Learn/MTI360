@@ -66,6 +66,7 @@ ADR format: Status, Context, Decision, Consequences, Alternatives considered. AD
 | [tenancy.md](architecture/tenancy.md) | Tenant identification, enforcement layers, leakage vectors, isolation test gate, database conventions |
 | [backend-foundation.md](architecture/backend-foundation.md) | Backend foundation: layers and import contracts, database access and transactions, migrations, post-commit side effects, realm routers, API conventions, logging, testing, T01-00 decision record (T01-01), audit (T01-02), tenancy core (T01-03), identity and authentication (T01-04), authorization and RBAC (T01-05) |
 | [identity-authentication.md](architecture/identity-authentication.md) | T01-04 decision record, API contract, RLS, deviations and blocklist provenance (decisions D01–D19) |
+| [platform-identity.md](architecture/platform-identity.md) | T01-06 locked decisions D6-1 … D6-5 (first administrator, password recovery, lost MFA device, MFA mechanisms, step-up) and architecture constraints; implemented by ADR-0017 |
 | [authorization.md](architecture/authorization.md) | T01-05 permission catalogue, roles, RLS and triggers, request flow, status codes, session fields, route coverage, tests (decisions D-B1 … D-B4) |
 | [security.md](architecture/security.md) | Realm boundaries, authentication, authorization, secrets, files, audit, AI tool authorization |
 | [environments.md](architecture/environments.md) | Environment matrix: configuration sources, per-environment rules, secret handling, `pnpm check:env` (T00-04) |
@@ -75,7 +76,7 @@ ADR format: Status, Context, Decision, Consequences, Alternatives considered. AD
 | [application-shell.md](architecture/application-shell.md) | Application shell, experience framework and route boundaries (T00-08) |
 | [layout.md](architecture/layout.md) | Responsive layout primitives, breakpoints, spacing, content widths and page patterns (T00-09) |
 | [accessibility.md](architecture/accessibility.md) | WCAG 2.2 AA contract: keyboard, focus, names, forms, live regions, overlays, tables, motion, contrast, landmarks/headings, testing, screen checklist, known exceptions (T00-10) |
-| [ci.md](architecture/ci.md) | CI workflows, required `ci-ok` status, security model, pinned versions, Dependabot scope, local reproduction, future branch protection (T00-05) |
+| [ci.md](architecture/ci.md) | CI workflows, required `ci-ok` status, security model, pinned versions, audit exceptions, Dependabot scope, local reproduction, future branch protection (T00-05) |
 | [spec-inconsistencies.md](architecture/spec-inconsistencies.md) | Known inconsistencies between specifications, recorded for future resolution |
 
 ## What does NOT belong here
