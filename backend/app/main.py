@@ -37,6 +37,7 @@ from app.modules.platform_identity.service import (
     PlatformIdentityConfig,
     PlatformIdentityService,
 )
+from app.modules.tenants.service import TenantAdmin
 
 
 class HealthResponse(BaseModel):
@@ -122,6 +123,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     # Platform administration (T01-07) builds on the platform identity service.
     platform_users = PlatformUserAdmin(platform_identity)
+    tenant_admin = TenantAdmin(platform_identity, invitation_secret=identity.config.session_secret)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -146,6 +148,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.identity = identity
     app.state.platform_identity = platform_identity
     app.state.platform_users = platform_users
+    app.state.tenant_admin = tenant_admin
 
     install_exception_handlers(app)
     app.add_middleware(RequestContextMiddleware)

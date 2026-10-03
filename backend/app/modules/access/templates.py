@@ -32,6 +32,10 @@ class RoleTemplate:
     permissions: frozenset[str]
 
 
+OWNER_TEMPLATE = SystemRole.INSTITUTE_OWNER
+"""The system role given to the primary administrator at provisioning (T01-07, D7-1)."""
+
+
 def system_role_templates() -> tuple[RoleTemplate, ...]:
     everything = frozenset(p.code for p in tenant_permissions())
     return (
