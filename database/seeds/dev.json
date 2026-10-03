@@ -1,5 +1,5 @@
 {
-  "_comment": "Development fixtures only (T01-08, decision D16). Load with `python -m app.cli seed` from backend/ with APP_ENV=development. Emails use reserved .example domains; passwords are generated and printed once by the command, never stored here.",
+  "_comment": "Development fixtures only (T01-08, decision D16). Load with `python -m app.cli seed` from backend/ with APP_ENV=development. Emails use reserved .example domains; passwords are generated, never shown or stored; to sign in, request a reset link from the sign-in page (Mailpit locally).",
   "institutes": [
     {
       "name": "Konkan Maritime Training Institute",

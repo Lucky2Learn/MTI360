@@ -7,8 +7,10 @@
     python -m app.cli seed [--file PATH]
 
 ``seed`` (T01-08, decision D16) loads ``database/seeds/dev.json`` into a
-**development** database only (``APP_ENV=development``) and prints each new
-account's random one-time password once. It refuses to run twice.
+**development** database only (``APP_ENV=development``). Each account gets a
+random password that is never printed, logged or stored in clear: developers
+set their own with the password reset flow (Mailpit locally). It refuses to
+run twice.
 
 ``create-platform-admin`` (decision D6-1) creates the first ``SUPER_ADMIN``,
 or recovers access with ``--break-glass``. The password is **never** an
@@ -63,7 +65,7 @@ def parser() -> argparse.ArgumentParser:
     seed_command = commands.add_parser(
         "seed",
         help="Load the development fixtures (APP_ENV=development only).",
-        description="Prints each new account's random one-time password once.",
+        description="Passwords are random and never shown; use the password reset flow.",
     )
     seed_command.add_argument("--file", type=Path, default=DEFAULT_SEED_FILE)
     return root
@@ -131,9 +133,10 @@ def run_seed(path: Path, *, settings_loader: Callable[[], Settings] = load_setti
     except ConfigurationError as error:
         _out(sys.stderr, str(error))
         return EXIT_CONFIGURATION
-    _out(sys.stdout, "Development seed applied. One-time passwords (shown only now):")
+    # Never the passwords (CodeQL: clear-text logging): emails only.
+    _out(sys.stdout, "Development seed applied. Accounts (set a password with password reset):")
     for account in accounts:
-        _out(sys.stdout, f"  {account.email}  {account.password}")
+        _out(sys.stdout, f"  {account.email}")
     return EXIT_OK
 
 

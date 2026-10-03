@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 
 from app import cli
-from app.seed import DEFAULT_SEED_FILE, SeedError, load_seed, parse_seed
+from app.seed import DEFAULT_SEED_FILE, SeededAccount, SeedError, load_seed, parse_seed
 
 
 def _document(**member: Any) -> dict[str, Any]:
@@ -66,3 +66,22 @@ def test_the_command_refuses_outside_development(capsys: pytest.CaptureFixture[s
     )
     assert code == cli.EXIT_REFUSED
     assert "APP_ENV=development" in capsys.readouterr().err
+
+
+def test_the_command_never_prints_passwords(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    accounts = [SeededAccount("owner@malabar-seafarers.example", "Secret-one-time-42")]
+
+    async def fake_seed(*_: Any) -> list[SeededAccount]:
+        return accounts
+
+    monkeypatch.setattr(cli, "_seed", fake_seed)
+    code = cli.run_seed(
+        DEFAULT_SEED_FILE,
+        settings_loader=lambda: SimpleNamespace(app_env="development"),  # type: ignore[arg-type,return-value]
+    )
+    output = capsys.readouterr()
+    assert code == cli.EXIT_OK
+    assert "owner@malabar-seafarers.example" in output.out
+    assert "Secret-one-time-42" not in output.out + output.err

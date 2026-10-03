@@ -99,7 +99,7 @@ No new permissions and no step-up: tenant MFA is optional (D6).
 - **Contents:** institutes (`TRIAL`/`ACTIVE`), campuses, system roles, `ACTIVE` members with credentials, and the owner pointer.
 - **Rules:**
   - `.example` emails only;
-  - random passwords printed once, never stored in the file, logged or audited;
+  - random passwords, never printed, stored in the file, logged or audited (developers set their own through the password reset flow, Mailpit locally);
   - refused when an email already exists, and refused unless `APP_ENV=development`.
 
 ### 9. Static enforcement

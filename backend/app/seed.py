@@ -10,9 +10,10 @@ Loads ``database/seeds/dev.json`` (realistic maritime fixtures) into a
   primary administrator (``tenants.owner_membership_id``, T01-07).
 
 Rules (D16): every email uses a reserved ``.example`` domain; every password is
-random, generated here, never stored in the file, printed **once** by the
-command and never logged or audited; the seed refuses to run twice (an email
-already exists) and the command refuses to run outside ``APP_ENV=development``.
+random, generated here, never stored in the file, never printed, logged or
+audited (developers set their own through the password reset flow); the seed
+refuses to run twice (an email already exists) and the command refuses to run
+outside ``APP_ENV=development``.
 Role names come from the file and are mapped to the code templates; they are
 never authorization logic.
 """
