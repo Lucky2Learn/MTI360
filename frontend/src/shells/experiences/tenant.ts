@@ -13,6 +13,12 @@ import {
   WorkflowIcon,
   type IconComponent,
 } from "@/design-system/icons";
+import {
+  ALWAYS,
+  permission,
+  UNRELEASED,
+  type Requirement,
+} from "@/lib/authz/requirements";
 
 import { EXPERIENCE, type ApplicationExperience } from "./types";
 
@@ -20,8 +26,13 @@ import type { NavItem } from "../navigation";
 
 // Tenant Application (/app): one Maritime Training Institute's workspace.
 // Navigation definitions only — no module is built in T00-08. The tenant is
-// NOT part of the URL and is never taken from the browser: it will be derived
-// server-side from the authenticated session (ADR-0004, Phase 01).
+// NOT part of the URL and is never taken from the browser: it is derived
+// server-side from the authenticated session (ADR-0004, T01-04).
+//
+// Requirement map (T01-05 UI contract §6; T01-09A): every item declares one
+// requirement. It is the single source for navigation filtering, command
+// search and page access. Modules without a permission yet are UNRELEASED;
+// they replace it with their own permission when they ship.
 
 const slug = (label: string) =>
   label
@@ -34,6 +45,7 @@ function group(
   icon: IconComponent,
   pages: string[],
   extra: Partial<NavItem> = {},
+  requirements: Partial<Record<string, Requirement>> = {},
 ): NavItem {
   const href = `/app/${slug(label)}`;
   return {
@@ -41,11 +53,14 @@ function group(
     label,
     href,
     icon,
+    // The group's own overview page has no permission yet.
+    requirement: UNRELEASED,
     ...extra,
     children: pages.map((page) => ({
       id: `${slug(label)}-${slug(page)}`,
       label: page,
       href: `${href}/${slug(page)}`,
+      requirement: requirements[page] ?? UNRELEASED,
     })),
   };
 }
@@ -69,6 +84,7 @@ export const tenantExperience: ApplicationExperience = {
           label: "Dashboard",
           href: "/app",
           icon: DashboardIcon,
+          requirement: ALWAYS,
         },
       ],
     },
@@ -162,18 +178,30 @@ export const tenantExperience: ApplicationExperience = {
       id: "institute",
       label: "Institute",
       items: [
-        group("Administration", SettingsIcon, [
-          "Institute",
-          "Campuses",
-          "Users",
-          "Roles",
-          "Integrations",
-          "AI Config",
-          "Notifications",
-          "Billing",
-          "Audit Logs",
-          "Settings",
-        ]),
+        group(
+          "Administration",
+          SettingsIcon,
+          [
+            "Institute",
+            "Campuses",
+            "Users",
+            "Roles",
+            "Integrations",
+            "AI Config",
+            "Notifications",
+            "Billing",
+            "Audit Logs",
+            "Settings",
+          ],
+          {},
+          {
+            Institute: permission("tenant.profile.read"),
+            Campuses: permission("campus.read"),
+            Users: permission("member.read"),
+            Roles: permission("role.read"),
+            "Audit Logs": permission("audit.read"),
+          },
+        ),
       ],
     },
   ],

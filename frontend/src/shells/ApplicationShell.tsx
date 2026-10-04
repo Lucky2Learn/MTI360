@@ -15,7 +15,7 @@ import {
   type ShellNotification,
 } from "./NotificationCenter";
 import { MAIN_CONTENT_ID, SkipNavigation } from "./SkipNavigation";
-import { UserMenu, type ShellAccount } from "./UserMenu";
+import { UserMenu, type ShellAccount, type UserMenuSession } from "./UserMenu";
 
 import type { Navigation } from "./navigation";
 
@@ -25,6 +25,9 @@ import type { Navigation } from "./navigation";
 // authorize or resolve a tenant; the navigation it receives is configuration
 // that later phases filter server-side. The shell mounts the application's
 // single global ToastRegion, so any code inside it can call toast.*().
+// T01-09A: optional `headerContext` (the tenant's institute and campus
+// controls, before notifications) and `accountSession` (UserMenu session
+// header, items and sign-out). The shell itself still decides nothing.
 
 export type ApplicationShellProps = {
   /** Name of the experience, e.g. "Platform Administration". */
@@ -39,6 +42,10 @@ export type ApplicationShellProps = {
   search?: boolean;
   /** Notification centre items; omit to hide the notification entry point. */
   notifications?: ShellNotification[];
+  /** Session context controls in the header (before notifications). */
+  headerContext?: ReactNode;
+  /** Session-driven account menu (header, items, sign-out). */
+  accountSession?: UserMenuSession;
   children: ReactNode;
 };
 
@@ -51,6 +58,8 @@ export function ApplicationShell({
   account,
   search = false,
   notifications,
+  headerContext,
+  accountSession,
   children,
 }: ApplicationShellProps) {
   const pathname = usePathname() ?? homeHref;
@@ -72,6 +81,7 @@ export function ApplicationShell({
         }
         actions={
           <>
+            {headerContext}
             {search && (
               <CommandSearch
                 experienceLabel={experienceLabel}
@@ -81,7 +91,7 @@ export function ApplicationShell({
             {notifications && (
               <NotificationCenter notifications={notifications} />
             )}
-            <UserMenu account={account} />
+            <UserMenu account={account} session={accountSession} />
           </>
         }
       />

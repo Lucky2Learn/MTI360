@@ -76,6 +76,7 @@ Redis, S3, SMTP, session/CSRF, CORS and AI settings are typed and validated, but
 |---|---|---|
 | `APP_ENV` | server-only | One of the four environments; default `development` |
 | `API_BASE_URL` | server-only | `http(s)` URL without credentials, query or fragment. Default `http://localhost:8000` in development and test; **required in staging/production** |
+| `TRUSTED_PROXY_HOPS` | server-only | Integer 0–10, default `0` (T01-09A). Number of proxies in front of the Next.js server whose `X-Forwarded-For` entries are trusted; the same-origin proxy forwards the browser address as a single `X-Forwarded-For` entry for the API's own `TRUSTED_PROXY_HOPS=1` (D08). With the ARCHITECTURE.md topology (Cloudflare → reverse proxy → frontend) it is `2`. With `0` the server must not be directly reachable from browsers: Next.js keeps a client-supplied `X-Forwarded-For` |
 | `NEXT_PUBLIC_APP_NAME` | **browser-public** | Display name (default `MTI 360`). The only public value |
 
 The frontend holds no secrets. Any `NEXT_PUBLIC_*` value is embedded in JavaScript shipped to every browser.

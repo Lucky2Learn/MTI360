@@ -40,6 +40,7 @@ export function MenuContent({
   items,
   onAction,
   initialFocus,
+  describedBy,
 }: {
   /** Needed when there is no trigger (ContextMenu); a MenuTrigger labels the menu itself. */
   label?: string;
@@ -47,10 +48,13 @@ export function MenuContent({
   onAction: (id: string) => void;
   /** Item that receives focus when the menu opens without a trigger (ContextMenu). */
   initialFocus?: "first" | "last";
+  /** Id of static context that describes the menu (DropdownMenu header). */
+  describedBy?: string;
 }) {
   return (
     <AriaMenu
       aria-label={label}
+      aria-describedby={describedBy}
       // React Aria focus strategy for an opened menu (WAI-ARIA menu pattern),
       // not DOM autofocus on page load.
       // eslint-disable-next-line jsx-a11y/no-autofocus

@@ -8,7 +8,9 @@ import type { ReactNode } from "react";
 
 export type CardElevation = "none" | "sm" | "md";
 export type CardPadding = "none" | "md" | "lg";
-type HeadingLevel = "h2" | "h3" | "h4";
+// "h1" only where the card title is the page title (T16 authentication
+// screens, T01-09A).
+type HeadingLevel = "h1" | "h2" | "h3" | "h4";
 
 const elevations: Record<CardElevation, string> = {
   none: "",

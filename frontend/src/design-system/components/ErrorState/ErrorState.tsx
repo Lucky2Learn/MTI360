@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, type ReactNode } from "react";
+import { useId, type ReactNode, type Ref } from "react";
 
 import { Button } from "@/design-system/components/Button";
 import {
@@ -24,8 +24,12 @@ import { cx } from "@/design-system/lib/cx";
 //
 // `kind="permission"` is the permission-restricted presentation (§57); the
 // authorization decision itself is always made server-side.
+//
+// T01-09A: `titleAs="h1"` when the state replaces a whole screen's content
+// (T16 authentication screens), and `titleRef` to move focus to the title
+// after content was replaced (the title then takes tabIndex=-1).
 
-type HeadingLevel = "h2" | "h3";
+type HeadingLevel = "h1" | "h2" | "h3";
 
 export type ErrorStateProps = {
   kind?: "error" | "permission";
@@ -45,6 +49,8 @@ export type ErrorStateProps = {
   /** Request/correlation reference for support (not a technical message). */
   reference?: string;
   titleAs?: HeadingLevel;
+  /** Programmatic focus target (tabIndex=-1) for focus after replacement. */
+  titleRef?: Ref<HTMLHeadingElement>;
 };
 
 export function ErrorState({
@@ -61,6 +67,7 @@ export function ErrorState({
   supportLabel = "Contact support",
   reference,
   titleAs: Heading = "h2",
+  titleRef,
 }: ErrorStateProps) {
   const titleId = useId();
   const Icon = kind === "permission" ? LockIcon : ErrorIcon;
@@ -82,7 +89,12 @@ export function ErrorState({
         <Icon className="size-6" />
       </span>
       <div className="flex flex-col gap-2">
-        <Heading id={titleId} className="text-card-heading text-text-primary">
+        <Heading
+          id={titleId}
+          ref={titleRef}
+          tabIndex={titleRef ? -1 : undefined}
+          className="text-card-heading text-text-primary"
+        >
           {title}
         </Heading>
         {description && (
