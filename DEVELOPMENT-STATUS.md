@@ -820,7 +820,7 @@ Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TAS
 | T01-06 | Platform Identity & MFA | `READY_FOR_REVIEW` (`feat/T01-06-platform-identity-mfa`, not merged) |
 | T01-07 | Platform Administration Foundation (API) | `READY_FOR_REVIEW` (`feat/T01-07-platform-administration`, not merged) |
 | T01-08 | Tenant Administration Foundation (API) | `READY_FOR_REVIEW` (`feat/T01-08-tenant-administration`, not merged) |
-| T01-09 | Frontend Authentication & Session Integration | `NOT_STARTED` |
+| T01-09 | Frontend Authentication & Session Integration | `IN_PROGRESS` — T01-09A (tenant) `READY_FOR_REVIEW` on `feat/T01-09-frontend-auth-session`, not committed; T01-09B (platform/MFA UX) `NOT_STARTED`, blocked on B1 |
 | T01-10 | Security Verification Gate | `NOT_STARTED` |
 
 ### T01-01 — Backend, Database & API Foundation
@@ -1153,6 +1153,71 @@ tenant audit API 3, tenant administration schema/RLS 4, development seed 1
 trip tested). ruff, ruff format, mypy (strict), import-linter (2 kept): pass.
 Negative controls: without self-protection or the last-owner count, 3 member
 tests fail. No frontend changes (frontend checks not run). CI not run.
+```
+
+### T01-09A — Frontend Tenant Authentication & Session
+
+**Status:** `READY_FOR_REVIEW` (implemented and verified on `feat/T01-09-frontend-auth-session`; not committed, not merged). T01-09B (platform and MFA UX) is `NOT_STARTED`, blocked on B1 (no frozen UX contract for PLAT-01, PLAT-02, MFA enrolment, step-up, platform reset and invitation pages).
+
+**Implementation:**
+
+```text
+Proxy: app/api/[...path]/route.ts + lib/api/proxy.ts - /api/v1/* to the
+  server-only API_BASE_URL; request allow-list Cookie (session cookies only),
+  X-CSRF-Token, Origin, Sec-Fetch-Site, Content-Type, Accept, User-Agent and
+  X-Forwarded-For rebuilt with ONE entry (the browser address, trusting the
+  frontend's server-only TRUSTED_PROXY_HOPS proxies in front of Next.js,
+  default 0; the API then uses TRUSTED_PROXY_HOPS=1); response allow-list
+  Set-Cookie (all), X-Request-ID, Retry-After, Content-Type, Cache-Control
+  (no-store default); status and envelope unchanged; only upstream failures
+  are logged (method + path), never bodies, queries, cookies or headers
+API and session: lib/api (typed contracts, ApiError without the server
+  message, NetworkError, SessionRefreshedError, browser client);
+  lib/session (server read of GET /session with React cache and the /app
+  gate; client provider with the T01-05 §11 matrix: 401 re-read and routing,
+  SESSION_REFRESH_REQUIRED GET retried once / unsafe never resent,
+  PERMISSION_DENIED background re-read; visibility re-read, SessionSync on
+  every page navigation; `next` allow-list; fragment tokens; sign-out)
+Authorization UX: lib/authz (requirement map on the tenant navigation,
+  can/canAny/canAll, meets, filterNavigation, PermissionGate, RESOURCE-01
+  feedback with 5 s deduplication); AUTHZ-01 and RESOURCE-02 in-shell views
+  (shells/AccessStates.tsx, app/app/not-found.tsx); DASH-01 empty dashboard
+Screens: (tenant-auth) /login (+ tenant MFA verify/recovery step),
+  /forgot-password, /reset-password#token=, /accept-invitation#token=,
+  /select-institute, /select-campus, /session-ended; features/identity
+Shell: /app layout and page guarded server-side; TenantContext,
+  CampusSwitcher, session UserMenu (SESSION-01 header, sign-out), mobile
+  Institute/Campus menu items, other-tab notice (app/app/tenant-frame.tsx)
+Design system: AuthenticationTemplate (T16), Input isRevealable and
+  autoCapitalize, HideIcon, MailIcon, h1 + titleRef on ErrorState/EmptyState,
+  h1 on CardHeader, DropdownMenu header, RadioGroup isLabelHidden
+src/proxy.ts: /app/* without the session cookie -> /session-ended (cookie
+  presence only, UX); UNRELEASED pages visible in development only
+Not built: T01-09B (B1); the unsaved-changes guard before switching
+  (T01-04 §8.8 makes it conditional on "a future form-level hook"); security
+  headers / CSP in src/proxy.ts (not T01-09); TanStack Query / Zod (not
+  installed; not needed for this slice)
+```
+
+**Verification:**
+
+```text
+Frontend 1058 tests in 79 files (was 783 in 60): proxy forwarding and
+stripping, X-Forwarded-For, Set-Cookie / X-Request-ID / Retry-After, log
+content; client envelope and errors; `next` open-redirect matrix; server
+session gate; provider error matrix incl. suspended / revoked membership,
+no-institute and campus-required routing; requirement map, navigation
+filtering, PermissionGate, no authority from storage or URL, no role gating
+(static); AUTH-01 identical DOM for every refused sign-in, MFA verify /
+recovery / invalid / ended; reset and invitation fragment handling; choosers;
+in-shell controls; AUTHZ-01 / RESOURCE-02; telemetry (no secret in console,
+storage, URLs or the page); axe (jsdom, Light and Dark data-theme).
+prettier, eslint (0 warnings), tsc, next build: pass; no server value in the
+browser bundles. Backend unchanged: ruff, ruff format, mypy, import-linter,
+uv lock --check pass; backend pytest not run (no backend change).
+Not run: D18 Chromium journeys J1-J10 and pixel checks at 390/768/1024/1440
+(the harness needs containers and servers, excluded by this task's runtime
+rules); CI not run.
 ```
 
 ---
@@ -3639,14 +3704,65 @@ Frontend Authentication & Session Integration
 
 ---
 
+## 2026-10-04 — T01-09A Frontend Tenant Authentication & Session
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+T01-09 is split after the readiness review (blocker B1, option b). T01-09A
+implements the tenant half against the frozen T01-04 and T01-05 UI
+contracts: the same-origin proxy with browser-address forwarding, the API
+client and session helpers, the tenant authentication screens on the T16
+template including tenant MFA verify and recovery, the guarded /app shell
+with institute and campus controls, the session account menu, permission-
+aware navigation, AUTHZ-01 / RESOURCE-01 / RESOURCE-02 / DASH-01 and the
+T01-05 error matrix. No backend change.
+
+**Tests:**
+
+```text
+Frontend 1058 tests (was 783), 19 new test files; prettier, eslint, tsc and
+next build pass. D18 Chromium journeys and CI not run.
+```
+
+**Known Issues:**
+
+```text
+- Tenant MFA verify/recovery UX has no frozen contract (AUTH-04 is
+  "designed with T01-06" in UI-SCREENS.md but T01-06 produced none; T01-04
+  §2.2 excludes it). T01-09A ships a minimal step inside /login because
+  sign-in returns mfa_required; its UX is a B1 item for the T01-09B addendum.
+- The browser address is the TRUSTED_PROXY_HOPS-th X-Forwarded-For entry
+  from the right (frontend setting, default 0). Deployments must set it to
+  the real number of proxies (2 for Cloudflare + reverse proxy); with 0 and
+  a directly reachable server, a client-supplied header is kept by Next.js.
+- Light/Dark contrast and responsive layout were verified only structurally
+  in jsdom (semantic tokens, class contracts), not in a browser.
+```
+
+**Next:**
+
+```text
+Review T01-09A -> commit -> PR, CI -> merge commit; freeze the platform/MFA
+UX addendum (B1) -> T01-09B
+```
+
+---
+
 # 40. NEXT TASK
 
 The next step is:
 
 ```text
-Review and merge T01-08 (Tenant Administration Foundation, READY_FOR_REVIEW
-on feat/T01-08-tenant-administration), then T01-09 — Frontend Authentication &
-Session Integration. T01-07 was merged by PR #27 (merge commit fe0b019).
+Review T01-09A (Frontend Tenant Authentication & Session, READY_FOR_REVIEW on
+feat/T01-09-frontend-auth-session, not committed), then freeze the
+platform/MFA UX addendum (B1) for T01-09B. T01-08 was merged by PR #29
+(merge commit fd70d7d).
 ```
 
 The completed-task description below is retained for reference.

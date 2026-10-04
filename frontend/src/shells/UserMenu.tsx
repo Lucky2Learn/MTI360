@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import {
   Button,
   Dialog,
   DropdownMenu,
   toast,
+  type MenuAction,
   type MenuEntry,
 } from "@/design-system/components";
 import {
@@ -18,11 +19,14 @@ import {
 import { ThemeSelector } from "@/design-system/theme/ThemeSelector";
 
 // UserMenu (T00-08): account entry point built on the T00-07C DropdownMenu.
-// Structural only — there is no authentication yet (Phase 01): Profile, Help
-// and Sign out explain that they are not available; nothing is invalidated
-// and no identity is read. Preferences opens the existing T00-06
-// ThemeSelector (Light / Dark / System, same runtime and storage key) in a
-// Dialog; the global appearance control lives here (CLAUDE.md §19).
+// Preferences opens the existing T00-06 ThemeSelector (Light / Dark / System,
+// same runtime and storage key) in a Dialog; the global appearance control
+// lives here (CLAUDE.md §19). Profile and Help are not built yet and say so.
+//
+// T01-09A: an experience with a session passes `session` — a menu header
+// (identity, institute, roles: SESSION-01), extra items (the mobile
+// Institute / Campus entries) and the real sign-out. Without it (experiences
+// that have no authentication yet) Sign out explains it is not available.
 
 export type ShellAccount = {
   /** Display name. Development builds use generic demo identities only. */
@@ -33,16 +37,29 @@ export type ShellAccount = {
   initials: string;
 };
 
-export type UserMenuProps = { account: ShellAccount };
+export type UserMenuSession = {
+  /** Static context above the items (no interactive content). */
+  header: ReactNode;
+  /** Items placed before Preferences, e.g. Institute and Campus. */
+  items?: MenuAction[];
+  onItemAction?: (id: string) => void;
+  onSignOut: () => void;
+};
 
-export function UserMenu({ account }: UserMenuProps) {
+export type UserMenuProps = {
+  account: ShellAccount;
+  session?: UserMenuSession;
+};
+
+export function UserMenu({ account, session }: UserMenuProps) {
   const [preferencesOpen, setPreferencesOpen] = useState(false);
 
   const items: MenuEntry[] = [
+    ...(session?.items ?? []),
     {
       id: "profile",
       label: "Profile",
-      description: account.detail,
+      description: session ? undefined : account.detail,
       icon: ProfileIcon,
     },
     { id: "preferences", label: "Preferences", icon: PreferencesIcon },
@@ -57,17 +74,25 @@ export function UserMenu({ account }: UserMenuProps) {
         setPreferencesOpen(true);
         break;
       case "sign-out":
+        if (session) {
+          session.onSignOut();
+          break;
+        }
         toast.info("Sign-out is not available yet", {
           description: "Accounts and sessions arrive with authentication.",
         });
         break;
-      default:
+      case "profile":
+      case "help":
         toast.info(
           `${id === "help" ? "Help" : "Profile"} is not available yet`,
           {
             description: "This area is part of a later phase.",
           },
         );
+        break;
+      default:
+        session?.onItemAction?.(id);
     }
   };
 
@@ -76,6 +101,7 @@ export function UserMenu({ account }: UserMenuProps) {
       <DropdownMenu
         items={items}
         onAction={onAction}
+        header={session?.header}
         trigger={
           <Button variant="ghost">
             <span className="inline-flex items-center gap-2">

@@ -29,7 +29,22 @@ describe("parseServerEnv", () => {
     expect(parseServerEnv({})).toEqual({
       appEnv: "development",
       apiBaseUrl: "http://localhost:8000",
+      trustedProxyHops: 0,
     });
+  });
+
+  it("reads TRUSTED_PROXY_HOPS as an integer from 0 to 10 (T01-09A)", () => {
+    expect(parseServerEnv({ TRUSTED_PROXY_HOPS: "2" }).trustedProxyHops).toBe(
+      2,
+    );
+    expect(parseServerEnv({ TRUSTED_PROXY_HOPS: " 0 " }).trustedProxyHops).toBe(
+      0,
+    );
+    for (const value of ["-1", "11", "two", "1.5", "0x2"]) {
+      expect(problemsFor({ TRUSTED_PROXY_HOPS: value })).toContain(
+        "TRUSTED_PROXY_HOPS: must be an integer from 0 to 10",
+      );
+    }
   });
 
   it.each(["development", "test", "staging", "production"])(

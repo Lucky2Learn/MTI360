@@ -675,7 +675,7 @@ Every slice is delivered as five commits:
 | T01-06 | Platform Identity & MFA | READY_FOR_REVIEW |
 | T01-07 | Platform Administration Foundation (API) | READY_FOR_REVIEW |
 | T01-08 | Tenant Administration Foundation (API) and development seed | READY_FOR_REVIEW |
-| T01-09 | Frontend Authentication & Session Integration | NOT_STARTED |
+| T01-09 | Frontend Authentication & Session Integration | IN_PROGRESS (T01-09A tenant: READY_FOR_REVIEW; T01-09B platform/MFA UX: NOT_STARTED, blocked on B1) |
 | T01-10 | Security Verification Gate & Phase Close-out | NOT_STARTED |
 
 Dependencies:
@@ -1062,6 +1062,13 @@ Architecture review approved; decisions **D8-1 … D8-4 are locked** in `docs/ar
 ## T01-09 — Frontend Authentication & Session Integration
 
 The same-origin API proxy, session helpers, the AUTH-01 … AUTH-05, PLAT-01 and PLAT-02 pages on the T16 template, guarded shells, tenant and campus switchers, role-aware navigation, and logout.
+
+The readiness review (2026-10-03) found no UX contract for the platform and MFA screens (blocker **B1**). The task is split (option b):
+
+* **T01-09A — Tenant authentication & session.** Built against the frozen UI contracts `docs/ui/T01-04-IDENTITY-AUTHENTICATION-UI.md` and `docs/ui/T01-05-AUTHORIZATION-RBAC-UI.md`: the same-origin proxy (`app/api/[...path]`, browser address as one `X-Forwarded-For` entry for `TRUSTED_PROXY_HOPS=1`), the typed API client and server/client session helpers, AUTH-01 … AUTH-03 and AUTH-05 … AUTH-08 on `AuthenticationTemplate` (T16), tenant MFA verify and recovery (the sign-in step only), the guarded `/app` shell, `TenantContext`, `CampusSwitcher`, the session `UserMenu`, the requirement map, `can()`, `PermissionGate`, AUTHZ-01, RESOURCE-01/02, NAV-01/02, DASH-01 and the T01-05 §11 error matrix.
+  **Status:** READY_FOR_REVIEW (implemented and verified on `feat/T01-09-frontend-auth-session`; not committed, not merged). The out-of-repository Chromium journeys J1–J10 (D18) were not run.
+* **T01-09B — Platform and MFA UX.** PLAT-01, PLAT-02, platform MFA enrolment, step-up (`403 STEP_UP_REQUIRED`), platform password reset and invitation acceptance, and tenant MFA enrolment, after a frozen UX addendum resolves B1.
+  **Status:** NOT_STARTED (blocked on B1).
 
 ---
 

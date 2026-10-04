@@ -39,6 +39,8 @@ export type RadioGroupProps = Omit<
   options: RadioOption[];
   description?: ReactNode;
   errorMessage?: ErrorMessage;
+  /** Hide the label visually (keeps the accessible name; T01-09A choosers). */
+  isLabelHidden?: boolean;
 };
 
 export function RadioGroup({
@@ -47,6 +49,7 @@ export function RadioGroup({
   description,
   errorMessage,
   orientation = "vertical",
+  isLabelHidden = false,
   ...props
 }: RadioGroupProps) {
   return (
@@ -55,7 +58,9 @@ export function RadioGroup({
       orientation={orientation}
       className="group flex flex-col gap-2"
     >
-      <FieldLabel isRequired={props.isRequired}>{label}</FieldLabel>
+      <span className={cx(isLabelHidden && "sr-only")}>
+        <FieldLabel isRequired={props.isRequired}>{label}</FieldLabel>
+      </span>
       {description && <FieldDescription>{description}</FieldDescription>}
       <div
         className={cx(

@@ -1,4 +1,5 @@
 import type { IconComponent } from "@/design-system/icons";
+import type { Requirement } from "@/lib/authz/requirements";
 
 // Navigation model for the application shell (T00-08). Every experience
 // supplies its own navigation as configuration (experiences/*.ts); the shell
@@ -6,6 +7,8 @@ import type { IconComponent } from "@/design-system/icons";
 // permission, subscription or feature entitlement is NOT decided here: later
 // phases filter this configuration server-side before it reaches the shell,
 // and every route still enforces authorization on the server (CLAUDE.md §10, §62).
+// Since T01-09A each tenant item declares its permission requirement, which
+// lib/authz/navigation.ts uses to filter the tenant navigation (T01-05 §6).
 
 export type NavBadge = {
   /** Number shown in the navigation, e.g. 12. */
@@ -25,6 +28,11 @@ export type NavItem = {
   badge?: NavBadge;
   /** Nested pages, shown under a disclosure. One level is supported. */
   children?: NavItem[];
+  /**
+   * Permission requirement of the item's page (T01-05 UI contract §6).
+   * Required for every tenant item (enforced by tests); advisory only.
+   */
+  requirement?: Requirement;
 };
 
 export type NavSection = {
@@ -52,6 +60,8 @@ function isWithin(href: string, pathname: string): boolean {
  * whose href equals or contains the path, with its ancestors. Returns [] when
  * no item matches. Deeper and longer matches win, so a module page is not
  * attributed to the experience home ("/app" contains every tenant path).
+ * On equal hrefs the deeper item wins (a filtered group links to its first
+ * visible child, T01-09A).
  */
 export function findTrail(navigation: Navigation, pathname: string): NavItem[] {
   let best: NavItem[] = [];
@@ -62,7 +72,7 @@ export function findTrail(navigation: Navigation, pathname: string): NavItem[] {
         const current = best.at(-1);
         if (
           !current ||
-          normalizePath(item.href).length > normalizePath(current.href).length
+          normalizePath(item.href).length >= normalizePath(current.href).length
         ) {
           best = trail;
         }

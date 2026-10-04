@@ -146,7 +146,9 @@ function NavigationItem({
 }: ItemProps) {
   const childListId = useId();
   const inTrail = trail.includes(item);
-  const isCurrent = isCurrentPage(item, pathname);
+  // The deepest matching item only: a filtered group shares its first
+  // child's href, and only the child is the current page.
+  const isCurrent = trail.at(-1) === item && isCurrentPage(item, pathname);
   const hasChildren = depth === 0 && Boolean(item.children?.length);
   // Open when the user opened it; otherwise when it contains the current page.
   const [userExpanded, setUserExpanded] = useState<boolean | null>(null);

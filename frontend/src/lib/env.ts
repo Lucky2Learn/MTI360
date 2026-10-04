@@ -11,6 +11,9 @@ import "server-only";
 //   API_BASE_URL         http(s) URL without credentials, query or fragment.
 //                        Defaults to the local API in development and test;
 //                        required in staging and production.
+//   TRUSTED_PROXY_HOPS   proxies in front of this server whose
+//                        X-Forwarded-For entries are trusted (T01-09A;
+//                        integer 0-10, default 0; lib/api/forwarding.ts).
 //   NEXT_PUBLIC_APP_NAME display name (default: "MTI 360").
 
 export const APP_ENVS = [
@@ -25,6 +28,7 @@ export type AppEnv = (typeof APP_ENVS)[number];
 export interface ServerEnv {
   readonly appEnv: AppEnv;
   readonly apiBaseUrl: string;
+  readonly trustedProxyHops: number;
 }
 
 /** Values that are safe to ship to the browser. */
@@ -95,10 +99,20 @@ export function parseServerEnv(source: EnvSource): ServerEnv {
     }
   }
 
+  const rawHops = source.TRUSTED_PROXY_HOPS?.trim();
+  let trustedProxyHops = 0;
+  if (rawHops) {
+    if (/^(?:[0-9]|10)$/.test(rawHops)) {
+      trustedProxyHops = Number(rawHops);
+    } else {
+      problems.push("TRUSTED_PROXY_HOPS: must be an integer from 0 to 10");
+    }
+  }
+
   if (problems.length > 0) {
     throw new EnvironmentError(problems);
   }
-  return { appEnv, apiBaseUrl };
+  return { appEnv, apiBaseUrl, trustedProxyHops };
 }
 
 export function parsePublicEnv(source: EnvSource): PublicEnv {

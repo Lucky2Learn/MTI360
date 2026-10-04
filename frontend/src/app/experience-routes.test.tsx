@@ -40,11 +40,35 @@ const navigationState = vi.hoisted(() => ({
 }));
 vi.mock("next/navigation", () => ({
   usePathname: () => navigationState.pathname,
-  useRouter: () => ({ push: navigationState.push }),
+  useRouter: () => ({ push: navigationState.push, refresh: vi.fn() }),
   notFound: () => {
     throw new Error("NEXT_NOT_FOUND");
   },
+  redirect: (url: string) => {
+    throw new Error(`NEXT_REDIRECT ${url}`);
+  },
 }));
+
+// /app is guarded since T01-09A: these structural tests run with a ready
+// session holding the T01 tenant baseline (the guard has its own tests in
+// lib/session and app/app).
+vi.mock("server-only", () => ({}));
+vi.mock("@/lib/session/server", async () => {
+  const { readySession } = await import("@/test/session-fixtures");
+  const session = readySession({
+    permissions: [
+      "audit.read",
+      "campus.read",
+      "member.read",
+      "role.read",
+      "tenant.profile.read",
+    ],
+  });
+  return {
+    readTenantSession: () => Promise.resolve(session),
+    requireReadyTenantSession: () => Promise.resolve(session),
+  };
+});
 
 const APP_DIR = path.dirname(fileURLToPath(import.meta.url));
 
