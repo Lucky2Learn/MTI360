@@ -2,15 +2,9 @@
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 
-import {
-  Alert,
-  Button,
-  CopyButton,
-  Form,
-  SecretValue,
-} from "@/design-system/components";
-import { focusRing } from "@/design-system/lib/cx";
+import { Alert, Button, Form } from "@/design-system/components";
 import { AuthenticationTemplate } from "@/design-system/templates/AuthenticationTemplate";
+import { AuthenticatorSetupSteps } from "@/features/identity/AuthenticatorSetupSteps";
 import { FeedbackRegion, RequiredLegend } from "@/features/identity/components";
 import {
   commonFeedback,
@@ -20,6 +14,11 @@ import {
 import { MfaCodeField } from "@/features/identity/MfaCodeField";
 import { MFA_ENDED } from "@/features/identity/MfaStep";
 import { PLATFORM_CONTEXT } from "@/features/identity/realm";
+import {
+  PLATFORM_RECOVERY_HINT,
+  RecoveryCodesPanel,
+  RECOVERY_CODES_TITLE,
+} from "@/features/identity/RecoveryCodesPanel";
 import { ApiError } from "@/lib/api/errors";
 import type {
   MfaEnrolmentConfirmedWire,
@@ -28,8 +27,6 @@ import type {
 import { assignLocation } from "@/lib/session/document";
 import { platformAuthPost } from "@/lib/session/platform-client";
 import { resolvePlatformNext } from "@/lib/session/platform-routes";
-
-import { RecoveryCodesPanel, RECOVERY_CODES_TITLE } from "./RecoveryCodesPanel";
 
 // PAUTH-04 Set up two-step verification (T01-09B UI contract §6; D9B-3,
 // D9B-4). Runs after a password sign-in that answered
@@ -169,6 +166,7 @@ export function EnrolmentStep({
       >
         <RecoveryCodesPanel
           codes={phase.codes}
+          hint={PLATFORM_RECOVERY_HINT}
           onContinue={() => {
             setPhase({ step: "intro" });
             assignLocation(resolvePlatformNext(next));
@@ -217,40 +215,7 @@ export function EnrolmentStep({
       footer={backToSignIn}
     >
       <FeedbackRegion feedback={feedback} />
-      <ol className="flex list-decimal flex-col gap-4 pl-5 text-body-sm text-text-primary">
-        <li>
-          <div className="flex flex-col gap-3">
-            <span>
-              In your authenticator app, add an account and choose to enter a
-              setup key.
-            </span>
-            <SecretValue
-              label="Setup key"
-              value={secret}
-              actions={<CopyButton value={secret} label="Copy key" size="sm" />}
-            />
-            <a
-              href={uri}
-              className={`w-fit rounded-sm text-link underline-offset-4 hover:underline ${focusRing}`}
-            >
-              Open in authenticator app
-            </a>
-            <dl className="flex flex-col gap-1 text-text-secondary">
-              {[
-                ["Type", "Time-based"],
-                ["Digits", "6"],
-                ["Interval", "30 seconds"],
-              ].map(([term, value]) => (
-                <div key={term} className="flex gap-2">
-                  <dt>{term}:</dt>
-                  <dd className="text-text-primary">{value}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </li>
-        <li>Enter the 6-digit code your app now shows for MTI 360.</li>
-      </ol>
+      <AuthenticatorSetupSteps secret={secret} uri={uri} />
       <Form
         aria-label="Confirm your authenticator app"
         onSubmit={(event) => void confirm(event)}

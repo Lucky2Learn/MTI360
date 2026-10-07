@@ -12,6 +12,11 @@ import {
   Dialog,
 } from "@/design-system/components";
 import {
+  PLATFORM_RECOVERY_HINT,
+  RecoveryCodesPanel,
+  RECOVERY_CODES_TITLE,
+} from "@/features/identity/RecoveryCodesPanel";
+import {
   ApiError,
   StepUpCancelledError,
   StepUpFailedError,
@@ -25,8 +30,6 @@ import {
   type PlatformSession,
 } from "@/lib/session/platform-session";
 import { usePlatformSession } from "@/lib/session/PlatformSessionProvider";
-
-import { RecoveryCodesPanel, RECOVERY_CODES_TITLE } from "./RecoveryCodesPanel";
 
 // Partial PLAT-52 Sign-in security (T01-09B UI contract §10; D9B-8 accepted):
 // identity (read-only), two-step verification status, recovery codes
@@ -210,6 +213,7 @@ export function SignInSecurity() {
         {codes && (
           <RecoveryCodesPanel
             codes={codes}
+            hint={PLATFORM_RECOVERY_HINT}
             onContinue={acknowledge}
             continueLabel="Done"
           />

@@ -30,6 +30,8 @@ export type Session = {
   roles: Role[];
   /** In memory only; sent as X-CSRF-Token on unsafe requests. */
   csrfToken: string;
+  /** Display only (T01-09C): the user has a confirmed authenticator. */
+  mfaEnabled: boolean;
 };
 
 const collator = new Intl.Collator(undefined, { sensitivity: "base" });
@@ -66,6 +68,7 @@ export function toSession(wire: SessionWire): Session {
       isSystem: role.is_system,
     })),
     csrfToken: wire.csrf_token,
+    mfaEnabled: wire.mfa_enabled,
   };
 }
 

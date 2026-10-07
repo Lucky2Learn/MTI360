@@ -6,6 +6,9 @@ import type { SessionStatus } from "@/lib/api/types";
 
 export const APP_HOME = "/app";
 
+/** Tenant AUTH-04 Sign-in security (T01-09C D9C-1): the user's own MFA. */
+export const ACCOUNT_SECURITY = "/app/account/security";
+
 export const AUTH_ROUTES = {
   login: "/login",
   forgotPassword: "/forgot-password",

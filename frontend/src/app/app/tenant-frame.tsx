@@ -1,10 +1,16 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 
 import { Alert, Button, LoadingRegion } from "@/design-system/components";
 import type { MenuAction } from "@/design-system/components";
-import { CompassIcon, InstituteIcon, SpinnerIcon } from "@/design-system/icons";
+import {
+  CompassIcon,
+  InstituteIcon,
+  LockIcon,
+  SpinnerIcon,
+} from "@/design-system/icons";
 import {
   campusLabel,
   CampusSwitchDialog,
@@ -17,6 +23,7 @@ import {
 import type { SessionWire } from "@/lib/api/types";
 import { filterNavigation } from "@/lib/authz/navigation";
 import { reloadDocument } from "@/lib/session/document";
+import { ACCOUNT_SECURITY } from "@/lib/session/routes";
 import { monogram, type Session } from "@/lib/session/session";
 import {
   TenantSessionProvider,
@@ -27,7 +34,8 @@ import { EXPERIENCE, ExperienceFrame, getExperience } from "@/shells";
 // Tenant Application frame (T01-09A). Composes the shell with the server
 // session: permission-filtered navigation (NAV-01/02), the institute context
 // and campus switcher (tablet and up in the header; on mobile as account menu
-// items), the account menu header (SESSION-01) and sign-out (J9). Everything
+// items), the account menu header (SESSION-01), "Sign-in security" (the
+// member's own two-step verification, T01-09C D9C-1) and sign-out (J9). Everything
 // here is UX; the /app page and the API decide access.
 
 const BELOW_TABLET = "(max-width: 47.99rem)";
@@ -79,6 +87,7 @@ function TenantShell({
   showUnreleased: boolean;
   children: ReactNode;
 }) {
+  const router = useRouter();
   const { session, signOut, changedElsewhere } = useTenantSession();
   const belowTablet = useBelowTablet();
   const [dialog, setDialog] = useState<OpenDialog>(null);
@@ -93,30 +102,33 @@ function TenantShell({
     [session.permissions, showUnreleased],
   );
 
-  const menuItems: MenuAction[] = belowTablet
-    ? [
-        ...(session.institutes.length > 1
-          ? [
-              {
-                id: "institute",
-                label: "Institute",
-                description: session.activeInstitute?.name,
-                icon: InstituteIcon,
-              },
-            ]
-          : []),
-        ...(session.campusOptions.length > 1
-          ? [
-              {
-                id: "campus",
-                label: "Campus",
-                description: campusLabel(session),
-                icon: CompassIcon,
-              },
-            ]
-          : []),
-      ]
-    : [];
+  const menuItems: MenuAction[] = [
+    ...(belowTablet
+      ? [
+          ...(session.institutes.length > 1
+            ? [
+                {
+                  id: "institute",
+                  label: "Institute",
+                  description: session.activeInstitute?.name,
+                  icon: InstituteIcon,
+                },
+              ]
+            : []),
+          ...(session.campusOptions.length > 1
+            ? [
+                {
+                  id: "campus",
+                  label: "Campus",
+                  description: campusLabel(session),
+                  icon: CompassIcon,
+                },
+              ]
+            : []),
+        ]
+      : []),
+    { id: "security", label: "Sign-in security", icon: LockIcon },
+  ];
 
   const startSignOut = () => {
     setSigningOut(true);
@@ -145,6 +157,7 @@ function TenantShell({
             items: menuItems,
             onItemAction: (id) => {
               if (id === "institute" || id === "campus") setDialog(id);
+              if (id === "security") router.push(ACCOUNT_SECURITY);
             },
             onSignOut: startSignOut,
           },

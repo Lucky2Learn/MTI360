@@ -820,7 +820,7 @@ Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TAS
 | T01-06 | Platform Identity & MFA | `READY_FOR_REVIEW` (`feat/T01-06-platform-identity-mfa`, not merged) |
 | T01-07 | Platform Administration Foundation (API) | `READY_FOR_REVIEW` (`feat/T01-07-platform-administration`, not merged) |
 | T01-08 | Tenant Administration Foundation (API) | `READY_FOR_REVIEW` (`feat/T01-08-tenant-administration`, not merged) |
-| T01-09 | Frontend Authentication & Session Integration | `IN_PROGRESS` — T01-09A (tenant) `COMPLETED` (PR #30, `2af531b`); T01-09B (platform/MFA UX) `READY_FOR_REVIEW` on `feat/T01-09B-platform-identity-mfa-ux`, B1 resolved; T01-09C (tenant MFA enrolment) `NOT_STARTED` |
+| T01-09 | Frontend Authentication & Session Integration | `IN_PROGRESS` — T01-09A (tenant) `COMPLETED` (PR #30, `2af531b`); T01-09B (platform/MFA UX) `READY_FOR_REVIEW` on `feat/T01-09B-platform-identity-mfa-ux`, B1 resolved; T01-09C (tenant MFA UX) `READY_FOR_REVIEW` on the same branch |
 | T01-10 | Security Verification Gate | `NOT_STARTED` |
 
 ### T01-01 — Backend, Database & API Foundation
@@ -1293,9 +1293,53 @@ Not run: D18 Chromium journeys and pixel checks at 390/768/1024/1440
 rules); CI not run.
 ```
 
-### T01-09C — Tenant MFA Enrolment & Removal
+### T01-09C — Tenant MFA UX
 
-**Status:** `NOT_STARTED`. Deferred from T01-09B by D9B-9: opt-in tenant TOTP enrolment, recovery codes and removal on the existing T01-06 tenant endpoints, reusing PAUTH-04/PAUTH-05; needs a tenant account location.
+**Status:** `READY_FOR_REVIEW` (implemented and verified on `feat/T01-09B-platform-identity-mfa-ux` as a second local commit after T01-09B `5190a7b`; not pushed, not merged). Completes **D9B-9**. Contract `docs/ui/T01-09C-TENANT-MFA-UI.md` (D9C-1 … D9C-6).
+
+**Implementation:**
+
+```text
+Route: /app/account/security — AUTH-04 Sign-in security (personal; any
+  ready tenant session; server gate requireReadyTenantSession), reached from
+  the account menu item "Sign-in security" (D9C-1); no navigation item, no
+  new permission
+Feature: features/identity/TenantSignInSecurity — Account (read-only) and
+  Two-step verification: set-up on an explicit press (POST
+  /session/mfa/enrolment), key Dialog (shared AuthenticatorSetupSteps: key,
+  Copy key, otpauth link, settings; no QR) with the confirm code (POST
+  /session/mfa/enrolment/confirm), recovery codes once in a non-dismissable
+  Dialog (shared RecoveryCodesPanel, required acknowledgement, beforeunload
+  guard), turning off with a current code (POST /session/mfa/remove); every
+  call through TenantSessionProvider.request (tenant cookie, CSRF, T01-05
+  matrix); the session is re-read after each change (D9C-4)
+Shared: RecoveryCodesPanel moved to features/identity with a per-realm
+  hint; AuthenticatorSetupSteps extracted from the platform EnrolmentStep
+  (platform behaviour unchanged); client Session gains mfaEnabled (display
+  only); tenant account menu gains "Sign-in security"
+Sign-in step: unchanged (T01-09A MfaStep, shared with PLAT-02)
+Backend limitations kept: no tenant recovery-code count or regeneration
+  (BG-T1), no tenant step-up (BG-T2), no institute MFA policy (BG-T3)
+```
+
+**Verification:**
+
+```text
+Frontend 1243 tests in 90 files (was 1216 in 87): Sign-in security status,
+set-up (no start on mount under StrictMode, one start on press with the
+tenant CSRF token on tenant paths, key/link/settings, no QR, copy on press,
+wrong code keeps the key, success drops the key, codes once, Escape does not
+dismiss, acknowledgement, beforeunload, session re-read, focused outcome,
+cancel, 409, SESSION_REFRESH_REQUIRED not resent, PERMISSION_DENIED, 401,
+429), turning off (wrong code, success, cancel), page gate and account menu,
+source rules (no role gating, storage, logging or platform paths), tenant
+sign-in step (rotated-session destination, tenant paths only, refused
+recovery code, 429, focus), leak checks across complete flows; axe in Light
+and Dark. All T01-09A and T01-09B tests unchanged and passing. prettier,
+eslint (0 warnings), tsc, next build: pass; no server value or cookie name
+in the browser bundles. No backend change.
+Not run: D18 Chromium journeys (environment/runtime limitation); CI not run.
+```
 
 ---
 
@@ -2285,6 +2329,7 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-10-03 | T01-08 Tenant Administration Foundation implemented | `READY_FOR_REVIEW` on `feat/T01-08-tenant-administration`; members, roles, campuses, tenant audit read, owner protection, development seed, migration 0008, ADR-0019 |
 | 2026-10-04 | T01-09A Frontend Tenant Authentication & Session merged to `main` (PR #30, implementation `a4a3cfe`, merge `2af531b`) | `COMPLETED` |
 | 2026-10-07 | T01-09B readiness review; UX contract frozen | `READY_FOR_IMPLEMENTATION`; B1 resolved; D9B-1 … D9B-12; D9B-8 (partial PLAT-52) and D9B-9 (tenant MFA → T01-09C) accepted (`docs/ui/T01-09B-PLATFORM-IDENTITY-MFA-UI.md`) |
+| 2026-10-07 | T01-09C Tenant MFA UX implemented | `READY_FOR_REVIEW` (second local commit on `feat/T01-09B-platform-identity-mfa-ux`); Sign-in security `/app/account/security`, tenant MFA set-up, recovery codes, turning off; completes D9B-9 |
 | 2026-10-07 | T01-09B Platform Identity & MFA UX implemented | `READY_FOR_REVIEW` on `feat/T01-09B-platform-identity-mfa-ux`; platform sign-in, MFA verify and set-up, recovery codes, reset and invitation, platform console, step-up, partial PLAT-52, realm-scoped cookie forwarding |
 
 ---
@@ -3784,6 +3829,50 @@ Frontend Authentication & Session Integration
 
 ---
 
+## 2026-10-07 — T01-09C Tenant MFA UX
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+Completes D9B-9: tenant members can turn two-step verification on and off
+themselves on the personal Sign-in security page (/app/account/security,
+account menu; D9C-1), on the existing T01-06 tenant endpoints. Set-up starts
+only on an explicit press, shows the shared setup steps and the recovery
+codes once; turning off needs a current authenticator code; the server
+session is re-read after every change. The tenant sign-in MFA step is
+unchanged and gained tests. Platform components were shared, not copied.
+No backend change.
+
+**Tests:**
+
+```text
+Frontend 1243 tests (was 1216), 3 new test files; prettier, eslint, tsc and
+next build pass. D18 Chromium journeys and CI not run.
+```
+
+**Known Issues:**
+
+```text
+- No tenant recovery-code count or regeneration endpoint (BG-T1); the
+  recovery-codes copy explains turning MFA off and on to get new codes.
+- No tenant step-up (BG-T2) and no institute MFA policy (BG-T3).
+- The page location (D9C-1) is a new personal route: no earlier UI
+  contract placed tenant MFA anywhere.
+```
+
+**Next:**
+
+```text
+Review T01-09B + T01-09C -> PR, CI -> merge commit -> T01-10
+```
+
+---
+
 ## 2026-10-07 — T01-09B Platform Identity & MFA UX
 
 **Status:**
@@ -3890,10 +3979,10 @@ UX addendum (B1) -> T01-09B
 The next step is:
 
 ```text
-Review T01-09B (Platform Identity & MFA UX, READY_FOR_REVIEW on
-feat/T01-09B-platform-identity-mfa-ux, committed, not pushed), then PR, CI
-and merge commit; next T01-09C (tenant MFA enrolment and removal), then
-T01-10. T01-09A was merged by PR #30 (merge commit 2af531b).
+Review T01-09B and T01-09C (both READY_FOR_REVIEW on
+feat/T01-09B-platform-identity-mfa-ux as two local commits, not pushed), then
+PR, CI and merge commit; next T01-10 Security Verification Gate. T01-09A was
+merged by PR #30 (merge commit 2af531b).
 ```
 
 The completed-task description below is retained for reference.

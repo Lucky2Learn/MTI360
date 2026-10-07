@@ -1186,7 +1186,7 @@ Detailed UI/UX specification for AUTH-01 … AUTH-03 and AUTH-05 … AUTH-08 (T0
 **Template:** T16
 **Priority:** P0
 
-Designed with platform identity and MFA (T01-06), not in the T01-04 specification. The tenant sign-in MFA step (verify and recovery code) is built in T01-09A and shares its implementation with PLAT-02 (T01-09B). Tenant MFA enrolment and removal are deferred to **T01-09C** (T01-09B D9B-9).
+Designed with platform identity and MFA (T01-06), not in the T01-04 specification. The tenant sign-in MFA step (verify and recovery code) is built in T01-09A and shares its implementation with PLAT-02 (T01-09B). Tenant MFA set-up and removal are built in **T01-09C** (completing D9B-9) on the personal **Sign-in security** page `/app/account/security`, reached from the account menu (D9C-1). Specification: [docs/ui/T01-09C-TENANT-MFA-UI.md](docs/ui/T01-09C-TENANT-MFA-UI.md).
 
 ---
 
