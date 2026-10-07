@@ -41,11 +41,14 @@ regexes = [
 # twice on one line pair) and 77773dd (password); flagged by generic-api-key
 # in the T01-10 security gate. History is not rewritten, so the exact values
 # are allowlisted in their exact files only (proved by gitleaks-selftest.sh).
+# The self-test script itself must name each exact value to prove the
+# allowlist, so it is the second exact path of both entries.
 [[allowlists]]
 description = "T01-09B fake TOTP setup key in the platform frontend security test"
 condition = "AND"
 paths = [
   '''^frontend/src/features/platform-identity/security\.test\.tsx$''',
+  '''^scripts/ci/gitleaks-selftest\.sh$''',
 ]
 regexTarget = "secret"
 regexes = [
@@ -57,6 +60,7 @@ description = "T01-09C fake password in the tenant MFA frontend test"
 condition = "AND"
 paths = [
   '''^frontend/src/features/identity/TenantMfa\.test\.tsx$''',
+  '''^scripts/ci/gitleaks-selftest\.sh$''',
 ]
 regexTarget = "secret"
 regexes = [
