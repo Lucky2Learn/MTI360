@@ -817,11 +817,11 @@ Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TAS
 | T01-03 | Tenancy Core | `COMPLETED` (PR #19, `f602631`) |
 | T01-04 | Tenant Identity & Authentication | `COMPLETED` (PR #20, `daa6526`) |
 | T01-05 | Authorization & RBAC | `COMPLETED` (PR #21, `ee956e5`) |
-| T01-06 | Platform Identity & MFA | `READY_FOR_REVIEW` (`feat/T01-06-platform-identity-mfa`, not merged) |
-| T01-07 | Platform Administration Foundation (API) | `READY_FOR_REVIEW` (`feat/T01-07-platform-administration`, not merged) |
-| T01-08 | Tenant Administration Foundation (API) | `READY_FOR_REVIEW` (`feat/T01-08-tenant-administration`, not merged) |
+| T01-06 | Platform Identity & MFA | `COMPLETED` (PR #25, `9fdb40a`) |
+| T01-07 | Platform Administration Foundation (API) | `COMPLETED` (PR #27, `fe0b019`) |
+| T01-08 | Tenant Administration Foundation (API) | `COMPLETED` (PR #29, `fd70d7d`) |
 | T01-09 | Frontend Authentication & Session Integration | `IN_PROGRESS` — T01-09A (tenant) `COMPLETED` (PR #30, `2af531b`); T01-09B (platform/MFA UX) `READY_FOR_REVIEW` on `feat/T01-09B-platform-identity-mfa-ux`, B1 resolved; T01-09C (tenant MFA UX) `READY_FOR_REVIEW` on the same branch |
-| T01-10 | Security Verification Gate | `NOT_STARTED` |
+| T01-10 | Security Verification Gate | `READY_WITH_D18_DEFERRED` (local gate 2026-10-07; D18 not run) |
 
 ### T01-01 — Backend, Database & API Foundation
 
@@ -1043,7 +1043,7 @@ resource-campus check 2 tests fail. CI not run.
 
 ### T01-06 — Platform Identity & MFA
 
-**Status:** `READY_FOR_REVIEW` (implemented and verified on `feat/T01-06-platform-identity-mfa`; not merged)
+**Status:** `COMPLETED` (merged to `main` by PR #25, merge commit `9fdb40a`)
 
 **Implementation:**
 
@@ -1080,7 +1080,7 @@ not run.
 
 ### T01-07 — Platform Administration Foundation (API)
 
-**Status:** `READY_FOR_REVIEW` (implemented and verified on `feat/T01-07-platform-administration`; not merged)
+**Status:** `COMPLETED` (merged to `main` by PR #27, merge commit `fe0b019`)
 
 **Implementation:**
 
@@ -1119,7 +1119,7 @@ self-protection 2 tests fail. No frontend changes. CI not run.
 
 ### T01-08 — Tenant Administration Foundation (API)
 
-**Status:** `READY_FOR_REVIEW` (implemented and verified on `feat/T01-08-tenant-administration`; not merged)
+**Status:** `COMPLETED` (merged to `main` by PR #29, merge commit `fd70d7d`)
 
 **Implementation:**
 
@@ -1339,6 +1339,71 @@ and Dark. All T01-09A and T01-09B tests unchanged and passing. prettier,
 eslint (0 warnings), tsc, next build: pass; no server value or cookie name
 in the browser bundles. No backend change.
 Not run: D18 Chromium journeys (environment/runtime limitation); CI not run.
+```
+
+### T01-10 — Security Verification Gate & Phase Close-out
+
+**Status:** `READY_WITH_D18_DEFERRED` (gate run locally on 2026-10-07 on `feat/T01-09B-platform-identity-mfa-ux`; not pushed, no PR). The automated and security gates pass. The D18 Chromium journeys were **not run** (environment/runtime limitation), so T01 is not classified `READY_FOR_T01_CLOSE`.
+
+**Scope verified:** T01-01 … T01-08 (backend unchanged since `main` `2af531b`) and T01-09A/B/C (frontend).
+
+```text
+Realms        platform/tenant guards; realm-scoped cookie forwarding (D9B-10);
+              pending MFA sessions are 401 outside the MFA routes
+Tenancy       trusted server context only; tenant switch validated against
+              memberships (404); campus scope server-side; RLS on every table
+RLS / DB      narrow equality-matched keys exactly as D7-1, D7-2, D7-3, D7-8
+              and D8-1 lock them; tenant audit read limited to tenant-realm
+              events (D8-2); USING (true) only on the global permission
+              catalogue; no SECURITY DEFINER, BYPASSRLS or unscoped(); no
+              DELETE on identity tables; alembic_version SELECT-only for the
+              runtime roles; audit append-only (privileges and triggers);
+              migration chain 0001 -> 0008 linear, head 0008
+AuthN / MFA   session rotation at login, MFA and institute switch; TOTP replay
+              protection; encrypted secrets; HMAC recovery codes; step-up in
+              authorize() only
+AuthZ         permission codes only (no role-name gating in backend or
+              frontend); the bootstrap and last-Super-Admin role queries are
+              the documented D6-1 / D7-5 data checks, not authorization
+Frontend      the server page gate is authoritative; src/proxy.ts is cookie
+              presence only; no secrets in storage, URLs, console or bundles
+```
+
+**Findings:**
+
+```text
+F-01 HIGH (fixed, f55ff50 + 71f3d87)  CI gitleaks scan flagged 3
+     synthetic fixtures (fake setup key and password) in the T01-09B/C
+     frontend leak-check tests; the secrets job would fail. Allowlisted by
+     exact path AND value with self-test cases; the follow-up adds the
+     self-test script (which names the exact values) as a second exact
+     path. Full-history scan clean.
+F-02 LOW  (documented)      Full frontend suite with Vitest's default worker
+     count (32 here) times out a different, unchanged test on each run while
+     the Docker runtime shares the host; with --maxWorkers=8: 1243/1243 twice.
+     CI (4 vCPU) unaffected. No code change.
+F-03 LOW  (fixed, docs)     Stale status of T01-06/07/08 (merged as PR #25,
+     #27, #29) in TASKS.md, this file and the architecture notes.
+F-04 DOCUMENTED LIMITATION  Backend integration tests (PostgreSQL/Redis,
+     363) not run locally (the database belongs to the running runtime);
+     they passed in CI on main 2af531b and the backend is unchanged.
+F-05 DOCUMENTED LIMITATION  D18 Chromium journeys not run.
+F-06 DOCUMENTED LIMITATION  T01-09B BG-1 … BG-5 and T01-09C BG-T1 … BG-T3.
+F-07 ACCEPTED DEVIATION     D9C-1 tenant Sign-in security location.
+```
+
+**Verification:**
+
+```text
+Frontend 1243/1243 (90 files; --maxWorkers=8, twice); prettier, eslint (0
+warnings), tsc, next build: pass; bundle scan: no server value, cookie name
+or fixture value. Backend (no database): 454 passed, 363 skipped (the
+integration tests); ruff, ruff format, mypy (188 files), import-linter
+(2 kept), uv lock --check: pass. gitleaks 8.30.1 (repository-pinned) over all
+refs: no leaks; gitleaks self-test: passed. git diff --check: clean.
+CI evidence for main 2af531b: backend, frontend, secrets, repo, docker,
+CodeQL, audits and ci-ok all succeeded.
+Not run: D18 Chromium journeys; CI on this branch (not pushed).
 ```
 
 ---
@@ -2327,8 +2392,12 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-10-03 | T01-07 Platform Administration Foundation implemented | `READY_FOR_REVIEW` on `feat/T01-07-platform-administration`; provisioning, tenant suspension with session revocation, platform user administration and invitations, audit read, migration 0007, ADR-0018 |
 | 2026-10-03 | T01-08 architecture review; decisions D8-1 … D8-4 locked | New invitee identity (narrow key), tenant audit visibility (tenant-realm events only), member lifecycle without global session revocation, self-protection and last owner (`docs/architecture/tenant-administration.md`) |
 | 2026-10-03 | T01-08 Tenant Administration Foundation implemented | `READY_FOR_REVIEW` on `feat/T01-08-tenant-administration`; members, roles, campuses, tenant audit read, owner protection, development seed, migration 0008, ADR-0019 |
+| 2026-10-03 | T01-06 merged to `main` (PR #25, `9fdb40a`) | `COMPLETED` |
+| 2026-10-03 | T01-07 merged to `main` (PR #27, `fe0b019`) | `COMPLETED` |
+| 2026-10-03 | T01-08 merged to `main` (PR #29, `fd70d7d`) | `COMPLETED` |
 | 2026-10-04 | T01-09A Frontend Tenant Authentication & Session merged to `main` (PR #30, implementation `a4a3cfe`, merge `2af531b`) | `COMPLETED` |
 | 2026-10-07 | T01-09B readiness review; UX contract frozen | `READY_FOR_IMPLEMENTATION`; B1 resolved; D9B-1 … D9B-12; D9B-8 (partial PLAT-52) and D9B-9 (tenant MFA → T01-09C) accepted (`docs/ui/T01-09B-PLATFORM-IDENTITY-MFA-UI.md`) |
+| 2026-10-07 | T01-10 Security Verification Gate | `READY_WITH_D18_DEFERRED`; one defect fixed (gitleaks fixtures, `f55ff50`, `71f3d87`); stale T01-06/07/08 statuses corrected; D18 not run |
 | 2026-10-07 | T01-09C Tenant MFA UX implemented | `READY_FOR_REVIEW` (second local commit on `feat/T01-09B-platform-identity-mfa-ux`); Sign-in security `/app/account/security`, tenant MFA set-up, recovery codes, turning off; completes D9B-9 |
 | 2026-10-07 | T01-09B Platform Identity & MFA UX implemented | `READY_FOR_REVIEW` on `feat/T01-09B-platform-identity-mfa-ux`; platform sign-in, MFA verify and set-up, recovery codes, reset and invitation, platform console, step-up, partial PLAT-52, realm-scoped cookie forwarding |
 
@@ -3829,6 +3898,43 @@ Frontend Authentication & Session Integration
 
 ---
 
+## 2026-10-07 — T01-10 Security Verification Gate
+
+**Status:**
+
+```text
+READY_WITH_D18_DEFERRED
+```
+
+**Summary:**
+
+The T01 security gate reviewed realms, tenancy, RLS and grants in every
+migration, authentication, authorization, MFA, audit, the frontend proxy and
+gate, and secret handling across T01-01 … T01-09C, and ran every available
+automated check. One genuine defect was found and fixed: the CI gitleaks
+scan would have failed on three synthetic fixtures in the T01-09B/C leak-check
+tests (remediation f55ff50 and 71f3d87: exact path-and-value allowlist and
+self-test cases). Stale T01-06/07/08 statuses were corrected. No BLOCKER, HIGH or
+MEDIUM finding remains.
+
+**Tests:**
+
+```text
+Frontend 1243/1243; backend 454 passed / 363 integration skipped locally
+(passed in CI on main); all lint, type, import, lock, build and secret checks
+pass. D18 Chromium journeys not run.
+```
+
+**Next:**
+
+```text
+Push feat/T01-09B-platform-identity-mfa-ux -> PR -> CI (incl. secrets and
+PostgreSQL integration) -> merge commit; run the D18 Chromium journeys in a
+suitable environment -> T01 close -> Phase 02
+```
+
+---
+
 ## 2026-10-07 — T01-09C Tenant MFA UX
 
 **Status:**
@@ -3979,10 +4085,12 @@ UX addendum (B1) -> T01-09B
 The next step is:
 
 ```text
-Review T01-09B and T01-09C (both READY_FOR_REVIEW on
-feat/T01-09B-platform-identity-mfa-ux as two local commits, not pushed), then
-PR, CI and merge commit; next T01-10 Security Verification Gate. T01-09A was
-merged by PR #30 (merge commit 2af531b).
+T01-10 gate: READY_WITH_D18_DEFERRED. Push
+feat/T01-09B-platform-identity-mfa-ux (T01-09B 5190a7b, T01-09C 77773dd,
+remediation f55ff50 and 71f3d87, and the T01-10 status commit), open the PR, let CI run
+(secrets, PostgreSQL integration) and merge with a merge commit; run the D18
+Chromium journeys in a suitable environment; then close T01 and start
+Phase 02. T01-09A was merged by PR #30 (merge commit 2af531b).
 ```
 
 The completed-task description below is retained for reference.

@@ -672,11 +672,11 @@ Every slice is delivered as five commits:
 | T01-03 | Tenancy Core (Tenant, Campus, isolation layers) | COMPLETED |
 | T01-04 | Tenant Identity & Authentication | COMPLETED |
 | T01-05 | Authorization & RBAC | COMPLETED |
-| T01-06 | Platform Identity & MFA | READY_FOR_REVIEW |
-| T01-07 | Platform Administration Foundation (API) | READY_FOR_REVIEW |
-| T01-08 | Tenant Administration Foundation (API) and development seed | READY_FOR_REVIEW |
+| T01-06 | Platform Identity & MFA | COMPLETED (PR #25, merge `9fdb40a`) |
+| T01-07 | Platform Administration Foundation (API) | COMPLETED (PR #27, merge `fe0b019`) |
+| T01-08 | Tenant Administration Foundation (API) and development seed | COMPLETED (PR #29, merge `fd70d7d`) |
 | T01-09 | Frontend Authentication & Session Integration | IN_PROGRESS (T01-09A tenant: COMPLETED, PR #30, merge `2af531b`; T01-09B platform/MFA UX: READY_FOR_REVIEW, B1 resolved; T01-09C tenant MFA UX: READY_FOR_REVIEW) |
-| T01-10 | Security Verification Gate & Phase Close-out | NOT_STARTED |
+| T01-10 | Security Verification Gate & Phase Close-out | READY_WITH_D18_DEFERRED (gate run locally 2026-10-07; D18 Chromium journeys not run) |
 
 Dependencies:
 
@@ -945,7 +945,7 @@ Architecture review approved; decisions **D6-1 … D6-5 are locked** in `docs/ar
 
 **Priority:** P0
 
-**Status:** READY_FOR_REVIEW (implemented and verified on `feat/T01-06-platform-identity-mfa`; not merged).
+**Status:** COMPLETED (merged to `main` by PR #25, merge commit `9fdb40a`).
 
 **Implemented** (locked decisions D6-1 … D6-5 in `docs/architecture/platform-identity.md`; ADR-0017):
 
@@ -991,7 +991,7 @@ Architecture review approved; decisions **D7-1 … D7-10 are locked** in `docs/a
 
 **Priority:** P0
 
-**Status:** READY_FOR_REVIEW (implemented and verified on `feat/T01-07-platform-administration`; not merged).
+**Status:** COMPLETED (merged to `main` by PR #27, merge commit `fe0b019`).
 
 **Implemented** (ADR-0018):
 
@@ -1032,7 +1032,7 @@ Architecture review approved; decisions **D8-1 … D8-4 are locked** in `docs/ar
 
 **Priority:** P0
 
-**Status:** READY_FOR_REVIEW (implemented and verified on `feat/T01-08-tenant-administration`; not merged).
+**Status:** COMPLETED (merged to `main` by PR #29, merge commit `fd70d7d`).
 
 **Implemented** (ADR-0019):
 
@@ -1085,6 +1085,8 @@ Tenant A cannot access Tenant B.
 A Tenant Admin cannot perform Platform Admin operations.
 An unauthenticated user cannot access protected APIs.
 ```
+
+**Status:** READY_WITH_D18_DEFERRED (2026-10-07, run locally on `feat/T01-09B-platform-identity-mfa-ux`; not pushed). No BLOCKER, HIGH or MEDIUM finding remains. One genuine defect was fixed in remediation commits `f55ff50` and `71f3d87`: three synthetic leak-check fixtures from T01-09B/C were flagged by the CI gitleaks scan and are now allowlisted by exact path and value. The second commit also covers the self-test lines that name those values. The three proofs above are covered by the backend security and integration suites (route coverage, realm guards, tenancy isolation, platform boundaries). Those suites passed in CI on `main` (`2af531b`), and the backend is unchanged since. The out-of-repository D18 Chromium journeys were not run (environment/runtime limitation). Details: DEVELOPMENT-STATUS.md, T01-10.
 
 ---
 
