@@ -102,7 +102,7 @@ Redis-backed, keyed per IP, account, tenant and endpoint class. Applies to login
 - Staging and production secrets are injected by the platform secret manager / CI.
 - **Must never be committed:** real `.env` files; API keys and provider tokens (WhatsApp, email, SMS, voice, payment, LLM); database passwords; session, CSRF and encryption keys; private keys and certificates; cloud credentials; database dumps or backups; uploaded files.
 - `pnpm check:env` (T00-04) blocks tracked `.env` files, non-placeholder values in templates and secret-like `NEXT_PUBLIC_*` names.
-- **Secret scanning (T00-05):** CI runs gitleaks over the full history of every ref with the default rules and `--redact`. The allowlist in `.gitleaks.toml` covers only one documented fake test value in two exact files (exact path AND exact value), and a self-test proves detection on every run. CI itself needs no secrets. See [ci.md §3](ci.md#3-security-model).
+- **Secret scanning (T00-05):** CI runs gitleaks over the full history of every ref with the default rules and `--redact`. The allowlist in `.gitleaks.toml` covers only three documented fake test values, each in its exact files (exact path AND exact value; two frontend leak-check fixtures were added by the T01-10 gate), and a self-test proves detection on every run. CI itself needs no secrets. See [ci.md §3](ci.md#3-security-model).
 
 ## 10. File access
 

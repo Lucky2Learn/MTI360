@@ -33,3 +33,32 @@ regexTarget = "secret"
 regexes = [
   '''^mti360-test-csrf-secret-0123456789abcdef$''',
 ]
+
+# Synthetic leak-check fixtures of the T01-09B / T01-09C frontend security
+# tests. These tests PROVE that a password or TOTP setup key never reaches
+# the console, storage, URLs or the page, so they need realistic-looking fake
+# values. They were never real credentials. Committed in 5190a7b (setup key,
+# twice on one line pair) and 77773dd (password); flagged by generic-api-key
+# in the T01-10 security gate. History is not rewritten, so the exact values
+# are allowlisted in their exact files only (proved by gitleaks-selftest.sh).
+[[allowlists]]
+description = "T01-09B fake TOTP setup key in the platform frontend security test"
+condition = "AND"
+paths = [
+  '''^frontend/src/features/platform-identity/security\.test\.tsx$''',
+]
+regexTarget = "secret"
+regexes = [
+  '''^KRSXG5CTMVRXEZLUKRSXG5CTMVRXEZLU$''',
+]
+
+[[allowlists]]
+description = "T01-09C fake password in the tenant MFA frontend test"
+condition = "AND"
+paths = [
+  '''^frontend/src/features/identity/TenantMfa\.test\.tsx$''',
+]
+regexTarget = "secret"
+regexes = [
+  '''^Halyard-Mizzen-Leeward-8$''',
+]

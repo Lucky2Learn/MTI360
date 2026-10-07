@@ -59,8 +59,13 @@ Toolchain on the runner: `actions/setup-node` reads `.nvmrc` (24.21.0); `corepac
 ### Secret scanning (gitleaks)
 
 - **Scope:** the full history of every ref (`--log-opts="--all"` after a `fetch-depth: 0` checkout), with the default gitleaks rules. `--redact` keeps values out of logs.
-- **Allowlist (`.gitleaks.toml`):** exactly one entry, found by a real baseline scan. It covers the documented fake T00-04 `TEST_CSRF_SECRET` value (`mti360-test-csrf-secret-0123456789abcdef`) **only** in `backend/tests/conftest.py` and `backend/tests/unit/test_settings_environments.py`, with `condition = "AND"` (exact path **and** exact value). There are no directory globs, disabled rules or stopwords. The other fake test values are not flagged by the default rules and are not allowlisted.
-- **Self-test (`scripts/ci/gitleaks-selftest.sh`):** runs in CI every time. In throwaway repositories under `mktemp`, with values generated at runtime and never committed, it proves that (1) a credential-shaped value is detected; (2) a different value in an allowlisted file is still detected; (3) the documented fake value outside its allowlisted files is still detected; (4) the documented fake value in its allowlisted file is not reported.
+- **Allowlist (`.gitleaks.toml`):** three entries, each found by a real scan, each with `condition = "AND"` (exact path **and** exact value):
+  - the documented fake T00-04 `TEST_CSRF_SECRET` value (`mti360-test-csrf-secret-0123456789abcdef`) **only** in `backend/tests/conftest.py` and `backend/tests/unit/test_settings_environments.py` (baseline scan);
+  - the fake TOTP setup key `KRSXG5CTMVRXEZLUKRSXG5CTMVRXEZLU` **only** in `frontend/src/features/platform-identity/security.test.tsx` (T01-09B leak-check fixture, found by the T01-10 gate);
+  - the fake password `Halyard-Mizzen-Leeward-8` **only** in `frontend/src/features/identity/TenantMfa.test.tsx` (T01-09C leak-check fixture, found by the T01-10 gate).
+
+  The two frontend values were already committed when the gate found them; history is not rewritten, so they are allowlisted rather than replaced. There are no directory globs, disabled rules or stopwords. The other fake test values are not flagged by the default rules and are not allowlisted.
+- **Self-test (`scripts/ci/gitleaks-selftest.sh`):** runs in CI every time. In throwaway repositories under `mktemp`, with values generated at runtime and never committed, it proves that (1) a credential-shaped value is detected; (2) a different value in an allowlisted file is still detected; (3) the documented fake value outside its allowlisted files is still detected; (4) the documented fake value in its allowlisted file is not reported. Cases (2)–(4) run for every allowlist entry (T01-10 added them for the two frontend fixtures).
 - **Adding an allowlist entry** requires a real finding of a documented fake value, the exact path and exact value, and a self-test case. A real secret is never allowlisted: rotate it and remove it from history instead.
 
 ## 4. Pinned versions
