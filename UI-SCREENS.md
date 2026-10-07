@@ -307,6 +307,8 @@ All Tenants
 **Template:** T16 Authentication
 **Priority:** P0
 
+Detailed UI/UX specification (T01-09B): [docs/ui/T01-09B-PLATFORM-IDENTITY-MFA-UI.md](docs/ui/T01-09B-PLATFORM-IDENTITY-MFA-UI.md). Route `/platform/login`.
+
 ### Purpose
 
 Authenticate MTI 360 platform administrators.
@@ -315,16 +317,16 @@ Authenticate MTI 360 platform administrators.
 
 * Email
 * Password
-* Remember device
 * Sign in
 * Forgot password
+
+"Remember device" is removed: trusted and remembered devices are deferred by T01-06 D6-4.
 
 ### States
 
 * Loading
-* Invalid credentials
-* Locked account
-* MFA required
+* Invalid credentials (one generic message; a locked or suspended account is not distinguished, T01-04 S8)
+* MFA required (PLAT-02) or MFA set-up required (PAUTH-04), as in-memory steps of `/platform/login`
 
 ### Responsive
 
@@ -350,17 +352,19 @@ Desktop:
 **Template:** T16 Authentication
 **Priority:** P0
 
+A step of `/platform/login`, not a route (T01-09B D9B-2).
+
 ### Purpose
 
 Secure platform administrator access.
 
 ### Elements
 
-* MFA code
+* Authenticator (TOTP) code
 * Verification
-* Resend
-* Recovery option
-* Trusted device where applicable
+* Recovery-code option
+
+"Resend" and "Trusted device" are removed: OTP resend and trusted devices are deferred by T01-06 D6-4 (TOTP and recovery codes only).
 
 ### Responsive
 
@@ -1072,6 +1076,8 @@ Manage tenant domains and branding.
 **Template:** T03 Detail
 **Priority:** P1
 
+Partially built in T01-09B (D9B-8): "Sign-in security" at `/platform/profile` — name, email and roles (read-only), two-step verification status, recovery codes remaining and "Generate new recovery codes" (step-up). The rest of the profile belongs to T02-23.
+
 ---
 
 ## PLAT-53 — Platform Settings
@@ -1092,6 +1098,61 @@ Mumbai Campus
 ```
 
 Tenant users must never see another tenant's data.
+
+---
+
+# 12A. PLATFORM AUTHENTICATION (T01-09B)
+
+Detailed UI/UX specification: [docs/ui/T01-09B-PLATFORM-IDENTITY-MFA-UI.md](docs/ui/T01-09B-PLATFORM-IDENTITY-MFA-UI.md). The new platform authentication screens form the **PAUTH** family, because PLAT-03 … PLAT-13 already name Platform Dashboard … Billing & Invoices (D9B-1). All use T16 with the context label "Platform administration", except PAUTH-07.
+
+## PAUTH-01 — Platform Forgot Password
+
+**Template:** T16
+**Priority:** P0
+
+`/platform/forgot-password`. One confirmation for every email.
+
+## PAUTH-02 — Platform Reset Password
+
+**Template:** T16
+**Priority:** P0
+
+`/platform/reset-password#token=…` (fragment token). A reset never bypasses MFA.
+
+## PAUTH-03 — Platform Accept Invitation
+
+**Template:** T16
+**Priority:** P0
+
+`/platform/accept-invitation#token=…`. Masked email preview; password only; no automatic sign-in.
+
+## PAUTH-04 — Set Up Two-Step Verification
+
+**Template:** T16
+**Priority:** P0
+
+Step of `/platform/login` after `mfa_enrolment_required` (first sign-in, or after an MFA reset). Starts only on an explicit press; manual setup key, `otpauth://` link, no QR code.
+
+## PAUTH-05 — Recovery Codes
+
+**Template:** component (T16 card or Dialog)
+**Priority:** P0
+
+The ten codes, shown once, with a required acknowledgement. After enrolment and after regeneration on PLAT-52.
+
+## PAUTH-06 — Platform Session Ended
+
+**Template:** T16
+**Priority:** P0
+
+`/platform/session-ended?reason=signed-out|ended`.
+
+## PAUTH-07 — Step-Up Verification
+
+**Template:** Dialog in the platform shell
+**Priority:** P0
+
+Opened by `403 STEP_UP_REQUIRED`; TOTP only; the original request is resent once after success.
 
 ---
 
@@ -1125,7 +1186,7 @@ Detailed UI/UX specification for AUTH-01 … AUTH-03 and AUTH-05 … AUTH-08 (T0
 **Template:** T16
 **Priority:** P0
 
-Designed with platform identity and MFA (T01-06), not in the T01-04 specification.
+Designed with platform identity and MFA (T01-06), not in the T01-04 specification. The tenant sign-in MFA step (verify and recovery code) is built in T01-09A and shares its implementation with PLAT-02 (T01-09B). Tenant MFA set-up and removal are built in **T01-09C** (completing D9B-9) on the personal **Sign-in security** page `/app/account/security`, reached from the account menu (D9C-1). Specification: [docs/ui/T01-09C-TENANT-MFA-UI.md](docs/ui/T01-09C-TENANT-MFA-UI.md).
 
 ---
 

@@ -1,6 +1,6 @@
 # Platform Identity and MFA
 
-- **Status:** Decisions locked (T01-06 architecture review, 2026-10-02); implemented and verified (`READY_FOR_REVIEW` on `feat/T01-06-platform-identity-mfa`); see [ADR-0017](../adr/0017-platform-identity-mfa.md).
+- **Status:** Decisions locked (T01-06 architecture review, 2026-10-02); implemented and verified; merged to `main` by PR #25 (merge commit `9fdb40a`); see [ADR-0017](../adr/0017-platform-identity-mfa.md).
 - **Builds on:** [ADR-0005](../adr/0005-identity-and-session-realms.md) (separate platform identity), [ADR-0010](../adr/0010-sessions-credentials-and-csrf.md) (`platform_users` / `platform_user_credentials` / `platform_sessions`, `__Host-mti360_psid`), [ADR-0011](../adr/0011-rbac-model.md) and [ADR-0016](../adr/0016-authorization-rbac.md) (code-defined platform roles, `requires_step_up` hook), [ADR-0012](../adr/0012-application-level-encryption.md) (`DATA_ENCRYPTION_KEY`, AES-256-GCM), T01-00 decision D9 (TOTP and recovery codes; MFA mandatory for platform users).
 - **Scope (TASKS.md T01-06):** platform identity, platform sessions and MFA, plus optional MFA enrolment for tenant users. Platform user management (create, suspend, list) belongs to T01-07; the PLAT-01, PLAT-02 and AUTH-04 screens belong to T01-09.
 

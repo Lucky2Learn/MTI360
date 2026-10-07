@@ -72,8 +72,10 @@ describe("design-system showcase gate", () => {
 
 // Whole-page render + axe over every component: ~2 s alone, but it exceeded
 // Vitest's 5 s default under full-suite parallel load once the T00-08 shell
-// tests were added, so these tests get an explicit budget.
-const WHOLE_PAGE = { timeout: 20_000 };
+// tests were added, so these tests get an explicit budget — raised to 40 s
+// when the T01-09B flow tests made the full suite heavier (~24 s observed
+// under load; it still passes in ~2 s on its own).
+const WHOLE_PAGE = { timeout: 40_000 };
 
 describe("design-system showcase content", WHOLE_PAGE, () => {
   it("shows every T00-07A, T00-07B, T00-07C, T00-09 and T00-10A section and passes axe", async () => {

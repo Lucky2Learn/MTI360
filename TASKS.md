@@ -672,11 +672,11 @@ Every slice is delivered as five commits:
 | T01-03 | Tenancy Core (Tenant, Campus, isolation layers) | COMPLETED |
 | T01-04 | Tenant Identity & Authentication | COMPLETED |
 | T01-05 | Authorization & RBAC | COMPLETED |
-| T01-06 | Platform Identity & MFA | READY_FOR_REVIEW |
-| T01-07 | Platform Administration Foundation (API) | READY_FOR_REVIEW |
-| T01-08 | Tenant Administration Foundation (API) and development seed | READY_FOR_REVIEW |
-| T01-09 | Frontend Authentication & Session Integration | IN_PROGRESS (T01-09A tenant: READY_FOR_REVIEW; T01-09B platform/MFA UX: NOT_STARTED, blocked on B1) |
-| T01-10 | Security Verification Gate & Phase Close-out | NOT_STARTED |
+| T01-06 | Platform Identity & MFA | COMPLETED (PR #25, merge `9fdb40a`) |
+| T01-07 | Platform Administration Foundation (API) | COMPLETED (PR #27, merge `fe0b019`) |
+| T01-08 | Tenant Administration Foundation (API) and development seed | COMPLETED (PR #29, merge `fd70d7d`) |
+| T01-09 | Frontend Authentication & Session Integration | IN_PROGRESS (T01-09A tenant: COMPLETED, PR #30, merge `2af531b`; T01-09B platform/MFA UX: READY_FOR_REVIEW, B1 resolved; T01-09C tenant MFA UX: READY_FOR_REVIEW) |
+| T01-10 | Security Verification Gate & Phase Close-out | READY_WITH_D18_DEFERRED (gate run locally 2026-10-07; D18 Chromium journeys not run) |
 
 Dependencies:
 
@@ -945,7 +945,7 @@ Architecture review approved; decisions **D6-1 … D6-5 are locked** in `docs/ar
 
 **Priority:** P0
 
-**Status:** READY_FOR_REVIEW (implemented and verified on `feat/T01-06-platform-identity-mfa`; not merged).
+**Status:** COMPLETED (merged to `main` by PR #25, merge commit `9fdb40a`).
 
 **Implemented** (locked decisions D6-1 … D6-5 in `docs/architecture/platform-identity.md`; ADR-0017):
 
@@ -991,7 +991,7 @@ Architecture review approved; decisions **D7-1 … D7-10 are locked** in `docs/a
 
 **Priority:** P0
 
-**Status:** READY_FOR_REVIEW (implemented and verified on `feat/T01-07-platform-administration`; not merged).
+**Status:** COMPLETED (merged to `main` by PR #27, merge commit `fe0b019`).
 
 **Implemented** (ADR-0018):
 
@@ -1032,7 +1032,7 @@ Architecture review approved; decisions **D8-1 … D8-4 are locked** in `docs/ar
 
 **Priority:** P0
 
-**Status:** READY_FOR_REVIEW (implemented and verified on `feat/T01-08-tenant-administration`; not merged).
+**Status:** COMPLETED (merged to `main` by PR #29, merge commit `fd70d7d`).
 
 **Implemented** (ADR-0019):
 
@@ -1063,12 +1063,14 @@ Architecture review approved; decisions **D8-1 … D8-4 are locked** in `docs/ar
 
 The same-origin API proxy, session helpers, the AUTH-01 … AUTH-05, PLAT-01 and PLAT-02 pages on the T16 template, guarded shells, tenant and campus switchers, role-aware navigation, and logout.
 
-The readiness review (2026-10-03) found no UX contract for the platform and MFA screens (blocker **B1**). The task is split (option b):
+The readiness review (2026-10-03) found no UX contract for the platform and MFA screens (blocker **B1**). The task is split (option b, extended to three parts by T01-09B D9B-9):
 
 * **T01-09A — Tenant authentication & session.** Built against the frozen UI contracts `docs/ui/T01-04-IDENTITY-AUTHENTICATION-UI.md` and `docs/ui/T01-05-AUTHORIZATION-RBAC-UI.md`: the same-origin proxy (`app/api/[...path]`, browser address as one `X-Forwarded-For` entry for `TRUSTED_PROXY_HOPS=1`), the typed API client and server/client session helpers, AUTH-01 … AUTH-03 and AUTH-05 … AUTH-08 on `AuthenticationTemplate` (T16), tenant MFA verify and recovery (the sign-in step only), the guarded `/app` shell, `TenantContext`, `CampusSwitcher`, the session `UserMenu`, the requirement map, `can()`, `PermissionGate`, AUTHZ-01, RESOURCE-01/02, NAV-01/02, DASH-01 and the T01-05 §11 error matrix.
-  **Status:** READY_FOR_REVIEW (implemented and verified on `feat/T01-09-frontend-auth-session`; not committed, not merged). The out-of-repository Chromium journeys J1–J10 (D18) were not run.
-* **T01-09B — Platform and MFA UX.** PLAT-01, PLAT-02, platform MFA enrolment, step-up (`403 STEP_UP_REQUIRED`), platform password reset and invitation acceptance, and tenant MFA enrolment, after a frozen UX addendum resolves B1.
-  **Status:** NOT_STARTED (blocked on B1).
+  **Status:** COMPLETED (implementation `a4a3cfe`; merged to `main` by PR #30, merge commit `2af531b`). The out-of-repository Chromium journeys J1–J10 (D18) were not run.
+* **T01-09B — Platform Identity & MFA UX.** Built against the frozen contract `docs/ui/T01-09B-PLATFORM-IDENTITY-MFA-UI.md` (readiness review 2026-10-07, `READY_FOR_IMPLEMENTATION`; **B1 resolved**; decisions D9B-1 … D9B-12): PLAT-01, PLAT-02, PAUTH-01 … PAUTH-07 (forgot and reset password, invitation acceptance, MFA set-up, recovery codes, session ended, step-up), the guarded platform console with permission-aware navigation, and a partial PLAT-52 "Sign-in security" (**D9B-8 accepted**). MFA-pending states are in-memory steps of `/platform/login` (D9B-2); the proxy forwards only the called realm's session cookie (D9B-10). Tenant MFA enrolment moved to T01-09C (**D9B-9 accepted**).
+  **Status:** READY_FOR_REVIEW (implemented and verified on `feat/T01-09B-platform-identity-mfa-ux`; committed, not pushed, not merged). The out-of-repository Chromium journeys were not run.
+* **T01-09C — Tenant MFA UX.** Opt-in TOTP set-up, recovery codes shown once and turning it off with a current code for tenant users, on the existing T01-06 tenant endpoints (`/api/v1/session/mfa/enrolment`, `/enrolment/confirm`, `/remove`), reusing the T01-09B components; the tenant sign-in MFA step (T01-09A) is unchanged and now covered by additional tests. Contract `docs/ui/T01-09C-TENANT-MFA-UI.md` (D9C-1 … D9C-6): the personal **Sign-in security** page `/app/account/security`, reached from the account menu (D9C-1). Completes D9B-9. Backend limitations kept: no tenant recovery-code count or regeneration, no tenant step-up, no institute MFA policy.
+  **Status:** READY_FOR_REVIEW (implemented and verified on `feat/T01-09B-platform-identity-mfa-ux` as a second local commit after T01-09B; not pushed, not merged). The out-of-repository Chromium journeys were not run.
 
 ---
 
@@ -1083,6 +1085,8 @@ Tenant A cannot access Tenant B.
 A Tenant Admin cannot perform Platform Admin operations.
 An unauthenticated user cannot access protected APIs.
 ```
+
+**Status:** READY_WITH_D18_DEFERRED (2026-10-07, run locally on `feat/T01-09B-platform-identity-mfa-ux`; not pushed). No BLOCKER, HIGH or MEDIUM finding remains. One genuine defect was fixed in remediation commits `f55ff50` and `71f3d87`: three synthetic leak-check fixtures from T01-09B/C were flagged by the CI gitleaks scan and are now allowlisted by exact path and value. The second commit also covers the self-test lines that name those values. The three proofs above are covered by the backend security and integration suites (route coverage, realm guards, tenancy isolation, platform boundaries). Those suites passed in CI on `main` (`2af531b`), and the backend is unchanged since. The out-of-repository D18 Chromium journeys were not run (environment/runtime limitation). Details: DEVELOPMENT-STATUS.md, T01-10.
 
 ---
 

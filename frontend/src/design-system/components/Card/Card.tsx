@@ -1,6 +1,6 @@
 import { cx } from "@/design-system/lib/cx";
 
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 
 // Card (DESIGN-SYSTEM.md §43). Groups related content on a surface: KPIs,
 // summaries, records, actions, insights. Not a default wrapper — use it only
@@ -65,6 +65,8 @@ export type CardHeaderProps = {
   description?: ReactNode;
   /** Header actions (buttons, menus); wraps below the title on small screens. */
   actions?: ReactNode;
+  /** Programmatic focus target (tabIndex=-1), e.g. after a step change. */
+  titleRef?: Ref<HTMLHeadingElement>;
 };
 
 export function CardHeader({
@@ -73,11 +75,17 @@ export function CardHeader({
   titleId,
   description,
   actions,
+  titleRef,
 }: CardHeaderProps) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div className="flex min-w-0 flex-col gap-1">
-        <Heading id={titleId} className="text-card-heading text-text-primary">
+        <Heading
+          id={titleId}
+          ref={titleRef}
+          tabIndex={titleRef ? -1 : undefined}
+          className="text-card-heading text-text-primary"
+        >
           {title}
         </Heading>
         {description && (

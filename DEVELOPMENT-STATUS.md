@@ -817,11 +817,11 @@ Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TAS
 | T01-03 | Tenancy Core | `COMPLETED` (PR #19, `f602631`) |
 | T01-04 | Tenant Identity & Authentication | `COMPLETED` (PR #20, `daa6526`) |
 | T01-05 | Authorization & RBAC | `COMPLETED` (PR #21, `ee956e5`) |
-| T01-06 | Platform Identity & MFA | `READY_FOR_REVIEW` (`feat/T01-06-platform-identity-mfa`, not merged) |
-| T01-07 | Platform Administration Foundation (API) | `READY_FOR_REVIEW` (`feat/T01-07-platform-administration`, not merged) |
-| T01-08 | Tenant Administration Foundation (API) | `READY_FOR_REVIEW` (`feat/T01-08-tenant-administration`, not merged) |
-| T01-09 | Frontend Authentication & Session Integration | `IN_PROGRESS` — T01-09A (tenant) `READY_FOR_REVIEW` on `feat/T01-09-frontend-auth-session`, not committed; T01-09B (platform/MFA UX) `NOT_STARTED`, blocked on B1 |
-| T01-10 | Security Verification Gate | `NOT_STARTED` |
+| T01-06 | Platform Identity & MFA | `COMPLETED` (PR #25, `9fdb40a`) |
+| T01-07 | Platform Administration Foundation (API) | `COMPLETED` (PR #27, `fe0b019`) |
+| T01-08 | Tenant Administration Foundation (API) | `COMPLETED` (PR #29, `fd70d7d`) |
+| T01-09 | Frontend Authentication & Session Integration | `IN_PROGRESS` — T01-09A (tenant) `COMPLETED` (PR #30, `2af531b`); T01-09B (platform/MFA UX) `READY_FOR_REVIEW` on `feat/T01-09B-platform-identity-mfa-ux`, B1 resolved; T01-09C (tenant MFA UX) `READY_FOR_REVIEW` on the same branch |
+| T01-10 | Security Verification Gate | `READY_WITH_D18_DEFERRED` (local gate 2026-10-07; D18 not run) |
 
 ### T01-01 — Backend, Database & API Foundation
 
@@ -1043,7 +1043,7 @@ resource-campus check 2 tests fail. CI not run.
 
 ### T01-06 — Platform Identity & MFA
 
-**Status:** `READY_FOR_REVIEW` (implemented and verified on `feat/T01-06-platform-identity-mfa`; not merged)
+**Status:** `COMPLETED` (merged to `main` by PR #25, merge commit `9fdb40a`)
 
 **Implementation:**
 
@@ -1080,7 +1080,7 @@ not run.
 
 ### T01-07 — Platform Administration Foundation (API)
 
-**Status:** `READY_FOR_REVIEW` (implemented and verified on `feat/T01-07-platform-administration`; not merged)
+**Status:** `COMPLETED` (merged to `main` by PR #27, merge commit `fe0b019`)
 
 **Implementation:**
 
@@ -1119,7 +1119,7 @@ self-protection 2 tests fail. No frontend changes. CI not run.
 
 ### T01-08 — Tenant Administration Foundation (API)
 
-**Status:** `READY_FOR_REVIEW` (implemented and verified on `feat/T01-08-tenant-administration`; not merged)
+**Status:** `COMPLETED` (merged to `main` by PR #29, merge commit `fd70d7d`)
 
 **Implementation:**
 
@@ -1157,7 +1157,7 @@ tests fail. No frontend changes (frontend checks not run). CI not run.
 
 ### T01-09A — Frontend Tenant Authentication & Session
 
-**Status:** `READY_FOR_REVIEW` (implemented and verified on `feat/T01-09-frontend-auth-session`; not committed, not merged). T01-09B (platform and MFA UX) is `NOT_STARTED`, blocked on B1 (no frozen UX contract for PLAT-01, PLAT-02, MFA enrolment, step-up, platform reset and invitation pages).
+**Status:** `COMPLETED` (implementation commit `a4a3cfe`; merged to `main` by PR #30, merge commit `2af531b`). T01-09B (platform and MFA UX) followed once its UX contract was frozen (B1 resolved, see below).
 
 **Implementation:**
 
@@ -1193,7 +1193,7 @@ Design system: AuthenticationTemplate (T16), Input isRevealable and
   h1 on CardHeader, DropdownMenu header, RadioGroup isLabelHidden
 src/proxy.ts: /app/* without the session cookie -> /session-ended (cookie
   presence only, UX); UNRELEASED pages visible in development only
-Not built: T01-09B (B1); the unsaved-changes guard before switching
+Not built: T01-09B (then blocked on B1; since implemented, below); the unsaved-changes guard before switching
   (T01-04 §8.8 makes it conditional on "a future form-level hook"); security
   headers / CSP in src/proxy.ts (not T01-09); TanStack Query / Zod (not
   installed; not needed for this slice)
@@ -1218,6 +1218,192 @@ uv lock --check pass; backend pytest not run (no backend change).
 Not run: D18 Chromium journeys J1-J10 and pixel checks at 390/768/1024/1440
 (the harness needs containers and servers, excluded by this task's runtime
 rules); CI not run.
+```
+
+### T01-09B — Platform Identity & MFA UX
+
+**Status:** `READY_FOR_REVIEW` (implemented and verified on `feat/T01-09B-platform-identity-mfa-ux`; one implementation commit; not pushed, not merged). Blocker **B1 is resolved** by the frozen contract `docs/ui/T01-09B-PLATFORM-IDENTITY-MFA-UI.md` (readiness review 2026-10-07, `READY_FOR_IMPLEMENTATION`; decisions D9B-1 … D9B-12). **D9B-8 accepted** (partial PLAT-52). **D9B-9 accepted** (tenant MFA enrolment/removal deferred to **T01-09C**).
+
+**Implementation:**
+
+```text
+Routes: app/platform split into route groups — (auth): /platform/login,
+  /forgot-password, /reset-password#token=, /accept-invitation#token=,
+  /session-ended (T16, no shell); (console): /platform, /platform/profile
+  and the T00-08 placeholders, guarded by the server page gate
+Screens: PLAT-01 sign-in; PLAT-02 verify / recovery code (the T01-09A
+  MfaStep, generalised by realm — one implementation); PAUTH-04 set-up
+  (explicit start, setup key + otpauth link + Copy key, no QR); PAUTH-05
+  recovery codes (once, Copy codes, required acknowledgement,
+  beforeunload guard); PAUTH-01/02/06 (the T01-09A screens with
+  realm="platform"); PAUTH-03 invitation (masked email, password only);
+  PAUTH-07 step-up Dialog; partial PLAT-52 Sign-in security
+  (identity, MFA status, codes remaining, Generate new recovery codes)
+Session: lib/session platform-routes (platform next / reason allow-lists),
+  platform-server (GET /api/v1/platform/session with ONLY the platform
+  cookie; pending = 401 = no session), platform-client, platform-session,
+  PlatformSessionProvider (T01-05 §11 matrix on /api/v1/platform/*;
+  STEP_UP_REQUIRED → PAUTH-07 → exactly one resend; cancel → nothing;
+  visibility re-read; no polling, no idle timer). MFA-pending status and
+  CSRF token in memory only; a reload restarts sign-in (D9B-2)
+Proxy: lib/api forwards only the called realm's session cookie
+  (/api/v1/platform/* → __Host-mti360_psid, else __Host-mti360_tsid;
+  D9B-10); src/proxy.ts also redirects protected /platform paths without the
+  platform cookie to /platform/session-ended (UX only)
+Shell: platform-frame — permission-filtered navigation (Overview ALWAYS,
+  Tenants tenant.read, Platform Users platform_user.read, Audit audit.read,
+  System Health / Integrations / Settings UNRELEASED), account menu (name,
+  email, role labels display-only; Sign-in security, Preferences, Sign
+  out), platform sign-out, zero-permission Overview state, low
+  recovery-codes warning (<= 3, server session)
+Design system: AuthenticationTemplate context label + titleRef; CardHeader
+  titleRef; CopyButton; SecretValue / CodeList (font-mono, no new token);
+  MfaCodeField; UserMenu hideUnavailable; ShellAccessDenied / ShellNotFound
+  copy props (tenant defaults unchanged)
+Not built (out of scope): tenant MFA (T01-09C); QR codes; download/print;
+  idle warning; signed-in password change; self-service MFA removal or
+  re-enrolment; session lists; platform administration screens (Phase 02)
+```
+
+**Verification:**
+
+```text
+Frontend 1216 tests in 87 files (was 1058 in 79): proxy cookie realm
+isolation; src/proxy.ts platform redirects and public auth routes; platform
+next/reason allow-lists (open redirects, auth routes as destinations, /app
+rejected, tenant next rejects /platform); server gate (no cookie, valid,
+invalid/401, tenant cookie only, pending, read error); provider matrix (401,
+SESSION_REFRESH_REQUIRED GET once / POST never, PERMISSION_DENIED,
+visibility, no polling); step-up (exactly one resend, cancel, Escape,
+repeated STEP_UP_REQUIRED, 401, 422, 429, refresh in dialog, no resend after
+5xx/network); PLAT-01 identical DOM for every refusal; PLAT-02; PAUTH-04
+(no start on mount, one start under StrictMode, restart, 422 keeps key, key
+dropped after confirmation); PAUTH-05 (acknowledgement, beforeunload);
+PAUTH-01/02/03/06; console (page gate, navigation by permission never role
+name, zero permission, account menu, sign-out never touches the tenant
+session, PLAT-52 regeneration with step-up); security flows (no password,
+token, MFA/recovery code, secret, otpauth URI or CSRF token in console,
+storage, URLs, title or page; fragments removed; no storage authority);
+axe in Light and Dark. prettier, eslint (0 warnings), tsc, next build: pass;
+no server value or cookie name in the browser bundles. No backend change.
+The showcase whole-page test budget was raised from 20 s to 40 s (it timed
+out at ~24 s under the heavier full-suite load; ~2 s alone).
+Not run: D18 Chromium journeys and pixel checks at 390/768/1024/1440
+(the external harness needs containers and servers, excluded by the runtime
+rules); CI not run.
+```
+
+### T01-09C — Tenant MFA UX
+
+**Status:** `READY_FOR_REVIEW` (implemented and verified on `feat/T01-09B-platform-identity-mfa-ux` as a second local commit after T01-09B `5190a7b`; not pushed, not merged). Completes **D9B-9**. Contract `docs/ui/T01-09C-TENANT-MFA-UI.md` (D9C-1 … D9C-6).
+
+**Implementation:**
+
+```text
+Route: /app/account/security — AUTH-04 Sign-in security (personal; any
+  ready tenant session; server gate requireReadyTenantSession), reached from
+  the account menu item "Sign-in security" (D9C-1); no navigation item, no
+  new permission
+Feature: features/identity/TenantSignInSecurity — Account (read-only) and
+  Two-step verification: set-up on an explicit press (POST
+  /session/mfa/enrolment), key Dialog (shared AuthenticatorSetupSteps: key,
+  Copy key, otpauth link, settings; no QR) with the confirm code (POST
+  /session/mfa/enrolment/confirm), recovery codes once in a non-dismissable
+  Dialog (shared RecoveryCodesPanel, required acknowledgement, beforeunload
+  guard), turning off with a current code (POST /session/mfa/remove); every
+  call through TenantSessionProvider.request (tenant cookie, CSRF, T01-05
+  matrix); the session is re-read after each change (D9C-4)
+Shared: RecoveryCodesPanel moved to features/identity with a per-realm
+  hint; AuthenticatorSetupSteps extracted from the platform EnrolmentStep
+  (platform behaviour unchanged); client Session gains mfaEnabled (display
+  only); tenant account menu gains "Sign-in security"
+Sign-in step: unchanged (T01-09A MfaStep, shared with PLAT-02)
+Backend limitations kept: no tenant recovery-code count or regeneration
+  (BG-T1), no tenant step-up (BG-T2), no institute MFA policy (BG-T3)
+```
+
+**Verification:**
+
+```text
+Frontend 1243 tests in 90 files (was 1216 in 87): Sign-in security status,
+set-up (no start on mount under StrictMode, one start on press with the
+tenant CSRF token on tenant paths, key/link/settings, no QR, copy on press,
+wrong code keeps the key, success drops the key, codes once, Escape does not
+dismiss, acknowledgement, beforeunload, session re-read, focused outcome,
+cancel, 409, SESSION_REFRESH_REQUIRED not resent, PERMISSION_DENIED, 401,
+429), turning off (wrong code, success, cancel), page gate and account menu,
+source rules (no role gating, storage, logging or platform paths), tenant
+sign-in step (rotated-session destination, tenant paths only, refused
+recovery code, 429, focus), leak checks across complete flows; axe in Light
+and Dark. All T01-09A and T01-09B tests unchanged and passing. prettier,
+eslint (0 warnings), tsc, next build: pass; no server value or cookie name
+in the browser bundles. No backend change.
+Not run: D18 Chromium journeys (environment/runtime limitation); CI not run.
+```
+
+### T01-10 — Security Verification Gate & Phase Close-out
+
+**Status:** `READY_WITH_D18_DEFERRED` (gate run locally on 2026-10-07 on `feat/T01-09B-platform-identity-mfa-ux`; not pushed, no PR). The automated and security gates pass. The D18 Chromium journeys were **not run** (environment/runtime limitation), so T01 is not classified `READY_FOR_T01_CLOSE`.
+
+**Scope verified:** T01-01 … T01-08 (backend unchanged since `main` `2af531b`) and T01-09A/B/C (frontend).
+
+```text
+Realms        platform/tenant guards; realm-scoped cookie forwarding (D9B-10);
+              pending MFA sessions are 401 outside the MFA routes
+Tenancy       trusted server context only; tenant switch validated against
+              memberships (404); campus scope server-side; RLS on every table
+RLS / DB      narrow equality-matched keys exactly as D7-1, D7-2, D7-3, D7-8
+              and D8-1 lock them; tenant audit read limited to tenant-realm
+              events (D8-2); USING (true) only on the global permission
+              catalogue; no SECURITY DEFINER, BYPASSRLS or unscoped(); no
+              DELETE on identity tables; alembic_version SELECT-only for the
+              runtime roles; audit append-only (privileges and triggers);
+              migration chain 0001 -> 0008 linear, head 0008
+AuthN / MFA   session rotation at login, MFA and institute switch; TOTP replay
+              protection; encrypted secrets; HMAC recovery codes; step-up in
+              authorize() only
+AuthZ         permission codes only (no role-name gating in backend or
+              frontend); the bootstrap and last-Super-Admin role queries are
+              the documented D6-1 / D7-5 data checks, not authorization
+Frontend      the server page gate is authoritative; src/proxy.ts is cookie
+              presence only; no secrets in storage, URLs, console or bundles
+```
+
+**Findings:**
+
+```text
+F-01 HIGH (fixed, f55ff50 + 71f3d87)  CI gitleaks scan flagged 3
+     synthetic fixtures (fake setup key and password) in the T01-09B/C
+     frontend leak-check tests; the secrets job would fail. Allowlisted by
+     exact path AND value with self-test cases; the follow-up adds the
+     self-test script (which names the exact values) as a second exact
+     path. Full-history scan clean.
+F-02 LOW  (documented)      Full frontend suite with Vitest's default worker
+     count (32 here) times out a different, unchanged test on each run while
+     the Docker runtime shares the host; with --maxWorkers=8: 1243/1243 twice.
+     CI (4 vCPU) unaffected. No code change.
+F-03 LOW  (fixed, docs)     Stale status of T01-06/07/08 (merged as PR #25,
+     #27, #29) in TASKS.md, this file and the architecture notes.
+F-04 DOCUMENTED LIMITATION  Backend integration tests (PostgreSQL/Redis,
+     363) not run locally (the database belongs to the running runtime);
+     they passed in CI on main 2af531b and the backend is unchanged.
+F-05 DOCUMENTED LIMITATION  D18 Chromium journeys not run.
+F-06 DOCUMENTED LIMITATION  T01-09B BG-1 … BG-5 and T01-09C BG-T1 … BG-T3.
+F-07 ACCEPTED DEVIATION     D9C-1 tenant Sign-in security location.
+```
+
+**Verification:**
+
+```text
+Frontend 1243/1243 (90 files; --maxWorkers=8, twice); prettier, eslint (0
+warnings), tsc, next build: pass; bundle scan: no server value, cookie name
+or fixture value. Backend (no database): 454 passed, 363 skipped (the
+integration tests); ruff, ruff format, mypy (188 files), import-linter
+(2 kept), uv lock --check: pass. gitleaks 8.30.1 (repository-pinned) over all
+refs: no leaks; gitleaks self-test: passed. git diff --check: clean.
+CI evidence for main 2af531b: backend, frontend, secrets, repo, docker,
+CodeQL, audits and ci-ok all succeeded.
+Not run: D18 Chromium journeys; CI on this branch (not pushed).
 ```
 
 ---
@@ -2206,6 +2392,14 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-10-03 | T01-07 Platform Administration Foundation implemented | `READY_FOR_REVIEW` on `feat/T01-07-platform-administration`; provisioning, tenant suspension with session revocation, platform user administration and invitations, audit read, migration 0007, ADR-0018 |
 | 2026-10-03 | T01-08 architecture review; decisions D8-1 … D8-4 locked | New invitee identity (narrow key), tenant audit visibility (tenant-realm events only), member lifecycle without global session revocation, self-protection and last owner (`docs/architecture/tenant-administration.md`) |
 | 2026-10-03 | T01-08 Tenant Administration Foundation implemented | `READY_FOR_REVIEW` on `feat/T01-08-tenant-administration`; members, roles, campuses, tenant audit read, owner protection, development seed, migration 0008, ADR-0019 |
+| 2026-10-03 | T01-06 merged to `main` (PR #25, `9fdb40a`) | `COMPLETED` |
+| 2026-10-03 | T01-07 merged to `main` (PR #27, `fe0b019`) | `COMPLETED` |
+| 2026-10-03 | T01-08 merged to `main` (PR #29, `fd70d7d`) | `COMPLETED` |
+| 2026-10-04 | T01-09A Frontend Tenant Authentication & Session merged to `main` (PR #30, implementation `a4a3cfe`, merge `2af531b`) | `COMPLETED` |
+| 2026-10-07 | T01-09B readiness review; UX contract frozen | `READY_FOR_IMPLEMENTATION`; B1 resolved; D9B-1 … D9B-12; D9B-8 (partial PLAT-52) and D9B-9 (tenant MFA → T01-09C) accepted (`docs/ui/T01-09B-PLATFORM-IDENTITY-MFA-UI.md`) |
+| 2026-10-07 | T01-10 Security Verification Gate | `READY_WITH_D18_DEFERRED`; one defect fixed (gitleaks fixtures, `f55ff50`, `71f3d87`); stale T01-06/07/08 statuses corrected; D18 not run |
+| 2026-10-07 | T01-09C Tenant MFA UX implemented | `READY_FOR_REVIEW` (second local commit on `feat/T01-09B-platform-identity-mfa-ux`); Sign-in security `/app/account/security`, tenant MFA set-up, recovery codes, turning off; completes D9B-9 |
+| 2026-10-07 | T01-09B Platform Identity & MFA UX implemented | `READY_FOR_REVIEW` on `feat/T01-09B-platform-identity-mfa-ux`; platform sign-in, MFA verify and set-up, recovery codes, reset and invitation, platform console, step-up, partial PLAT-52, realm-scoped cookie forwarding |
 
 ---
 
@@ -3704,12 +3898,144 @@ Frontend Authentication & Session Integration
 
 ---
 
-## 2026-10-04 — T01-09A Frontend Tenant Authentication & Session
+## 2026-10-07 — T01-10 Security Verification Gate
+
+**Status:**
+
+```text
+READY_WITH_D18_DEFERRED
+```
+
+**Summary:**
+
+The T01 security gate reviewed realms, tenancy, RLS and grants in every
+migration, authentication, authorization, MFA, audit, the frontend proxy and
+gate, and secret handling across T01-01 … T01-09C, and ran every available
+automated check. One genuine defect was found and fixed: the CI gitleaks
+scan would have failed on three synthetic fixtures in the T01-09B/C leak-check
+tests (remediation f55ff50 and 71f3d87: exact path-and-value allowlist and
+self-test cases). Stale T01-06/07/08 statuses were corrected. No BLOCKER, HIGH or
+MEDIUM finding remains.
+
+**Tests:**
+
+```text
+Frontend 1243/1243; backend 454 passed / 363 integration skipped locally
+(passed in CI on main); all lint, type, import, lock, build and secret checks
+pass. D18 Chromium journeys not run.
+```
+
+**Next:**
+
+```text
+Push feat/T01-09B-platform-identity-mfa-ux -> PR -> CI (incl. secrets and
+PostgreSQL integration) -> merge commit; run the D18 Chromium journeys in a
+suitable environment -> T01 close -> Phase 02
+```
+
+---
+
+## 2026-10-07 — T01-09C Tenant MFA UX
 
 **Status:**
 
 ```text
 READY_FOR_REVIEW
+```
+
+**Summary:**
+
+Completes D9B-9: tenant members can turn two-step verification on and off
+themselves on the personal Sign-in security page (/app/account/security,
+account menu; D9C-1), on the existing T01-06 tenant endpoints. Set-up starts
+only on an explicit press, shows the shared setup steps and the recovery
+codes once; turning off needs a current authenticator code; the server
+session is re-read after every change. The tenant sign-in MFA step is
+unchanged and gained tests. Platform components were shared, not copied.
+No backend change.
+
+**Tests:**
+
+```text
+Frontend 1243 tests (was 1216), 3 new test files; prettier, eslint, tsc and
+next build pass. D18 Chromium journeys and CI not run.
+```
+
+**Known Issues:**
+
+```text
+- No tenant recovery-code count or regeneration endpoint (BG-T1); the
+  recovery-codes copy explains turning MFA off and on to get new codes.
+- No tenant step-up (BG-T2) and no institute MFA policy (BG-T3).
+- The page location (D9C-1) is a new personal route: no earlier UI
+  contract placed tenant MFA anywhere.
+```
+
+**Next:**
+
+```text
+Review T01-09B + T01-09C -> PR, CI -> merge commit -> T01-10
+```
+
+---
+
+## 2026-10-07 — T01-09B Platform Identity & MFA UX
+
+**Status:**
+
+```text
+READY_FOR_REVIEW
+```
+
+**Summary:**
+
+The T01-09B readiness review froze the platform identity and MFA UX
+contract (B1 resolved; D9B-1 … D9B-12; D9B-8 and D9B-9 accepted). T01-09B
+implements it on the T01-09A foundation: the platform authentication pages
+(PLAT-01, PLAT-02, PAUTH-01 … PAUTH-06), MFA set-up with one-time recovery
+codes, the guarded platform console with permission-aware navigation,
+reactive step-up (PAUTH-07) and a partial PLAT-52 Sign-in security with
+recovery-code regeneration. The proxy now forwards only the called realm's
+session cookie. Tenant MFA enrolment is deferred to T01-09C. No backend
+change.
+
+**Tests:**
+
+```text
+Frontend 1216 tests (was 1058), 9 new test files; prettier, eslint, tsc and
+next build pass. D18 Chromium journeys and CI not run.
+```
+
+**Known Issues:**
+
+```text
+- Backend limitations kept as documented (contract §14): no read of an
+  MFA-pending session (reload restarts sign-in); TOTP issuer "MTI 360" in
+  both realms; enrolment shares the fixed 5-minute pending window; step-up
+  accepts TOTP only; no signed-in password change, self-service
+  re-enrolment or session-list endpoints.
+- Light/Dark contrast and responsive layout verified structurally in jsdom
+  (semantic tokens, class contracts, axe), not in a browser.
+- A stale, git-ignored .next/dev/types folder from an earlier local
+  `next dev` run (2026-10-03) referenced the moved platform page and broke
+  tsc / next build; it was moved aside (not deleted) during verification.
+```
+
+**Next:**
+
+```text
+Review T01-09B -> PR, CI -> merge commit -> T01-09C (tenant MFA enrolment)
+-> T01-10 Security Verification Gate
+```
+
+---
+
+## 2026-10-04 — T01-09A Frontend Tenant Authentication & Session
+
+**Status:**
+
+```text
+COMPLETED (merged by PR #30, merge commit 2af531b)
 ```
 
 **Summary:**
@@ -3759,10 +4085,12 @@ UX addendum (B1) -> T01-09B
 The next step is:
 
 ```text
-Review T01-09A (Frontend Tenant Authentication & Session, READY_FOR_REVIEW on
-feat/T01-09-frontend-auth-session, not committed), then freeze the
-platform/MFA UX addendum (B1) for T01-09B. T01-08 was merged by PR #29
-(merge commit fd70d7d).
+T01-10 gate: READY_WITH_D18_DEFERRED. Push
+feat/T01-09B-platform-identity-mfa-ux (T01-09B 5190a7b, T01-09C 77773dd,
+remediation f55ff50 and 71f3d87, and the T01-10 status commit), open the PR, let CI run
+(secrets, PostgreSQL integration) and merge with a merge commit; run the D18
+Chromium journeys in a suitable environment; then close T01 and start
+Phase 02. T01-09A was merged by PR #30 (merge commit 2af531b).
 ```
 
 The completed-task description below is retained for reference.

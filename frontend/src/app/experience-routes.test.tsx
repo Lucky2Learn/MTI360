@@ -23,7 +23,8 @@ import TenantPage, {
 } from "./app/[[...slug]]/page";
 import { metadata as tenantLayoutMetadata } from "./app/layout";
 import { isShowcaseEnabled } from "./design-system/gate";
-import PlatformPage from "./platform/[[...slug]]/page";
+import PlatformPage from "./platform/(console)/[[...slug]]/page";
+import { PlatformFrame } from "./platform/(console)/platform-frame";
 import PublicSitePage from "./site/[[...slug]]/page";
 import StudentPage from "./student/[[...slug]]/page";
 
@@ -69,6 +70,17 @@ vi.mock("@/lib/session/server", async () => {
     requireReadyTenantSession: () => Promise.resolve(session),
   };
 });
+// /platform is guarded since T01-09B: a full platform session with the T01
+// Super Admin baseline (the guard has its own tests in lib/session).
+vi.mock("@/lib/session/platform-server", async () => {
+  const { platformSession } = await import("@/test/platform-fixtures");
+  const session = platformSession();
+  return {
+    readPlatformSession: () => Promise.resolve(session),
+    requirePlatformSession: () => Promise.resolve(session),
+    SessionReadError: class extends Error {},
+  };
+});
 
 const APP_DIR = path.dirname(fileURLToPath(import.meta.url));
 
@@ -82,7 +94,7 @@ const ROUTES: {
 }[] = [
   {
     id: EXPERIENCE.PLATFORM,
-    folder: "platform",
+    folder: "platform/(console)",
     basePath: "/platform",
     Page: PlatformPage,
   },
@@ -107,6 +119,16 @@ async function renderRoute(
 ) {
   navigationState.pathname = [route.basePath, ...(slug ?? [])].join("/");
   const page = await route.Page({ params: Promise.resolve({ slug }) });
+  if (route.id === EXPERIENCE.PLATFORM) {
+    const { platformSession } = await import("@/test/platform-fixtures");
+    return render(
+      <ThemeProvider>
+        <PlatformFrame session={platformSession()} showUnreleased>
+          {page}
+        </PlatformFrame>
+      </ThemeProvider>,
+    );
+  }
   return render(
     <ThemeProvider>
       <ExperienceFrame experience={route.id}>{page}</ExperienceFrame>

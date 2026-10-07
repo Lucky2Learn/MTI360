@@ -1,12 +1,11 @@
-import { EXPERIENCE, ExperienceFrame } from "@/shells";
-
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 // Platform Administration (/platform): MTI 360 SaaS control plane.
-// Route boundary (T00-08). No authentication, authorization or tenant
-// resolution happens here yet; later phases enforce access server-side at
-// this boundary. Placeholder pages are not indexed.
+// Route boundary (T00-08). Since T01-09B it holds two route groups
+// (invisible in URLs): (auth) — the public platform authentication pages on
+// the T16 template, outside the shell — and (console) — the guarded platform
+// shell. Nothing under /platform is indexed.
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
@@ -14,9 +13,5 @@ export const metadata: Metadata = {
 export default function PlatformLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
-  return (
-    <ExperienceFrame experience={EXPERIENCE.PLATFORM}>
-      {children}
-    </ExperienceFrame>
-  );
+  return children;
 }

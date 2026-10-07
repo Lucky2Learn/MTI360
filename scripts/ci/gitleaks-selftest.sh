@@ -22,8 +22,23 @@ config="${repo_root}/.gitleaks.toml"
 leak_exit=42
 failures=0
 
-# The one documented fake value allowlisted in .gitleaks.toml.
+# The documented fake values allowlisted in .gitleaks.toml.
 documented_fake="mti360-test-csrf-secret-0123456789abcdef"
+# T01-09B / T01-09C frontend leak-check fixtures (T01-10).
+fake_setup_key="KRSXG5CTMVRXEZLUKRSXG5CTMVRXEZLU"
+fake_password="Halyard-Mizzen-Leeward-8"
+platform_security_test="frontend/src/features/platform-identity/security.test.tsx"
+tenant_mfa_test="frontend/src/features/identity/TenantMfa.test.tsx"
+
+# A random base32 value shaped like a TOTP setup key (32 characters).
+random_setup_key() {
+  head -c 20 /dev/urandom | base32 | tr -d '='
+}
+
+# A random word-shaped password, like the documented fake but different.
+random_password() {
+  printf 'Ropewalk-%s-Quay-%s'     "$(head -c 6 /dev/urandom | base32 | tr -d '=' | tr 'A-Z' 'a-z')"     "$((RANDOM % 9 + 1))"
+}
 
 random_hex() {
   local hex
@@ -76,6 +91,19 @@ run_case documented-value-other-file detected "backend/app/settings_copy.py" \
 
 run_case documented-value-allowlisted-file clean "backend/tests/conftest.py" \
   "TEST_CSRF_SECRET = \"${documented_fake}\""
+
+# T01-10: the frontend fixtures are allowlisted by exact path AND value.
+run_case setup-key-file-other-value detected "${platform_security_test}"   "  secret: \"$(random_setup_key)\","
+
+run_case setup-key-other-file detected "frontend/src/lib/session/settings.ts"   "  secret: \"${fake_setup_key}\","
+
+run_case setup-key-allowlisted-file clean "${platform_security_test}"   "  secret: \"${fake_setup_key}\","
+
+run_case password-file-other-value detected "${tenant_mfa_test}"   "  password: \"$(random_password)\","
+
+run_case password-other-file detected "frontend/src/lib/session/settings.ts"   "  password: \"${fake_password}\","
+
+run_case password-allowlisted-file clean "${tenant_mfa_test}"   "  password: \"${fake_password}\","
 
 if [ "${failures}" -ne 0 ]; then
   echo "::error::gitleaks self-test failed (${failures} case(s))."

@@ -44,6 +44,11 @@ export type UserMenuSession = {
   items?: MenuAction[];
   onItemAction?: (id: string) => void;
   onSignOut: () => void;
+  /**
+   * Leave out the not-yet-built Profile and Help items (T01-09B platform:
+   * the menu is exactly the session items, Preferences and Sign out).
+   */
+  hideUnavailable?: boolean;
 };
 
 export type UserMenuProps = {
@@ -56,14 +61,20 @@ export function UserMenu({ account, session }: UserMenuProps) {
 
   const items: MenuEntry[] = [
     ...(session?.items ?? []),
-    {
-      id: "profile",
-      label: "Profile",
-      description: session ? undefined : account.detail,
-      icon: ProfileIcon,
-    },
+    ...(session?.hideUnavailable
+      ? []
+      : [
+          {
+            id: "profile",
+            label: "Profile",
+            description: session ? undefined : account.detail,
+            icon: ProfileIcon,
+          },
+        ]),
     { id: "preferences", label: "Preferences", icon: PreferencesIcon },
-    { id: "help", label: "Help", icon: HelpIcon },
+    ...(session?.hideUnavailable
+      ? []
+      : [{ id: "help", label: "Help", icon: HelpIcon }]),
     { id: "separator", type: "separator" },
     { id: "sign-out", label: "Sign out", icon: SignOutIcon },
   ];
