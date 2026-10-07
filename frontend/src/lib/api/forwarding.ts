@@ -4,25 +4,48 @@
 /** The tenant session cookie (HttpOnly; never read by browser code). */
 export const TENANT_SESSION_COOKIE = "__Host-mti360_tsid";
 
+/** The platform session cookie (HttpOnly; never read by browser code). */
+export const PLATFORM_SESSION_COOKIE = "__Host-mti360_psid";
+
 /** Session cookies the API reads (ADR-0010 §4). No other cookie is forwarded. */
 export const API_SESSION_COOKIES = [
   TENANT_SESSION_COOKIE,
-  "__Host-mti360_psid",
+  PLATFORM_SESSION_COOKIE,
 ] as const;
 
+export type ApiSessionCookie = (typeof API_SESSION_COOKIES)[number];
+
+const PLATFORM_API_PREFIX = "/api/v1/platform";
+
 /**
- * The Cookie header reduced to the session cookies, or null. Other cookies
- * of the application origin never reach the API.
+ * The one session cookie an API path may receive (T01-09B D9B-10; ADR-0006
+ * realm prefixes): `/api/v1/platform` and below get the platform cookie,
+ * every other `/api/v1` path the tenant cookie. Never both.
  */
-export function apiCookieHeader(cookieHeader: string | null): string | null {
+export function sessionCookieFor(apiPath: string): ApiSessionCookie {
+  return apiPath === PLATFORM_API_PREFIX ||
+    apiPath.startsWith(`${PLATFORM_API_PREFIX}/`)
+    ? PLATFORM_SESSION_COOKIE
+    : TENANT_SESSION_COOKIE;
+}
+
+/**
+ * The Cookie header reduced to the session cookie of `apiPath`'s realm, or
+ * null. Other cookies of the application origin, and the other realm's
+ * session cookie, never reach the API.
+ */
+export function apiCookieHeader(
+  cookieHeader: string | null,
+  apiPath: string,
+): string | null {
   if (!cookieHeader) return null;
-  const allowed = new Set<string>(API_SESSION_COOKIES);
+  const allowed = sessionCookieFor(apiPath);
   const kept = cookieHeader
     .split(";")
     .map((pair) => pair.trim())
     .filter((pair) => {
       const separator = pair.indexOf("=");
-      return separator > 0 && allowed.has(pair.slice(0, separator));
+      return separator > 0 && pair.slice(0, separator) === allowed;
     });
   return kept.length > 0 ? kept.join("; ") : null;
 }

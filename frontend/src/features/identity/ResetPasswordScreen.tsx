@@ -12,9 +12,7 @@ import {
 } from "@/design-system/components";
 import { AuthenticationTemplate } from "@/design-system/templates/AuthenticationTemplate";
 import { ApiError } from "@/lib/api/errors";
-import { authPost } from "@/lib/session/client";
 import { assignLocation } from "@/lib/session/document";
-import { AUTH_ROUTES, authUrl } from "@/lib/session/routes";
 
 import {
   confirmPasswordError,
@@ -26,6 +24,7 @@ import {
   RequiredLegend,
 } from "./components";
 import { commonFeedback, passwordFieldError, type Feedback } from "./feedback";
+import { AUTH_REALMS, type AuthRealm } from "./realm";
 import { useFragmentToken } from "./useFragmentToken";
 
 // AUTH-03 Reset password (T01-04 UI contract §8.3). The token comes from the
@@ -34,13 +33,28 @@ import { useFragmentToken } from "./useFragmentToken";
 // reset link is incomplete", which is safe. Invalid, expired and used links
 // are one message (OQ-6). Passwords are cleared after every failure.
 
-const BACK_TO_SIGN_IN = (
-  <Button variant="tertiary" href={AUTH_ROUTES.login}>
-    Back to sign in
-  </Button>
-);
+// T01-09B: `realm="platform"` is PAUTH-02 (/platform/reset-password#token=;
+// POST /platform/auth/password-reset/confirm). A platform reset never
+// bypasses MFA (D6-2), and the copy says so.
 
-export function ResetPasswordScreen() {
+const DESCRIPTIONS: Record<AuthRealm, string> = {
+  tenant:
+    "Your new password replaces the old one and signs you out everywhere.",
+  platform:
+    "Your new password replaces the old one and signs you out everywhere. Your authenticator app is still required when you sign in.",
+};
+
+export function ResetPasswordScreen({
+  realm = "tenant",
+}: {
+  realm?: AuthRealm;
+}) {
+  const target = AUTH_REALMS[realm];
+  const backToSignIn = (
+    <Button variant="tertiary" href={target.routes.login}>
+      Back to sign in
+    </Button>
+  );
   const token = useFragmentToken();
   const newPasswordId = useId();
   const requirementsId = useId();
@@ -68,12 +82,12 @@ export function ResetPasswordScreen() {
     setFeedback(null);
     setFieldErrors({});
     try {
-      await authPost("/password-reset/confirm", {
+      await target.post("/password-reset/confirm", {
         token,
         new_password: password,
       });
       clearPasswords();
-      assignLocation(authUrl(AUTH_ROUTES.login, { reason: "password-reset" }));
+      assignLocation(target.loginUrl({ reason: "password-reset" }));
       return;
     } catch (error) {
       clearPasswords();
@@ -99,7 +113,10 @@ export function ResetPasswordScreen() {
 
   if (token === undefined) {
     return (
-      <AuthenticationTemplate title="Choose a new password">
+      <AuthenticationTemplate
+        title="Choose a new password"
+        context={target.context}
+      >
         <LoadingRegion label="Checking your reset link">
           <SkeletonText lines={3} />
         </LoadingRegion>
@@ -109,12 +126,12 @@ export function ResetPasswordScreen() {
 
   if (token === null) {
     return (
-      <AuthenticationTemplate footer={BACK_TO_SIGN_IN}>
+      <AuthenticationTemplate context={target.context} footer={backToSignIn}>
         <ErrorState
           titleAs="h1"
           title="This reset link is incomplete"
           description="Open the link from your email again, or request a new one."
-          backHref={AUTH_ROUTES.forgotPassword}
+          backHref={target.routes.forgotPassword}
           backLabel="Request a new link"
         />
       </AuthenticationTemplate>
@@ -123,13 +140,13 @@ export function ResetPasswordScreen() {
 
   if (unusable) {
     return (
-      <AuthenticationTemplate footer={BACK_TO_SIGN_IN}>
+      <AuthenticationTemplate context={target.context} footer={backToSignIn}>
         <ErrorState
           titleAs="h1"
           titleRef={unusableTitle}
           title="This reset link can't be used"
           description="It may have expired or already been used. Reset links work once and expire after 30 minutes."
-          backHref={AUTH_ROUTES.forgotPassword}
+          backHref={target.routes.forgotPassword}
           backLabel="Request a new link"
         />
       </AuthenticationTemplate>
@@ -139,8 +156,9 @@ export function ResetPasswordScreen() {
   return (
     <AuthenticationTemplate
       title="Choose a new password"
-      description="Your new password replaces the old one and signs you out everywhere."
-      footer={BACK_TO_SIGN_IN}
+      description={DESCRIPTIONS[realm]}
+      context={target.context}
+      footer={backToSignIn}
     >
       <PasswordRequirements id={requirementsId} />
       <FeedbackRegion feedback={feedback} />

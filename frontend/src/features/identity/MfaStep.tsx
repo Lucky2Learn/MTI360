@@ -1,20 +1,24 @@
 "use client";
 
-import { useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 
-import { Button, Form, Input } from "@/design-system/components";
+import { Button, Form } from "@/design-system/components";
 import { AuthenticationTemplate } from "@/design-system/templates/AuthenticationTemplate";
 import { ApiError } from "@/lib/api/errors";
 import type { SessionWire } from "@/lib/api/types";
-import { authPost } from "@/lib/session/client";
 import { assignLocation } from "@/lib/session/document";
+import { resolvePlatformNext } from "@/lib/session/platform-routes";
 import { destinationFor } from "@/lib/session/routes";
 
 import { FeedbackRegion, RequiredLegend } from "./components";
 import { commonFeedback, tooManyAttempts, type Feedback } from "./feedback";
+import { MfaCodeField } from "./MfaCodeField";
+import { AUTH_REALMS, type AuthRealm } from "./realm";
 
-// Tenant MFA step of sign-in (T01-09A scope: verify and recovery only;
-// backend contract T01-06, POST /auth/mfa/verify and /auth/mfa/recovery).
+// MFA step of sign-in, for both realms (T01-09A tenant AUTH-04 verify and
+// recovery; T01-09B platform PLAT-02 — one implementation, D9B-1). Backend
+// contract T01-06: POST /auth/mfa/verify and /auth/mfa/recovery (tenant) or
+// /platform/auth/mfa/verify and /recovery (platform).
 // It follows a password sign-in that answered `mfa_required`: the pending
 // session cookie is HttpOnly, and its CSRF token (from that response) is held
 // in memory only. Codes live only in this component's state — cleared after
@@ -24,6 +28,8 @@ import { commonFeedback, tooManyAttempts, type Feedback } from "./feedback";
 // Outcomes: success → the session's next step (full document navigation);
 // wrong code (422) → field error; the pending session ended (401: expired
 // after 5 minutes or too many wrong codes) → back to sign-in with a notice.
+// The pending state is in memory only, so a reload restarts sign-in (D9B-2).
+// Focus moves to the step's h1 when it appears and when the mode changes.
 
 export const MFA_ENDED: Feedback = {
   tone: "warning",
@@ -68,21 +74,44 @@ const COPY: Record<
   },
 };
 
+/** Where a successful verification goes (full document navigation). */
+const DESTINATIONS: Record<
+  AuthRealm,
+  (session: SessionWire, next: string | null) => string
+> = {
+  tenant: (session, next) => destinationFor(session.status, next),
+  // A platform MFA success is always a full (rotated) session.
+  platform: (_session, next) => resolvePlatformNext(next),
+};
+
 export type MfaStepProps = {
   csrfToken: string;
   next: string | null;
   /** Back to the sign-in form, optionally with a notice. */
   onRestart: (feedback: Feedback | null) => void;
+  /** Which sign-in this step completes (default: tenant). */
+  realm?: AuthRealm;
 };
 
-export function MfaStep({ csrfToken, next, onRestart }: MfaStepProps) {
+export function MfaStep({
+  csrfToken,
+  next,
+  onRestart,
+  realm = "tenant",
+}: MfaStepProps) {
   const inputId = useId();
+  const titleRef = useRef<HTMLHeadingElement>(null);
   const [mode, setMode] = useState<Mode>("totp");
   const [code, setCode] = useState("");
   const [pending, setPending] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [invalid, setInvalid] = useState(false);
   const copy = COPY[mode];
+  const target = AUTH_REALMS[realm];
+
+  useEffect(() => {
+    titleRef.current?.focus();
+  }, [mode]);
 
   const switchMode = (value: Mode) => {
     setMode(value);
@@ -98,13 +127,13 @@ export function MfaStep({ csrfToken, next, onRestart }: MfaStepProps) {
     setFeedback(null);
     setInvalid(false);
     try {
-      const session = await authPost<SessionWire>(
+      const session = await target.post<SessionWire>(
         copy.path,
         { [copy.field]: code.trim() },
         { csrfToken },
       );
       setCode("");
-      assignLocation(destinationFor(session.status, next));
+      assignLocation(DESTINATIONS[realm](session, next));
       return;
     } catch (error) {
       setCode("");
@@ -124,13 +153,15 @@ export function MfaStep({ csrfToken, next, onRestart }: MfaStepProps) {
 
   const restart = () => {
     // Ends the pending session; the result does not matter.
-    void authPost("/logout").catch(() => undefined);
+    void target.post("/logout").catch(() => undefined);
     onRestart(null);
   };
 
   return (
     <AuthenticationTemplate
       title={copy.title}
+      titleRef={titleRef}
+      context={target.context}
       description={copy.description}
       footer={
         <Button variant="tertiary" onPress={restart}>
@@ -145,23 +176,18 @@ export function MfaStep({ csrfToken, next, onRestart }: MfaStepProps) {
         onSubmit={(event) => void submit(event)}
       >
         <RequiredLegend />
-        <Input
+        <MfaCodeField
           id={inputId}
+          kind={mode}
           label={copy.label}
-          name={copy.field}
-          isRequired
-          autoComplete={mode === "totp" ? "one-time-code" : "off"}
-          inputMode={mode === "totp" ? "numeric" : "text"}
-          autoCapitalize="none"
-          spellCheck="false"
-          maxLength={mode === "totp" ? 7 : 13}
           value={code}
           onChange={(value) => {
             setCode(value);
             setInvalid(false);
           }}
-          isInvalid={invalid || undefined}
-          errorMessage={invalid ? copy.invalid : copy.missing}
+          invalid={invalid}
+          invalidMessage={copy.invalid}
+          missingMessage={copy.missing}
         />
         <Button type="submit" size="lg" fullWidth isPending={pending}>
           {pending ? "Verifying…" : "Verify"}

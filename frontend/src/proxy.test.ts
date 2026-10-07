@@ -43,7 +43,68 @@ describe("proxy", () => {
     expect(response.status).toBe(307);
   });
 
-  it("runs only for the tenant application", () => {
-    expect(config.matcher).toEqual(["/app", "/app/:path*"]);
+  it("runs only for the tenant application and the platform", () => {
+    expect(config.matcher).toEqual([
+      "/app",
+      "/app/:path*",
+      "/platform",
+      "/platform/:path*",
+    ]);
+  });
+
+  it("never lets a platform cookie through to /app", () => {
+    const response = proxy(request("/app", "__Host-mti360_psid=platform"));
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3100/session-ended?reason=ended",
+    );
+  });
+});
+
+describe("proxy — platform (T01-09B)", () => {
+  it("sends a protected platform path without the platform cookie to the platform session-ended page", () => {
+    const response = proxy(request("/platform/profile"));
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3100/platform/session-ended?reason=ended&next=%2Fplatform%2Fprofile",
+    );
+    const home = proxy(request("/platform"));
+    expect(home.headers.get("location")).toBe(
+      "http://localhost:3100/platform/session-ended?reason=ended",
+    );
+  });
+
+  it("never lets a tenant cookie authenticate a platform path", () => {
+    const response = proxy(
+      request("/platform/tenants", "__Host-mti360_tsid=tenant-session"),
+    );
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toContain(
+      "/platform/session-ended",
+    );
+  });
+
+  it("lets the platform cookie through to the server-side gate", () => {
+    const response = proxy(
+      request("/platform/users", "__Host-mti360_psid=opaque-value"),
+    );
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+  });
+
+  it.each([
+    "/platform/login",
+    "/platform/forgot-password",
+    "/platform/reset-password",
+    "/platform/accept-invitation",
+    "/platform/session-ended",
+  ])("keeps %s public (no redirect loop)", (path) => {
+    const response = proxy(request(path));
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+    expect(response.headers.get("location")).toBeNull();
+  });
+
+  it("does not treat a look-alike segment as an authentication route", () => {
+    const response = proxy(request("/platform/login-history"));
+    expect(response.status).toBe(307);
   });
 });

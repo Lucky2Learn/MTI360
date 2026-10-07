@@ -80,6 +80,41 @@ describe("AuthenticationTemplate", () => {
     await expectNoA11yViolations(container);
   });
 
+  it("shows an experience context label in the banner and exposes the h1 through titleRef (T01-09B)", async () => {
+    const ref = { current: null as HTMLHeadingElement | null };
+    const { container } = frame(
+      <AuthenticationTemplate
+        title="Sign in to platform administration"
+        context="Platform administration"
+        titleRef={ref}
+      >
+        <p>Form</p>
+      </AuthenticationTemplate>,
+      "dark",
+    );
+    expect(screen.getByRole("banner")).toHaveTextContent(
+      "MTI 360Platform administration",
+    );
+    expect(ref.current).toHaveAttribute("tabindex", "-1");
+    expect(ref.current?.tagName).toBe("H1");
+    ref.current!.focus();
+    expect(ref.current).toHaveFocus();
+    expectHeadingOutline(container);
+    await expectNoA11yViolations(container);
+  });
+
+  it("has no context label and no focus target by default", () => {
+    frame(
+      <AuthenticationTemplate title="Sign in to MTI 360">
+        <p>Form</p>
+      </AuthenticationTemplate>,
+    );
+    expect(screen.getByRole("banner")).toHaveTextContent(/^MTI 360$/);
+    expect(screen.getByRole("heading", { level: 1 })).not.toHaveAttribute(
+      "tabindex",
+    );
+  });
+
   it("states expose a focusable title through titleRef", () => {
     const ref = { current: null as HTMLHeadingElement | null };
     frame(

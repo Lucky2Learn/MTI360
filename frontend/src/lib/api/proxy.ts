@@ -5,7 +5,9 @@ import { apiCookieHeader, clientAddress } from "./forwarding";
 // browser calls /api/v1/* on the application origin; the Next.js server
 // forwards to the internal API_BASE_URL, which never reaches browser code.
 //
-// Forwarded request headers (allow-list): Cookie (session cookies only),
+// Forwarded request headers (allow-list): Cookie (only the session cookie of
+// the called realm: platform paths the platform cookie, every other path the
+// tenant cookie; T01-09B D9B-10),
 // X-CSRF-Token, Origin, Sec-Fetch-Site, Content-Type, Accept, User-Agent, and
 // X-Forwarded-For rebuilt with exactly one entry: the browser address
 // (clientAddress, trusting TRUSTED_PROXY_HOPS proxies in front of Next.js). Everything else — including a client-supplied
@@ -81,9 +83,10 @@ export function isForwardablePath(pathname: string): boolean {
   });
 }
 
-/** Request headers for the API (see the allow-list above). */
+/** Request headers for the API at `apiPath` (see the allow-list above). */
 export function upstreamRequestHeaders(
   incoming: Headers,
+  apiPath: string,
   trustedProxyHops = 0,
 ): Headers {
   const headers = new Headers();
@@ -91,7 +94,7 @@ export function upstreamRequestHeaders(
     const value = incoming.get(name);
     if (value !== null) headers.set(name, value);
   }
-  const cookie = apiCookieHeader(incoming.get("cookie"));
+  const cookie = apiCookieHeader(incoming.get("cookie"), apiPath);
   if (cookie) headers.set("cookie", cookie);
   const address = clientAddress(
     incoming.get("x-forwarded-for"),
@@ -134,7 +137,11 @@ export async function proxyToApi(
   try {
     upstream = await fetchImpl(`${apiBaseUrl}${url.pathname}${url.search}`, {
       method,
-      headers: upstreamRequestHeaders(request.headers, trustedProxyHops),
+      headers: upstreamRequestHeaders(
+        request.headers,
+        url.pathname,
+        trustedProxyHops,
+      ),
       body: BODYLESS_METHODS.has(method)
         ? undefined
         : await request.arrayBuffer(),

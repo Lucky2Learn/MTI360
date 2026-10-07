@@ -22,22 +22,38 @@ const MAX_NEXT_LENGTH = 512;
 const SEGMENT = /^[A-Za-z0-9\-._~]+$/;
 
 /**
- * `next` is accepted only as "/app" or "/app/…" built from plain path
- * segments; anything else (absolute URLs, "//host", backslashes, encoded
- * forms, dot segments, other paths) is ignored. Prevents open redirects (§6.1).
+ * `value` when it is `home` or `home/…` built from plain path segments, else
+ * null. Absolute URLs, "//host", backslashes, encoded forms, dot segments and
+ * other paths are rejected; `excludedFirst` lists first segments that are
+ * never destinations (T01-09B: the platform authentication routes).
  */
-export function safeNextPath(value: unknown): string | null {
+export function safePathBelow(
+  home: string,
+  value: unknown,
+  excludedFirst: ReadonlySet<string> = new Set(),
+): string | null {
   if (typeof value !== "string" || value.length > MAX_NEXT_LENGTH) return null;
-  if (value === APP_HOME) return value;
-  if (!value.startsWith(`${APP_HOME}/`)) return null;
-  const segments = value.slice(APP_HOME.length + 1).split("/");
+  if (value === home) return value;
+  if (!value.startsWith(`${home}/`)) return null;
+  const segments = value.slice(home.length + 1).split("/");
   // A trailing slash leaves one empty segment, which is allowed.
   if (segments.at(-1) === "") segments.pop();
-  if (segments.length === 0) return APP_HOME;
+  if (segments.length === 0) return home;
+  if (excludedFirst.has(segments[0]!)) return null;
   const valid = segments.every(
     (segment) => SEGMENT.test(segment) && segment !== "." && segment !== "..",
   );
   return valid ? value : null;
+}
+
+/**
+ * `next` is accepted only as "/app" or "/app/…" built from plain path
+ * segments; anything else (absolute URLs, "//host", backslashes, encoded
+ * forms, dot segments, other paths such as /platform) is ignored. Prevents
+ * open redirects (§6.1).
+ */
+export function safeNextPath(value: unknown): string | null {
+  return safePathBelow(APP_HOME, value);
 }
 
 /** `next` when valid, otherwise the application home. */

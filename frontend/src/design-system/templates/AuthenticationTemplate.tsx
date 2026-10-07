@@ -3,7 +3,7 @@ import { CompassIcon } from "@/design-system/icons";
 import { ThemeSelector } from "@/design-system/theme/ThemeSelector";
 import { MAIN_CONTENT_ID, SkipNavigation } from "@/shells/SkipNavigation";
 
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 
 // AuthenticationTemplate — page template T16 (T01-09A; T01-04 UI contract §7,
 // DESIGN-SYSTEM.md §68, §90). One frame for every tenant authentication
@@ -18,6 +18,9 @@ import type { ReactNode } from "react";
 // Exactly one h1: the card title — or, when a state replaces the content
 // (`title` omitted), the ErrorState / EmptyState title rendered as h1.
 // No tenant branding before sign-in (§7.1, S14). Semantic tokens only.
+// T01-09B: an optional `context` label in the banner names the experience
+// being signed in to ("Platform administration", D9B-11), and `titleRef`
+// lets multi-step screens move focus to the h1 when the step changes.
 
 export type AuthenticationTemplateProps = {
   /** Card title (the page h1). Omit when the content brings its own h1. */
@@ -28,6 +31,10 @@ export type AuthenticationTemplateProps = {
   children: ReactNode;
   /** Secondary links below the card. */
   footer?: ReactNode;
+  /** Experience label in the banner, e.g. "Platform administration". */
+  context?: string;
+  /** Focus target of the card title (tabIndex=-1). */
+  titleRef?: Ref<HTMLHeadingElement>;
 };
 
 export function AuthenticationTemplate({
@@ -36,6 +43,8 @@ export function AuthenticationTemplate({
   notice,
   children,
   footer,
+  context,
+  titleRef,
 }: AuthenticationTemplateProps) {
   return (
     <div className="flex min-h-dvh flex-col bg-background-primary">
@@ -49,6 +58,11 @@ export function AuthenticationTemplate({
             <CompassIcon className="size-5" />
           </span>
           MTI 360
+          {context && (
+            <span className="border-l border-border-subtle pl-2 text-body-sm font-normal text-text-secondary">
+              {context}
+            </span>
+          )}
         </p>
       </header>
       <main
@@ -63,6 +77,7 @@ export function AuthenticationTemplate({
               {title && (
                 <CardHeader
                   titleAs="h1"
+                  titleRef={titleRef}
                   title={title}
                   description={description}
                 />

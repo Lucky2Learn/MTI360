@@ -356,6 +356,29 @@ Decisions (T00-07B proposal, approved): D1 `value`/`defaultValue`/`onChange` wit
 | Keyboard | segments are spinbuttons (digits, Up/Down, Tab, `a` / `p`); keyboard-first — React Aria has no time list |
 | Server rendering | literal segments normalise Unicode spaces (Node's ICU emits U+202F before am/pm, browsers may emit U+0020), so server and client text match and hydration does not fail |
 
+## 3D. One-time security values (T01-09B)
+
+Added by T01-09B ([T01-09B UI contract](../ui/T01-09B-PLATFORM-IDENTITY-MFA-UI.md) §11, §12). They render only what the caller gives them; the caller keeps the value in memory and drops it. No storage, logging or copy-on-render. Also new in T01-09B: `CardHeader` and `AuthenticationTemplate` accept `titleRef` (the h1 becomes a `tabIndex=-1` focus target for step changes), and `AuthenticationTemplate` accepts a `context` label for the banner ("Platform administration").
+
+### CopyButton
+
+| Aspect | Contract |
+|---|---|
+| Purpose | Copy a value to the clipboard on an explicit press only |
+| Props | `value`, `label` (visible), `copiedLabel`, `failedLabel`, `size` |
+| Behaviour | `navigator.clipboard.writeText` on press; never automatic. Unavailable or refused clipboard → fallback hint ("Select the text and copy it instead") |
+| Accessibility | secondary `Button`; the result is announced in an always-mounted polite `role="status"` next to it (works without a `ToastRegion`, e.g. on T16 pages); the value itself is never announced or rendered |
+
+### SecretValue and CodeList
+
+| Aspect | Contract |
+|---|---|
+| Purpose | An authenticator setup key (`SecretValue`) and recovery codes (`CodeList`) |
+| Props | SecretValue: `label`, `value`, `groupSize` (default 4; 0 = unchanged), `actions`; CodeList: `label`, `codes` |
+| Theme | `font-mono` (system monospace, design-tokens.md D6 — no new token), `surface-secondary` with `border-subtle`, `text-primary`; semantic tokens in Light and Dark |
+| Responsive | text wraps (`break-all`), never clipped at 390px; CodeList is one column on mobile, two from `tablet` |
+| Accessibility | SecretValue is labelled by its visible label and selectable as text; CodeList is a named `<ol>` |
+
 ## 4. Showcase — `/design-system` (decision D8)
 
 - Every 07A, 07B and 07C component in its variants and states (07C sections in `showcase-overlays.tsx`, with a showcase-only toast queue and region), with realistic maritime sample data and the theme selector; a Student enquiry form (two columns from `desktop`, §84 actions, simulated server validation — nothing is submitted).

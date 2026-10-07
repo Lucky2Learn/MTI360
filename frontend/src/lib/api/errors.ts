@@ -105,3 +105,27 @@ export async function apiErrorFrom(response: Response): Promise<ApiError> {
     retryAfter: parseRetryAfter(response.headers.get("retry-after")),
   });
 }
+
+/**
+ * A request answered 403 STEP_UP_REQUIRED and the person cancelled the
+ * step-up dialog (T01-09B D9B-6). The action was not performed; the UI shows
+ * nothing.
+ */
+export class StepUpCancelledError extends Error {
+  constructor() {
+    super("STEP_UP_CANCELLED");
+    this.name = "StepUpCancelledError";
+  }
+}
+
+/**
+ * After a successful step-up, the single resend of the original request was
+ * refused with STEP_UP_REQUIRED again. It is never resent a second time
+ * (D9B-6: no loop).
+ */
+export class StepUpFailedError extends Error {
+  constructor() {
+    super("STEP_UP_FAILED");
+    this.name = "StepUpFailedError";
+  }
+}

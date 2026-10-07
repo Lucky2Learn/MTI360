@@ -57,6 +57,7 @@ ADR format: Status, Context, Decision, Consequences, Alternatives considered. AD
 
 | Document | Contents |
 |---|---|
+| [T01-09B-PLATFORM-IDENTITY-MFA-UI.md](ui/T01-09B-PLATFORM-IDENTITY-MFA-UI.md) | Platform sign-in, MFA verification and set-up, recovery codes, platform password reset and invitation, session ended, step-up, platform console navigation and partial PLAT-52: decisions D9B-1 … D9B-12, routes, API mapping, security rules, tests (T01-09B readiness review, built in T01-09B; tenant MFA deferred to T01-09C) |
 | [T01-05-AUTHORIZATION-RBAC-UI.md](ui/T01-05-AUTHORIZATION-RBAC-UI.md) | Permission-aware navigation and actions, access denied versus not found, session permissions and roles, campus-aware access, permission changes during a session, error matrix (T01-05 design, built in T01-09) |
 | [T01-04-IDENTITY-AUTHENTICATION-UI.md](ui/T01-04-IDENTITY-AUTHENTICATION-UI.md) | Tenant sign-in, password recovery, invitation, institute and campus selection, session states: journeys, routes, screens, states, errors, security UX, responsive, accessibility (T01-04 design, built in T01-09) |
 

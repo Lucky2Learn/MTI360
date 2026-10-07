@@ -28,7 +28,25 @@ function useNavigationFocus() {
 
 const noSubscription = () => () => undefined;
 
-export function ShellAccessDenied({ homeHref }: { homeHref: string }) {
+export type AccessStateProps = {
+  homeHref: string;
+  /** Label of the way home (default "Go to dashboard"). */
+  homeLabel?: string;
+};
+
+export type ShellAccessDeniedProps = AccessStateProps & {
+  /** Who to ask; defaults to the tenant wording (T01-09B: platform). */
+  description?: string;
+};
+
+const TENANT_DENIED =
+  "Your access in this institute doesn't include this page. If you need it, ask your institute administrator.";
+
+export function ShellAccessDenied({
+  homeHref,
+  homeLabel = "Go to dashboard",
+  description = TENANT_DENIED,
+}: ShellAccessDeniedProps) {
   const heading = useNavigationFocus();
   return (
     <PageContainer>
@@ -38,15 +56,18 @@ export function ShellAccessDenied({ homeHref }: { homeHref: string }) {
       <ErrorState
         kind="permission"
         title="You don't have access to this page"
-        description="Your access in this institute doesn't include this page. If you need it, ask your institute administrator."
+        description={description}
         backHref={homeHref}
-        backLabel="Go to dashboard"
+        backLabel={homeLabel}
       />
     </PageContainer>
   );
 }
 
-export function ShellNotFound({ homeHref }: { homeHref: string }) {
+export function ShellNotFound({
+  homeHref,
+  homeLabel = "Go to dashboard",
+}: AccessStateProps) {
   const heading = useNavigationFocus();
   // Only with a previous entry in this tab (never on the server render).
   const canGoBack = useSyncExternalStore(
@@ -64,7 +85,7 @@ export function ShellNotFound({ homeHref }: { homeHref: string }) {
         icon={CompassIcon}
         title="Page not found"
         description="This page or item doesn't exist, or it's no longer available."
-        primaryAction={<Button href={homeHref}>Go to dashboard</Button>}
+        primaryAction={<Button href={homeHref}>{homeLabel}</Button>}
         secondaryAction={
           canGoBack ? (
             <Button

@@ -138,14 +138,55 @@ describe("proxy request forwarding", () => {
     expect(captured[0]!.init.body).toBeUndefined();
   });
 
-  it("forwards only the session cookies of the API", () => {
+  it("forwards only the session cookie of the called realm (D9B-10)", () => {
+    const both =
+      "theme=dark; __Host-mti360_tsid=a; __Host-mti360_psid=b; broken; =x";
+    expect(apiCookieHeader(both, "/api/v1/session")).toBe(
+      "__Host-mti360_tsid=a",
+    );
+    expect(apiCookieHeader(both, "/api/v1/auth/login")).toBe(
+      "__Host-mti360_tsid=a",
+    );
+    expect(apiCookieHeader(both, "/api/v1/platform/session")).toBe(
+      "__Host-mti360_psid=b",
+    );
+    expect(apiCookieHeader(both, "/api/v1/platform")).toBe(
+      "__Host-mti360_psid=b",
+    );
+    // A tenant path that merely starts with the letters "platform".
+    expect(apiCookieHeader(both, "/api/v1/platformish")).toBe(
+      "__Host-mti360_tsid=a",
+    );
     expect(
-      apiCookieHeader(
-        "theme=dark; __Host-mti360_tsid=a; __Host-mti360_psid=b; broken; =x",
-      ),
-    ).toBe("__Host-mti360_tsid=a; __Host-mti360_psid=b");
-    expect(apiCookieHeader("theme=dark")).toBeNull();
-    expect(apiCookieHeader(null)).toBeNull();
+      apiCookieHeader("__Host-mti360_psid=b", "/api/v1/session"),
+    ).toBeNull();
+    expect(
+      apiCookieHeader("__Host-mti360_tsid=a", "/api/v1/platform/session"),
+    ).toBeNull();
+    expect(apiCookieHeader("theme=dark", "/api/v1/session")).toBeNull();
+    expect(apiCookieHeader(null, "/api/v1/session")).toBeNull();
+  });
+
+  it("never sends both realm cookies upstream", async () => {
+    for (const path of ["/api/v1/session", "/api/v1/platform/session"]) {
+      const { fetchImpl, captured } = upstream(
+        new Response("{}", { status: 200 }),
+      );
+      await proxyToApi(
+        browserRequest(path, {
+          headers: {
+            cookie: "__Host-mti360_tsid=tenant-value; __Host-mti360_psid=pv",
+          },
+        }),
+        { apiBaseUrl: API, fetchImpl },
+      );
+      const cookie = captured[0]!.init.headers.get("cookie");
+      expect(cookie).toBe(
+        path.startsWith("/api/v1/platform")
+          ? "__Host-mti360_psid=pv"
+          : "__Host-mti360_tsid=tenant-value",
+      );
+    }
   });
 });
 
