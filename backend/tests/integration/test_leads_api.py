@@ -586,6 +586,10 @@ async def test_list_filters_and_search(h: Harness) -> None:
         return [lead["id"] for lead in data(response)]
 
     assert await ids(sort="full_name") == [a["id"], b["id"]]
+    listed = data(await h.client.get(LEADS, params={"q": tag, "sort": "full_name"}))
+    assert listed[1]["owner"] == {"membership_id": ravi, "display_name": "Ravi"}
+    assert listed[1]["campus"] == {"id": str(w.campus_a1), "code": "MUM"}
+    assert (listed[0]["owner"], listed[0]["campus"]) == (None, None)
     assert await ids(status="CONTACTED") == [b["id"]]
     assert set(await ids(status=["NEW", "CONTACTED"])) == {a["id"], b["id"]}
     assert await ids(owner=ravi) == [b["id"]]

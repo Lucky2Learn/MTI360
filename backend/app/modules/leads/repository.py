@@ -290,7 +290,9 @@ class LeadListRow:
     source: str
     course_code: str | None
     course_name: str | None
+    campus_id: uuid.UUID | None
     campus_code: str | None
+    owner_membership_id: uuid.UUID | None
     owner_name: str | None
     next_follow_up_at: datetime | None
     overdue_follow_ups: int
@@ -330,7 +332,9 @@ async def search_leads(
             Lead.source,
             Course.code.label("course_code"),
             Course.name.label("course_name"),
+            Lead.campus_id,
             Campus.code.label("campus_code"),
+            Lead.owner_membership_id,
             OwnerUser.display_name.label("owner_name"),
             next_follow_up,
             _overdue_follow_ups(tenant_id).label("overdue_follow_ups"),

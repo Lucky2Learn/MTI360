@@ -54,6 +54,7 @@ from app.modules.leads.schemas import (
     LeadOut,
     LeadRef,
     NoteRequest,
+    OwnerBrief,
     OwnerRef,
     PersonRef,
     RescheduleFollowUpRequest,
@@ -157,8 +158,14 @@ def list_item(row: repo.LeadListRow) -> LeadListItem:
             if row.course_code
             else None
         ),
-        campus=CampusBrief(code=row.campus_code) if row.campus_code else None,
-        owner=PersonRef(display_name=row.owner_name) if row.owner_name else None,
+        campus=(
+            CampusBrief(id=row.campus_id, code=row.campus_code or "") if row.campus_id else None
+        ),
+        owner=(
+            OwnerBrief(membership_id=row.owner_membership_id, display_name=row.owner_name or "")
+            if row.owner_membership_id
+            else None
+        ),
         next_follow_up_at=row.next_follow_up_at,
         overdue_follow_ups=row.overdue_follow_ups,
         transitions=transitions(row.status),

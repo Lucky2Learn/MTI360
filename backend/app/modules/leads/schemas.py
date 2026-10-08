@@ -104,7 +104,13 @@ class CourseBrief(ResponseModel):
 
 
 class CampusBrief(ResponseModel):
+    id: uuid.UUID
     code: str
+
+
+class OwnerBrief(ResponseModel):
+    membership_id: uuid.UUID
+    display_name: str
 
 
 class LeadListItem(ResponseModel):
@@ -116,7 +122,7 @@ class LeadListItem(ResponseModel):
     source: LeadSource
     interested_course: CourseBrief | None
     campus: CampusBrief | None
-    owner: PersonRef | None
+    owner: OwnerBrief | None
     next_follow_up_at: datetime | None
     overdue_follow_ups: int
     transitions: list[TransitionOption]
