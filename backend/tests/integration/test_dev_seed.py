@@ -13,6 +13,7 @@ import pytest
 from conftest import DatabaseUnderTest
 from identity_support import FAST_HASHER, Harness, auth_harness
 
+from app.modules.access.templates import system_role_templates
 from app.seed import SeedError, SeedInstitute, load_seed, seed
 
 pytestmark = [pytest.mark.anyio, pytest.mark.integration]
@@ -64,7 +65,8 @@ async def test_the_seed_creates_working_institutes_once(h: Harness) -> None:
         "(SELECT count(*) FROM tenant_memberships WHERE tenant_id = :t AND status = 'ACTIVE')",
         t=tenant_id,
     )
-    assert tuple(counts[0]) == (len(first.campuses), 2, len(first.members))
+    templates = len(system_role_templates())  # four since Phase 02-1
+    assert tuple(counts[0]) == (len(first.campuses), templates, len(first.members))
     stored = await h.owner(
         "SELECT c.password_hash FROM user_credentials c JOIN users u ON u.id = c.user_id "
         "WHERE u.email = ANY(:e)",

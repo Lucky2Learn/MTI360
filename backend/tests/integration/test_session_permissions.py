@@ -24,6 +24,12 @@ ALL_TENANT = [
     "campus.create",
     "campus.read",
     "campus.update",
+    "course.manage",  # Phase 02-1
+    "course.read",
+    "lead.assign",
+    "lead.create",
+    "lead.read",
+    "lead.update",
     "member.invite",
     "member.read",
     "member.revoke",
@@ -38,6 +44,11 @@ ALL_TENANT = [
 ]
 ADMIN = [code for code in ALL_TENANT if code != "role.delete"]
 CAMPUS_ONLY = ["campus.read", "campus.update"]
+# A campus-restricted Administrator keeps every campus-scoped permission (D-B1): since
+# Phase 02-1 also course.read and the lead permissions, never the tenant-wide course.manage.
+RESTRICTED_ADMIN = sorted(
+    [*CAMPUS_ONLY, "course.read", "lead.assign", "lead.create", "lead.read", "lead.update"]
+)
 OWNER_ROLE = {"name": "Institute owner", "is_system": True}
 ADMIN_ROLE = {"name": "Administrator", "is_system": True}
 
@@ -117,11 +128,12 @@ async def test_a_tenant_switch_changes_the_authorization_state(h: Harness) -> No
     csrf = in_b["csrf_token"]  # the session was rotated
     in_a = await _switch(h, "/api/v1/session/tenant", {"tenant_id": str(h.world.tenant_a)}, csrf)
     # Administrator in A, but restricted to one campus: campus permissions only (D-B1).
-    assert in_a["permissions"] == CAMPUS_ONLY
+    assert in_a["permissions"] == RESTRICTED_ADMIN
+    assert "course.manage" not in in_a["permissions"]
     assert in_a["roles"] == [ADMIN_ROLE]
     probe = (await h.client.get("/api/v1/probe/authz")).json()
     assert probe == {
-        "permissions": CAMPUS_ONLY,
+        "permissions": RESTRICTED_ADMIN,
         "all_campuses": False,
         "campus_ids": [str(h.world.campus_a1)],
     }

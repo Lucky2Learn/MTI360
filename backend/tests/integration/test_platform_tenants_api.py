@@ -77,7 +77,8 @@ async def test_provisioning_creates_a_working_institute(h: PlatformHarness) -> N
     assert data["owner_account"] == "new"
     tenant_id = uuid.UUID(tenant["id"])
 
-    # One transaction: tenant, campus, two system roles, membership, role, invitation; audited.
+    # One transaction: tenant, campus, the four system roles (two since Phase 02-1),
+    # membership, role, invitation; audited.
     counts = await h.owner(
         "SELECT (SELECT count(*) FROM campuses WHERE tenant_id = :t), "
         "(SELECT count(*) FROM roles WHERE tenant_id = :t AND is_system), "
@@ -87,7 +88,7 @@ async def test_provisioning_creates_a_working_institute(h: PlatformHarness) -> N
         "(SELECT count(*) FROM user_invitations WHERE tenant_id = :t)",
         t=tenant_id,
     )
-    assert tuple(counts[0]) == (1, 2, 1, 1, 1)
+    assert tuple(counts[0]) == (1, 4, 1, 1, 1)
     events = await h.audit(response)
     assert [row[0] for row in events] == [
         "platform.tenant.created",

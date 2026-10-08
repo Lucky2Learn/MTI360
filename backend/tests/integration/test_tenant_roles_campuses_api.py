@@ -46,7 +46,8 @@ async def test_roles_and_the_permission_catalogue(h: Harness) -> None:
     assert [p["code"] for p in catalogue] == sorted(p.code for p in tenant_permissions())
     roles = (await h.client.get("/api/v1/roles")).json()["data"]
     names = [role["name"] for role in roles]
-    assert names[:2] == ["Administrator", "Institute owner"]  # system roles first
+    # System roles first (Admissions manager and Counsellor since Phase 02-1).
+    assert names[:4] == ["Administrator", "Admissions manager", "Counsellor", "Institute owner"]
     owner = next(role for role in roles if role["name"] == "Institute owner")
     assert owner["is_system"] is True
     assert owner["member_count"] == 1
