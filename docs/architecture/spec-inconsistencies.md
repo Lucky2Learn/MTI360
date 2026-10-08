@@ -357,3 +357,27 @@
 - **Issue:** A session-only route answers `401` when the session has already ended, so sign-out would not be idempotent.
 - **Current handling:** `POST /api/v1/auth/logout` is an anonymous route with the same-origin check; it revokes the presented session when there is one and always clears the cookie with `204`.
 - **Proposed resolution:** None required.
+
+## INC-44 — Lead status vocabulary
+
+- **Status:** `DECIDED-BY-ADR` ([ADR-0020](../adr/0020-courses-and-leads.md) §4; Phase 02-1)
+- **Where:** PRD.md §27 (`NEW, CONTACTED, QUALIFIED, COUNSELLING, APPLICATION, ADMITTED` + `LOST, DEFERRED, NOT_ELIGIBLE`) vs APP-FLOW.md §10 (adds `INTERESTED` and `DUPLICATE`) vs UI-SCREENS.md ADM-02 (`New → Contacted → Counselling → Application → Review → Approved → Enrolled → Lost`, which mixes lead, application and enrolment stages)
+- **Issue:** Three documents give three lead pipelines.
+- **Current handling:** Leads use the APP-FLOW §10 set, the functional workflow reference (APP-FLOW §45) and a superset of PRD §27. `APPLICATION` and `ADMITTED` are set only by the 02-2 application flow. The application and enrolment stages of ADM-02 belong to applications (02-2), not to leads.
+- **Proposed resolution:** Align PRD §27 and UI-SCREENS ADM-02 with APP-FLOW §10 when those documents are next revised.
+
+## INC-45 — Lead navigation placement and demo badge
+
+- **Status:** `DECIDED-BY-ADR` ([ADR-0020](../adr/0020-courses-and-leads.md) §12; Phase 02-1)
+- **Where:** APP-FLOW.md §3 and `frontend/src/shells/experiences/tenant.ts` (Leads under both GROW and ADMISSIONS; no Pipeline page although UI-SCREENS ADM-02 exists; a hard-coded "12 new enquiries" badge on Admissions)
+- **Issue:** Two navigation entries for one capability, a screen without a route, and a badge showing a fabricated number.
+- **Current handling:** The canonical route is `/app/admissions/leads`, and ADM-02 is its board view (`?view=board`). GROW › Leads stays `UNRELEASED` until the GROW pillar defines a marketing view of leads. The demo badge is removed. A badge returns only when real data backs it.
+- **Proposed resolution:** Update APP-FLOW §3 to show one Leads entry under Admissions (with GROW linking to it) when GROW is specified.
+
+## INC-46 — Cross-tenant route meta-test
+
+- **Status:** `DECIDED-BY-ADR` ([ADR-0020](../adr/0020-courses-and-leads.md) §11; Phase 02-1)
+- **Where:** tenancy.md §8 (a meta-test that fails when a tenant route lacks a cross-tenant test) and PHASE-02-MASTER-READINESS.md §3, §25 (states that it exists) vs `backend/app/api/coverage.py` and `tests/security/test_route_coverage.py` (permission or exemption coverage only)
+- **Issue:** No test proves that every tenant route has a cross-tenant case.
+- **Current handling:** From Phase 02-1, a cross-tenant registry (`backend/tests/security/cross_tenant_registry.py`) maps every route of the business modules (`courses`, `leads`) to the test that exercises it with another tenant's IDs, and a meta-test enforces it. T01 routes are recorded as covered by their existing isolation suites.
+- **Proposed resolution:** Every later business module registers its routes. Extend the registry to T01 routes when a security-hardening task (Phase 16) audits them individually.
