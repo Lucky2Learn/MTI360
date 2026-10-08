@@ -108,6 +108,8 @@ M0 — Foundation Ready: reached 2026-09-30 (Phase 00 complete)
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
+> **2026-10-08 (Phase 02-1):** the first business slice, Courses + Lead Management, is implemented on `feat/phase-02-1-courses-leads` and `READY_FOR_REVIEW` (not pushed, not merged, no CI run yet). It is the first product functionality. The percentage above is not recalculated: no agreed weighting exists, and the slice is not merged or CI-verified.
+
 > **2026-09-30:** Phase 00 is `COMPLETED`: T00-01 … T00-10A are merged to `main` (T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12, T00-10A via PR #13). Phase 01 is `IN_PROGRESS`: the T01-00 architecture review is approved (D1–D22 with the D10 and D14 amendments) T01-01 (Backend, Database & API Foundation) is `COMPLETED` (PR #14), and T01-02 (Audit Foundation) is `COMPLETED` (PR #16). T01-03 (Tenancy Core) is `COMPLETED` (PR #19). T01-04 (Tenant Identity & Authentication) is `COMPLETED` (PR #20). T01-05 (Authorization & RBAC) is `COMPLETED` (PR #21). T01-06 (Platform Identity & MFA) is implemented and `READY_FOR_REVIEW` on `feat/T01-06-platform-identity-mfa` (not merged). T01-07 (Platform Administration Foundation) is implemented and `READY_FOR_REVIEW` on `feat/T01-07-platform-administration` (not merged). T01-08 (Tenant Administration Foundation) is implemented and `READY_FOR_REVIEW` on `feat/T01-08-tenant-administration` (not merged). All are infrastructure only: database access, migrations, request context, error envelope, logging, realm routers, the append-only audit table with its writers, the `tenants` and `campuses` tables with their isolation layers, the tenant authentication backend, and the permission catalogue, roles and authorization layer (no screens). No business tables and no product functionality exist yet, so product implementation completion remains 0%.
 
 ---
@@ -154,7 +156,8 @@ Multi-Tenancy
 |---|---|---|
 | 00 | Foundation | `COMPLETED` |
 | 01 | Authentication & Multi-Tenancy | `IN_PROGRESS` |
-| 02 | Platform Control Plane | `NOT_STARTED` |
+| 02 | Admissions MVP (re-sequenced, L1) — 02-1 Courses + Leads | `IN_PROGRESS` (02-1 `READY_FOR_REVIEW`) |
+| 02 (original) | Platform Control Plane (after the MVP, except 02-C) | `NOT_STARTED` |
 | 03 | Tenant Foundation | `NOT_STARTED` |
 | 04 | Admissions | `NOT_STARTED` |
 | 05 | Academics | `NOT_STARTED` |
@@ -1408,7 +1411,91 @@ Not run: D18 Chromium journeys; CI on this branch (not pushed).
 
 ---
 
+# 9A. PHASE 02 — ADMISSIONS MVP (re-sequenced, L1)
+
+Sources: [PHASE-02-MASTER-READINESS.md](docs/architecture/PHASE-02-MASTER-READINESS.md), [PHASE-02-1-COURSES-LEADS-READINESS.md](docs/architecture/PHASE-02-1-COURSES-LEADS-READINESS.md), [ADR-0020](docs/adr/0020-courses-and-leads.md). TASKS.md "PHASE 02 — ADMISSIONS MVP" is the slice order.
+
+| Slice | Description | Status |
+|---|---|---|
+| 02-1 | Courses + Lead Management | `READY_FOR_REVIEW` |
+| 02-2 | Applications → Documents → Admission → Student | `NOT_STARTED` |
+| 02-C | Onboarding enablers | `NOT_STARTED` |
+
+### 02-1 — Courses + Lead Management
+
+**Status:** `READY_FOR_REVIEW` on `feat/phase-02-1-courses-leads` (from `main` `9009db5`; not pushed; no PR; CI not run on the branch). Merge with **Create a merge commit**.
+
+**Implementation:**
+
+```text
+Database   migration 0009: courses (institute-wide, no campus), leads (campus
+           nullable = institute pool), lead_follow_ups, lead_activities
+           (append-only); realm-agnostic tenant RLS; composite tenant FKs;
+           no DELETE; activities SELECT/INSERT only; mti_readonly reads
+           courses only; 6 permissions; ADMISSIONS_MANAGER and COUNSELLOR
+           cloned into every tenant; Owner/Admin clones extended; upgrade
+           refuses a custom-role name clash; downgrade documented as lossy
+Backend    modules courses and leads (router → service → domain →
+           repository); core helpers campus_visibility(), TransitionTable,
+           record_activity(), escape_like; 20 routes; 7 domain audit events
+           (no personal values); mark_application_started() for 02-2
+Frontend   tenantApiRead() (tenant cookie only), page gate, T02/T03
+           templates and form layout, useListParams, StatusTransitionDialog,
+           MemberPicker, ActivityFeed; ACA-01/02/03, GROW-08 list + ADM-02
+           board, lead create/edit with the duplicate warning, GROW-09 detail
+           with status, assignment, follow-ups and notes; navigation
+           requirement map (course.read, lead.read); demo badge removed
+Seed       Konkan: admissions manager, two campus counsellors, 5 courses
+           (draft/active/archived), 17 leads across the pipeline (pool and
+           campus, assigned and not, a duplicate pair, overdue/today/
+           upcoming follow-ups, notes); Coromandel: 2 courses, 3 leads
+Docs       ADR-0020; INC-44/45/46; TASKS.md L1 re-sequencing; the two
+           readiness reports committed
+```
+
+**Deviations from the blueprint (recorded in ADR-0020 §13):**
+
+```text
+D-1  OpenAPI-generated types not adopted (Y9): hand-typed contracts, as
+     T01-09A; no new dependency (TanStack Query, Zod, generator) added.
+D-2  Board "Show more" is a link to the list filtered by that status, not
+     in-column paging.
+D-3  Lead detail stacks main → side → activity below desktop (DOM order),
+     instead of mobile Tabs; no sticky "Change status" (header actions stack
+     full width on mobile).
+D-4  The "today" follow-up filter carries the browser's UTC offset in the
+     URL (an integer) because the server cannot know the time zone.
+D-5  LeadListItem also carries the owner membership ID and campus ID (the
+     row "Assign…" needs the current assignment).
+```
+
+**Verification (local, 2026-10-08):**
+
+```text
+Backend   pytest 1059 passed (PostgreSQL + Redis integration tests run;
+          REQUIRE_DATABASE_TESTS=1); ruff, ruff format, mypy (221 files),
+          import-linter (2 kept), uv lock --check: pass; migration 0009
+          up/down/clash-refusal/up in the test suite; alembic check clean
+Frontend  vitest 1303 passed (97 files); prettier, eslint (0 warnings), tsc,
+          next build: pass (on next 16.3.8)
+Security  every new route in the cross-tenant registry with an explicit
+          cross-tenant test (meta-test enforced); campus isolation, pool
+          visibility, duplicate-warning privacy, audit metadata free of
+          personal values; gitleaks 8.30.1 over all refs: no leaks
+Audits    pnpm audit: clean apart from the documented braces exception (after
+          patching next 16.3.6 -> 16.3.8 for six advisories that also affect
+          main); pip-audit: no known vulnerabilities
+Repo      git diff --check clean; marketing website hashes unchanged; no
+          .env, compose or ACRS changes
+Not run   D18 Chromium journeys (no browser runtime here); CI on the branch
+          (not pushed); CodeQL (CI only)
+```
+
+---
+
 # 10. PHASE 02 — PLATFORM CONTROL PLANE
+
+> **Re-sequenced (L1, 2026-10-08):** follows the Admissions MVP (section 9A), except the thin provisioning UI (02-C).
 
 ## Phase Status
 

@@ -85,3 +85,70 @@ def test_the_command_never_prints_passwords(
     assert code == cli.EXIT_OK
     assert "owner@malabar-seafarers.example" in output.out
     assert "Secret-one-time-42" not in output.out + output.err
+
+
+# --- Courses and leads (Phase 02-1) ---------------------------------------------------------
+
+
+def _with_admissions(courses: list[Any], leads: list[Any]) -> dict[str, Any]:
+    document = _document()
+    document["institutes"][0]["courses"] = courses
+    document["institutes"][0]["leads"] = leads
+    return document
+
+
+GPR = {"code": "GPR", "name": "GP Rating", "category": "PRE_SEA", "status": "ACTIVE"}
+OWNER = "owner@malabar-seafarers.example"
+
+
+def _lead(**fields: Any) -> dict[str, Any]:
+    return {
+        "key": "L1",
+        "full_name": "Arjun Nair",
+        "mobile": "+91 90000 10101",
+        "source": "WALK_IN",
+        "created_by": OWNER,
+        **fields,
+    }
+
+
+def test_the_committed_seed_has_the_admissions_demo() -> None:
+    konkan = load_seed(DEFAULT_SEED_FILE)[0]
+    roles = {member.role.value for member in konkan.members}
+    assert {"ADMISSIONS_MANAGER", "COUNSELLOR"} <= roles
+    assert {c.status.value for c in konkan.courses} == {"DRAFT", "ACTIVE", "ARCHIVED"}
+    statuses = {lead.status.value for lead in konkan.leads}
+    assert statuses >= {"NEW", "CONTACTED", "QUALIFIED", "COUNSELLING", "INTERESTED"}
+    assert statuses >= {"LOST", "DEFERRED", "DUPLICATE"}
+    assert any(lead.campus is None for lead in konkan.leads)  # institute pool
+    assert any(lead.owner is None for lead in konkan.leads)  # unassigned
+    mobiles = [lead.mobile for lead in konkan.leads if lead.mobile]
+    assert len(mobiles) != len(set(mobiles))  # a pair for the duplicate warning
+    hours = [f.due_in_hours for lead in konkan.leads for f in lead.follow_ups]
+    assert min(hours) < 0 < max(hours)  # overdue and upcoming follow-ups
+    assert any(lead.notes for lead in konkan.leads)
+
+
+@pytest.mark.parametrize(
+    ("courses", "leads", "message"),
+    [
+        ([GPR | {"code": "G P R"}], [], "invalid course code"),
+        ([GPR | {"duration_value": 6}], [], "duration"),
+        ([GPR, GPR], [], "unique"),
+        ([GPR], [_lead(mobile=None)], "mobile or an email"),
+        ([GPR], [_lead(mobile="+91 98200 12345")], "fictitious"),
+        ([GPR], [_lead(mobile=None, email="arjun@gmail.com")], "example.com"),
+        ([GPR], [_lead(course="DNS")], "unknown course"),
+        ([GPR], [_lead(campus="MUM")], "unknown campus"),
+        ([GPR], [_lead(owner="someone@malabar-seafarers.example")], "seed members"),
+        ([GPR], [_lead(status="APPLICATION")], "02-2"),
+        ([GPR], [_lead(status="LOST")], "status_reason"),
+        ([GPR], [_lead(status="DUPLICATE")], "duplicate_of"),
+        ([GPR], [_lead(), _lead(status="DUPLICATE", duplicate_of="L9")], "duplicate key"),
+    ],
+)
+def test_invalid_courses_and_leads_are_refused(
+    courses: list[Any], leads: list[Any], message: str
+) -> None:
+    with pytest.raises(SeedError, match=message):
+        parse_seed(_with_admissions(courses, leads))

@@ -14,6 +14,7 @@ from conftest import DatabaseUnderTest
 from identity_support import FAST_HASHER, Harness, auth_harness
 
 from app.modules.access.templates import system_role_templates
+from app.modules.leads.domain import LeadStatus
 from app.seed import SeedError, SeedInstitute, load_seed, seed
 
 pytestmark = [pytest.mark.anyio, pytest.mark.integration]
@@ -39,6 +40,15 @@ def _unique(institutes: tuple[SeedInstitute, ...]) -> tuple[SeedInstitute, ...]:
             members=tuple(
                 dataclasses.replace(member, email=email(member.email))
                 for member in institute.members
+            ),
+            # Phase 02-1: leads reference members by their seed email.
+            leads=tuple(
+                dataclasses.replace(
+                    lead,
+                    owner=email(lead.owner) if lead.owner else None,
+                    created_by=email(lead.created_by),
+                )
+                for lead in institute.leads
             ),
         )
         for institute in institutes
@@ -86,3 +96,33 @@ async def test_the_seed_creates_working_institutes_once(h: Harness) -> None:
 
     with pytest.raises(SeedError, match="already been applied"):
         await seed(h.factory, FAST_HASHER, institutes)
+
+
+async def test_the_seed_creates_the_admissions_demo(h: Harness) -> None:
+    """Phase 02-1: courses and leads load through the real schema, and a seeded
+    campus counsellor sees exactly the institute pool and their campus."""
+    institutes = _unique(load_seed())
+    accounts = {a.email: a.password for a in await seed(h.factory, FAST_HASHER, institutes)}
+    konkan = institutes[0]
+    counsellor = next(m for m in konkan.members if m.role.value == "COUNSELLOR")
+    assert counsellor.campuses == ("MUM",)
+
+    h.client.cookies.clear()
+    login = await h.client.post(
+        "/api/v1/auth/login",
+        json={"email": counsellor.email, "password": accounts[counsellor.email]},
+    )
+    assert login.status_code == 200, login.text
+    courses = (await h.client.get("/api/v1/courses", params={"limit": 100})).json()
+    assert {c["code"] for c in courses["data"]} == {c.code for c in konkan.courses}
+    leads = await h.client.get(
+        "/api/v1/leads", params={"status": [s.value for s in LeadStatus], "limit": 100}
+    )
+    visible = {lead["full_name"] for lead in leads.json()["data"]}
+    expected = {lead.full_name for lead in konkan.leads if lead.campus in (None, "MUM")}
+    assert visible == expected
+    assert not visible & {lead.full_name for lead in konkan.leads if lead.campus == "RTN"}
+    with_notes = next(lead for lead in leads.json()["data"] if lead["full_name"] == "Imran Shaikh")
+    activity = await h.client.get(f"/api/v1/leads/{with_notes['id']}/activity")
+    assert activity.status_code == 200
+    assert activity.json()["data"]

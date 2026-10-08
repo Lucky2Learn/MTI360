@@ -94,6 +94,7 @@ Metadata carries codes, statuses, field names, booleans and counts only. It neve
   - adds the six permissions to the existing Owner and Admin clones.
 - New tenants receive the new roles through `clone_system_roles()`.
 - **Readonly role (Y8):** `mti_readonly` may read `courses` only, never the lead tables.
+- **Name clash:** if a tenant already has a custom role named like a new system role ("Admissions manager", "Counsellor"), the upgrade stops with a clear message. It does not rename tenant data.
 - **Downgrade:** a development operation that loses data. It removes the new roles' assignments and the permissions it added, then drops the tables. The system-role protection trigger is suspended for that statement only, as the table owner.
 
 ### 11. Cross-tenant route registry (V3)
@@ -114,9 +115,13 @@ Metadata carries codes, statuses, field names, booleans and counts only. It neve
   - list state lives in URL parameters, which hold IDs and enums only, plus the search box term.
 - **Dependencies (Y9):** TanStack Query and Zod are not added, because no 02-1 screen needs client caching or schema-shared forms. OpenAPI type generation is **not** adopted in 02-1; contracts are hand-typed as in T01-09A (§13).
 
-### 13. Deviation recorded
+### 13. Deviations recorded
 
-Y9 proposed OpenAPI-generated types after a CLAUDE §74 review. That review is deferred: adding a generator, its lockfile entries and a CI drift check would roughly double the dependency and CI surface of this slice. Hand-typed contracts, covered by component tests against fixtures shaped like the API, carry the same risk T01-09A accepted. 02-2 or a dedicated tooling task should revisit it.
+1. **OpenAPI types (Y9) not adopted.** Y9 proposed OpenAPI-generated types after a CLAUDE §74 review. That review is deferred: a generator, its lockfile entries and a CI drift check would roughly double this slice's dependency and CI surface. Contracts are hand-typed in `frontend/src/lib/api/admissions.ts`, as in T01-09A, and component tests run against API-shaped fixtures. No dependency was added in 02-1.
+2. **Board paging.** A column shows its 25 most recently updated leads and its total. "View all *n* in the list" opens the list filtered by that status, instead of paging inside the column.
+3. **Lead detail on mobile.** The detail stacks main, side and activity in DOM order below desktop, instead of mobile Tabs. There is no sticky "Change status": header actions already stack full width on mobile.
+4. **"Today" filter.** The `follow_up=today` filter takes the browser's UTC offset (`utc_offset`, minutes, an integer in the URL), because the server does not know the member's time zone. Campus time zones are not modelled yet (INC-40).
+5. **List items.** `LeadListItem` also carries the owner's membership ID and the campus ID. Without them, "Assign…" from a row could not show the current assignment.
 
 ## Consequences
 
