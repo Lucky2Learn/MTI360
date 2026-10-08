@@ -166,14 +166,14 @@ describe("RESOURCE-02 not found", () => {
   it("an UNRELEASED page is a 404 in staging and production, a page in development", async () => {
     for (const appEnv of ["staging", "production"]) {
       state.appEnv = appEnv;
-      await expect(page(["admissions", "leads"])).rejects.toThrow(
+      await expect(page(["admissions", "applications"])).rejects.toThrow(
         "NEXT_NOT_FOUND",
       );
     }
     state.appEnv = "development";
-    await page(["admissions", "leads"]);
+    await page(["admissions", "applications"]);
     expect(
-      screen.getByRole("heading", { level: 1, name: "Leads" }),
+      screen.getByRole("heading", { level: 1, name: "Applications" }),
     ).toBeInTheDocument();
   });
 

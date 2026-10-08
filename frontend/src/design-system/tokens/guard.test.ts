@@ -44,8 +44,10 @@ const RAW_HTML = /dangerouslySetInnerHTML/;
 const OUTLINE_NONE = /(?<![\w:-])outline-none(?![\w-])/;
 const FOCUS_REPLACEMENT =
   /focusRing|insetFocusRing|fieldFocus|(?:data-focus-visible|focus-visible|data-focused|data-focus-within):|a11y-focus:/;
+// Not after "/": an API path segment such as `/leads/{id}/transition`
+// (Phase 02-1) is not a utility; Tailwind utilities never follow a slash.
 const MOTION_UTILITY =
-  /(?<![\w:-])(?:transition(?:-[a-z]+)?|animate-[a-z]+)(?![\w-])/;
+  /(?<![\w:/-])(?:transition(?:-[a-z]+)?|animate-[a-z]+)(?![\w-])/;
 const MOTION_GUARD = /motion-reduce:|motion-safe:/;
 const POSITIVE_TABINDEX = /tab[iI]ndex=(?:\{\s*[1-9]|"[1-9])/;
 

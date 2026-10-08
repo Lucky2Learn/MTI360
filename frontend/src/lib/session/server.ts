@@ -1,10 +1,11 @@
 import "server-only";
 
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 
-import { clientAddress, TENANT_SESSION_COOKIE } from "@/lib/api/forwarding";
+import { TENANT_SESSION_COOKIE } from "@/lib/api/forwarding";
+import { tenantForwardHeaders } from "@/lib/api/server-read";
 import type { SessionWire } from "@/lib/api/types";
 import { getServerEnv } from "@/lib/env";
 
@@ -43,18 +44,7 @@ export const readTenantSession = cache(
     const token = (await cookies()).get(TENANT_SESSION_COOKIE)?.value;
     if (!token) return null;
 
-    const incoming = await headers();
-    const forwarded: Record<string, string> = {
-      accept: "application/json",
-      cookie: `${TENANT_SESSION_COOKIE}=${token}`,
-    };
-    const userAgent = incoming.get("user-agent");
-    if (userAgent) forwarded["user-agent"] = userAgent;
-    const address = clientAddress(
-      incoming.get("x-forwarded-for"),
-      getServerEnv().trustedProxyHops,
-    );
-    if (address) forwarded["x-forwarded-for"] = address;
+    const forwarded = await tenantForwardHeaders(token);
 
     let response: Response;
     try {
