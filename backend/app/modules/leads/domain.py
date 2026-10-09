@@ -144,6 +144,8 @@ class ActivityKind(StrEnum):
     FOLLOW_UP_COMPLETED = "FOLLOW_UP_COMPLETED"
     FOLLOW_UP_CANCELLED = "FOLLOW_UP_CANCELLED"
     NOTE = "NOTE"
+    APPLICATION_STARTED = "APPLICATION_STARTED"
+    """An application was started from this lead (Phase 02-2; ADR-0021 §10)."""
 
 
 class FollowUpFilter(StrEnum):

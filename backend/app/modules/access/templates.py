@@ -9,11 +9,15 @@ that updates both this file and every tenant's clone (a test compares them).
 * ``ADMIN`` — every tenant permission except ``role.delete``.
 * ``ADMISSIONS_MANAGER`` (Phase 02-1, L7) — the course catalogue and every lead
   permission, assignment included. ``course.manage`` is tenant-wide, so it is
-  effective only with all-campus access (D-B1).
+  effective only with all-campus access (D-B1). Phase 02-2 adds every
+  application, document, admission and student permission (ADR-0021 §11).
 * ``COUNSELLOR`` (Phase 02-1, L7) — reads the catalogue; reads, adds and works
-  leads; does not assign leads or manage courses.
+  leads; does not assign leads or manage courses. Phase 02-2 adds starting,
+  editing and submitting applications, reading and uploading documents and
+  reading students; not reviewing, verifying or admitting.
 
-Migration ``0009`` added the last two to every existing tenant.
+Migration ``0009`` added the last two to every existing tenant; migration
+``0010`` extended them (and the Owner/Admin clones) with the 02-2 permissions.
 
 Templates are expanded here to explicit permission codes, never stored as
 wildcards (D-B3).
@@ -25,8 +29,16 @@ from enum import StrEnum
 from app.core.authz import Permission
 from app.modules.access.catalog import tenant_permissions
 from app.modules.access.permissions import ROLE_DELETE
+from app.modules.applications.permissions import (
+    APPLICATION_CREATE,
+    APPLICATION_READ,
+    APPLICATION_REVIEW,
+    APPLICATION_UPDATE,
+)
 from app.modules.courses.permissions import COURSE_MANAGE, COURSE_READ
+from app.modules.documents.permissions import DOCUMENT_READ, DOCUMENT_UPLOAD, DOCUMENT_VERIFY
 from app.modules.leads.permissions import LEAD_ASSIGN, LEAD_CREATE, LEAD_READ, LEAD_UPDATE
+from app.modules.students.permissions import ADMISSION_APPROVE, STUDENT_READ
 
 
 class SystemRole(StrEnum):
@@ -45,6 +57,14 @@ class RoleTemplate:
 
 
 OWNER_TEMPLATE = SystemRole.INSTITUTE_OWNER
+ADMISSIONS_MANAGER_DESCRIPTION = (
+    "Runs admissions: the course catalogue, leads and their assignment, applications, "
+    "document verification, review and admission approval."
+)
+COUNSELLOR_DESCRIPTION = (
+    "Works enquiries and applications: leads, notes and follow-ups, application drafts "
+    "and document uploads; reads the catalogue and students."
+)
 """The system role given to the primary administrator at provisioning (T01-07, D7-1)."""
 
 
@@ -70,13 +90,40 @@ def system_role_templates() -> tuple[RoleTemplate, ...]:
         RoleTemplate(
             SystemRole.ADMISSIONS_MANAGER,
             "Admissions manager",
-            "Manages the course catalogue and the admissions team's leads, including assignment.",
-            _codes(COURSE_READ, COURSE_MANAGE, LEAD_READ, LEAD_CREATE, LEAD_UPDATE, LEAD_ASSIGN),
+            ADMISSIONS_MANAGER_DESCRIPTION,
+            _codes(
+                COURSE_READ,
+                COURSE_MANAGE,
+                LEAD_READ,
+                LEAD_CREATE,
+                LEAD_UPDATE,
+                LEAD_ASSIGN,
+                APPLICATION_READ,
+                APPLICATION_CREATE,
+                APPLICATION_UPDATE,
+                APPLICATION_REVIEW,
+                DOCUMENT_READ,
+                DOCUMENT_UPLOAD,
+                DOCUMENT_VERIFY,
+                ADMISSION_APPROVE,
+                STUDENT_READ,
+            ),
         ),
         RoleTemplate(
             SystemRole.COUNSELLOR,
             "Counsellor",
-            "Works enquiries: adds and updates leads, notes and follow-ups; reads the catalogue.",
-            _codes(COURSE_READ, LEAD_READ, LEAD_CREATE, LEAD_UPDATE),
+            COUNSELLOR_DESCRIPTION,
+            _codes(
+                COURSE_READ,
+                LEAD_READ,
+                LEAD_CREATE,
+                LEAD_UPDATE,
+                APPLICATION_READ,
+                APPLICATION_CREATE,
+                APPLICATION_UPDATE,
+                DOCUMENT_READ,
+                DOCUMENT_UPLOAD,
+                STUDENT_READ,
+            ),
         ),
     )

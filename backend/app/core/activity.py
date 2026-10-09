@@ -80,7 +80,8 @@ async def record_activity(
         "kind": kind,
         "actor_membership_id": actor_membership_id,
         "details": activity_details(details or {}),
-        "body": body,
     }
+    if body is not None:  # only timelines with notes have a body column (Phase 02-2)
+        row["body"] = body
     await db.execute(insert(table).values(**row))
     return row["id"]  # type: ignore[no-any-return]

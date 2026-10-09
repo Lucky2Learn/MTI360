@@ -19,35 +19,58 @@ from app.core.context import Realm, current_context
 
 pytestmark = [pytest.mark.anyio, pytest.mark.integration]
 
-ALL_TENANT = [
-    "audit.read",
-    "campus.create",
-    "campus.read",
-    "campus.update",
-    "course.manage",  # Phase 02-1
-    "course.read",
-    "lead.assign",
-    "lead.create",
-    "lead.read",
-    "lead.update",
-    "member.invite",
-    "member.read",
-    "member.revoke",
-    "member.suspend",
-    "member.update",
-    "role.assign",
-    "role.create",
-    "role.delete",
-    "role.read",
-    "role.update",
-    "tenant.profile.read",
+PHASE_02_2 = [
+    "admission.approve",
+    "application.create",
+    "application.read",
+    "application.review",
+    "application.update",
+    "document.read",
+    "document.upload",
+    "document.verify",
+    "student.read",
 ]
+ALL_TENANT = sorted(
+    [
+        "audit.read",
+        "campus.create",
+        "campus.read",
+        "campus.update",
+        "course.manage",  # Phase 02-1
+        "course.read",
+        "lead.assign",
+        "lead.create",
+        "lead.read",
+        "lead.update",
+        "member.invite",
+        "member.read",
+        "member.revoke",
+        "member.suspend",
+        "member.update",
+        "role.assign",
+        "role.create",
+        "role.delete",
+        "role.read",
+        "role.update",
+        "tenant.profile.read",
+        *PHASE_02_2,  # Phase 02-2: every one is campus-scoped
+    ]
+)
 ADMIN = [code for code in ALL_TENANT if code != "role.delete"]
 CAMPUS_ONLY = ["campus.read", "campus.update"]
 # A campus-restricted Administrator keeps every campus-scoped permission (D-B1): since
-# Phase 02-1 also course.read and the lead permissions, never the tenant-wide course.manage.
+# Phase 02-1 also course.read and the lead permissions, never the tenant-wide course.manage;
+# since Phase 02-2 every application, document, admission and student permission.
 RESTRICTED_ADMIN = sorted(
-    [*CAMPUS_ONLY, "course.read", "lead.assign", "lead.create", "lead.read", "lead.update"]
+    [
+        *CAMPUS_ONLY,
+        "course.read",
+        "lead.assign",
+        "lead.create",
+        "lead.read",
+        "lead.update",
+        *PHASE_02_2,
+    ]
 )
 OWNER_ROLE = {"name": "Institute owner", "is_system": True}
 ADMIN_ROLE = {"name": "Administrator", "is_system": True}

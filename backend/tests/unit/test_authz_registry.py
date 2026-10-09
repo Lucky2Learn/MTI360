@@ -50,6 +50,17 @@ PHASE_02_1 = {
     "lead.update": PermissionScope.CAMPUS,
     "lead.assign": PermissionScope.CAMPUS,
 }
+PHASE_02_2 = {
+    "application.read": PermissionScope.CAMPUS,
+    "application.create": PermissionScope.CAMPUS,
+    "application.update": PermissionScope.CAMPUS,
+    "application.review": PermissionScope.CAMPUS,
+    "document.read": PermissionScope.CAMPUS,
+    "document.upload": PermissionScope.CAMPUS,
+    "document.verify": PermissionScope.CAMPUS,
+    "admission.approve": PermissionScope.CAMPUS,
+    "student.read": PermissionScope.CAMPUS,
+}
 PLATFORM_BASELINE = {
     "tenant.read",
     "tenant.create",
@@ -110,7 +121,7 @@ def test_identity_is_realm_and_code() -> None:
 def test_the_catalogue_is_exactly_the_t01_baseline_and_phase_02_1() -> None:
     tenant = {p.code: p.scope for p in all_permissions() if p.realm is Realm.TENANT}
     platform = {p.code for p in all_permissions() if p.realm is Realm.PLATFORM}
-    assert tenant == TENANT_BASELINE | PHASE_02_1
+    assert tenant == TENANT_BASELINE | PHASE_02_1 | PHASE_02_2
     assert platform == PLATFORM_BASELINE
     assert len(all_permissions()) == len({p.key for p in all_permissions()})
     # D6-5 (T01-06) extended by D7-4 (T01-07): exactly these permissions require step-up.
@@ -163,16 +174,23 @@ def test_system_role_templates() -> None:
     assert templates[SystemRole.INSTITUTE_OWNER].permissions == everything
     assert templates[SystemRole.ADMIN].permissions == everything - {"role.delete"}
     assert "role.delete" not in templates[SystemRole.ADMIN].permissions
-    # Phase 02-1 (L7): the admissions team's roles hold course and lead permissions only.
-    assert templates[SystemRole.ADMISSIONS_MANAGER].permissions == set(PHASE_02_1)
+    # Phase 02-1 (L7) and 02-2 (ADR-0021 §11): the admissions team's roles hold business
+    # permissions only; counsellors do not assign, manage courses, review, verify or admit.
+    assert templates[SystemRole.ADMISSIONS_MANAGER].permissions == set(PHASE_02_1) | set(PHASE_02_2)
     assert templates[SystemRole.COUNSELLOR].permissions == {
         "course.read",
         "lead.read",
         "lead.create",
         "lead.update",
+        "application.read",
+        "application.create",
+        "application.update",
+        "document.read",
+        "document.upload",
+        "student.read",
     }
     for template in templates.values():
-        assert template.permissions <= set(TENANT_BASELINE) | set(PHASE_02_1)
+        assert template.permissions <= set(TENANT_BASELINE) | set(PHASE_02_1) | set(PHASE_02_2)
         assert not any("*" in code for code in template.permissions)
 
 

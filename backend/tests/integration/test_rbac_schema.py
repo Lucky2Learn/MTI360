@@ -77,6 +77,18 @@ PHASE_02_1_CODES = {
     "lead.read",
     "lead.update",
 }
+PHASE_02_2_CODES = {
+    "admission.approve",
+    "application.create",
+    "application.read",
+    "application.review",
+    "application.update",
+    "document.read",
+    "document.upload",
+    "document.verify",
+    "student.read",
+}
+COUNSELLOR_02_2 = PHASE_02_2_CODES - {"application.review", "document.verify", "admission.approve"}
 PLATFORM_CODES = {
     "audit.read",
     "platform_user.create",
@@ -239,7 +251,8 @@ async def test_the_rbac_migration_clones_system_roles_and_assigns_nobody(
 
     assert present == len(TABLES) + len(POLICIES) + 2 * len(TRIGGERS)
     # World A existed before the upgrade: 0005 cloned the two T01 system roles; 0009
-    # (Phase 02-1) added Admissions manager and Counsellor and extended the first two.
+    # (Phase 02-1) added Admissions manager and Counsellor and extended the first two;
+    # 0010 (Phase 02-2) extended all four.
     roles = await _owner(
         migrated_database,
         "SELECT r.template_code, r.name, array_agg(rp.permission_code ORDER BY 1) "
@@ -248,12 +261,15 @@ async def test_the_rbac_migration_clones_system_roles_and_assigns_nobody(
         tenant=world.tenant_a,
     )
     by_template = {row[0]: (row[1], set(row[2])) for row in roles}
-    head = TENANT_CODES | PHASE_02_1_CODES
+    head = TENANT_CODES | PHASE_02_1_CODES | PHASE_02_2_CODES
     assert by_template == {
         "INSTITUTE_OWNER": ("Institute owner", head),
         "ADMIN": ("Administrator", head - {"role.delete"}),
-        "ADMISSIONS_MANAGER": ("Admissions manager", PHASE_02_1_CODES),
-        "COUNSELLOR": ("Counsellor", PHASE_02_1_CODES - {"course.manage", "lead.assign"}),
+        "ADMISSIONS_MANAGER": ("Admissions manager", PHASE_02_1_CODES | PHASE_02_2_CODES),
+        "COUNSELLOR": (
+            "Counsellor",
+            (PHASE_02_1_CODES - {"course.manage", "lead.assign"}) | COUNSELLOR_02_2,
+        ),
     }
     # ... and no member was given a role.
     assigned = await _owner(
