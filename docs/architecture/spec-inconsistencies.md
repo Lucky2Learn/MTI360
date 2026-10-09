@@ -172,7 +172,7 @@
 
 ## INC-22 — Upload file types and size limits unspecified
 
-- **Status:** `OPEN` (T00-07B decision D7)
+- **Status:** `DECIDED-BY-ADR` for admission documents ([ADR-0021](../adr/0021-admissions-core.md) §8; master readiness L5; Phase 02-2): PDF, JPEG and PNG, at most 10 MiB per file, for every admission document type. Other document categories (faculty, institute, compliance) decide their own limits when they are built. Originally `OPEN` (T00-07B decision D7).
 - **Where:** CLAUDE.md §50 and ARCHITECTURE.md §49 (server validation pipeline) and §31 (document processing); PRD/UI-SCREENS mention admission documents (CDC, passport, medical certificates) but no allowed types or limits
 - **Issue:** No specification defines which file types are accepted or the maximum sizes per document category.
 - **Current handling:** FileUpload requires explicit `accept` (MIME + extension pairs) and `maxSize` props with no defaults; a permanent deny list applies regardless. The showcase uses PDF/JPG/PNG up to 5 MB and 2 MB as examples only. Server-side validation remains authoritative.
@@ -381,3 +381,11 @@
 - **Issue:** No test proves that every tenant route has a cross-tenant case.
 - **Current handling:** From Phase 02-1, a cross-tenant registry (`backend/tests/security/cross_tenant_registry.py`) maps every route of the business modules (`courses`, `leads`) to the test that exercises it with another tenant's IDs, and a meta-test enforces it. T01 routes are recorded as covered by their existing isolation suites.
 - **Proposed resolution:** Every later business module registers its routes. Extend the registry to T01 routes when a security-hardening task (Phase 16) audits them individually.
+
+## INC-47 — Application status vocabulary and the admission order
+
+- **Status:** `DECIDED-BY-ADR` ([ADR-0021](../adr/0021-admissions-core.md) §4, §6; Phase 02-2)
+- **Where:** APP-FLOW.md §16 (`DRAFT → SUBMITTED → UNDER REVIEW → DOCUMENT VERIFICATION → ELIGIBLE → APPROVED → ADMITTED`; `REJECTED`, `DOCUMENT CORRECTION REQUIRED`, `NOT ELIGIBLE`), APP-FLOW.md §18 and PRD.md §29 (fee and payment before "Student Created"), UI-SCREENS.md ADM-05…ADM-10 (no statuses)
+- **Issue:** `DOCUMENT VERIFICATION` and `ELIGIBLE` duplicate state that is tracked per document and by the review decision, and the admission flow places payment before the student exists, which contradicts the locked decision L3.
+- **Current handling:** All ten statuses are in the database CHECK; `DOCUMENT_VERIFICATION` and `ELIGIBLE` are reserved and unused. `CORRECTION_REQUIRED` stands for "document correction required" and also covers corrections to the application's details. Admission approval creates the Admission and the Student; payment gates enrolment and batch allocation later (L3).
+- **Proposed resolution:** Align APP-FLOW §16/§18 and PRD §29 with ADR-0021 when those documents are next revised.
