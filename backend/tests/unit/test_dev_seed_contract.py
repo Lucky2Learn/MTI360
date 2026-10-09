@@ -129,6 +129,66 @@ def test_the_committed_seed_has_the_admissions_demo() -> None:
     assert any(lead.notes for lead in konkan.leads)
 
 
+def test_the_committed_seed_has_the_applications_demo() -> None:
+    """Phase 02-2: every stage a demo needs, documents included."""
+    konkan, coromandel = load_seed(DEFAULT_SEED_FILE)[:2]
+    statuses = {a.status.value for a in konkan.applications}
+    assert statuses >= {"DRAFT", "SUBMITTED", "CORRECTION_REQUIRED", "APPROVED", "ADMITTED"}
+    assert any(a.lead is None for a in konkan.applications)  # a walk-in
+    documents = {d.status.value for a in konkan.applications for d in a.documents}
+    assert documents == {"UPLOADED", "UNDER_REVIEW", "VERIFIED", "REJECTED"}
+    assert any(a.status.value == "ADMITTED" for a in coromandel.applications)
+
+
+def _application(**fields: Any) -> dict[str, Any]:
+    return {
+        "key": "A1",
+        "lead": "L1",
+        "course": "GPR",
+        "campus": "KOC",
+        "created_by": OWNER,
+        **fields,
+    }
+
+
+@pytest.mark.parametrize(
+    ("application", "message"),
+    [
+        (_application(course="DNS"), "ACTIVE course"),
+        (_application(lead="L9"), "open seed lead"),
+        (_application(status="ELIGIBLE"), "reserved"),
+        (_application(status="SUBMITTED"), "complete"),
+        (_application(status="REJECTED", reviewed_by=OWNER), "status_reason"),
+        (_application(status="APPROVED"), "reviewed_by"),
+        (
+            _application(documents=[{"type": "PASSPORT", "status": "VERIFIED"}]),
+            "UPLOADED on drafts",
+        ),
+        (
+            _application(lead=None, full_name="Meera Pillai", mobile="+91 98200 12345"),
+            "fictitious",
+        ),
+        (_application(indos_number="??"), "INDoS"),
+    ],
+    ids=[
+        "course",
+        "lead",
+        "reserved",
+        "incomplete",
+        "reason",
+        "reviewer",
+        "documents",
+        "mobile",
+        "indos",
+    ],
+)
+def test_invalid_applications_are_refused(application: dict[str, Any], message: str) -> None:
+    document = _with_admissions([GPR], [_lead()])
+    document["institutes"][0]["applications"] = [application]
+    with pytest.raises(SeedError, match=message):
+        parse_seed(document)
+
+
 @pytest.mark.parametrize(
     ("courses", "leads", "message"),
     [

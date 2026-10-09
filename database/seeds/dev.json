@@ -1,5 +1,5 @@
 {
-  "_comment": "Development fixtures only (T01-08, decision D16). Load with `python -m app.cli seed` from backend/ with APP_ENV=development. Emails use reserved .example domains; passwords are generated, never shown or stored; to sign in, request a reset link from the sign-in page (Mailpit locally). Courses and leads (Phase 02-1) use fictitious contacts: example.com emails and the +91 90000 10xxx range.",
+  "_comment": "Development fixtures only (T01-08, decision D16). Load with `python -m app.cli seed` from backend/ with APP_ENV=development. Emails use reserved .example domains; passwords are generated, never shown or stored; to sign in, request a reset link from the sign-in page (Mailpit locally). Courses, leads (Phase 02-1) and applications (Phase 02-2) use fictitious contacts: example.com emails and the +91 90000 10xxx range.",
   "institutes": [
     {
       "name": "Konkan Maritime Training Institute",
@@ -353,6 +353,91 @@
           "status": "NOT_ELIGIBLE",
           "status_reason": "Did not take Physics, Chemistry and Maths in 12th."
         }
+      ],
+      "applications": [
+        {
+          "key": "KA1",
+          "lead": "K12",
+          "course": "DNS",
+          "campus": "MUM",
+          "created_by": "counsellor.mumbai@konkan-maritime.example",
+          "status": "SUBMITTED",
+          "date_of_birth": "2007-02-11",
+          "highest_qualification": "12th PCM, 74%",
+          "declared": true,
+          "documents": [
+            { "type": "PASSPORT", "status": "UNDER_REVIEW" },
+            { "type": "MARKSHEET_12", "status": "UNDER_REVIEW" },
+            { "type": "MEDICAL_CERTIFICATE", "status": "UNDER_REVIEW" }
+          ]
+        },
+        {
+          "key": "KA2",
+          "lead": "K13",
+          "course": "GPR",
+          "campus": "RTN",
+          "created_by": "counsellor.ratnagiri@konkan-maritime.example",
+          "reviewed_by": "admissions@konkan-maritime.example",
+          "status": "CORRECTION_REQUIRED",
+          "status_reason": "The 12th marksheet scan is unreadable; upload a clear copy.",
+          "date_of_birth": "2006-09-30",
+          "highest_qualification": "10th, 61%",
+          "declared": true,
+          "documents": [
+            { "type": "PASSPORT", "status": "VERIFIED" },
+            {
+              "type": "MARKSHEET_10",
+              "status": "REJECTED",
+              "reason": "Scan is unreadable"
+            }
+          ]
+        },
+        {
+          "key": "KA3",
+          "lead": "K09",
+          "course": "GPR",
+          "campus": "MUM",
+          "created_by": "admissions@konkan-maritime.example",
+          "reviewed_by": "admissions@konkan-maritime.example",
+          "status": "APPROVED",
+          "date_of_birth": "2006-12-05",
+          "highest_qualification": "10th, 68%",
+          "declared": true,
+          "documents": [
+            { "type": "PASSPORT", "status": "VERIFIED" },
+            { "type": "MARKSHEET_10", "status": "VERIFIED" },
+            { "type": "MEDICAL_CERTIFICATE", "status": "VERIFIED" }
+          ]
+        },
+        {
+          "key": "KA4",
+          "course": "STCW-BST",
+          "campus": "MUM",
+          "created_by": "counsellor.mumbai@konkan-maritime.example",
+          "reviewed_by": "admissions@konkan-maritime.example",
+          "status": "ADMITTED",
+          "full_name": "Sandeep Patil",
+          "mobile": "+91 90000 10120",
+          "date_of_birth": "1998-04-21",
+          "highest_qualification": "GP Rating (2019); 3 years at sea",
+          "city": "Thane",
+          "indos_number": "18HL4521",
+          "declared": true,
+          "documents": [
+            { "type": "CDC", "status": "VERIFIED" },
+            { "type": "INDOS", "status": "VERIFIED" },
+            { "type": "MEDICAL_CERTIFICATE", "status": "VERIFIED" }
+          ]
+        },
+        {
+          "key": "KA5",
+          "lead": "K11",
+          "course": "DNS",
+          "campus": "MUM",
+          "created_by": "counsellor.mumbai@konkan-maritime.example",
+          "status": "DRAFT",
+          "documents": [{ "type": "PASSPORT", "status": "UPLOADED" }]
+        }
       ]
     },
     {
@@ -421,6 +506,24 @@
           "campus": "CHE",
           "created_by": "director@coromandel-nautical.example",
           "status": "QUALIFIED"
+        }
+      ],
+      "applications": [
+        {
+          "key": "CA1",
+          "lead": "C03",
+          "course": "GME",
+          "campus": "CHE",
+          "created_by": "director@coromandel-nautical.example",
+          "reviewed_by": "director@coromandel-nautical.example",
+          "status": "ADMITTED",
+          "date_of_birth": "2001-07-18",
+          "highest_qualification": "B.E. Mechanical, 2023",
+          "declared": true,
+          "documents": [
+            { "type": "PASSPORT", "status": "VERIFIED" },
+            { "type": "MEDICAL_CERTIFICATE", "status": "VERIFIED" }
+          ]
         }
       ]
     }

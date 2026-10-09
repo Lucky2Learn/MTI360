@@ -12,6 +12,7 @@ import urllib.error
 import urllib.request
 import uuid
 
+import anyio
 import pytest
 
 from app.integrations.storage import ObjectNotFoundError, S3ObjectStorage
@@ -49,7 +50,9 @@ async def test_round_trip_against_the_real_store(s3: tuple[S3ObjectStorage, str,
         assert await storage.get(key) == data
         anonymous = urllib.request.Request(f"{endpoint}/{bucket}/{key}")  # noqa: S310
         with pytest.raises(urllib.error.HTTPError) as refused:
-            urllib.request.urlopen(anonymous, timeout=5)  # noqa: S310 - local test endpoint
+            await anyio.to_thread.run_sync(
+                lambda: urllib.request.urlopen(anonymous, timeout=5)  # noqa: S310 - local
+            )
         refused.value.close()
         assert refused.value.code in {401, 403}
     finally:

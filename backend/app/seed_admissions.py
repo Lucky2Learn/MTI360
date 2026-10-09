@@ -255,8 +255,10 @@ async def seed_admissions(
     leads: Sequence[SeedLead],
     campus_ids: Mapping[str, uuid.UUID],
     memberships: Mapping[str, uuid.UUID],
-) -> None:
-    """Insert one institute's courses and leads (system realm, trusted tenant)."""
+) -> tuple[dict[str, uuid.UUID], dict[str, uuid.UUID]]:
+    """Insert one institute's courses and leads (system realm, trusted tenant).
+
+    Returns the course IDs by code and the lead IDs by key (Phase 02-2 applications)."""
     course_ids: dict[str, uuid.UUID] = {}
     for course in courses:
         course_ids[course.code] = uuid.uuid7()
@@ -348,3 +350,4 @@ async def seed_admissions(
             )
         for note in lead.notes:
             await _activity(db, lead_id, ActivityKind.NOTE, creator, body=note)
+    return course_ids, lead_ids
