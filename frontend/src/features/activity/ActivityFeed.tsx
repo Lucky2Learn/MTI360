@@ -3,7 +3,6 @@ import {
   type TimelineItem,
   type Tone,
 } from "@/design-system/components";
-import type { ActivityWire } from "@/lib/api/admissions";
 
 import { formatDateTime } from "../shared/format";
 
@@ -21,9 +20,17 @@ export type ActivityDescription = {
   tone?: Tone;
 };
 
-export type ActivityFeedProps = {
-  activities: ActivityWire[];
-  describe: (activity: ActivityWire) => ActivityDescription;
+/** What the feed needs of an activity row (lead, application or Student 360). */
+export type FeedActivity = {
+  id: string;
+  actor: { display_name: string } | null;
+  body?: string | null;
+  created_at: string;
+};
+
+export type ActivityFeedProps<A extends FeedActivity> = {
+  activities: A[];
+  describe: (activity: A) => ActivityDescription;
   label: string;
 };
 
@@ -35,11 +42,11 @@ export function NoteBody({ body }: { body: string }) {
   );
 }
 
-export function ActivityFeed({
+export function ActivityFeed<A extends FeedActivity>({
   activities,
   describe,
   label,
-}: ActivityFeedProps) {
+}: ActivityFeedProps<A>) {
   const items: TimelineItem[] = activities.map((activity) => {
     const { title, description, tone } = describe(activity);
     return {
@@ -49,7 +56,7 @@ export function ActivityFeed({
       timestampLabel: formatDateTime(activity.created_at),
       actor: activity.actor?.display_name,
       description:
-        activity.body !== null ? (
+        activity.body !== null && activity.body !== undefined ? (
           <NoteBody body={activity.body} />
         ) : (
           description

@@ -24,7 +24,10 @@ export const SAFE_METHODS: ReadonlySet<HttpMethod> = new Set(["GET"]);
 
 export type ApiRequestOptions = {
   method?: HttpMethod;
-  /** JSON body (unsafe methods only). */
+  /**
+   * JSON body (unsafe methods only), or FormData for a file upload (Phase
+   * 02-2): the browser then sets the multipart Content-Type with its boundary.
+   */
   body?: unknown;
   /** Sent as X-CSRF-Token on unsafe methods when present. */
   csrfToken?: string | null;
@@ -41,7 +44,9 @@ export async function apiRequest<T>(
   { method = "GET", body, csrfToken, signal }: ApiRequestOptions = {},
 ): Promise<T> {
   const headers: Record<string, string> = { Accept: "application/json" };
-  if (body !== undefined) headers["Content-Type"] = "application/json";
+  const isForm = typeof FormData !== "undefined" && body instanceof FormData;
+  if (body !== undefined && !isForm)
+    headers["Content-Type"] = "application/json";
   if (!SAFE_METHODS.has(method) && csrfToken) {
     headers["X-CSRF-Token"] = csrfToken;
   }
@@ -51,7 +56,8 @@ export async function apiRequest<T>(
     response = await fetch(`${API_PREFIX}${path}`, {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body:
+        body === undefined ? undefined : isForm ? body : JSON.stringify(body),
       credentials: "same-origin",
       cache: "no-store",
       signal,

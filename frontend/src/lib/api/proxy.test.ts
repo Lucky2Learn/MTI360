@@ -4,13 +4,19 @@ import { describe, expect, it, vi } from "vitest";
 import { inputUrl } from "@/test/fetch-mock";
 
 import { apiCookieHeader, clientAddress } from "./forwarding";
-import { isForwardablePath, proxyToApi, type ProxyLogRecord } from "./proxy";
+import {
+  isForwardablePath,
+  MAX_REQUEST_BYTES,
+  proxyToApi,
+  type ProxyLogRecord,
+} from "./proxy";
 
 // Same-origin API proxy (T01-09A, D17): exactly the allow-listed headers in
 // both directions, the browser address as a single X-Forwarded-For entry,
 // status and envelope unchanged, and logs without any secret.
 
 const API = "http://api.internal:8000";
+const CRLF = String.fromCharCode(13, 10);
 const SECRET_BODY = JSON.stringify({
   email: "ananya.rao@coastal-maritime.example",
   password: "correct horse battery staple",
@@ -372,6 +378,109 @@ describe("proxy responses", () => {
     );
     expect(log).not.toHaveBeenCalled();
     expect(consoleError).not.toHaveBeenCalled();
+  });
+});
+
+describe("document uploads and downloads (Phase 02-2, ADR-0021 §8)", () => {
+  it("refuses a body declared or streamed over 11 MiB without calling the API", async () => {
+    const { fetchImpl, captured } = upstream(
+      new Response(null, { status: 204 }),
+    );
+    const declared = new Request(
+      "http://localhost:3100/api/v1/applications/a1/documents",
+      {
+        method: "POST",
+        headers: { "content-length": String(MAX_REQUEST_BYTES + 1) },
+        body: "x",
+      },
+    );
+    const first = await proxyToApi(declared, { apiBaseUrl: API, fetchImpl });
+    expect(first.status).toBe(413);
+    expect(
+      ((await first.json()) as { error: { code: string } }).error.code,
+    ).toBe("PAYLOAD_TOO_LARGE");
+    const chunk = new Uint8Array(1024 * 1024);
+    let sent = 0;
+    const stream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        sent += 1;
+        if (sent > 12) controller.close();
+        else controller.enqueue(chunk);
+      },
+    });
+    const streamed = new Request(
+      "http://localhost:3100/api/v1/applications/a1/documents",
+      {
+        method: "POST",
+        body: stream,
+        // @ts-expect-error: Node's Request needs duplex for a streamed body
+        duplex: "half",
+      },
+    );
+    const second = await proxyToApi(streamed, { apiBaseUrl: API, fetchImpl });
+    expect(second.status).toBe(413);
+    expect(sent).toBeLessThanOrEqual(13); // stopped reading after the limit
+    expect(captured).toHaveLength(0);
+  });
+
+  it("forwards a multipart body unchanged with its boundary", async () => {
+    const { fetchImpl, captured } = upstream(
+      new Response(null, { status: 204 }),
+    );
+    const body = [
+      "--b",
+      'Content-Disposition: form-data; name="document_type"',
+      "",
+      "PASSPORT",
+      "--b--",
+      "",
+    ].join(CRLF);
+    await proxyToApi(
+      browserRequest("/api/v1/applications/a1/documents", {
+        method: "POST",
+        body,
+        headers: { "content-type": "multipart/form-data; boundary=b" },
+      }),
+      { apiBaseUrl: API, fetchImpl },
+    );
+    const [call] = captured;
+    expect(new TextDecoder().decode(call!.init.body as ArrayBuffer)).toBe(body);
+    expect(call!.init.headers.get("content-type")).toBe(
+      "multipart/form-data; boundary=b",
+    );
+  });
+
+  it("returns the download headers and nothing else", async () => {
+    const { fetchImpl } = upstream(
+      new Response("%PDF-1.7", {
+        status: 200,
+        headers: {
+          "content-type": "application/pdf",
+          "content-disposition": 'attachment; filename="passport.pdf"',
+          "content-length": "8",
+          "content-security-policy": "default-src 'none'; sandbox",
+          "x-content-type-options": "nosniff",
+          "cache-control": "no-store",
+          "x-amz-request-id": "storage-internal",
+          server: "uvicorn",
+        },
+      }),
+    );
+    const response = await proxyToApi(
+      browserRequest("/api/v1/documents/d1/download"),
+      { apiBaseUrl: API, fetchImpl },
+    );
+    expect(response.headers.get("content-disposition")).toBe(
+      'attachment; filename="passport.pdf"',
+    );
+    expect(response.headers.get("content-security-policy")).toBe(
+      "default-src 'none'; sandbox",
+    );
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(response.headers.get("x-amz-request-id")).toBeNull();
+    expect(response.headers.get("server")).toBeNull();
+    expect(await response.text()).toBe("%PDF-1.7");
   });
 });
 

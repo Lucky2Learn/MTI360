@@ -5,3 +5,4 @@ export * from "./AuthenticationTemplate";
 export * from "./DataListTemplate";
 export * from "./DetailTemplate";
 export * from "./FormLayout";
+export * from "./WizardTemplate";

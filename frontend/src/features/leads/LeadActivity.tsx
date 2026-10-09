@@ -105,6 +105,12 @@ export function describeLeadActivity(
       return { title: `${kind(d.follow_up_kind)} cancelled` };
     case "NOTE":
       return { title: "Note" };
+    case "APPLICATION_STARTED":
+      return {
+        title: "Application started",
+        description: text(d.application_number) ?? undefined,
+        tone: "success",
+      };
   }
 }
 

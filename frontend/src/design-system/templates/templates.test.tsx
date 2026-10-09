@@ -9,6 +9,7 @@ import { renderScreen } from "@/test/render-screen";
 import { DataListTemplate } from "./DataListTemplate";
 import { DetailTemplate } from "./DetailTemplate";
 import { FormActions, FormCell, FormGrid, FormSection } from "./FormLayout";
+import { WizardTemplate } from "./WizardTemplate";
 
 // Page templates T02 / T03 and the form layout (Phase 02-1): one h1, the
 // side column as a named landmark, DOM order = reading order, accessible in
@@ -92,6 +93,42 @@ describe.each(["light", "dark"] as const)("templates (%s)", (theme) => {
     ).toBeInTheDocument();
     const buttons = screen.getAllByRole("button").map((b) => b.textContent);
     expect(buttons).toEqual(["Cancel", "Save"]);
+    await expectNoA11yViolations(container);
+  });
+
+  it("T05 Wizard (Phase 02-2): steps as links, the current one marked, completion in words", async () => {
+    const { container } = renderScreen(
+      <WizardTemplate
+        title="Application APP-2026-00012"
+        breadcrumbs={[{ label: "Applications" }, { label: "Edit" }]}
+        steps={[
+          {
+            id: "personal",
+            label: "Personal details",
+            href: "/a?step=personal",
+            complete: true,
+          },
+          { id: "contact", label: "Contact", href: "/a?step=contact" },
+          { id: "review", label: "Review and submit", href: "/a?step=review" },
+        ]}
+        currentStep="contact"
+        stepsLabel="Application steps"
+      >
+        <p>Step form</p>
+      </WizardTemplate>,
+      { theme },
+    );
+    const nav = screen.getByRole("navigation", { name: "Application steps" });
+    const links = Array.from(nav.querySelectorAll("a"));
+    expect(links.map((link) => link.getAttribute("href"))).toEqual([
+      "/a?step=personal",
+      "/a?step=contact",
+      "/a?step=review",
+    ]);
+    expect(links[1]).toHaveAttribute("aria-current", "step");
+    expect(links[0]).toHaveTextContent("Personal details (completed)");
+    expect(screen.getByText("Step 2 of 3: Contact")).toBeInTheDocument();
+    expectHeadingOutline(container);
     await expectNoA11yViolations(container);
   });
 });
