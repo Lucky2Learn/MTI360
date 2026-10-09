@@ -158,3 +158,8 @@ class ApplicationActivity(TenantScopedMixin, Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False, sort_order=90
     )
+
+    @property
+    def body(self) -> str | None:
+        """Application activity has no notes: the shared timeline view reads ``None``."""
+        return None

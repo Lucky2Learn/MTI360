@@ -2,7 +2,7 @@
 
 Static meta-test over the real application: a route served by a business
 module (``BUSINESS_MODULES``) must be in ``BUSINESS_ROUTES`` and its test
-must exist in the cross-tenant suite; registry entries must match real
+must exist in one of the cross-tenant suites; registry entries must match real
 routes; every other authenticated tenant route must belong to a module whose
 existing isolation suite is recorded in ``T01_SUITES``.
 """
@@ -13,7 +13,7 @@ from pathlib import Path
 from cross_tenant_registry import (
     BUSINESS_MODULES,
     BUSINESS_ROUTES,
-    CROSS_TENANT_SUITE,
+    CROSS_TENANT_SUITES,
     T01_SUITES,
 )
 from fastapi import FastAPI
@@ -41,13 +41,16 @@ def _tenant_routes(app: FastAPI) -> dict[tuple[str, str], str]:
 
 
 def _suite_tests() -> set[str]:
-    tree = ast.parse((BACKEND / CROSS_TENANT_SUITE).read_text(encoding="utf-8"))
-    return {
-        node.name
-        for node in tree.body
-        if isinstance(node, ast.AsyncFunctionDef | ast.FunctionDef)
-        and node.name.startswith("test_")
-    }
+    names: set[str] = set()
+    for suite in CROSS_TENANT_SUITES:
+        tree = ast.parse((BACKEND / suite).read_text(encoding="utf-8"))
+        names |= {
+            node.name
+            for node in tree.body
+            if isinstance(node, ast.AsyncFunctionDef | ast.FunctionDef)
+            and node.name.startswith("test_")
+        }
+    return names
 
 
 def _business(module: str) -> bool:

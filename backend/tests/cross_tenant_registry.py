@@ -5,7 +5,7 @@ not prove that a route keeps another tenant's data out. This registry does,
 incrementally:
 
 * :data:`BUSINESS_ROUTES` — every route of the business modules maps to the
-  test, in :data:`CROSS_TENANT_SUITE`, that calls it as tenant A with tenant
+  test, in one of :data:`CROSS_TENANT_SUITES`, that calls it as tenant A with tenant
   B's identifiers (or checks that its lists and lookups contain none of B's
   rows). ``test_cross_tenant_registry.py`` fails when a business-module route
   is missing here, or when a named test does not exist.
@@ -20,12 +20,30 @@ modules to :data:`BUSINESS_MODULES` and its routes here.
 from types import MappingProxyType
 from typing import Final
 
-BUSINESS_MODULES: Final = ("app.modules.courses", "app.modules.leads")
-CROSS_TENANT_SUITE: Final = "tests/integration/test_courses_leads_cross_tenant.py"
+BUSINESS_MODULES: Final = (
+    "app.modules.courses",
+    "app.modules.leads",
+    "app.modules.applications",  # Phase 02-2
+    "app.modules.documents",
+    "app.modules.students",
+)
+CROSS_TENANT_SUITES: Final = (
+    "tests/integration/test_courses_leads_cross_tenant.py",
+    "tests/integration/test_admissions_cross_tenant.py",
+)
 
 _C = "/api/v1/courses"
 _L = "/api/v1/leads"
 _F = "/api/v1/lead-follow-ups"
+_A = "/api/v1/applications"
+_AI = f"{_A}/{{application_id}}"
+_D = "/api/v1/documents"
+_DI = f"{_D}/{{document_id}}"
+_S = "/api/v1/students"
+_SI = f"{_S}/{{student_id}}"
+_APP_READS = "test_other_tenant_application_reads_are_not_found"
+_APP_CHANGES = "test_other_tenant_application_changes_are_not_found"
+_STUDENT_READS = "test_other_tenant_student_reads_are_not_found"
 
 BUSINESS_ROUTES: Final = MappingProxyType(
     {
@@ -49,6 +67,26 @@ BUSINESS_ROUTES: Final = MappingProxyType(
         ("PATCH", f"{_F}/{{follow_up_id}}"): "test_other_tenant_follow_ups_are_not_found",
         ("POST", f"{_F}/{{follow_up_id}}/complete"): "test_other_tenant_follow_ups_are_not_found",
         ("POST", f"{_F}/{{follow_up_id}}/cancel"): "test_other_tenant_follow_ups_are_not_found",
+        # Phase 02-2 (ADR-0021)
+        ("GET", _A): "test_application_list_holds_no_other_tenant_application",
+        ("POST", _A): "test_application_create_rejects_other_tenant_references",
+        ("GET", _AI): _APP_READS,
+        ("PATCH", _AI): _APP_CHANGES,
+        ("POST", f"{_AI}/submit"): _APP_CHANGES,
+        ("POST", f"{_AI}/review"): _APP_CHANGES,
+        ("POST", f"{_AI}/admit"): "test_admission_never_links_another_tenants_student",
+        ("GET", f"{_AI}/activity"): _APP_READS,
+        ("GET", f"{_AI}/student-candidates"): _APP_READS,
+        ("GET", f"{_AI}/documents"): _APP_READS,
+        ("POST", f"{_AI}/documents"): _APP_CHANGES,
+        ("GET", _D): "test_document_queue_holds_no_other_tenant_document",
+        ("GET", f"{_DI}/download"): "test_other_tenant_documents_are_not_found",
+        ("POST", f"{_DI}/verify"): "test_other_tenant_documents_are_not_found",
+        ("POST", f"{_DI}/reject"): "test_other_tenant_documents_are_not_found",
+        ("GET", _S): "test_student_list_holds_no_other_tenant_student",
+        ("GET", _SI): _STUDENT_READS,
+        ("GET", f"{_SI}/documents"): _STUDENT_READS,
+        ("GET", f"{_SI}/activity"): _STUDENT_READS,
     }
 )
 
