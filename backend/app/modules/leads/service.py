@@ -42,6 +42,7 @@ from app.modules.leads.domain import (
     APPLICATION_START,
     CITY_MAX_LENGTH,
     INITIAL_STATUS,
+    PROGRESSED_STATUSES,
     QUALIFICATION_MAX_LENGTH,
     REASON_MAX_LENGTH,
     ActivityKind,
@@ -501,31 +502,75 @@ async def _status_changed(
     )
 
 
-async def mark_application_started(
-    db: AsyncSession, lead_id: uuid.UUID, *, actor_membership_id: uuid.UUID | None
-) -> Lead:
-    """The 02-2 system transition: an application was created for this open lead.
-
-    Called by the application service in the transaction that creates the
-    application (after its own authorization); never exposed as a route in
-    02-1. Closed and already progressed leads are refused.
-    """
+async def _system_lead(db: AsyncSession, lead_id: uuid.UUID) -> Lead:
     context = current_context()
     if context.tenant_id is None:
         raise PermissionDeniedError()
     lead = await repo.lead(db, context.tenant_id, lead_id)
     if lead is None:
         raise NotFoundError()
+    return lead
+
+
+async def mark_application_started(
+    db: AsyncSession,
+    lead_id: uuid.UUID,
+    *,
+    actor_membership_id: uuid.UUID | None,
+    application_id: uuid.UUID,
+    application_number: str,
+) -> Lead:
+    """The 02-2 system transition: an application was started from this lead.
+
+    Called by the application service in the transaction that creates the
+    application (after its own authorization); never a route. Every call
+    records ``APPLICATION_STARTED``. An open lead moves to ``APPLICATION``; a
+    lead already in ``APPLICATION`` or ``ADMITTED`` (a second application, for
+    another course) keeps its status; a closed lead is refused (ADR-0021 §10).
+    """
+    lead = await _system_lead(db, lead_id)
     current = LeadStatus(lead.status)
-    if not APPLICATION_START.allows(current, LeadStatus.APPLICATION):
+    moves = APPLICATION_START.allows(current, LeadStatus.APPLICATION)
+    if not moves and current not in PROGRESSED_STATUSES:
         raise _invalid(
-            _detail("lead_id", TransitionProblem.INVALID.value, "This lead is not open.")
+            _detail("lead_id", TransitionProblem.INVALID.value, "Reopen this lead first.")
         )
-    lead.status = LeadStatus.APPLICATION.value
-    lead.status_reason = None
-    lead.status_changed_at = func.now()
-    await db.flush()
-    await _status_changed(db, actor_membership_id, lead, current, LeadStatus.APPLICATION, None)
+    await record_activity(
+        db,
+        ACTIVITIES,
+        subject_column="lead_id",
+        subject_id=lead.id,
+        kind=ActivityKind.APPLICATION_STARTED.value,
+        actor_membership_id=actor_membership_id,
+        details={"application_id": application_id, "application_number": application_number},
+    )
+    if moves:
+        lead.status = LeadStatus.APPLICATION.value
+        lead.status_reason = None
+        lead.status_changed_at = func.now()
+        await db.flush()
+        await _status_changed(db, actor_membership_id, lead, current, LeadStatus.APPLICATION, None)
+    return lead
+
+
+async def mark_admitted(
+    db: AsyncSession, lead_id: uuid.UUID, *, actor_membership_id: uuid.UUID | None
+) -> Lead:
+    """The 02-2 system transition: an application of this lead was admitted.
+
+    ``APPLICATION`` → ``ADMITTED`` with a status-change activity and audit
+    event; an ``ADMITTED`` lead (an earlier admission) is unchanged. A lead
+    with an application is never open or closed (staff cannot move a
+    progressed lead), so any other status is left as it is.
+    """
+    lead = await _system_lead(db, lead_id)
+    current = LeadStatus(lead.status)
+    if current is LeadStatus.APPLICATION:
+        lead.status = LeadStatus.ADMITTED.value
+        lead.status_reason = None
+        lead.status_changed_at = func.now()
+        await db.flush()
+        await _status_changed(db, actor_membership_id, lead, current, LeadStatus.ADMITTED, None)
     return lead
 
 

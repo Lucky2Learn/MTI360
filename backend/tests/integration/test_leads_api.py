@@ -376,19 +376,70 @@ async def test_the_application_entry_point_is_a_system_transition_for_open_leads
     csrf = await sign_in(h, "maya")
     open_lead = await new_lead(h, csrf)
     closed = data(await _move(h, csrf, await new_lead(h, csrf), "LOST", reason="No response"))
+    lead_id = uuid.UUID(open_lead["id"])
+    first, second = uuid.uuid7(), uuid.uuid7()
     async with system_context(h.factory, tenant_id=h.world.tenant_a) as db:
         lead = await service.mark_application_started(
-            db, uuid.UUID(open_lead["id"]), actor_membership_id=None
+            db,
+            lead_id,
+            actor_membership_id=None,
+            application_id=first,
+            application_number="APP-2026-00001",
+        )
+        assert lead.status == "APPLICATION"
+    # Phase 02-2: a second application (another course) keeps the status and is recorded.
+    async with system_context(h.factory, tenant_id=h.world.tenant_a) as db:
+        lead = await service.mark_application_started(
+            db,
+            lead_id,
+            actor_membership_id=None,
+            application_id=second,
+            application_number="APP-2026-00002",
         )
         assert lead.status == "APPLICATION"
     async with system_context(h.factory, tenant_id=h.world.tenant_a) as db:
         with pytest.raises(ValidationFailedError):
             await service.mark_application_started(
-                db, uuid.UUID(closed["id"]), actor_membership_id=None
+                db,
+                uuid.UUID(closed["id"]),
+                actor_membership_id=None,
+                application_id=uuid.uuid7(),
+                application_number="APP-2026-00003",
             )
     progressed = data(await h.client.get(f"{LEADS}/{open_lead['id']}"))
     assert progressed["status"] == "APPLICATION"
-    assert progressed["transitions"] == []  # staff cannot move it in 02-1
+    assert progressed["transitions"] == []  # staff cannot move a progressed lead
+    kinds = [
+        (a["kind"], a["details"].get("application_number"))
+        for a in await _activity(h, open_lead["id"])
+    ]
+    assert kinds[:3] == [
+        ("APPLICATION_STARTED", "APP-2026-00002"),
+        ("STATUS_CHANGED", None),
+        ("APPLICATION_STARTED", "APP-2026-00001"),
+    ]
+    still_closed = data(await h.client.get(f"{LEADS}/{closed['id']}"))
+    assert still_closed["status"] == "LOST"
+
+    # Admission: APPLICATION → ADMITTED once; an admitted lead stays admitted.
+    for _ in range(2):
+        async with system_context(h.factory, tenant_id=h.world.tenant_a) as db:
+            lead = await service.mark_admitted(db, lead_id, actor_membership_id=None)
+            assert lead.status == "ADMITTED"
+    admitted = data(await h.client.get(f"{LEADS}/{open_lead['id']}"))
+    assert (admitted["status"], admitted["transitions"]) == ("ADMITTED", [])
+    moves = [a for a in await _activity(h, open_lead["id"]) if a["kind"] == "STATUS_CHANGED"]
+    assert [(m["details"]["from"], m["details"]["to"]) for m in moves[:2]] == [
+        ("APPLICATION", "ADMITTED"),
+        ("NEW", "APPLICATION"),
+    ]
+    # An open lead is not admitted by mistake.
+    other = await new_lead(h, csrf)
+    async with system_context(h.factory, tenant_id=h.world.tenant_a) as db:
+        unchanged = await service.mark_admitted(
+            db, uuid.UUID(other["id"]), actor_membership_id=None
+        )
+        assert unchanged.status == "NEW"
 
 
 # --- Assignment --------------------------------------------------------------------------------

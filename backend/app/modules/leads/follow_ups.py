@@ -8,9 +8,10 @@ follow-up are derived, never stored. Follow-ups and notes are recorded in
 """
 
 import uuid
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Any, Final, cast
+from typing import Any, Final, Protocol, cast
 
 from sqlalchemy import Table, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -257,15 +258,37 @@ async def cancel(db: AsyncSession, follow_up_id: uuid.UUID, *, version: int) -> 
 # --- Notes and the timeline ----------------------------------------------------------------
 
 
+class ActivityRecord(Protocol):
+    """A timeline row: a ``LeadActivity``, or a row of the Student 360 union (Phase 02-2)."""
+
+    @property
+    def id(self) -> uuid.UUID: ...
+
+    @property
+    def kind(self) -> str: ...
+
+    @property
+    def actor_membership_id(self) -> uuid.UUID | None: ...
+
+    @property
+    def details(self) -> dict[str, Any]: ...
+
+    @property
+    def body(self) -> str | None: ...
+
+    @property
+    def created_at(self) -> datetime: ...
+
+
 @dataclass(frozen=True, slots=True)
 class ActivityView:
-    item: LeadActivity
+    item: ActivityRecord
     actor_name: str | None
     details: dict[str, Any]
 
 
-async def _activity_views(
-    db: AsyncSession, who: Caller, items: list[LeadActivity]
+async def activity_views(
+    db: AsyncSession, who: Caller, items: Sequence[ActivityRecord]
 ) -> list[ActivityView]:
     """Activity with names resolved server-side. Assignment details gain ``*_name`` keys;
     a campus outside the caller's scope is named generically, never disclosed."""
@@ -302,7 +325,7 @@ async def list_activity(
     who = await caller(db, LEAD_READ)
     await authorized_lead(db, who, lead_id, LEAD_READ)
     items, total = await repo.activities_of(db, who.tenant_id, lead_id, page)
-    return await _activity_views(db, who, items), total
+    return await activity_views(db, who, items), total
 
 
 async def add_note(db: AsyncSession, lead_id: uuid.UUID, *, body: str) -> ActivityView:
@@ -316,4 +339,4 @@ async def add_note(db: AsyncSession, lead_id: uuid.UUID, *, body: str) -> Activi
     found = await db.get(LeadActivity, activity_id)
     if found is None:  # pragma: no cover - inserted in this transaction
         raise NotFoundError()
-    return (await _activity_views(db, who, [found]))[0]
+    return (await activity_views(db, who, [found]))[0]
