@@ -108,7 +108,15 @@ export const tenantExperience: ApplicationExperience = {
           ["Leads", "Counselling", "Applications", "Documents", "Students"],
           {},
           // Leads: list and board (ADM-02, ?view=board), Phase 02-1.
-          { Leads: permission("lead.read") },
+          // Applications (ADM-05…ADM-10), the document verification queue
+          // (ADM-09) and Students (ADM-11/12), Phase 02-2. Counselling stays
+          // UNRELEASED (P1).
+          {
+            Leads: permission("lead.read"),
+            Applications: permission("application.read"),
+            Documents: permission("document.read"),
+            Students: permission("student.read"),
+          },
         ),
         group(
           "Academics",

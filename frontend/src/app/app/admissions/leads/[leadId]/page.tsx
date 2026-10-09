@@ -1,5 +1,7 @@
 import { Badge, Card, CardBody, CardHeader } from "@/design-system/components";
 import { DetailTemplate } from "@/design-system/templates/DetailTemplate";
+import { APPLICATION_READ } from "@/features/applications/labels";
+import { LeadApplications } from "@/features/applications/LeadApplications";
 import { FollowUpsPanel } from "@/features/leads/FollowUpsPanel";
 import {
   LEAD_READ,
@@ -17,10 +19,12 @@ import { ReadErrorState } from "@/features/shared/ReadErrorState";
 import { RecordLink } from "@/features/shared/RecordLink";
 import type {
   ActivityWire,
+  ApplicationListItemWire,
   FollowUpWire,
   LeadWire,
 } from "@/lib/api/admissions";
 import { tenantApiRead } from "@/lib/api/server-read";
+import { can } from "@/lib/authz/requirements";
 import {
   requireRecordId,
   settle,
@@ -156,13 +160,20 @@ export default async function LeadDetailPage({ params }: Props) {
       </>
     );
   }
-  const [leadRead, followUpsRead, activityRead] = await Promise.all([
-    tenantApiRead<LeadWire>(`/leads/${id}`),
-    tenantApiRead<{ items: FollowUpWire[] }>(`/leads/${id}/follow-ups`),
-    tenantApiRead<ActivityWire[]>(
-      `/leads/${id}/activity?limit=${ACTIVITY_LIMIT}`,
-    ),
-  ]);
+  const [leadRead, followUpsRead, activityRead, applicationsRead] =
+    await Promise.all([
+      tenantApiRead<LeadWire>(`/leads/${id}`),
+      tenantApiRead<{ items: FollowUpWire[] }>(`/leads/${id}/follow-ups`),
+      tenantApiRead<ActivityWire[]>(
+        `/leads/${id}/activity?limit=${ACTIVITY_LIMIT}`,
+      ),
+      // Phase 02-2: the lead's applications (application.read only).
+      can(session.permissions, APPLICATION_READ)
+        ? tenantApiRead<ApplicationListItemWire[]>(
+            `/applications?lead=${id}&limit=20&sort=-created_at`,
+          )
+        : null,
+    ]);
   const lead = settle(leadRead, path);
   if (lead.kind !== "ok") {
     return (
@@ -208,6 +219,9 @@ export default async function LeadDetailPage({ params }: Props) {
         aside={
           <>
             <Pipeline lead={data} />
+            {applicationsRead?.kind === "ok" && (
+              <LeadApplications applications={applicationsRead.data} />
+            )}
             {followUps ? (
               <FollowUpsPanel
                 leadId={data.id}

@@ -108,11 +108,21 @@ describe("requirement map (T01-05 §6)", () => {
     expect(byHref.get("/app/admissions/leads")).toEqual(
       permission("lead.read"),
     );
+    // Phase 02-2: applications, the document queue and students (ADR-0021 §14).
+    expect(byHref.get("/app/admissions/applications")).toEqual(
+      permission("application.read"),
+    );
+    expect(byHref.get("/app/admissions/documents")).toEqual(
+      permission("document.read"),
+    );
+    expect(byHref.get("/app/admissions/students")).toEqual(
+      permission("student.read"),
+    );
     for (const href of [
       "/app/administration/integrations",
       "/app/administration/billing",
       "/app/grow/leads",
-      "/app/admissions/applications",
+      "/app/admissions/counselling",
       "/app/academics/batches",
       "/app/ai/sql-data-agent",
     ]) {

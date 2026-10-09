@@ -13,6 +13,8 @@ import type { ReadResult } from "@/lib/api/server-read";
 import type { SessionWire } from "@/lib/api/types";
 import {
   activity,
+  ADMISSIONS_COUNSELLOR,
+  applicationItem,
   COUNSELLOR,
   course,
   followUp,
@@ -394,6 +396,45 @@ describe("GROW-09 lead detail", () => {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
     expect(screen.queryByRole("link", { name: "Edit" })).toBeNull();
+  });
+
+  it("Phase 02-2: starts an application and lists the lead's applications", async () => {
+    state.session = readySession({ permissions: ADMISSIONS_COUNSELLOR });
+    detailReads({ status: "INTERESTED" });
+    state.reads.unshift([
+      "/applications?lead=",
+      ok([applicationItem({ status: "DRAFT" })], 1),
+    ]);
+    await show(detail());
+    expect(
+      screen.getByRole("link", { name: "Start application" }),
+    ).toHaveAttribute(
+      "href",
+      `/app/admissions/applications/new?lead=${IDS.arjun}`,
+    );
+    expect(
+      screen.getByRole("link", { name: "APP-2026-00012 · GPR" }),
+    ).toHaveAttribute(
+      "href",
+      `/app/admissions/applications/${IDS.application}`,
+    );
+  });
+
+  it("Phase 02-2: a closed lead, or a member without application.create, cannot start one", async () => {
+    state.session = readySession({ permissions: ADMISSIONS_COUNSELLOR });
+    detailReads({ status: "LOST", status_reason: "Joined another institute" });
+    state.reads.unshift(["/applications?lead=", ok([], 0)]);
+    const { unmount } = await show(detail());
+    expect(
+      screen.queryByRole("link", { name: "Start application" }),
+    ).toBeNull();
+    expect(screen.getByText("No applications yet")).toBeInTheDocument();
+    unmount();
+    state.session = readySession({ permissions: COUNSELLOR });
+    await show(detail());
+    expect(
+      screen.queryByRole("link", { name: "Start application" }),
+    ).toBeNull();
   });
 
   it("another institute's, another campus's or a malformed lead is not found", async () => {
