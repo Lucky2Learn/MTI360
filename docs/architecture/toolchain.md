@@ -49,6 +49,8 @@ This document records the exact toolchain versions, why each was chosen, which n
 
 **Not installed yet (decision D5):** SQLAlchemy (target 2.0.x), Alembic, asyncpg, Redis client, S3 client. They are added by the task that first uses them.
 
+**Phase 02-2 (ADR-0021 §9):** `boto3` 1.43.107 (with botocore, s3transfer, jmespath, python-dateutil, six, urllib3) as the S3 client behind `app/integrations/storage`, and `python-multipart` 0.0.32 for FastAPI file uploads. Both resolved under the 7-day cooldown (`exclude-newer`), `pip-audit` clean; boto3 has no type information, so mypy ignores its missing imports only (the adapter is typed by the `ObjectStorage` protocol).
+
 ### Docker images (T00-03)
 
 | Service | Image | Notes |
