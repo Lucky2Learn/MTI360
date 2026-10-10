@@ -389,3 +389,19 @@
 - **Issue:** `DOCUMENT VERIFICATION` and `ELIGIBLE` duplicate state that is tracked per document and by the review decision, and the admission flow places payment before the student exists, which contradicts the locked decision L3.
 - **Current handling:** All ten statuses are in the database CHECK; `DOCUMENT_VERIFICATION` and `ELIGIBLE` are reserved and unused. `CORRECTION_REQUIRED` stands for "document correction required" and also covers corrections to the application's details. Admission approval creates the Admission and the Student; payment gates enrolment and batch allocation later (L3).
 - **Proposed resolution:** Align APP-FLOW §16/§18 and PRD §29 with ADR-0021 when those documents are next revised.
+
+## INC-48 — "Invoice" versus tax invoice
+
+- **Status:** `DECIDED-BY-ADR` ([ADR-0022](../adr/0022-finance-lite.md) §2; Phase 02-5). Production confirmation outstanding.
+- **Where:** PRD.md §38 (invoices, receipts), APP-FLOW.md §26 (Fee Plan → Invoice → Payment → Receipt), ARCHITECTURE.md (Finance table `invoices`), UI-SCREENS.md FIN-04/FIN-05 (Invoices, Invoice Detail), TASKS.md T06-03
+- **Issue:** The specifications say "invoice" without stating whether a GST tax invoice is meant. A document called an invoice can be read as a tax invoice, which has legal content requirements. No specification defines the tax treatment of institute fees.
+- **Current handling:** Finance-lite issues **non-tax fee invoices**. There is no GST or tax calculation and no tax-invoice features. Every view and print is labelled "Fee invoice — not a tax invoice". The table and route names stay `invoices` (ARCHITECTURE.md). No legal or tax conclusion is drawn.
+- **Proposed resolution:** Before the first production tenant uses Finance-lite, an appropriately qualified person confirms that tenant's tax treatment. If tax invoices are required, a later ADR adds them, and the specifications then distinguish fee invoices from tax invoices.
+
+## INC-49 — Number period: financial year versus calendar year
+
+- **Status:** `DECIDED-BY-ADR` ([ADR-0022](../adr/0022-finance-lite.md) §3; Phase 02-5). The receipt date basis needs production confirmation.
+- **Where:** ADR-0021 §7 (`APP`/`ADM`/`STU` numbers by calendar year, database clock in UTC; `tenant_sequences.period` a calendar year) vs ADR-0022 §3 (fee invoice and receipt numbers by Indian financial year)
+- **Issue:** One table, `tenant_sequences`, now holds two kinds of period. Admissions numbering uses the UTC calendar year. Finance numbering uses the Indian financial year (1 April – 31 March), computed in India Standard Time, because a UTC boundary would put the first 5½ hours of 1 April IST in the previous year. Separately, a receipt's financial year follows its **confirmation** instant, not the `received_on` date entered by staff. A cheque received on 30 March and cleared on 2 April is therefore receipted in the new financial year.
+- **Current handling:** For `INVOICE` and `RECEIPT`, `period` is the financial year's starting calendar year (`FY2026-27` → 2026), formatted `INV-FY2026-27-nnnnn` / `RCT-FY2026-27-nnnnn`. For `APPLICATION`, `ADMISSION` and `STUDENT`, ADR-0021 §7 is unchanged. Allocation stays transactional and gap-free.
+- **Proposed resolution:** Confirm the receipt date basis with the institutes' accounts practice before production use (with INC-48). Decide whether admissions numbering should also move to the financial year or to IST when campus time zones are modelled (INC-40).

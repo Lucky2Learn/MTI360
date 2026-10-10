@@ -50,6 +50,9 @@ Recommended reading order (CLAUDE.md §2):
 | [0017](adr/0017-platform-identity-mfa.md) | Platform identity and MFA implementation: schema and RLS, encryption, TOTP and recovery codes, platform sessions, step-up, MFA reset, tenant MFA, bootstrap CLI | Accepted |
 | [0019](adr/0019-tenant-administration.md) | Tenant administration implementation: migration 0008 (invitee key, tenant audit visibility, campus-scope `removed_at`), member invitations and lifecycle, owner protection, roles, campuses, tenant audit read, development seed | Accepted |
 | [0018](adr/0018-platform-administration.md) | Platform administration implementation: migration 0007 keys and policies, provisioning, tenant suspension, platform user administration and invitations, audit read, refinements of D7-1 … D7-10 | Accepted |
+| [0020](adr/0020-courses-and-leads.md) | Courses and Leads (Phase 02-1) | Accepted |
+| [0021](adr/0021-admissions-core.md) | Admissions Core: Applications, Documents, Admission and Students (Phase 02-2) | Accepted |
+| [0022](adr/0022-finance-lite.md) | Finance-lite: fee structures, non-tax fee invoices, offline payments and receipts, financial-year numbering (Phase 02-5) | Accepted (not implemented) |
 
 ADR format: Status, Context, Decision, Consequences, Alternatives considered. ADRs are immutable once accepted; a change is made by a new ADR that supersedes the old one.
 
@@ -84,6 +87,9 @@ ADR format: Status, Context, Decision, Consequences, Alternatives considered. AD
 | [accessibility.md](architecture/accessibility.md) | WCAG 2.2 AA contract: keyboard, focus, names, forms, live regions, overlays, tables, motion, contrast, landmarks/headings, testing, screen checklist, known exceptions (T00-10) |
 | [ci.md](architecture/ci.md) | CI workflows, required `ci-ok` status, security model, pinned versions, audit exceptions, Dependabot scope, local reproduction, future branch protection (T00-05) |
 | [spec-inconsistencies.md](architecture/spec-inconsistencies.md) | Known inconsistencies between specifications, recorded for future resolution |
+| [PHASE-02-MASTER-READINESS.md](architecture/PHASE-02-MASTER-READINESS.md) | Phase 02 readiness and module sequencing: decisions L1–L7, slice plan (2026-10-08), with a 2026-10-10 addendum on the Finance-lite delivery order |
+| [PHASE-02-1-COURSES-LEADS-READINESS.md](architecture/PHASE-02-1-COURSES-LEADS-READINESS.md) | Phase 02-1 Courses + Lead Management implementation blueprint |
+| [PHASE-02-5-FINANCE-LITE-READINESS.md](architecture/PHASE-02-5-FINANCE-LITE-READINESS.md) | Phase 02-5 Finance-lite implementation plan: scope, screens, entities, permissions, API, migration, tests, acceptance (decisions in ADR-0022) |
 
 ## What does NOT belong here
 

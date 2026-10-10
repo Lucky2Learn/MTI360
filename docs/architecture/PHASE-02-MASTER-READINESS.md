@@ -638,3 +638,21 @@ AI, workflow builder, WhatsApp/SMS/voice, website builder and custom domains, ca
 
 **NEXT AFTER THAT:**
 02-2 Applications → Documents → Verification → Admission → Student (with the storage capability), with the onboarding enablers (02-C) in parallel. Then the public enquiry page, Finance-lite and Batches.
+
+---
+
+## Addendum — 2026-10-10: Finance-lite delivery order and decisions
+
+This addendum records later decisions. The review above is kept unchanged as historical evidence of the 2026-10-08 recommendation.
+
+- **Delivery order.** Slice **02-5 Finance-lite** is delivered **ahead of** 02-3 (Seed + demo hardening) and 02-4 (Public enquiry). These were sequenced before it in §22, §27 and L1. No identifier is renumbered. The remaining slices (02-C, 02-3, 02-4, 02-6) keep their relative order, and 02-6 Batches still follows 02-5 (§23). This changes the delivery order only. §17 and §23 already make 02-5 depend on 02-2 alone.
+- **Decisions.** The Finance-lite readiness review ([PHASE-02-5-FINANCE-LITE-READINESS.md](PHASE-02-5-FINANCE-LITE-READINESS.md)) raised S1 and F1–F8. They were approved and recorded in [ADR-0022](../adr/0022-finance-lite.md):
+  - non-tax fee invoices, with production use conditional on confirmation of the tax treatment;
+  - invoice and receipt numbers by Indian financial year (April–March, IST), still transactional and gap-free;
+  - cheque and DD payments `PENDING` until clearance;
+  - INR only, as integer paise;
+  - line adjustments at issue, recorded against the structure values;
+  - one live invoice per admission;
+  - separation of duties on reversal;
+  - no step-up in the MVP.
+- **§17 still holds.** It refines §17 "Minimum finance" without contradicting it: there is still no gateway, instalments, refunds, discounts, scholarships or reconciliation, and step-up for refunds stays a V2 decision. Cheque/DD clearance, reversal and cancellation are added as corrections that keep financial history.
