@@ -57,7 +57,10 @@ SESSION_REALM_TENANT: Final = "tenant"
 # --- Email (D12: the only login identifier) -----------------------------------------
 
 EMAIL_MAX_LENGTH: Final = 254
-_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+_EMAIL_PATTERN = re.compile(r"[^@\s]++@[^@\s]++")
+"""One ``@`` between two non-empty parts without white space. The domain's inner dot is
+checked separately: in one pattern, two quantifiers competing for the domain's text made
+matching quadratic in the input length (CodeQL ``py/polynomial-redos``)."""
 
 
 class InvalidEmailError(ValueError):
@@ -67,7 +70,11 @@ class InvalidEmailError(ValueError):
 def normalize_email(raw: str) -> str:
     """Canonical form: trimmed and lower-cased; raises on an implausible address."""
     email = raw.strip().lower()
-    if len(email) > EMAIL_MAX_LENGTH or not _EMAIL_PATTERN.fullmatch(email):
+    if (
+        len(email) > EMAIL_MAX_LENGTH
+        or not _EMAIL_PATTERN.fullmatch(email)
+        or "." not in email.partition("@")[2][1:-1]  # a dot inside the domain, not at its ends
+    ):
         raise InvalidEmailError("not an email address")
     return email
 

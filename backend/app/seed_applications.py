@@ -41,7 +41,12 @@ from app.modules.leads.models import Lead, LeadActivity
 from app.modules.students.domain import SequenceName
 from app.modules.students.models import Admission, Student
 from app.modules.students.sequences import next_number
-from app.seed_admissions import FICTITIOUS_MOBILE_PREFIX, AdmissionsSeedError, SeedLead
+from app.seed_admissions import (
+    FICTITIOUS_MOBILE_PREFIX,
+    AdmissionsSeedError,
+    SeedLead,
+    is_development_email,
+)
 
 APPLICATIONS = cast(Table, Application.__table__)
 APPLICATION_ACTIVITIES = cast(Table, ApplicationActivity.__table__)
@@ -192,7 +197,7 @@ def parse_applications(
             raise AdmissionsSeedError(f"{at}: invalid mobile, email or INDoS number") from None
         if mobile and not (mobile_key(mobile) or "").startswith(FICTITIOUS_MOBILE_PREFIX):
             raise AdmissionsSeedError(f"{at}.mobile: use the fictitious 90000 10xxx range")
-        if email and not email[1].endswith("example.com"):
+        if email and not is_development_email(email[1]):
             raise AdmissionsSeedError(f"{at}.email: development emails must use example.com")
         birth = item.get("date_of_birth")
         full_name = _str(item, "full_name") or (lead.full_name if lead else None)

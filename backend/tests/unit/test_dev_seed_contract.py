@@ -7,6 +7,7 @@ import pytest
 
 from app import cli
 from app.seed import DEFAULT_SEED_FILE, SeededAccount, SeedError, load_seed, parse_seed
+from app.seed_admissions import is_development_email
 
 
 def _document(**member: Any) -> dict[str, Any]:
@@ -169,6 +170,10 @@ def _application(**fields: Any) -> dict[str, Any]:
             "fictitious",
         ),
         (_application(indos_number="??"), "INDoS"),
+        (
+            _application(lead=None, full_name="Meera Pillai", email="meera@notexample.com"),
+            "example.com",
+        ),
     ],
     ids=[
         "course",
@@ -180,6 +185,7 @@ def _application(**fields: Any) -> dict[str, Any]:
         "documents",
         "mobile",
         "indos",
+        "email-lookalike",
     ],
 )
 def test_invalid_applications_are_refused(application: dict[str, Any], message: str) -> None:
@@ -198,6 +204,8 @@ def test_invalid_applications_are_refused(application: dict[str, Any], message: 
         ([GPR], [_lead(mobile=None)], "mobile or an email"),
         ([GPR], [_lead(mobile="+91 98200 12345")], "fictitious"),
         ([GPR], [_lead(mobile=None, email="arjun@gmail.com")], "example.com"),
+        ([GPR], [_lead(mobile=None, email="arjun@notexample.com")], "example.com"),
+        ([GPR], [_lead(mobile=None, email="arjun@example.com.in")], "example.com"),
         ([GPR], [_lead(course="DNS")], "unknown course"),
         ([GPR], [_lead(campus="MUM")], "unknown campus"),
         ([GPR], [_lead(owner="someone@malabar-seafarers.example")], "seed members"),
@@ -212,3 +220,20 @@ def test_invalid_courses_and_leads_are_refused(
 ) -> None:
     with pytest.raises(SeedError, match=message):
         parse_seed(_with_admissions(courses, leads))
+
+
+@pytest.mark.parametrize(
+    ("email", "development"),
+    [
+        ("arjun@example.com", True),
+        ("arjun@mail.example.com", True),
+        ("arjun@notexample.com", False),  # CodeQL py/incomplete-url-substring-sanitization
+        ("arjun@example.com.in", False),
+        ("arjun@example.co", False),
+        ("example.com@gmail.com", False),
+    ],
+)
+def test_only_the_reserved_example_domain_is_a_development_email(
+    email: str, development: bool
+) -> None:
+    assert is_development_email(email) is development

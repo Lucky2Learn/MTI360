@@ -50,6 +50,15 @@ FOLLOW_UPS = cast(Table, LeadFollowUp.__table__)
 ACTIVITIES = cast(Table, LeadActivity.__table__)
 SEEDABLE_STATUSES: Final = OPEN_STATUSES | CLOSED_STATUSES
 FICTITIOUS_MOBILE_PREFIX: Final = "9000010"
+DEVELOPMENT_EMAIL_DOMAIN: Final = "example.com"
+"""Reserved (RFC 2606): lead and applicant emails never reach a real mailbox."""
+
+
+def is_development_email(email: str) -> bool:
+    """The address's domain is ``example.com`` or one of its subdomains: compared as a
+    whole domain, so ``notexample.com`` or ``example.com.evil.org`` do not pass."""
+    domain = email.rpartition("@")[2]
+    return domain == DEVELOPMENT_EMAIL_DOMAIN or domain.endswith(f".{DEVELOPMENT_EMAIL_DOMAIN}")
 
 
 class AdmissionsSeedError(ValueError):
@@ -151,7 +160,7 @@ def _contact(item: Mapping[str, Any], at: str) -> tuple[str | None, str | None]:
         raise AdmissionsSeedError(f"{at}: a mobile or an email is required")
     if mobile and not (mobile_key(mobile) or "").startswith(FICTITIOUS_MOBILE_PREFIX):
         raise AdmissionsSeedError(f"{at}.mobile: use the fictitious 90000 10xxx range")
-    if email and not email[1].rsplit("@", 1)[1].endswith("example.com"):
+    if email and not is_development_email(email[1]):
         raise AdmissionsSeedError(f"{at}.email: development emails must use example.com")
     return mobile, email[0] if email else None
 
