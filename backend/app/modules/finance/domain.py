@@ -175,6 +175,10 @@ def invoice_lines(structure: Sequence[FeeItem], requested: Sequence[FeeItem]) ->
     return lines
 
 
+IssuedLine = InvoiceLine
+"""The domain line, named apart from the ``invoice_lines`` model where both are used."""
+
+
 def lines_total(lines: Sequence[InvoiceLine]) -> int:
     return sum(line.amount_minor for line in lines)
 

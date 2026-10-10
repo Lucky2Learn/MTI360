@@ -49,6 +49,12 @@ _STUDENT_READS = "test_other_tenant_student_reads_are_not_found"
 _FS = "/api/v1/fee-structures"
 _FSI = f"{_FS}/{{structure_id}}"
 _FS_CHANGES = "test_other_tenant_fee_structure_changes_are_not_found"
+_I = "/api/v1/invoices"
+_II = f"{_I}/{{invoice_id}}"
+_P = "/api/v1/payments"
+_PI = f"{_P}/{{payment_id}}"
+_INVOICE_CHANGES = "test_other_tenant_invoice_changes_are_not_found"
+_PAYMENT_CHANGES = "test_other_tenant_payment_changes_are_not_found"
 
 BUSINESS_ROUTES: Final = MappingProxyType(
     {
@@ -98,6 +104,17 @@ BUSINESS_ROUTES: Final = MappingProxyType(
         ("GET", _FSI): "test_other_tenant_fee_structure_reads_are_not_found",
         ("PATCH", _FSI): _FS_CHANGES,
         ("POST", f"{_FSI}/status"): _FS_CHANGES,
+        ("GET", _I): "test_invoice_list_holds_no_other_tenant_invoice",
+        ("POST", _I): "test_invoice_issue_refuses_other_tenant_admissions",
+        ("GET", _II): "test_other_tenant_invoice_reads_are_not_found",
+        ("POST", f"{_II}/cancel"): _INVOICE_CHANGES,
+        ("POST", f"{_II}/payments"): _INVOICE_CHANGES,
+        ("GET", _P): "test_payment_list_holds_no_other_tenant_payment",
+        ("GET", _PI): "test_other_tenant_payment_reads_are_not_found",
+        ("POST", f"{_PI}/confirm"): _PAYMENT_CHANGES,
+        ("POST", f"{_PI}/fail"): _PAYMENT_CHANGES,
+        ("POST", f"{_PI}/reverse"): _PAYMENT_CHANGES,
+        ("GET", "/api/v1/finance/summary"): "test_finance_summary_counts_no_other_tenant_invoice",
     }
 )
 

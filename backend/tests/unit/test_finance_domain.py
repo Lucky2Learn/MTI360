@@ -129,11 +129,11 @@ def test_labels_are_collapsed_and_bounded() -> None:
 
 def test_the_request_hash_is_canonical_and_excludes_the_key() -> None:
     payload = {"amount_minor": 500_000, "method": "UPI", "reference": "UTR 4471"}
-    first = request_hash("payment.record", payload)
+    first = request_hash("record_payment", payload)
     assert len(first) == 64
-    assert request_hash("payment.record", dict(reversed(payload.items()))) == first
-    assert request_hash("invoice.issue", payload) != first
-    assert request_hash("payment.record", {**payload, "amount_minor": 500_001}) != first
+    assert request_hash("record_payment", dict(reversed(payload.items()))) == first
+    assert request_hash("issue_invoice", payload) != first
+    assert request_hash("record_payment", {**payload, "amount_minor": 500_001}) != first
     for excluded in ("idempotency_key", "version"):
         with pytest.raises(ValueError, match="excludes"):
-            request_hash("payment.record", {**payload, excluded: 1})
+            request_hash("record_payment", {**payload, excluded: 1})
