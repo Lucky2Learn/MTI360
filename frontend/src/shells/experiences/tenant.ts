@@ -92,29 +92,49 @@ export const tenantExperience: ApplicationExperience = {
       id: "operations",
       label: "Operations",
       items: [
+        // GROW › Leads stays UNRELEASED: the canonical Leads page is under
+        // Admissions (Phase 02-1, INC-45); GROW defines a marketing view later.
         group("Grow", MarketingIcon, [
           "Marketing",
           "Campaigns",
           "Website",
           "Leads",
         ]),
+        // No badge: the T00-08 demo count ("12 new enquiries") was removed in
+        // Phase 02-1 (INC-45). A badge returns only when real data backs it.
         group(
           "Admissions",
           AdmissionsIcon,
           ["Leads", "Counselling", "Applications", "Documents", "Students"],
-          // Demo count; real counts come from the server in Phase 04.
-          { badge: { count: 12, label: "12 new enquiries" } },
+          {},
+          // Leads: list and board (ADM-02, ?view=board), Phase 02-1.
+          // Applications (ADM-05…ADM-10), the document verification queue
+          // (ADM-09) and Students (ADM-11/12), Phase 02-2. Counselling stays
+          // UNRELEASED (P1).
+          {
+            Leads: permission("lead.read"),
+            Applications: permission("application.read"),
+            Documents: permission("document.read"),
+            Students: permission("student.read"),
+          },
         ),
-        group("Academics", AcademicsIcon, [
-          "Courses",
-          "Batches",
-          "Timetable",
-          "Attendance",
-          "Faculty",
-          "Training",
-          "Examinations",
-          "Certificates",
-        ]),
+        group(
+          "Academics",
+          AcademicsIcon,
+          [
+            "Courses",
+            "Batches",
+            "Timetable",
+            "Attendance",
+            "Faculty",
+            "Training",
+            "Examinations",
+            "Certificates",
+          ],
+          {},
+          // The institute course catalogue (ACA-01), Phase 02-1.
+          { Courses: permission("course.read") },
+        ),
         group("Finance", FinanceIcon, [
           "Fee Structure",
           "Invoices",

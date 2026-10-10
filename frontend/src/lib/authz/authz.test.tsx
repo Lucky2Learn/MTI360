@@ -101,10 +101,29 @@ describe("requirement map (T01-05 §6)", () => {
     expect(byHref.get("/app/administration/audit-logs")).toEqual(
       permission("audit.read"),
     );
+    // Phase 02-1: the course catalogue and the canonical Leads page (INC-45).
+    expect(byHref.get("/app/academics/courses")).toEqual(
+      permission("course.read"),
+    );
+    expect(byHref.get("/app/admissions/leads")).toEqual(
+      permission("lead.read"),
+    );
+    // Phase 02-2: applications, the document queue and students (ADR-0021 §14).
+    expect(byHref.get("/app/admissions/applications")).toEqual(
+      permission("application.read"),
+    );
+    expect(byHref.get("/app/admissions/documents")).toEqual(
+      permission("document.read"),
+    );
+    expect(byHref.get("/app/admissions/students")).toEqual(
+      permission("student.read"),
+    );
     for (const href of [
       "/app/administration/integrations",
       "/app/administration/billing",
-      "/app/admissions/leads",
+      "/app/grow/leads",
+      "/app/admissions/counselling",
+      "/app/academics/batches",
       "/app/ai/sql-data-agent",
     ]) {
       expect(byHref.get(href)).toBe(UNRELEASED);
@@ -158,7 +177,7 @@ describe("navigation filtering (NAV-01 / NAV-02)", () => {
     );
   });
 
-  it("keeps badges only with visible items", () => {
+  it("shows no demo badge anywhere (INC-45: a badge needs real data)", () => {
     expect(flattenNavigation(production([])).some((item) => item.badge)).toBe(
       false,
     );
@@ -166,10 +185,22 @@ describe("navigation filtering (NAV-01 / NAV-02)", () => {
       permissions: [],
       showUnreleased: true,
     });
-    expect(
-      flattenNavigation(development).find((item) => item.id === "admissions")
-        ?.badge,
-    ).toBeDefined();
+    expect(flattenNavigation(development).some((item) => item.badge)).toBe(
+      false,
+    );
+  });
+
+  it("with the admissions permissions: Admissions › Leads and Academics › Courses", () => {
+    const navigation = production(["lead.read", "course.read"]);
+    expect(ids(navigation)).toEqual([
+      "dashboard",
+      "admissions",
+      "admissions-leads",
+      "academics",
+      "academics-courses",
+    ]);
+    // GROW › Leads stays UNRELEASED: one Leads page, under Admissions.
+    expect(ids(navigation)).not.toContain("grow-leads");
   });
 
   it("is the single source for every navigation surface", () => {

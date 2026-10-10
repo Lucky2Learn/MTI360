@@ -7,6 +7,7 @@ import pytest
 
 from app import cli
 from app.seed import DEFAULT_SEED_FILE, SeededAccount, SeedError, load_seed, parse_seed
+from app.seed_admissions import is_development_email
 
 
 def _document(**member: Any) -> dict[str, Any]:
@@ -85,3 +86,154 @@ def test_the_command_never_prints_passwords(
     assert code == cli.EXIT_OK
     assert "owner@malabar-seafarers.example" in output.out
     assert "Secret-one-time-42" not in output.out + output.err
+
+
+# --- Courses and leads (Phase 02-1) ---------------------------------------------------------
+
+
+def _with_admissions(courses: list[Any], leads: list[Any]) -> dict[str, Any]:
+    document = _document()
+    document["institutes"][0]["courses"] = courses
+    document["institutes"][0]["leads"] = leads
+    return document
+
+
+GPR = {"code": "GPR", "name": "GP Rating", "category": "PRE_SEA", "status": "ACTIVE"}
+OWNER = "owner@malabar-seafarers.example"
+
+
+def _lead(**fields: Any) -> dict[str, Any]:
+    return {
+        "key": "L1",
+        "full_name": "Arjun Nair",
+        "mobile": "+91 90000 10101",
+        "source": "WALK_IN",
+        "created_by": OWNER,
+        **fields,
+    }
+
+
+def test_the_committed_seed_has_the_admissions_demo() -> None:
+    konkan = load_seed(DEFAULT_SEED_FILE)[0]
+    roles = {member.role.value for member in konkan.members}
+    assert {"ADMISSIONS_MANAGER", "COUNSELLOR"} <= roles
+    assert {c.status.value for c in konkan.courses} == {"DRAFT", "ACTIVE", "ARCHIVED"}
+    statuses = {lead.status.value for lead in konkan.leads}
+    assert statuses >= {"NEW", "CONTACTED", "QUALIFIED", "COUNSELLING", "INTERESTED"}
+    assert statuses >= {"LOST", "DEFERRED", "DUPLICATE"}
+    assert any(lead.campus is None for lead in konkan.leads)  # institute pool
+    assert any(lead.owner is None for lead in konkan.leads)  # unassigned
+    mobiles = [lead.mobile for lead in konkan.leads if lead.mobile]
+    assert len(mobiles) != len(set(mobiles))  # a pair for the duplicate warning
+    hours = [f.due_in_hours for lead in konkan.leads for f in lead.follow_ups]
+    assert min(hours) < 0 < max(hours)  # overdue and upcoming follow-ups
+    assert any(lead.notes for lead in konkan.leads)
+
+
+def test_the_committed_seed_has_the_applications_demo() -> None:
+    """Phase 02-2: every stage a demo needs, documents included."""
+    konkan, coromandel = load_seed(DEFAULT_SEED_FILE)[:2]
+    statuses = {a.status.value for a in konkan.applications}
+    assert statuses >= {"DRAFT", "SUBMITTED", "CORRECTION_REQUIRED", "APPROVED", "ADMITTED"}
+    assert any(a.lead is None for a in konkan.applications)  # a walk-in
+    documents = {d.status.value for a in konkan.applications for d in a.documents}
+    assert documents == {"UPLOADED", "UNDER_REVIEW", "VERIFIED", "REJECTED"}
+    assert any(a.status.value == "ADMITTED" for a in coromandel.applications)
+
+
+def _application(**fields: Any) -> dict[str, Any]:
+    return {
+        "key": "A1",
+        "lead": "L1",
+        "course": "GPR",
+        "campus": "KOC",
+        "created_by": OWNER,
+        **fields,
+    }
+
+
+@pytest.mark.parametrize(
+    ("application", "message"),
+    [
+        (_application(course="DNS"), "ACTIVE course"),
+        (_application(lead="L9"), "open seed lead"),
+        (_application(status="ELIGIBLE"), "reserved"),
+        (_application(status="SUBMITTED"), "complete"),
+        (_application(status="REJECTED", reviewed_by=OWNER), "status_reason"),
+        (_application(status="APPROVED"), "reviewed_by"),
+        (
+            _application(documents=[{"type": "PASSPORT", "status": "VERIFIED"}]),
+            "UPLOADED on drafts",
+        ),
+        (
+            _application(lead=None, full_name="Meera Pillai", mobile="+91 98200 12345"),
+            "fictitious",
+        ),
+        (_application(indos_number="??"), "INDoS"),
+        (
+            _application(lead=None, full_name="Meera Pillai", email="meera@notexample.com"),
+            "example.com",
+        ),
+    ],
+    ids=[
+        "course",
+        "lead",
+        "reserved",
+        "incomplete",
+        "reason",
+        "reviewer",
+        "documents",
+        "mobile",
+        "indos",
+        "email-lookalike",
+    ],
+)
+def test_invalid_applications_are_refused(application: dict[str, Any], message: str) -> None:
+    document = _with_admissions([GPR], [_lead()])
+    document["institutes"][0]["applications"] = [application]
+    with pytest.raises(SeedError, match=message):
+        parse_seed(document)
+
+
+@pytest.mark.parametrize(
+    ("courses", "leads", "message"),
+    [
+        ([GPR | {"code": "G P R"}], [], "invalid course code"),
+        ([GPR | {"duration_value": 6}], [], "duration"),
+        ([GPR, GPR], [], "unique"),
+        ([GPR], [_lead(mobile=None)], "mobile or an email"),
+        ([GPR], [_lead(mobile="+91 98200 12345")], "fictitious"),
+        ([GPR], [_lead(mobile=None, email="arjun@gmail.com")], "example.com"),
+        ([GPR], [_lead(mobile=None, email="arjun@notexample.com")], "example.com"),
+        ([GPR], [_lead(mobile=None, email="arjun@example.com.in")], "example.com"),
+        ([GPR], [_lead(course="DNS")], "unknown course"),
+        ([GPR], [_lead(campus="MUM")], "unknown campus"),
+        ([GPR], [_lead(owner="someone@malabar-seafarers.example")], "seed members"),
+        ([GPR], [_lead(status="APPLICATION")], "02-2"),
+        ([GPR], [_lead(status="LOST")], "status_reason"),
+        ([GPR], [_lead(status="DUPLICATE")], "duplicate_of"),
+        ([GPR], [_lead(), _lead(status="DUPLICATE", duplicate_of="L9")], "duplicate key"),
+    ],
+)
+def test_invalid_courses_and_leads_are_refused(
+    courses: list[Any], leads: list[Any], message: str
+) -> None:
+    with pytest.raises(SeedError, match=message):
+        parse_seed(_with_admissions(courses, leads))
+
+
+@pytest.mark.parametrize(
+    ("email", "development"),
+    [
+        ("arjun@example.com", True),
+        ("arjun@mail.example.com", True),
+        ("arjun@notexample.com", False),  # CodeQL py/incomplete-url-substring-sanitization
+        ("arjun@example.com.in", False),
+        ("arjun@example.co", False),
+        ("example.com@gmail.com", False),
+    ],
+)
+def test_only_the_reserved_example_domain_is_a_development_email(
+    email: str, development: bool
+) -> None:
+    assert is_development_email(email) is development

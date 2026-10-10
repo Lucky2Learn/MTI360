@@ -7,8 +7,9 @@ requires-python = ">=3.14,<3.15"
 # Lower bounds are the newest versions that satisfied the 7-day supply-chain
 # cooldown when T00-02 was implemented. Exact versions are pinned in uv.lock.
 # Clients are added by the task that first uses them: SQLAlchemy (async),
-# asyncpg and Alembic arrived in T01-01; Redis, S3 and the security libraries
-# follow with their tasks (T01-00 decision D4).
+# asyncpg and Alembic arrived in T01-01; Redis and the security libraries with
+# T01-04/T01-06 (T01-00 decision D4); the S3 client (boto3) and the multipart
+# form parser (python-multipart, FastAPI uploads) with Phase 02-2 (ADR-0021).
 dependencies = [
     "fastapi>=0.141.1,<0.142",
     "uvicorn[standard]>=0.53.0,<0.55",
@@ -20,6 +21,8 @@ dependencies = [
     "argon2-cffi>=25.1.0,<26",
     "redis>=8.1.0,<9",
     "cryptography>=50.0.1,<51",
+    "boto3>=1.43.107,<2",
+    "python-multipart>=0.0.32,<0.1",
 ]
 
 [dependency-groups]
@@ -112,6 +115,12 @@ strict = true
 files = ["app", "migrations", "tests"]
 plugins = ["pydantic.mypy"]
 warn_unreachable = true
+
+# boto3/botocore ship no type information; the S3 client is wrapped behind the
+# typed ObjectStorage protocol in app/integrations/storage (ADR-0021).
+[[tool.mypy.overrides]]
+module = ["boto3", "boto3.*", "botocore", "botocore.*"]
+ignore_missing_imports = true
 
 [tool.pydantic-mypy]
 init_forbid_extra = true

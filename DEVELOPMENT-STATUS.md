@@ -108,6 +108,10 @@ M0 — Foundation Ready: reached 2026-09-30 (Phase 00 complete)
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
+> **2026-10-08 (Phase 02-1):** the first business slice, Courses + Lead Management, is implemented on `feat/phase-02-1-courses-leads` and `READY_FOR_REVIEW` (not merged; pushed as PR #32; CI at `9f1da62`: backend, frontend, docker, repo, secrets and both audits passed, CodeQL failed with three alerts fixed in `4367542` (local, re-run pending)). It is the first product functionality. The percentage above is not recalculated: no agreed weighting exists, and the slice is not merged or CI-verified.
+
+> **2026-10-10 (Phase 02-2):** Applications → Documents → Admission → Student is implemented on the same branch (`5e755be` … `f190924`, plus the review fixes `8bc77c1` and `de005f8` for PDF upload validation and `4367542` for the CodeQL alerts). It is `READY_FOR_REVIEW` (not merged; pushed as PR #32; CI at `9f1da62`: backend, frontend, docker, repo, secrets and both audits passed, CodeQL failed with three alerts fixed in `4367542` (local, re-run pending)): the latest backend suite, at `4367542` with database tests required against `mti360_test` and S3 configured, gave 1198 passed, 0 failed, 0 skipped, and `alembic check` is clean (§9A). The Chromium journeys have not run. The percentage above is not recalculated.
+
 > **2026-09-30:** Phase 00 is `COMPLETED`: T00-01 … T00-10A are merged to `main` (T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12, T00-10A via PR #13). Phase 01 is `IN_PROGRESS`: the T01-00 architecture review is approved (D1–D22 with the D10 and D14 amendments) T01-01 (Backend, Database & API Foundation) is `COMPLETED` (PR #14), and T01-02 (Audit Foundation) is `COMPLETED` (PR #16). T01-03 (Tenancy Core) is `COMPLETED` (PR #19). T01-04 (Tenant Identity & Authentication) is `COMPLETED` (PR #20). T01-05 (Authorization & RBAC) is `COMPLETED` (PR #21). T01-06 (Platform Identity & MFA) is implemented and `READY_FOR_REVIEW` on `feat/T01-06-platform-identity-mfa` (not merged). T01-07 (Platform Administration Foundation) is implemented and `READY_FOR_REVIEW` on `feat/T01-07-platform-administration` (not merged). T01-08 (Tenant Administration Foundation) is implemented and `READY_FOR_REVIEW` on `feat/T01-08-tenant-administration` (not merged). All are infrastructure only: database access, migrations, request context, error envelope, logging, realm routers, the append-only audit table with its writers, the `tenants` and `campuses` tables with their isolation layers, the tenant authentication backend, and the permission catalogue, roles and authorization layer (no screens). No business tables and no product functionality exist yet, so product implementation completion remains 0%.
 
 ---
@@ -154,7 +158,8 @@ Multi-Tenancy
 |---|---|---|
 | 00 | Foundation | `COMPLETED` |
 | 01 | Authentication & Multi-Tenancy | `IN_PROGRESS` |
-| 02 | Platform Control Plane | `NOT_STARTED` |
+| 02 | Admissions MVP (re-sequenced, L1) — 02-1 Courses + Leads, 02-2 Applications → Student | `IN_PROGRESS` (02-1 and 02-2 `READY_FOR_REVIEW`, §9A) |
+| 02 (original) | Platform Control Plane (after the MVP, except 02-C) | `NOT_STARTED` |
 | 03 | Tenant Foundation | `NOT_STARTED` |
 | 04 | Admissions | `NOT_STARTED` |
 | 05 | Academics | `NOT_STARTED` |
@@ -1408,7 +1413,309 @@ Not run: D18 Chromium journeys; CI on this branch (not pushed).
 
 ---
 
+# 9A. PHASE 02 — ADMISSIONS MVP (re-sequenced, L1)
+
+Sources: [PHASE-02-MASTER-READINESS.md](docs/architecture/PHASE-02-MASTER-READINESS.md), [PHASE-02-1-COURSES-LEADS-READINESS.md](docs/architecture/PHASE-02-1-COURSES-LEADS-READINESS.md), [ADR-0020](docs/adr/0020-courses-and-leads.md). TASKS.md "PHASE 02 — ADMISSIONS MVP" is the slice order.
+
+| Slice | Description | Status |
+|---|---|---|
+| 02-1 | Courses + Lead Management | `READY_FOR_REVIEW` |
+| 02-2 | Applications → Documents → Admission → Student | `READY_FOR_REVIEW` |
+| 02-C | Onboarding enablers | `NOT_STARTED` |
+
+### 02-1 — Courses + Lead Management
+
+**Status:** `READY_FOR_REVIEW` on `feat/phase-02-1-courses-leads` (from `main` `9009db5`; PR #32, not merged; CI results in 02-2 below). Merge with **Create a merge commit**.
+
+**Implementation:**
+
+```text
+Database   migration 0009: courses (institute-wide, no campus), leads (campus
+           nullable = institute pool), lead_follow_ups, lead_activities
+           (append-only); realm-agnostic tenant RLS; composite tenant FKs;
+           no DELETE; activities SELECT/INSERT only; mti_readonly reads
+           courses only; 6 permissions; ADMISSIONS_MANAGER and COUNSELLOR
+           cloned into every tenant; Owner/Admin clones extended; upgrade
+           refuses a custom-role name clash; downgrade documented as lossy
+Backend    modules courses and leads (router → service → domain →
+           repository); core helpers campus_visibility(), TransitionTable,
+           record_activity(), escape_like; 20 routes; 7 domain audit events
+           (no personal values); mark_application_started() for 02-2
+Frontend   tenantApiRead() (tenant cookie only), page gate, T02/T03
+           templates and form layout, useListParams, StatusTransitionDialog,
+           MemberPicker, ActivityFeed; ACA-01/02/03, GROW-08 list + ADM-02
+           board, lead create/edit with the duplicate warning, GROW-09 detail
+           with status, assignment, follow-ups and notes; navigation
+           requirement map (course.read, lead.read); demo badge removed
+Seed       Konkan: admissions manager, two campus counsellors, 5 courses
+           (draft/active/archived), 17 leads across the pipeline (pool and
+           campus, assigned and not, a duplicate pair, overdue/today/
+           upcoming follow-ups, notes); Coromandel: 2 courses, 3 leads
+Docs       ADR-0020; INC-44/45/46; TASKS.md L1 re-sequencing; the two
+           readiness reports committed
+```
+
+**Deviations from the blueprint (recorded in ADR-0020 §13):**
+
+```text
+D-1  OpenAPI-generated types not adopted (Y9): hand-typed contracts, as
+     T01-09A; no new dependency (TanStack Query, Zod, generator) added.
+D-2  Board "Show more" is a link to the list filtered by that status, not
+     in-column paging.
+D-3  Lead detail stacks main → side → activity below desktop (DOM order),
+     instead of mobile Tabs; no sticky "Change status" (header actions stack
+     full width on mobile).
+D-4  The "today" follow-up filter carries the browser's UTC offset in the
+     URL (an integer) because the server cannot know the time zone.
+D-5  LeadListItem also carries the owner membership ID and campus ID (the
+     row "Assign…" needs the current assignment).
+```
+
+**Verification (local, 2026-10-08):**
+
+```text
+Backend   pytest 1059 passed (PostgreSQL + Redis integration tests run;
+          REQUIRE_DATABASE_TESTS=1); ruff, ruff format, mypy (221 files),
+          import-linter (2 kept), uv lock --check: pass; migration 0009
+          up/down/clash-refusal/up in the test suite; alembic check clean
+Frontend  vitest 1303 passed (97 files); prettier, eslint (0 warnings), tsc,
+          next build: pass (on next 16.3.8)
+Security  every new route in the cross-tenant registry with an explicit
+          cross-tenant test (meta-test enforced); campus isolation, pool
+          visibility, duplicate-warning privacy, audit metadata free of
+          personal values; gitleaks 8.30.1 over all refs: no leaks
+Audits    pnpm audit: clean apart from the documented braces exception (after
+          patching next 16.3.6 -> 16.3.8 for six advisories that also affect
+          main); pip-audit: no known vulnerabilities
+Repo      git diff --check clean; marketing website hashes unchanged; no
+          .env, compose or ACRS changes
+Not run   D18 Chromium journeys (no browser runtime here); CI on the branch
+          (not pushed); CodeQL (CI only)
+```
+
+### 02-2 — Applications → Documents → Admission → Student
+
+**Status:** `READY_FOR_REVIEW` on `feat/phase-02-1-courses-leads`, implemented after the 02-1 baseline `ab02e7d` (code through `f190924`, plus the review fixes `8bc77c1`, `de005f8` and `4367542`; PR #32, not merged; CI below). The earlier `BLOCKED` status (the PostgreSQL/Redis integration tests had not run) is resolved: they ran and passed (see Verification). Merge with **Create a merge commit**. Decisions: [ADR-0021](docs/adr/0021-admissions-core.md).
+
+**Implementation (commits):**
+
+```text
+5e755be  ADR-0021 (Y1–Y11, the L2–L7 locks)
+aef9ae0  build: boto3 (S3 client) and python-multipart
+e6d1ce8  migration 0010: tenant_sequences, stored_files, applications,
+         application_documents, application_activities, students,
+         admissions; tenant RLS, composite tenant FKs, no DELETE, nothing
+         for mti_readonly; 9 campus-scoped permissions and role grants;
+         domain rules and the upload validation pipeline
+d6aefe2  ObjectStorage boundary (S3 adapter, in-memory fake); lead
+         APPLICATION_STARTED / ADMITTED transitions
+a429d28  19 API routes: applications, documents, students (Student 360)
+27d4a80  frontend: multipart client, proxy body cap (11 MiB), download
+         headers, T05 WizardTemplate
+e89ab78  screens ADM-05 … ADM-14
+f190924  development seed (Konkan: five applications across the stages;
+         Coromandel: one admitted student)
+```
+
+**Verification (local, 2026-10-10, combined 02-1 + 02-2 code at `f190924`; `80ce5e7` changed documentation only):**
+
+```text
+Backend   REQUIRE_DATABASE_TESTS=1 pytest against mti360_test (never the
+          development database mti360), PostgreSQL + Redis (database 1):
+          1150 passed, 0 failed, 1 skipped (the real-S3 test, no TEST_S3_*
+          in that run; run separately below). Covered, all passing:
+          - migration round trips: all 10 down/up tests, including 0010
+            (02-2) and 0009 (02-1)
+          - RLS, privileges, schema: admissions (7), courses/leads (5),
+            tenancy (17), RBAC (21)
+          - tenant isolation: tenancy isolation (33), admissions
+            cross-tenant (10), courses/leads cross-tenant (12), the
+            cross-tenant route registry meta-tests (3)
+          - permissions: session permissions (7), authorization registry
+            (23), authorization engine (12)
+          - 02-2: applications API (10), documents API (16), students API
+            (3), admissions domain (31), dev seed (3) and seed contract (32)
+          - 02-1 regression: leads API (20), courses API (8), courses/leads
+            domain (174)
+          An earlier run in the same session, with no database running,
+          gave 689 passed / 462 skipped; superseded by this run.
+S3        test_s3_storage + test_object_storage against the running local
+          SeaweedFS (one object under mti360-tests/, deleted again;
+          anonymous access refused): 4 passed
+Alembic   alembic heads: 0010 (single head); alembic check against
+          mti360_test: no new upgrade operations detected
+Static    ruff check, ruff format --check (266 files), mypy (265 files),
+          import-linter (2 kept, 0 broken), uv lock --check: pass
+Frontend  vitest 1349 passed (100 files); prettier, eslint
+          (--max-warnings=0), tsc (next typegen), next build: pass
+Repo      check:landing (marketing website unchanged), check:env,
+          actionlint 1.7.12: pass; git diff --check clean; no .env,
+          compose, infrastructure, ACRS or marketing files changed since
+          ab02e7d; no files deleted
+Security  gitleaks 8.30.1 over all refs: no leaks; self-test passed
+Audits    pnpm audit: only the documented braces exception;
+          pip-audit 2.10.1: no known vulnerabilities
+Review    manual review of ab02e7d..f190924 (document upload/download,
+          queue campus scope, application create/review/admit, student
+          linking, migration 0010 RLS and grants). An earlier version of
+          this line said "no defects found"; the final reviews found two
+          high-severity defects and one medium, fixed in 8bc77c1 and
+          de005f8 (below)
+Not run   D18 Chromium journeys. The running local api and frontend
+          containers predate Phase 02-1 and were not rebuilt. CI and the
+          docker job ran later on PR #32 (below).
+```
+
+**Defect found in the final review — fixed in `8bc77c1` (`fix: bound PDF validation work and run it off the event loop`):**
+
+```text
+Finding   High: PDF upload validation denial of service. A holder of
+          document.upload (system roles include Counsellor) could send a
+          small crafted PDF that was accepted after minutes of CPU on the
+          API event loop, stalling the worker:
+          - no total decompression budget across object streams (16 MiB
+            per stream only): 640 KiB took ~49 s, 10 MiB est. ~13 min;
+          - stream-dictionary lookup rescanned from the file start
+            (quadratic): 256 KiB of "stream" keywords took ~68 s;
+          - validate_upload ran synchronously in the async handler.
+Fix       INFLATED_TOTAL_MAX_BYTES = 32 MiB across all object streams of a
+          PDF (plus the 16 MiB per-stream limit; each stream inflates only
+          into the remainder); OBJECT_STREAMS_MAX = 256 per PDF; either
+          bound stops at once with the existing pdf_unreadable 422.
+          Linear stream scan. Truncated/unterminated object streams fail
+          closed. service.check_upload runs validation in a worker thread
+          (anyio.to_thread.run_sync). No dependency added; size,
+          extension, MIME, magic-number, active-content, authorization and
+          storage checks unchanged.
+Evidence  10 new tests (6 validation unit, 3 check_upload incl. a
+          deterministic worker-thread check, 1 upload API case: 422
+          pdf_unreadable, nothing stored); 6 of them fail against the
+          previous validation module. Focused: 40 unit passed, documents
+          API + storage 20 passed. Full backend, REQUIRE_DATABASE_TESTS=1
+          against mti360_test with TEST_S3_* set: 1161 passed, 0 failed,
+          0 skipped. ruff, ruff format, mypy (266 files), import-linter
+          (2 kept), uv lock --check: pass. Measured worst cases after the
+          fix (10 MiB files): 2-3 s in the worker thread.
+Residual  - Up to ~3 s CPU per hostile upload remains; the name scan holds
+            the GIL, so the event loop shares CPU with it (not blocked)
+            and latency can degrade under many concurrent hostile uploads.
+            Mitigated by the 30 uploads / 10 min per-member rate limit;
+            full isolation (separate scanning process) belongs with the
+            deferred malware scanning.
+          - A legitimate PDF with more than 256 object streams or more
+            than 32 MiB of object-stream content is refused as
+            unreadable (not expected for admission documents; revisit
+            with real files).
+          - Multipart parsing of the (capped) body still runs on the event
+            loop (Starlette's parser).
+          - The PDF checks stay heuristic, not a full parser.
+```
+
+**Defects found in the pre-push review — fixed in `de005f8` (`fix: close the PDF object-stream inspection bypass and bound the name scan`):**
+
+```text
+Finding   High: PDF active-content detection bypass. Script hidden in a
+          compressed object stream was accepted when the stream's
+          dictionary held the text "obj" (valid syntax: /Note (obj),
+          /objx 1), because the dictionary was located by searching back
+          for "obj"; or when "stream" was followed by CR alone or a space
+          before LF (not conforming, but accepted by lenient readers),
+          because only LF and CRLF were recognised. Present since a429d28;
+          confirmed against the module before the fix.
+Finding   Medium: name-scan memory. _names() built a list of every name of
+          the file before de-duplicating: a 10 MiB file of short names
+          peaked at 146 MiB (90 MiB with #-escaped names, 185 MiB with
+          two large object streams), per concurrent upload.
+Fix       One forward scan of whole tokens: indirect-object headers
+          (N G obj) and the stream keyword. A stream's dictionary is the
+          text since the later of the two. The line end after stream may
+          be CRLF, LF or CR, with spaces or tabs before it; an object
+          stream without one, or without endstream, is pdf_unreadable.
+          Fail closed: every /ObjStm declaration must belong to an object
+          stream that was decompressed and inspected, and none may occur
+          inside one; otherwise pdf_unreadable (declarations in strings,
+          on objects without a stream, behind a misleading header).
+          Incremental name scan: only watched or #-escaped names reach
+          Python; only counts of the 12 watched names are kept. Limits
+          (32 MiB total, 16 MiB per stream, 256 streams), the worker
+          thread and all other upload checks unchanged. No dependency.
+Evidence  22 new tests: 20 unit (text-like "obj" x3, line ends x5, unmatched
+          declarations x7, ordinary PDFs, watched-name counts, name-scan
+          memory x3 by allocation tracing, not wall clock) and 2 upload API
+          cases (hidden script -> 422 pdf_active_content, unmatched
+          declaration -> 422 pdf_unreadable; nothing stored). All 13
+          hostile PDFs among them are accepted by the previous module.
+          The linear-scan test also covers a flood of object headers.
+          Focused: unit 649 passed; documents API + S3 + validation 83
+          passed. Full backend at de005f8, REQUIRE_DATABASE_TESTS=1
+          against mti360_test with TEST_S3_* set: 1183 passed, 0 failed,
+          0 skipped. ruff, ruff format, mypy (266 files), import-linter
+          (2 kept), uv lock --check: pass. Measured (10 MiB hostile files,
+          this machine): name-scan peak ~0 MiB (was 90-185 MiB); worst
+          case ~2.2 s (#-escaped names), others 0.4-1.5 s.
+Residual  - Still a heuristic token scan, not a PDF parser. It does not
+            resolve indirect /Length, decode non-Flate filters (such object
+            streams are refused), or interpret strings and comments, so a
+            declaration in either is refused (fail closed) rather than
+            ignored; a legitimate PDF with "/ObjStm" in a string or comment
+            is refused as unreadable.
+          - CPU per hostile upload (up to ~2-3 s, GIL shared with the event
+            loop) and the deferred malware scanning are unchanged (above).
+```
+
+**CI on PR #32 and the CodeQL alerts — fixed in `4367542` (`fix: resolve the CodeQL alerts on email validation and the seed email guard`):**
+
+```text
+CI        at 9f1da62: backend, frontend, docker (image build + smoke),
+          repo, secrets, pip-audit, pnpm audit, CodeQL analyze (python,
+          javascript-typescript): pass. CodeQL check: fail, 3 new
+          high-severity alerts (read from the check run's annotations).
+Alert 1   py/polynomial-redos, app/modules/identity/domain.py:70: the
+          email pattern ^[^@\s]+@[^@\s]+\.[^@\s]+$ was quadratic
+          (40 000 chars ~2.6 s); new source: lead/application emails via
+          leads.domain.clean_email. Latent: the 254-character limit runs
+          first (~0.1 ms). Fixed: unambiguous [^@\s]++@[^@\s]++ plus a
+          separate inner-dot check; same strings accepted and refused.
+Alerts 2-3 py/incomplete-url-substring-sanitization, seed_admissions.py:154
+          and seed_applications.py:195: the development-email guard used
+          endswith("example.com"), so notexample.com passed. Fixed:
+          is_development_email (example.com or a subdomain).
+Evidence  15 new tests (email edge cases, exhaustive equivalence with the
+          earlier rule up to six characters, linear time on hostile
+          input, lookalike seed domains, the domain helper); the new
+          cases fail against the earlier code. No alert suppressed. Full
+          backend at 4367542, REQUIRE_DATABASE_TESTS=1 against
+          mti360_test with TEST_S3_* set: 1198 passed, 0 failed,
+          0 skipped. ruff, ruff format, mypy (266 files), import-linter
+          (2 kept), uv lock --check: pass. CodeQL re-run pending (not
+          pushed).
+Note      app/core/config.py keeps the earlier email pattern for an
+          operator-set configuration value (trusted input; not flagged).
+```
+
+**Known limitations and accepted risks (ADR-0021):**
+
+```text
+- Malware scanning deferred (L5): explicit risk acceptance with compensating
+  controls (type allow-list with magic numbers, PDF active-content and
+  encryption refusal, size limit, private generated keys, attachment-only
+  downloads with nosniff and a sandbox CSP); revisit before the first
+  production tenant.
+- Orphaned objects: a failed commit after the upload can leave a private,
+  unreferenced object under the tenant prefix; reconciliation job deferred.
+- Cross-campus student visibility not modelled (a student is visible at
+  the home campus only).
+- Per-course document checklists deferred (fixed document-type list, Y4).
+- INC-47: DOCUMENT_VERIFICATION and ELIGIBLE are reserved, not used.
+```
+
+**Review observation (not a defect; as specified in ADR-0021 §3):** creating an application from a lead prefills the lead's details for a holder of `application.create` without checking `lead.read`. Every system role holding `application.create` also holds `lead.read`; a custom role granted only `application.create` could read a lead's details through prefill. Decide whether to require `lead.read` for `lead_id` before custom roles are offered.
+
+---
+
 # 10. PHASE 02 — PLATFORM CONTROL PLANE
+
+> **Re-sequenced (L1, 2026-10-08):** follows the Admissions MVP (section 9A), except the thin provisioning UI (02-C).
 
 ## Phase Status
 

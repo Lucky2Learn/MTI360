@@ -56,6 +56,30 @@ describe("apiRequest", () => {
     });
   });
 
+  it("sends FormData as multipart, without a JSON content type (Phase 02-2 uploads)", async () => {
+    const api = installFetch();
+    api.on("POST /applications/a1/documents", ok({ id: "d1" }));
+    const form = new FormData();
+    form.append("document_type", "PASSPORT");
+    form.append(
+      "file",
+      new File(["%PDF-1.7"], "passport.pdf", { type: "application/pdf" }),
+    );
+    await apiRequest("/applications/a1/documents", {
+      method: "POST",
+      body: form,
+      csrfToken: "csrf-123",
+    });
+    const [call] = api.calls;
+    expect(call!.headers["content-type"]).toBeUndefined();
+    expect(call!.headers["x-csrf-token"]).toBe("csrf-123");
+    expect(call!.body).toEqual({
+      document_type: "PASSPORT",
+      file: { file: "passport.pdf", type: "application/pdf" },
+    });
+    expect(api.fetchMock.mock.calls[0]![1]!.body).toBe(form);
+  });
+
   it("returns undefined for 204", async () => {
     const api = installFetch();
     api.on("POST /auth/logout", noContent());

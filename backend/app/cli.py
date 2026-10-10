@@ -32,6 +32,7 @@ from typing import TextIO
 
 from app.core.config import ConfigurationError, Settings, load_settings
 from app.core.db import create_engine, create_sessionmaker
+from app.integrations.storage import S3ObjectStorage
 from app.modules.identity.passwords import PasswordHasher
 from app.modules.platform_identity.bootstrap import (
     BootstrapError,
@@ -115,7 +116,14 @@ async def _seed(settings: Settings, path: Path) -> list[SeededAccount]:
             memory_cost_kib=settings.argon2_memory_cost_kib,
             parallelism=settings.argon2_parallelism,
         )
-        return await seed(create_sessionmaker(engine), hasher, institutes)
+        storage = S3ObjectStorage.create(
+            endpoint_url=settings.s3_endpoint_url or None,
+            region=settings.s3_region,
+            bucket=settings.s3_bucket,
+            access_key_id=settings.s3_access_key_id.get_secret_value(),
+            secret_access_key=settings.s3_secret_access_key.get_secret_value(),
+        )
+        return await seed(create_sessionmaker(engine), hasher, institutes, storage=storage)
     finally:
         await engine.dispose()
 

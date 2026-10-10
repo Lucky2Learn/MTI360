@@ -8,7 +8,8 @@ Tenant context comes only from the server-side session → validated membership
 * ``session``: the session read, institute/campus selection and MFA opt-in —
   a valid session, institute optional (T01-04, ``Access.SESSION``);
 * ``router``: every other tenant route — a session with an institute
-  (tenant administration in T01-08, business modules from Phase 04).
+  (tenant administration in T01-08; courses and leads in Phase 02-1;
+  applications, documents and students in Phase 02-2).
 """
 
 from fastapi import APIRouter
@@ -16,10 +17,15 @@ from fastapi import APIRouter
 from app.api.realms import Access, realm_router
 from app.core.context import Realm
 from app.modules.access.router import role_routes
+from app.modules.applications.router import application_routes
 from app.modules.audit.router import tenant_audit_routes
+from app.modules.courses.router import course_routes
+from app.modules.documents.router import document_routes
 from app.modules.identity.members_router import member_routes
 from app.modules.identity.router import anonymous_routes, mfa_routes, session_routes
 from app.modules.institute.router import institute_routes
+from app.modules.leads.router import lead_routes
+from app.modules.students.router import student_routes
 
 anonymous = realm_router(Realm.TENANT, access=Access.ANONYMOUS)
 anonymous.include_router(anonymous_routes)
@@ -35,5 +41,10 @@ router.include_router(institute_routes)
 router.include_router(member_routes)
 router.include_router(role_routes)
 router.include_router(tenant_audit_routes)
+router.include_router(course_routes)
+router.include_router(lead_routes)
+router.include_router(application_routes)
+router.include_router(document_routes)
+router.include_router(student_routes)
 
 ROUTERS: tuple[APIRouter, ...] = (anonymous, mfa_pending, session, router)

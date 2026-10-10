@@ -114,6 +114,14 @@ class ConflictError(AppError):
     default_message = "The resource was changed by someone else. Reload it and try again."
 
 
+class PayloadTooLargeError(AppError):
+    """A request body over the route's limit (file uploads, Phase 02-2)."""
+
+    status_code = 413
+    code = "PAYLOAD_TOO_LARGE"
+    default_message = "The file is too large. Files can be at most 10 MB."
+
+
 class SessionRefreshRequiredError(AppError):
     """A browser-security check failed: missing or invalid CSRF token, or a
     cross-site request to an anonymous authentication route (T01-04, D14).

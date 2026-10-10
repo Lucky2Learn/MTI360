@@ -7,7 +7,11 @@ Loads ``database/seeds/dev.json`` (realistic maritime fixtures) into a
   (cloned from the code templates, T01-05);
 * ``ACTIVE`` people with a credential, an ``ACTIVE`` membership, a campus scope
   and one system role each; the first owner of an institute becomes its
-  primary administrator (``tenants.owner_membership_id``, T01-07).
+  primary administrator (``tenants.owner_membership_id``, T01-07);
+* (Phase 02-1) the institute's courses and leads, with follow-ups, notes and
+  their timeline (``app.seed_admissions``; fictitious contact details);
+* (Phase 02-2) applications at every stage with placeholder documents in the
+  object storage, and admitted students (``app.seed_applications``).
 
 Rules (D16): every email uses a reserved ``.example`` domain; every password is
 random, generated here, never stored in the file, never printed, logged or
@@ -33,9 +37,11 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.audit import AuditCategory, AuditEventType, AuditTarget, write_audit_event
 from app.core.tenancy import system_context
+from app.integrations.storage import ObjectStorage
 from app.modules.access import repository as access_repo
 from app.modules.access.service import clone_system_roles
 from app.modules.access.templates import OWNER_TEMPLATE, SystemRole
+from app.modules.courses.domain import CourseStatus
 from app.modules.identity.domain import (
     CampusScope,
     InvalidEmailError,
@@ -49,6 +55,15 @@ from app.modules.identity.passwords import PasswordHasher, common_passwords
 from app.modules.institute.models import CAMPUS_CODE_PATTERN, Campus
 from app.modules.tenants.domain import TenantStatus
 from app.modules.tenants.models import Tenant
+from app.seed_admissions import (
+    AdmissionsSeedError,
+    SeedCourse,
+    SeedLead,
+    parse_courses,
+    parse_leads,
+    seed_admissions,
+)
+from app.seed_applications import SeedApplication, parse_applications, seed_applications
 
 DEFAULT_SEED_FILE: Final = Path(__file__).resolve().parents[2] / "database" / "seeds" / "dev.json"
 SEEDED: Final = AuditEventType("system.seed.applied", AuditCategory.ADMIN)
@@ -82,6 +97,9 @@ class SeedInstitute:
     campuses: tuple[tuple[str, str], ...]
     """(code, name)"""
     members: tuple[SeedMember, ...]
+    courses: tuple[SeedCourse, ...] = ()
+    leads: tuple[SeedLead, ...] = ()
+    applications: tuple[SeedApplication, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -157,8 +175,35 @@ def parse_seed(data: Mapping[str, Any]) -> tuple[SeedInstitute, ...]:
         )
         if not any(m.role is OWNER_TEMPLATE for m in members):
             raise SeedError(f"{where}.members: at least one owner is required")
+        try:
+            courses = parse_courses(raw.get("courses", ()), where)
+            leads = parse_leads(
+                raw.get("leads", ()),
+                where,
+                courses={c.code for c in courses},
+                campuses=codes,
+                members={m.email for m in members},
+            )
+            applications = parse_applications(
+                raw.get("applications", ()),
+                where,
+                leads=leads,
+                active_courses={c.code for c in courses if c.status is CourseStatus.ACTIVE},
+                campuses=codes,
+                members={m.email for m in members},
+            )
+        except AdmissionsSeedError as error:
+            raise SeedError(str(error)) from None
         institutes.append(
-            SeedInstitute(_text(raw.get("name"), f"{where}.name"), status, tuple(campuses), members)
+            SeedInstitute(
+                _text(raw.get("name"), f"{where}.name"),
+                status,
+                tuple(campuses),
+                members,
+                courses,
+                leads,
+                applications,
+            )
         )
     return tuple(institutes)
 
@@ -200,9 +245,12 @@ async def seed(
     hasher: PasswordHasher,
     institutes: Sequence[SeedInstitute],
     *,
+    storage: ObjectStorage,
     password_factory: Callable[[], str] = generate_password,
 ) -> list[SeededAccount]:
-    """Create the fixtures; return each new account's one-time password (refused if seeded)."""
+    """Create the fixtures; return each new account's one-time password (refused if seeded).
+
+    Seed documents are stored in ``storage`` (the configured object storage)."""
     emails = sorted({m.email for institute in institutes for m in institute.members})
     async with system_context(factory) as db:
         taken = await db.scalars(select(USERS.c.email).where(USERS.c.email.in_(emails)))
@@ -235,8 +283,9 @@ async def seed(
                 )
             roles = await clone_system_roles(db, tenant_id)
             owner: uuid.UUID | None = None
+            memberships: dict[str, uuid.UUID] = {}
             for member in institute.members:
-                membership_id = uuid.uuid7()
+                membership_id = memberships[member.email] = uuid.uuid7()
                 await db.execute(
                     insert(MEMBERSHIPS).values(
                         id=membership_id,
@@ -263,6 +312,27 @@ async def seed(
             await db.execute(
                 update(TENANTS).where(TENANTS.c.id == tenant_id).values(owner_membership_id=owner)
             )
+            course_ids, lead_ids = await seed_admissions(
+                db,
+                tenant_id,
+                courses=institute.courses,
+                leads=institute.leads,
+                campus_ids=campus_ids,
+                memberships=memberships,
+            )
+            try:
+                await seed_applications(
+                    db,
+                    storage,
+                    tenant_id,
+                    applications=institute.applications,
+                    lead_ids=lead_ids,
+                    course_ids=course_ids,
+                    campus_ids=campus_ids,
+                    memberships=memberships,
+                )
+            except AdmissionsSeedError as error:
+                raise SeedError(str(error)) from None
             await write_audit_event(
                 db,
                 SEEDED,
@@ -270,6 +340,9 @@ async def seed(
                 metadata={
                     "campus_count": len(institute.campuses),
                     "member_count": len(institute.members),
+                    "course_count": len(institute.courses),
+                    "lead_count": len(institute.leads),
+                    "application_count": len(institute.applications),
                 },
             )
     return [SeededAccount(email, accounts[email]) for email in emails]

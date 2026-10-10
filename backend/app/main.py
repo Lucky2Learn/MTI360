@@ -27,6 +27,7 @@ from app.core.logging import configure_logging
 from app.core.middleware import RequestContextMiddleware
 from app.core.ratelimit import RedisRateLimiter
 from app.integrations.email import SmtpEmailSender
+from app.integrations.storage import S3ObjectStorage
 from app.modules.identity.members import MemberAdmin
 from app.modules.identity.passwords import PasswordHasher
 from app.modules.identity.service import IdentityConfig, IdentityService
@@ -39,6 +40,9 @@ from app.modules.platform_identity.service import (
     PlatformIdentityService,
 )
 from app.modules.tenants.service import TenantAdmin
+
+UPLOAD_RATE_LIMIT_NAMESPACE = "uploads"
+"""Redis key space of the document-upload limit (Phase 02-2; ADR-0021 §8)."""
 
 
 class HealthResponse(BaseModel):
@@ -127,12 +131,25 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     tenant_admin = TenantAdmin(platform_identity, invitation_secret=identity.config.session_secret)
     # Tenant member administration (T01-08) builds on the identity service.
     members = MemberAdmin(identity)
+    # Admission documents (Phase 02-2): private object storage and an upload rate limit.
+    # Neither opens a connection before it is used.
+    storage = S3ObjectStorage.create(
+        endpoint_url=settings.s3_endpoint_url or None,
+        region=settings.s3_region,
+        bucket=settings.s3_bucket,
+        access_key_id=settings.s3_access_key_id.get_secret_value(),
+        secret_access_key=settings.s3_secret_access_key.get_secret_value(),
+    )
+    upload_limiter = RedisRateLimiter.from_url(
+        settings.redis_url.get_secret_value(), namespace=UPLOAD_RATE_LIMIT_NAMESPACE
+    )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         yield
         await app.state.identity.rate_limiter.close()
         await app.state.platform_identity.rate_limiter.close()
+        await app.state.upload_limiter.close()
         await engine.dispose()
 
     app = FastAPI(
@@ -153,6 +170,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.platform_users = platform_users
     app.state.tenant_admin = tenant_admin
     app.state.members = members
+    app.state.storage = storage
+    app.state.upload_limiter = upload_limiter
 
     install_exception_handlers(app)
     app.add_middleware(RequestContextMiddleware)

@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.ids import new_id
 from app.core.pagination import SortField
+from app.core.search import escape_like
 from app.modules.access.models import MembershipRole, Role
 from app.modules.identity.domain import CampusScope, MembershipStatus, UserStatus
 from app.modules.identity.models import MembershipCampus, TenantMembership, User, UserInvitation
@@ -42,11 +43,6 @@ SORT_COLUMNS: Final = {
 
 def _rowcount(result: object) -> int:
     return cast(CursorResult[object], result).rowcount
-
-
-def escape_like(value: str) -> str:
-    r"""``value`` as a literal inside an ``ILIKE`` pattern (escape character ``\``)."""
-    return value.replace("\\", "\\\\").replace("%", r"\%").replace("_", r"\_")
 
 
 @dataclass(frozen=True, slots=True)

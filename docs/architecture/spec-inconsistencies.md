@@ -172,7 +172,7 @@
 
 ## INC-22 — Upload file types and size limits unspecified
 
-- **Status:** `OPEN` (T00-07B decision D7)
+- **Status:** `DECIDED-BY-ADR` for admission documents ([ADR-0021](../adr/0021-admissions-core.md) §8; master readiness L5; Phase 02-2): PDF, JPEG and PNG, at most 10 MiB per file, for every admission document type. Other document categories (faculty, institute, compliance) decide their own limits when they are built. Originally `OPEN` (T00-07B decision D7).
 - **Where:** CLAUDE.md §50 and ARCHITECTURE.md §49 (server validation pipeline) and §31 (document processing); PRD/UI-SCREENS mention admission documents (CDC, passport, medical certificates) but no allowed types or limits
 - **Issue:** No specification defines which file types are accepted or the maximum sizes per document category.
 - **Current handling:** FileUpload requires explicit `accept` (MIME + extension pairs) and `maxSize` props with no defaults; a permanent deny list applies regardless. The showcase uses PDF/JPG/PNG up to 5 MB and 2 MB as examples only. Server-side validation remains authoritative.
@@ -357,3 +357,35 @@
 - **Issue:** A session-only route answers `401` when the session has already ended, so sign-out would not be idempotent.
 - **Current handling:** `POST /api/v1/auth/logout` is an anonymous route with the same-origin check; it revokes the presented session when there is one and always clears the cookie with `204`.
 - **Proposed resolution:** None required.
+
+## INC-44 — Lead status vocabulary
+
+- **Status:** `DECIDED-BY-ADR` ([ADR-0020](../adr/0020-courses-and-leads.md) §4; Phase 02-1)
+- **Where:** PRD.md §27 (`NEW, CONTACTED, QUALIFIED, COUNSELLING, APPLICATION, ADMITTED` + `LOST, DEFERRED, NOT_ELIGIBLE`) vs APP-FLOW.md §10 (adds `INTERESTED` and `DUPLICATE`) vs UI-SCREENS.md ADM-02 (`New → Contacted → Counselling → Application → Review → Approved → Enrolled → Lost`, which mixes lead, application and enrolment stages)
+- **Issue:** Three documents give three lead pipelines.
+- **Current handling:** Leads use the APP-FLOW §10 set, the functional workflow reference (APP-FLOW §45) and a superset of PRD §27. `APPLICATION` and `ADMITTED` are set only by the 02-2 application flow. The application and enrolment stages of ADM-02 belong to applications (02-2), not to leads.
+- **Proposed resolution:** Align PRD §27 and UI-SCREENS ADM-02 with APP-FLOW §10 when those documents are next revised.
+
+## INC-45 — Lead navigation placement and demo badge
+
+- **Status:** `DECIDED-BY-ADR` ([ADR-0020](../adr/0020-courses-and-leads.md) §12; Phase 02-1)
+- **Where:** APP-FLOW.md §3 and `frontend/src/shells/experiences/tenant.ts` (Leads under both GROW and ADMISSIONS; no Pipeline page although UI-SCREENS ADM-02 exists; a hard-coded "12 new enquiries" badge on Admissions)
+- **Issue:** Two navigation entries for one capability, a screen without a route, and a badge showing a fabricated number.
+- **Current handling:** The canonical route is `/app/admissions/leads`, and ADM-02 is its board view (`?view=board`). GROW › Leads stays `UNRELEASED` until the GROW pillar defines a marketing view of leads. The demo badge is removed. A badge returns only when real data backs it.
+- **Proposed resolution:** Update APP-FLOW §3 to show one Leads entry under Admissions (with GROW linking to it) when GROW is specified.
+
+## INC-46 — Cross-tenant route meta-test
+
+- **Status:** `DECIDED-BY-ADR` ([ADR-0020](../adr/0020-courses-and-leads.md) §11; Phase 02-1)
+- **Where:** tenancy.md §8 (a meta-test that fails when a tenant route lacks a cross-tenant test) and PHASE-02-MASTER-READINESS.md §3, §25 (states that it exists) vs `backend/app/api/coverage.py` and `tests/security/test_route_coverage.py` (permission or exemption coverage only)
+- **Issue:** No test proves that every tenant route has a cross-tenant case.
+- **Current handling:** From Phase 02-1, a cross-tenant registry (`backend/tests/security/cross_tenant_registry.py`) maps every route of the business modules (`courses`, `leads`) to the test that exercises it with another tenant's IDs, and a meta-test enforces it. T01 routes are recorded as covered by their existing isolation suites.
+- **Proposed resolution:** Every later business module registers its routes. Extend the registry to T01 routes when a security-hardening task (Phase 16) audits them individually.
+
+## INC-47 — Application status vocabulary and the admission order
+
+- **Status:** `DECIDED-BY-ADR` ([ADR-0021](../adr/0021-admissions-core.md) §4, §6; Phase 02-2)
+- **Where:** APP-FLOW.md §16 (`DRAFT → SUBMITTED → UNDER REVIEW → DOCUMENT VERIFICATION → ELIGIBLE → APPROVED → ADMITTED`; `REJECTED`, `DOCUMENT CORRECTION REQUIRED`, `NOT ELIGIBLE`), APP-FLOW.md §18 and PRD.md §29 (fee and payment before "Student Created"), UI-SCREENS.md ADM-05…ADM-10 (no statuses)
+- **Issue:** `DOCUMENT VERIFICATION` and `ELIGIBLE` duplicate state that is tracked per document and by the review decision, and the admission flow places payment before the student exists, which contradicts the locked decision L3.
+- **Current handling:** All ten statuses are in the database CHECK; `DOCUMENT_VERIFICATION` and `ELIGIBLE` are reserved and unused. `CORRECTION_REQUIRED` stands for "document correction required" and also covers corrections to the application's details. Admission approval creates the Admission and the Student; payment gates enrolment and batch allocation later (L3).
+- **Proposed resolution:** Align APP-FLOW §16/§18 and PRD §29 with ADR-0021 when those documents are next revised.

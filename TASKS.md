@@ -140,6 +140,29 @@ PHASE 16 — Security & Hardening
 PHASE 17 — Production Readiness
 ```
 
+### Re-sequencing after Phase 01 (L1, approved 2026-10-08)
+
+The order above cannot produce a usable product: an application needs a course, and courses were in Phase 05, after Admissions. The Phase 02 master readiness review ([PHASE-02-MASTER-READINESS.md](docs/architecture/PHASE-02-MASTER-READINESS.md), decision L1) re-sequenced the work after Phase 01:
+
+```text
+PHASE 01 — Authentication & Multi-Tenancy        COMPLETED
+        ↓
+PHASE 02 — Admissions MVP (vertical slices)
+        02-1 Courses + Lead Management
+        02-2 Applications → Documents → Admission → Student
+        02-C Onboarding enablers (thin platform/tenant admin UI, parallel)
+        ↓
+V1 — 02-4 Public enquiry → 02-5 Finance-lite → 02-6 Batches
+        ↓
+V1.5 — 02-7 Communication → 02-8 Admissions dashboard → AI
+        ↓
+Remaining Platform Control Plane, RUN / COMPLY / AUTOMATE pillars (PRD §72–76 order)
+```
+
+- A **minimal course catalogue** is pulled forward from T05-01 into 02-1. Curriculum (ACA-04) stays in Phase 05.
+- The **Platform Control Plane** section below keeps its task list. Only the thin provisioning UI (02-C) is in the MVP; the rest follows it.
+- The phase sections below keep their original numbering for traceability. The slice table in **PHASE 02 — ADMISSIONS MVP** is the authoritative order.
+
 ---
 
 # 5. TASK STATUS
@@ -1090,7 +1113,30 @@ An unauthenticated user cannot access protected APIs.
 
 ---
 
+# PHASE 02 — ADMISSIONS MVP (re-sequenced, L1)
+
+## Objective
+
+Deliver the first usable business flow: course catalogue → lead → application → admission → student, as vertical slices on the T01 foundation.
+
+Sources: [PHASE-02-MASTER-READINESS.md](docs/architecture/PHASE-02-MASTER-READINESS.md) (L1–L7), [PHASE-02-1-COURSES-LEADS-READINESS.md](docs/architecture/PHASE-02-1-COURSES-LEADS-READINESS.md), [ADR-0020](docs/adr/0020-courses-and-leads.md).
+
+| ID | Slice | Covers (original task IDs) | Status |
+|---|---|---|---|
+| 02-1 | Courses + Lead Management | T05-01 (minimal: ACA-01/02/03), T04-01 (GROW-08/09; GROW-07/10 deferred), T04-02 (ADM-02 board, no drag-and-drop) | READY_FOR_REVIEW (`feat/phase-02-1-courses-leads`; see DEVELOPMENT-STATUS.md §9A) |
+| 02-2 | Applications → Documents → Admission → Student | T04-04 … T04-08 | READY_FOR_REVIEW (`feat/phase-02-1-courses-leads`; [ADR-0021](docs/adr/0021-admissions-core.md); see DEVELOPMENT-STATUS.md §9A) |
+| 02-C | Onboarding enablers (members, roles, minimal provisioning UI) | T03 admin screens, T02-04/T02-12 minimal | NOT_STARTED |
+| 02-4 | Public enquiry (V1) | T14 enquiry capture | NOT_STARTED |
+| 02-5 | Finance-lite (V1) | T06 subset | NOT_STARTED |
+| 02-6 | Batches (V1) | T05-03 | NOT_STARTED |
+
+One branch and one PR per slice, merged with a merge commit.
+
+---
+
 # PHASE 02 — PLATFORM CONTROL PLANE
+
+> **Re-sequenced (L1, 2026-10-08):** only the thin provisioning UI (02-C) is part of the MVP. The tasks below follow the Admissions MVP.
 
 ## Objective
 
@@ -1594,6 +1640,8 @@ Student
 
 ## T04-01 — Lead Foundation
 
+> **Re-sequenced:** delivered by slice 02-1 (GROW-08, GROW-09). GROW-07 Lead Sources and GROW-10 Import are deferred.
+
 UI:
 
 ```text
@@ -1614,6 +1662,8 @@ Implement:
 ---
 
 ## T04-02 — Lead Pipeline
+
+> **Re-sequenced:** delivered by slice 02-1 as the board view of the Leads route ("Move to…", no drag-and-drop).
 
 UI:
 
@@ -1770,6 +1820,8 @@ Certificate
 ---
 
 ## T05-01 — Courses
+
+> **Re-sequenced:** the minimal catalogue (ACA-01, ACA-02, ACA-03) is delivered by slice 02-1. ACA-04 Curriculum stays here.
 
 UI:
 

@@ -1,5 +1,5 @@
 {
-  "_comment": "Development fixtures only (T01-08, decision D16). Load with `python -m app.cli seed` from backend/ with APP_ENV=development. Emails use reserved .example domains; passwords are generated, never shown or stored; to sign in, request a reset link from the sign-in page (Mailpit locally).",
+  "_comment": "Development fixtures only (T01-08, decision D16). Load with `python -m app.cli seed` from backend/ with APP_ENV=development. Emails use reserved .example domains; passwords are generated, never shown or stored; to sign in, request a reset link from the sign-in page (Mailpit locally). Courses, leads (Phase 02-1) and applications (Phase 02-2) use fictitious contacts: example.com emails and the +91 90000 10xxx range.",
   "institutes": [
     {
       "name": "Konkan Maritime Training Institute",
@@ -27,6 +27,416 @@
           "role": "ADMIN",
           "campus_scope": "SELECTED",
           "campuses": ["RTN"]
+        },
+        {
+          "email": "admissions@konkan-maritime.example",
+          "display_name": "Farah Shaikh",
+          "role": "ADMISSIONS_MANAGER",
+          "campus_scope": "ALL"
+        },
+        {
+          "email": "counsellor.mumbai@konkan-maritime.example",
+          "display_name": "Rohit Naik",
+          "role": "COUNSELLOR",
+          "campus_scope": "SELECTED",
+          "campuses": ["MUM"]
+        },
+        {
+          "email": "counsellor.ratnagiri@konkan-maritime.example",
+          "display_name": "Priya Joshi",
+          "role": "COUNSELLOR",
+          "campus_scope": "SELECTED",
+          "campuses": ["RTN"]
+        }
+      ],
+      "courses": [
+        {
+          "code": "GPR",
+          "name": "GP Rating",
+          "category": "PRE_SEA",
+          "status": "ACTIVE",
+          "duration_value": 6,
+          "duration_unit": "MONTHS",
+          "eligibility_summary": "10th pass with 40% in Science, Maths and English; age 17½–25; medically fit (DG Shipping norms).",
+          "description": "Six-month pre-sea course for deck and engine ratings, with shipboard familiarisation on the training ship."
+        },
+        {
+          "code": "DNS",
+          "name": "Diploma in Nautical Science",
+          "category": "PRE_SEA",
+          "status": "ACTIVE",
+          "duration_value": 1,
+          "duration_unit": "YEARS",
+          "eligibility_summary": "12th PCM with 60% aggregate and 50% in English; age 17–25; IMU-CET qualified.",
+          "description": "One-year pre-sea diploma for deck cadets, followed by 18 months of sponsored sea service."
+        },
+        {
+          "code": "STCW-BST",
+          "name": "STCW Basic Safety Training",
+          "category": "POST_SEA",
+          "status": "ACTIVE",
+          "duration_value": 5,
+          "duration_unit": "DAYS",
+          "eligibility_summary": "Valid CDC or INDoS number; medically fit.",
+          "description": "PST, FPFF, EFA, PSSR and STSDSD modules."
+        },
+        {
+          "code": "AFF",
+          "name": "Advanced Fire Fighting",
+          "category": "POST_SEA",
+          "status": "DRAFT",
+          "duration_value": 5,
+          "duration_unit": "DAYS",
+          "eligibility_summary": "STCW Basic Safety Training completed."
+        },
+        {
+          "code": "CCMC",
+          "name": "Crowd and Crisis Management",
+          "category": "POST_SEA",
+          "status": "ARCHIVED",
+          "duration_value": 2,
+          "duration_unit": "DAYS",
+          "description": "No longer offered; kept for existing enquiries."
+        }
+      ],
+      "leads": [
+        {
+          "key": "K01",
+          "full_name": "Aditya Kulkarni",
+          "mobile": "+91 90000 10101",
+          "source": "WEBSITE",
+          "course": "GPR",
+          "campus": "MUM",
+          "owner": "counsellor.mumbai@konkan-maritime.example",
+          "created_by": "counsellor.mumbai@konkan-maritime.example",
+          "status": "NEW",
+          "email": "aditya.kulkarni@example.com",
+          "city": "Thane",
+          "follow_ups": [
+            {
+              "due_in_hours": 3,
+              "kind": "CALL",
+              "note": "First call: confirm 10th marks and age."
+            }
+          ]
+        },
+        {
+          "key": "K02",
+          "full_name": "Sneha Patil",
+          "mobile": "+91 90000 10102",
+          "source": "INSTAGRAM",
+          "course": "DNS",
+          "campus": null,
+          "owner": null,
+          "created_by": "admissions@konkan-maritime.example",
+          "status": "NEW",
+          "city": "Pune",
+          "highest_qualification": "12th PCM, 72%",
+          "follow_ups": [
+            {
+              "due_in_hours": -20,
+              "kind": "WHATSAPP",
+              "note": "Send DNS eligibility and fee overview."
+            }
+          ]
+        },
+        {
+          "key": "K03",
+          "full_name": "Imran Shaikh",
+          "mobile": "+91 90000 10199",
+          "source": "PHONE",
+          "course": "GPR",
+          "campus": "MUM",
+          "owner": "counsellor.mumbai@konkan-maritime.example",
+          "created_by": "counsellor.mumbai@konkan-maritime.example",
+          "status": "NEW",
+          "date_of_birth": "2007-08-19",
+          "notes": ["Father works on bulk carriers; keen on engine side."]
+        },
+        {
+          "key": "K04",
+          "full_name": "Imran Shaikh",
+          "mobile": "+91 90000 10199",
+          "source": "WEBSITE",
+          "course": "GPR",
+          "campus": "MUM",
+          "owner": "counsellor.mumbai@konkan-maritime.example",
+          "created_by": "counsellor.mumbai@konkan-maritime.example",
+          "status": "DUPLICATE",
+          "duplicate_of": "K03",
+          "status_reason": "Same enquiry submitted again through the website."
+        },
+        {
+          "key": "K05",
+          "full_name": "Kavya Menon",
+          "mobile": "+91 90000 10103",
+          "source": "REFERRAL",
+          "course": "DNS",
+          "campus": "RTN",
+          "owner": "counsellor.ratnagiri@konkan-maritime.example",
+          "created_by": "counsellor.ratnagiri@konkan-maritime.example",
+          "status": "CONTACTED",
+          "email": "kavya.menon@example.com",
+          "follow_ups": [
+            {
+              "due_in_hours": 48,
+              "kind": "VISIT",
+              "note": "Campus visit with parents."
+            }
+          ]
+        },
+        {
+          "key": "K06",
+          "full_name": "Rahul Desai",
+          "mobile": "+91 90000 10104",
+          "source": "GOOGLE",
+          "course": "GPR",
+          "campus": "MUM",
+          "owner": "counsellor.mumbai@konkan-maritime.example",
+          "created_by": "counsellor.mumbai@konkan-maritime.example",
+          "status": "CONTACTED",
+          "follow_ups": [
+            {
+              "due_in_hours": -30,
+              "kind": "CALL",
+              "note": "Call back about hostel availability."
+            }
+          ]
+        },
+        {
+          "key": "K07",
+          "full_name": "Vikram Sawant",
+          "mobile": "+91 90000 10105",
+          "source": "PHONE",
+          "course": "STCW-BST",
+          "campus": null,
+          "owner": null,
+          "created_by": "admissions@konkan-maritime.example",
+          "status": "CONTACTED",
+          "city": "Panvel"
+        },
+        {
+          "key": "K08",
+          "full_name": "Ananya Iyer",
+          "mobile": "+91 90000 10106",
+          "source": "EDUCATION_PORTAL",
+          "course": "DNS",
+          "campus": "RTN",
+          "owner": "counsellor.ratnagiri@konkan-maritime.example",
+          "created_by": "counsellor.ratnagiri@konkan-maritime.example",
+          "status": "QUALIFIED",
+          "date_of_birth": "2007-02-03",
+          "highest_qualification": "12th PCM, 81%",
+          "notes": ["Cleared IMU-CET; rank under 2,000."]
+        },
+        {
+          "key": "K09",
+          "full_name": "Sameer Khan",
+          "mobile": "+91 90000 10107",
+          "source": "WALK_IN",
+          "course": "GPR",
+          "campus": "MUM",
+          "owner": "admissions@konkan-maritime.example",
+          "created_by": "admissions@konkan-maritime.example",
+          "status": "QUALIFIED",
+          "follow_ups": [
+            {
+              "due_in_hours": 26,
+              "kind": "MEETING",
+              "note": "Counselling session at Mumbai campus."
+            }
+          ]
+        },
+        {
+          "key": "K10",
+          "full_name": "Pooja Rane",
+          "mobile": "+91 90000 10108",
+          "source": "WHATSAPP",
+          "course": "GPR",
+          "campus": "RTN",
+          "owner": "counsellor.ratnagiri@konkan-maritime.example",
+          "created_by": "counsellor.ratnagiri@konkan-maritime.example",
+          "status": "COUNSELLING",
+          "follow_ups": [
+            {
+              "due_in_hours": 5,
+              "kind": "CALL",
+              "note": "Discuss medical test slot."
+            }
+          ]
+        },
+        {
+          "key": "K11",
+          "full_name": "Nikhil Gawde",
+          "mobile": "+91 90000 10109",
+          "source": "YOUTUBE",
+          "course": "DNS",
+          "campus": "MUM",
+          "owner": "counsellor.mumbai@konkan-maritime.example",
+          "created_by": "counsellor.mumbai@konkan-maritime.example",
+          "status": "COUNSELLING"
+        },
+        {
+          "key": "K12",
+          "full_name": "Riya D'Souza",
+          "mobile": "+91 90000 10110",
+          "source": "REFERRAL",
+          "course": "DNS",
+          "campus": "MUM",
+          "owner": "counsellor.mumbai@konkan-maritime.example",
+          "created_by": "counsellor.mumbai@konkan-maritime.example",
+          "status": "INTERESTED",
+          "email": "riya.dsouza@example.com",
+          "date_of_birth": "2006-11-22",
+          "city": "Vasai",
+          "highest_qualification": "12th PCM, 76%",
+          "notes": [
+            "Ready to apply once the DNS 2026-B batch dates are confirmed."
+          ]
+        },
+        {
+          "key": "K13",
+          "full_name": "Arjun Pawar",
+          "mobile": "+91 90000 10111",
+          "source": "WALK_IN",
+          "course": "GPR",
+          "campus": "RTN",
+          "owner": "counsellor.ratnagiri@konkan-maritime.example",
+          "created_by": "counsellor.ratnagiri@konkan-maritime.example",
+          "status": "INTERESTED"
+        },
+        {
+          "key": "K14",
+          "full_name": "Tanvi Chavan",
+          "mobile": "+91 90000 10112",
+          "source": "FACEBOOK",
+          "course": "DNS",
+          "campus": "MUM",
+          "owner": "counsellor.mumbai@konkan-maritime.example",
+          "created_by": "counsellor.mumbai@konkan-maritime.example",
+          "status": "LOST",
+          "status_reason": "Joined an engineering college instead."
+        },
+        {
+          "key": "K15",
+          "full_name": "Omkar Jadhav",
+          "mobile": "+91 90000 10113",
+          "source": "PHONE",
+          "course": "GPR",
+          "campus": "RTN",
+          "owner": "counsellor.ratnagiri@konkan-maritime.example",
+          "created_by": "counsellor.ratnagiri@konkan-maritime.example",
+          "status": "DEFERRED",
+          "status_reason": "Wants the next intake after his 12th results."
+        },
+        {
+          "key": "K16",
+          "full_name": "Fatima Ansari",
+          "mobile": "+91 90000 10114",
+          "source": "OTHER",
+          "course": "CCMC",
+          "campus": null,
+          "owner": null,
+          "created_by": "admissions@konkan-maritime.example",
+          "status": "NEW",
+          "email": "fatima.ansari@example.com"
+        },
+        {
+          "key": "K17",
+          "full_name": "Harsh Vora",
+          "mobile": "+91 90000 10115",
+          "source": "WEBSITE",
+          "course": "DNS",
+          "campus": null,
+          "owner": null,
+          "created_by": "admissions@konkan-maritime.example",
+          "status": "NOT_ELIGIBLE",
+          "status_reason": "Did not take Physics, Chemistry and Maths in 12th."
+        }
+      ],
+      "applications": [
+        {
+          "key": "KA1",
+          "lead": "K12",
+          "course": "DNS",
+          "campus": "MUM",
+          "created_by": "counsellor.mumbai@konkan-maritime.example",
+          "status": "SUBMITTED",
+          "date_of_birth": "2007-02-11",
+          "highest_qualification": "12th PCM, 74%",
+          "declared": true,
+          "documents": [
+            { "type": "PASSPORT", "status": "UNDER_REVIEW" },
+            { "type": "MARKSHEET_12", "status": "UNDER_REVIEW" },
+            { "type": "MEDICAL_CERTIFICATE", "status": "UNDER_REVIEW" }
+          ]
+        },
+        {
+          "key": "KA2",
+          "lead": "K13",
+          "course": "GPR",
+          "campus": "RTN",
+          "created_by": "counsellor.ratnagiri@konkan-maritime.example",
+          "reviewed_by": "admissions@konkan-maritime.example",
+          "status": "CORRECTION_REQUIRED",
+          "status_reason": "The 12th marksheet scan is unreadable; upload a clear copy.",
+          "date_of_birth": "2006-09-30",
+          "highest_qualification": "10th, 61%",
+          "declared": true,
+          "documents": [
+            { "type": "PASSPORT", "status": "VERIFIED" },
+            {
+              "type": "MARKSHEET_10",
+              "status": "REJECTED",
+              "reason": "Scan is unreadable"
+            }
+          ]
+        },
+        {
+          "key": "KA3",
+          "lead": "K09",
+          "course": "GPR",
+          "campus": "MUM",
+          "created_by": "admissions@konkan-maritime.example",
+          "reviewed_by": "admissions@konkan-maritime.example",
+          "status": "APPROVED",
+          "date_of_birth": "2006-12-05",
+          "highest_qualification": "10th, 68%",
+          "declared": true,
+          "documents": [
+            { "type": "PASSPORT", "status": "VERIFIED" },
+            { "type": "MARKSHEET_10", "status": "VERIFIED" },
+            { "type": "MEDICAL_CERTIFICATE", "status": "VERIFIED" }
+          ]
+        },
+        {
+          "key": "KA4",
+          "course": "STCW-BST",
+          "campus": "MUM",
+          "created_by": "counsellor.mumbai@konkan-maritime.example",
+          "reviewed_by": "admissions@konkan-maritime.example",
+          "status": "ADMITTED",
+          "full_name": "Sandeep Patil",
+          "mobile": "+91 90000 10120",
+          "date_of_birth": "1998-04-21",
+          "highest_qualification": "GP Rating (2019); 3 years at sea",
+          "city": "Thane",
+          "indos_number": "18HL4521",
+          "declared": true,
+          "documents": [
+            { "type": "CDC", "status": "VERIFIED" },
+            { "type": "INDOS", "status": "VERIFIED" },
+            { "type": "MEDICAL_CERTIFICATE", "status": "VERIFIED" }
+          ]
+        },
+        {
+          "key": "KA5",
+          "lead": "K11",
+          "course": "DNS",
+          "campus": "MUM",
+          "created_by": "counsellor.mumbai@konkan-maritime.example",
+          "status": "DRAFT",
+          "documents": [{ "type": "PASSPORT", "status": "UPLOADED" }]
         }
       ]
     },
@@ -46,6 +456,74 @@
           "display_name": "Sunita Kamat",
           "role": "ADMIN",
           "campus_scope": "ALL"
+        }
+      ],
+      "courses": [
+        {
+          "code": "GME",
+          "name": "Graduate Marine Engineering",
+          "category": "PRE_SEA",
+          "status": "ACTIVE",
+          "duration_value": 1,
+          "duration_unit": "YEARS"
+        },
+        {
+          "code": "STCW-BST",
+          "name": "STCW Basic Safety Training",
+          "category": "POST_SEA",
+          "status": "ACTIVE",
+          "duration_value": 5,
+          "duration_unit": "DAYS"
+        }
+      ],
+      "leads": [
+        {
+          "key": "C01",
+          "full_name": "Karthik Subramanian",
+          "mobile": "+91 90000 10301",
+          "source": "WEBSITE",
+          "course": "GME",
+          "campus": "CHE",
+          "owner": "director@coromandel-nautical.example",
+          "created_by": "director@coromandel-nautical.example",
+          "status": "CONTACTED"
+        },
+        {
+          "key": "C02",
+          "full_name": "Divya Raman",
+          "email": "divya.raman@example.com",
+          "source": "REFERRAL",
+          "course": "STCW-BST",
+          "created_by": "director@coromandel-nautical.example",
+          "status": "NEW"
+        },
+        {
+          "key": "C03",
+          "full_name": "Sanjay Pillai",
+          "mobile": "+91 90000 10303",
+          "source": "PHONE",
+          "course": "GME",
+          "campus": "CHE",
+          "created_by": "director@coromandel-nautical.example",
+          "status": "QUALIFIED"
+        }
+      ],
+      "applications": [
+        {
+          "key": "CA1",
+          "lead": "C03",
+          "course": "GME",
+          "campus": "CHE",
+          "created_by": "director@coromandel-nautical.example",
+          "reviewed_by": "director@coromandel-nautical.example",
+          "status": "ADMITTED",
+          "date_of_birth": "2001-07-18",
+          "highest_qualification": "B.E. Mechanical, 2023",
+          "declared": true,
+          "documents": [
+            { "type": "PASSPORT", "status": "VERIFIED" },
+            { "type": "MEDICAL_CERTIFICATE", "status": "VERIFIED" }
+          ]
         }
       ]
     }

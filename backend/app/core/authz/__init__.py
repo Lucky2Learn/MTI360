@@ -1,6 +1,7 @@
 """Authorization (T01-05; ADR-0011, ADR-0016).
 
-The permission registry, ``authorize`` and ``require_permission``.
+The permission registry, ``authorize``, ``require_permission`` and the campus
+visibility predicate of lists (Phase 02-1).
 """
 
 from app.core.authz.dependencies import (
@@ -18,6 +19,7 @@ from app.core.authz.registry import (
     PermissionScope,
     permission,
 )
+from app.core.authz.visibility import campus_visibility, campus_visible
 
 __all__ = [
     "AUTHZ_DENIED",
@@ -30,6 +32,8 @@ __all__ = [
     "PermissionRegistry",
     "PermissionScope",
     "authorize",
+    "campus_visibility",
+    "campus_visible",
     "permission",
     "require_fresh_mfa",
     "require_permission",

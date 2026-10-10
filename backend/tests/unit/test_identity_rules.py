@@ -1,5 +1,8 @@
 """Identity rules, tokens, passwords and client IP without I/O (T01-04)."""
 
+import itertools
+import re
+import time
 import uuid
 from datetime import timedelta
 
@@ -7,6 +10,7 @@ import pytest
 from starlette.requests import Request
 
 from app.core.net import client_ip
+from app.modules.identity import domain
 from app.modules.identity.domain import (
     CampusScope,
     CampusState,
@@ -47,10 +51,39 @@ def test_emails_are_trimmed_and_lower_cased(raw: str, canonical: str) -> None:
     assert normalize_email(raw) == canonical
 
 
-@pytest.mark.parametrize("raw", ["", "no-at-sign", "two@@x.example", "a b@x.example", "a@b"])
+@pytest.mark.parametrize(
+    "raw",
+    ["", "no-at-sign", "two@@x.example", "a b@x.example", "a@b", "a@.b", "a@b.", "a@.", "@b.c"],
+)
 def test_implausible_emails_are_rejected(raw: str) -> None:
     with pytest.raises(InvalidEmailError):
         normalize_email(raw)
+
+
+def test_the_email_rule_is_unchanged_by_the_linear_pattern() -> None:
+    """Every string over a small alphabet, up to six characters, is accepted exactly when
+    the earlier single pattern accepted it (kept here as the specification only)."""
+    earlier = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    for length in range(7):
+        for characters in itertools.product("a.@ \t", repeat=length):
+            raw = "".join(characters)
+            try:
+                normalize_email(raw)
+                accepted = True
+            except InvalidEmailError:
+                accepted = False
+            assert accepted is bool(earlier.fullmatch(raw.strip().lower())), repr(raw)
+
+
+def test_the_email_pattern_is_linear_on_hostile_input() -> None:
+    """CodeQL py/polynomial-redos: "!@!." followed by many "!." made the earlier pattern
+    quadratic (40 000 characters took seconds). The length limit is not relied on here."""
+    hostile = "!@!." + "!." * 100_000 + "@"
+    started = time.perf_counter()
+    assert domain._EMAIL_PATTERN.fullmatch(hostile) is None
+    assert time.perf_counter() - started < 0.5  # linear: about a millisecond
+    with pytest.raises(InvalidEmailError):
+        normalize_email(hostile)
 
 
 def test_masked_email_keeps_only_the_first_character_and_the_domain() -> None:

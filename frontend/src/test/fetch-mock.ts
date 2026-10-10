@@ -55,6 +55,18 @@ export function apiError(
   );
 }
 
+/** Multipart bodies as `field → value`; files as `{ file: name, type }` (Phase 02-2). */
+function formEntries(form: FormData): Record<string, unknown> {
+  const entries: Record<string, unknown> = {};
+  form.forEach((value, key) => {
+    entries[key] =
+      typeof value === "string"
+        ? value
+        : { file: value.name, type: value.type };
+  });
+  return entries;
+}
+
 /** The URL of a fetch input, whatever its form. */
 export function inputUrl(input: RequestInfo | URL): string {
   if (typeof input === "string") return input;
@@ -74,7 +86,9 @@ export function installFetch() {
       const body =
         typeof init?.body === "string"
           ? (JSON.parse(init.body) as unknown)
-          : undefined;
+          : init?.body instanceof FormData
+            ? formEntries(init.body)
+            : undefined;
       calls.push({ method, path, headers, body });
       const queue = script.get(`${method} ${path}`);
       const next = queue?.shift();

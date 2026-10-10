@@ -14,7 +14,13 @@ import { apiCookieHeader, clientAddress } from "./forwarding";
 // X-Forwarded-For chain or X-Request-ID — is dropped.
 //
 // Returned response headers (allow-list): Set-Cookie (every one), X-Request-ID,
-// Retry-After, Content-Type, Cache-Control (no-store when the API sets none).
+// Retry-After, Content-Type, Cache-Control (no-store when the API sets none),
+// and for document downloads (Phase 02-2, ADR-0021 §8) Content-Disposition,
+// Content-Length, Content-Security-Policy and X-Content-Type-Options.
+//
+// Request bodies are capped at MAX_REQUEST_BYTES (11 MiB: a 10 MiB document
+// plus form overhead) while they are read: a larger declared or actual body is
+// answered 413 PAYLOAD_TOO_LARGE without contacting the API.
 // Status codes and the error envelope pass through unchanged.
 //
 // Logging: only an upstream failure is logged, as method + path + reason.
@@ -36,7 +42,12 @@ const RETURNED_RESPONSE_HEADERS = [
   "cache-control",
   "x-request-id",
   "retry-after",
+  "content-disposition",
+  "content-length",
+  "content-security-policy",
+  "x-content-type-options",
 ] as const;
+export const MAX_REQUEST_BYTES = 11 * 1024 * 1024;
 const BODYLESS_METHODS = new Set(["GET", "HEAD"]);
 const NULL_BODY_STATUS = new Set([101, 204, 205, 304]);
 const UPSTREAM_TIMEOUT_MS = 30_000;
@@ -133,6 +144,18 @@ export async function proxyToApi(
   }
 
   const method = request.method.toUpperCase();
+  let body: ArrayBuffer | undefined;
+  if (!BODYLESS_METHODS.has(method)) {
+    const read = await readCapped(request, MAX_REQUEST_BYTES);
+    if (read === null) {
+      return envelope(
+        413,
+        "PAYLOAD_TOO_LARGE",
+        "The file is too large. Files can be at most 10 MB.",
+      );
+    }
+    body = read;
+  }
   let upstream: Response;
   try {
     upstream = await fetchImpl(`${apiBaseUrl}${url.pathname}${url.search}`, {
@@ -142,9 +165,7 @@ export async function proxyToApi(
         url.pathname,
         trustedProxyHops,
       ),
-      body: BODYLESS_METHODS.has(method)
-        ? undefined
-        : await request.arrayBuffer(),
+      body,
       redirect: "manual",
       cache: "no-store",
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
@@ -169,6 +190,39 @@ export async function proxyToApi(
       headers: downstreamResponseHeaders(upstream.headers),
     },
   );
+}
+
+/**
+ * The request body, or null once it exceeds `limit` bytes (declared or read):
+ * the rest is never buffered.
+ */
+export async function readCapped(
+  request: Request,
+  limit: number,
+): Promise<ArrayBuffer | null> {
+  const declared = request.headers.get("content-length");
+  if (declared !== null && !(Number(declared) <= limit)) return null;
+  if (!request.body) return new ArrayBuffer(0);
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > limit) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const joined = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) {
+    joined.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return joined.buffer;
 }
 
 function logProxyEvent(record: ProxyLogRecord): void {

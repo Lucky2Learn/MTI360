@@ -474,4 +474,5 @@ async def auth_harness(database: DatabaseUnderTest, redis_url: str) -> AsyncIter
             yield Harness(app, client, world, app.state.sessionmaker, email, database)
     finally:
         await service.rate_limiter.close()
+        await app.state.upload_limiter.close()  # Phase 02-2 document uploads
         await app.state.engine.dispose()
