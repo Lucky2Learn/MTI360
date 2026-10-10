@@ -163,6 +163,18 @@ Remaining Platform Control Plane, RUN / COMPLY / AUTOMATE pillars (PRD §72–76
 - The **Platform Control Plane** section below keeps its task list. Only the thin provisioning UI (02-C) is in the MVP; the rest follows it.
 - The phase sections below keep their original numbering for traceability. The slice table in **PHASE 02 — ADMISSIONS MVP** is the authoritative order.
 
+### Delivery-order change (2026-10-10, ADR-0022)
+
+**02-5 Finance-lite** is delivered **ahead of** 02-3 (Seed + demo hardening) and 02-4 (Public enquiry). No identifier is renumbered.
+
+```text
+Delivered: 02-1 Courses + Leads, 02-2 Applications → Student   (PR #32, merge commit 2ea72f6)
+Next:      02-5 Finance-lite
+Then:      02-C, 02-3, 02-4 and 02-6 in their existing relative order (02-6 still follows 02-5)
+```
+
+02-5 depends only on 02-2 ([PHASE-02-MASTER-READINESS.md](docs/architecture/PHASE-02-MASTER-READINESS.md) §22–§23 and its 2026-10-10 addendum). The decisions are in [ADR-0022](docs/adr/0022-finance-lite.md), and the plan in [PHASE-02-5-FINANCE-LITE-READINESS.md](docs/architecture/PHASE-02-5-FINANCE-LITE-READINESS.md).
+
 ---
 
 # 5. TASK STATUS
@@ -1123,14 +1135,46 @@ Sources: [PHASE-02-MASTER-READINESS.md](docs/architecture/PHASE-02-MASTER-READIN
 
 | ID | Slice | Covers (original task IDs) | Status |
 |---|---|---|---|
-| 02-1 | Courses + Lead Management | T05-01 (minimal: ACA-01/02/03), T04-01 (GROW-08/09; GROW-07/10 deferred), T04-02 (ADM-02 board, no drag-and-drop) | READY_FOR_REVIEW (`feat/phase-02-1-courses-leads`; see DEVELOPMENT-STATUS.md §9A) |
-| 02-2 | Applications → Documents → Admission → Student | T04-04 … T04-08 | READY_FOR_REVIEW (`feat/phase-02-1-courses-leads`; [ADR-0021](docs/adr/0021-admissions-core.md); see DEVELOPMENT-STATUS.md §9A) |
+| 02-1 | Courses + Lead Management | T05-01 (minimal: ACA-01/02/03), T04-01 (GROW-08/09; GROW-07/10 deferred), T04-02 (ADM-02 board, no drag-and-drop) | COMPLETED (merged to `main` by PR #32, merge commit `2ea72f6`; D18 Chromium journeys not run; see DEVELOPMENT-STATUS.md §9A) |
+| 02-2 | Applications → Documents → Admission → Student | T04-04 … T04-08 | COMPLETED (merged to `main` by PR #32, merge commit `2ea72f6`; [ADR-0021](docs/adr/0021-admissions-core.md); D18 Chromium journeys not run; see DEVELOPMENT-STATUS.md §9A) |
 | 02-C | Onboarding enablers (members, roles, minimal provisioning UI) | T03 admin screens, T02-04/T02-12 minimal | NOT_STARTED |
 | 02-4 | Public enquiry (V1) | T14 enquiry capture | NOT_STARTED |
-| 02-5 | Finance-lite (V1) | T06 subset | NOT_STARTED |
+| 02-5 | Finance-lite (V1) — **delivered next, ahead of 02-3 and 02-4** | T06 subset: T06-02 fee structure, T06-03 fee invoices (non-tax), T06-04 offline payments and receipts, T06-05 outstanding, parts of T06-09/T06-10 | NOT_STARTED — decisions approved for implementation planning ([ADR-0022](docs/adr/0022-finance-lite.md); plan [PHASE-02-5-FINANCE-LITE-READINESS.md](docs/architecture/PHASE-02-5-FINANCE-LITE-READINESS.md)); not implemented |
 | 02-6 | Batches (V1) | T05-03 | NOT_STARTED |
 
 One branch and one PR per slice, merged with a merge commit.
+
+### 02-5 — Finance-lite (V1)
+
+**Objective:** bill an admitted student and record offline fee payments with an immutable, auditable history: fee structure → fee invoice → payment → receipt → outstanding.
+
+**Approved decisions (ADR-0022):**
+
+| ID | Decision |
+|---|---|
+| S1 | Identifier stays 02-5; delivered ahead of 02-3 and 02-4 |
+| F1 | Non-tax fee invoices only. No GST or tax calculation and no tax-invoice features; labelled "Fee invoice — not a tax invoice". **Production use requires confirmation of the tenant's tax treatment** (INC-48) |
+| F2 | Fee invoice and receipt numbers by Indian financial year (1 April – 31 March, IST): `INV-FY2026-27-nnnnn`, `RCT-FY2026-27-nnnnn`; `tenant_sequences.period` = FY start year; transactional and gap-free. A receipt's FY follows its confirmation (INC-49) |
+| F3 | Cheque and DD payments are `PENDING`. Only confirmation after clearance issues a receipt and reduces the balance; failure requires a reason |
+| F4 | INR only, as integer paise (`BIGINT *_minor`); currency fixed to `INR` by a CHECK |
+| F5 | Line amounts may be adjusted at issue. The structure values and the issued values are both recorded, and an adjustment needs a reason |
+| F6 | At most one live fee invoice per Admission. Cancelled invoices stay in history; a replacement gets a new number |
+| F7 | Separation of duties: the recorder cannot reverse their own payment |
+| F8 | No step-up for reversal in the MVP. Permission, campus authorization, reason, version check and audit stay mandatory |
+
+**Dependencies:** 02-2 (merged).
+
+**Files / modules:** backend module `finance`; sequence allocator moved to `app.core`; frontend `/app/finance/*` and the Student 360 Fees section.
+
+**Database changes:** migration `0011_finance_lite`.
+
+**API changes:** 17 tenant routes.
+
+**UI screens:** FIN-02, FIN-03, FIN-04, FIN-05, FIN-06, FIN-07, FIN-08 (with a summary strip), ADM-12 Fees. Deferred: FIN-01, FIN-09 and FIN-10.
+
+**Tests and acceptance:** [PHASE-02-5-FINANCE-LITE-READINESS.md](docs/architecture/PHASE-02-5-FINANCE-LITE-READINESS.md) §9–§10.
+
+**Deferred to full Finance (Phase 06):** refunds, discounts, scholarships, instalments, the payment gateway (T06-08), reconciliation, accounting exports, tax invoices, reminders (02-7) and the enrolment payment gate (02-6).
 
 ---
 
@@ -1956,6 +2000,8 @@ Test:
 ---
 
 # PHASE 06 — FINANCE
+
+> **Re-sequenced (2026-10-10, ADR-0022):** a subset of T06-02 … T06-05 (with parts of T06-09/T06-10) is delivered early as slice **02-5 Finance-lite** (non-tax fee invoices, offline payments, receipts, outstanding). The rest of this phase (refunds, gateway, reports, tax invoices) follows later.
 
 ## Objective
 

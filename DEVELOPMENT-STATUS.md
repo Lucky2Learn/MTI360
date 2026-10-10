@@ -108,6 +108,13 @@ M0 — Foundation Ready: reached 2026-09-30 (Phase 00 complete)
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
+> **2026-10-10 (merge and Finance-lite decisions):**
+>
+> - **Merged:** Phases 02-1 and 02-2 are merged to `main` by PR #32 (merge commit `2ea72f6`). CI on `2ea72f6` passed, including the PostgreSQL integration tests (`REQUIRE_DATABASE_TESTS=1`). CodeQL passed on the PR head `230dee2`.
+> - **Not verified:** the D18 Chromium journeys have not run, and the local `api`/`frontend` images predate T01-04 (§9A).
+> - **Next:** slice **02-5 Finance-lite** is approved for implementation planning, delivered ahead of 02-3 and 02-4 ([ADR-0022](docs/adr/0022-finance-lite.md)). It is **not implemented**.
+> - The percentage above is not recalculated.
+
 > **2026-10-08 (Phase 02-1):** the first business slice, Courses + Lead Management, is implemented on `feat/phase-02-1-courses-leads` and `READY_FOR_REVIEW` (not merged; pushed as PR #32; CI at `9f1da62`: backend, frontend, docker, repo, secrets and both audits passed, CodeQL failed with three alerts fixed in `4367542` (local, re-run pending)). It is the first product functionality. The percentage above is not recalculated: no agreed weighting exists, and the slice is not merged or CI-verified.
 
 > **2026-10-10 (Phase 02-2):** Applications → Documents → Admission → Student is implemented on the same branch (`5e755be` … `f190924`, plus the review fixes `8bc77c1` and `de005f8` for PDF upload validation and `4367542` for the CodeQL alerts). It is `READY_FOR_REVIEW` (not merged; pushed as PR #32; CI at `9f1da62`: backend, frontend, docker, repo, secrets and both audits passed, CodeQL failed with three alerts fixed in `4367542` (local, re-run pending)): the latest backend suite, at `4367542` with database tests required against `mti360_test` and S3 configured, gave 1198 passed, 0 failed, 0 skipped, and `alembic check` is clean (§9A). The Chromium journeys have not run. The percentage above is not recalculated.
@@ -158,7 +165,7 @@ Multi-Tenancy
 |---|---|---|
 | 00 | Foundation | `COMPLETED` |
 | 01 | Authentication & Multi-Tenancy | `IN_PROGRESS` |
-| 02 | Admissions MVP (re-sequenced, L1) — 02-1 Courses + Leads, 02-2 Applications → Student | `IN_PROGRESS` (02-1 and 02-2 `READY_FOR_REVIEW`, §9A) |
+| 02 | Admissions MVP (re-sequenced, L1) — 02-1 Courses + Leads, 02-2 Applications → Student; 02-5 Finance-lite next (ADR-0022) | `IN_PROGRESS` (02-1 and 02-2 `COMPLETED`, merged by PR #32; 02-5 `NOT_STARTED`, decisions approved; §9A) |
 | 02 (original) | Platform Control Plane (after the MVP, except 02-C) | `NOT_STARTED` |
 | 03 | Tenant Foundation | `NOT_STARTED` |
 | 04 | Admissions | `NOT_STARTED` |
@@ -1419,13 +1426,21 @@ Sources: [PHASE-02-MASTER-READINESS.md](docs/architecture/PHASE-02-MASTER-READIN
 
 | Slice | Description | Status |
 |---|---|---|
-| 02-1 | Courses + Lead Management | `READY_FOR_REVIEW` |
-| 02-2 | Applications → Documents → Admission → Student | `READY_FOR_REVIEW` |
+| 02-1 | Courses + Lead Management | `COMPLETED` (PR #32, `2ea72f6`; D18 not run) |
+| 02-2 | Applications → Documents → Admission → Student | `COMPLETED` (PR #32, `2ea72f6`; D18 not run) |
 | 02-C | Onboarding enablers | `NOT_STARTED` |
+| 02-3 | Seed + demo hardening | `NOT_STARTED` (after 02-5) |
+| 02-4 | Public enquiry | `NOT_STARTED` (after 02-5) |
+| 02-5 | Finance-lite | `NOT_STARTED`: decisions approved for implementation planning ([ADR-0022](docs/adr/0022-finance-lite.md)); delivered next |
+| 02-6 | Batches | `NOT_STARTED` (follows 02-5) |
+
+**Delivery order (2026-10-10, ADR-0022):** 02-5 is delivered ahead of 02-3 and 02-4. No identifier is renumbered (TASKS.md, "Delivery-order change").
 
 ### 02-1 — Courses + Lead Management
 
 **Status:** `READY_FOR_REVIEW` on `feat/phase-02-1-courses-leads` (from `main` `9009db5`; PR #32, not merged; CI results in 02-2 below). Merge with **Create a merge commit**.
+
+> **Update 2026-10-10:** `COMPLETED`, merged to `main` by PR #32 (merge commit `2ea72f6`). See "Post-merge verification" under 02-2.
 
 **Implementation:**
 
@@ -1496,6 +1511,8 @@ Not run   D18 Chromium journeys (no browser runtime here); CI on the branch
 ### 02-2 — Applications → Documents → Admission → Student
 
 **Status:** `READY_FOR_REVIEW` on `feat/phase-02-1-courses-leads`, implemented after the 02-1 baseline `ab02e7d` (code through `f190924`, plus the review fixes `8bc77c1`, `de005f8` and `4367542`; PR #32, not merged; CI below). The earlier `BLOCKED` status (the PostgreSQL/Redis integration tests had not run) is resolved: they ran and passed (see Verification). Merge with **Create a merge commit**. Decisions: [ADR-0021](docs/adr/0021-admissions-core.md).
+
+> **Update 2026-10-10:** `COMPLETED`, merged to `main` by PR #32 (merge commit `2ea72f6`). The CodeQL re-run is no longer pending: CodeQL passed on the PR head `230dee2`. See "Post-merge verification" below.
 
 **Implementation (commits):**
 
@@ -1710,6 +1727,59 @@ Note      app/core/config.py keeps the earlier email pattern for an
 ```
 
 **Review observation (not a defect; as specified in ADR-0021 §3):** creating an application from a lead prefills the lead's details for a holder of `application.create` without checking `lead.read`. Every system role holding `application.create` also holds `lead.read`; a custom role granted only `application.create` could read a lead's details through prefill. Decide whether to require `lead.read` for `lead_id` before custom roles are offered.
+
+**Post-merge verification (2026-10-10, `main` at `2ea72f6`, read-only):**
+
+```text
+Repo      main = origin/main = 2ea72f6; working tree clean
+Backend   pytest without TEST_DATABASE_URL: 733 passed, 0 failed,
+          465 skipped (the PostgreSQL/Redis integration tests; not run
+          locally in this check)
+Frontend  vitest: 1349 passed (100 files)
+CI        2ea72f6: backend (REQUIRE_DATABASE_TESTS=1, so the
+          integration tests ran), frontend, docker, repo, secrets,
+          pip-audit, pnpm audit, CodeQL analyze (python,
+          javascript-typescript), ci-ok: all success. PR head 230dee2:
+          the same plus the CodeQL check: success
+Runtime   local mti360-api:local built 2026-09-26, mti360-frontend:local
+          2026-09-29; the running API returns the default 404 for
+          POST /api/v1/auth/login (T01-04) and GET /api/v1/campuses
+          (T01-08): the images predate T01-04 and do not represent main.
+          Not rebuilt
+Not run   D18 Chromium journeys: no in-repository harness exists (D18:
+          out-of-repository in T01, in-repository Playwright in Phase 16)
+          and the runtime is stale. The real-S3 test is not in CI (no
+          TEST_S3_*); it last passed locally at 4367542
+Found     no security or functional regression
+```
+
+### 02-5 — Finance-lite
+
+**Status:** `NOT_STARTED`. The decisions are approved for implementation planning (2026-10-10). Nothing is implemented, migrated or released. The plan is in [PHASE-02-5-FINANCE-LITE-READINESS.md](docs/architecture/PHASE-02-5-FINANCE-LITE-READINESS.md), and the decisions in [ADR-0022](docs/adr/0022-finance-lite.md). It is delivered ahead of 02-3 and 02-4.
+
+```text
+Specification Ready   yes (ADR-0022, readiness plan, INC-48, INC-49)
+Design Ready          no (screens mapped to T02/T03/T04 templates; no design)
+Implemented           no
+Tested                no
+Production Ready      no — and conditional on confirming the tax treatment
+                      (ADR-0022 §2, INC-48) and the receipt FY date basis
+                      (ADR-0022 §3, INC-49)
+```
+
+**Approved decisions:**
+
+- **S1:** the identifier stays 02-5, and the slice is delivered ahead of 02-3 and 02-4.
+- **F1:** non-tax fee invoices; no GST or tax features.
+- **F2:** Indian financial-year numbering (`INV-FY2026-27-nnnnn`, `RCT-FY2026-27-nnnnn`; IST boundary; gap-free).
+- **F3:** cheque and DD payments are `PENDING` until clearance; failure requires a reason.
+- **F4:** INR, integer paise.
+- **F5:** line adjustments at issue are recorded against the structure values.
+- **F6:** one live fee invoice per admission.
+- **F7:** the recorder cannot reverse their own payment.
+- **F8:** no step-up in the MVP.
+
+**Carried verification gaps:** D18 browser journeys, the stale local images, and the real-S3 test outside CI (above). A separate task, V-02 Runtime and browser verification, is proposed and not approved (readiness plan §13).
 
 ---
 
