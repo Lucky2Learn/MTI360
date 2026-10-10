@@ -110,6 +110,8 @@ M0 — Foundation Ready: reached 2026-09-30 (Phase 00 complete)
 
 > **2026-10-08 (Phase 02-1):** the first business slice, Courses + Lead Management, is implemented on `feat/phase-02-1-courses-leads` and `READY_FOR_REVIEW` (not pushed, not merged, no CI run yet). It is the first product functionality. The percentage above is not recalculated: no agreed weighting exists, and the slice is not merged or CI-verified.
 
+> **2026-10-10 (Phase 02-2):** Applications → Documents → Admission → Student is implemented on the same branch (`5e755be` … `f190924`). It is `BLOCKED`, not `READY_FOR_REVIEW`: its PostgreSQL/Redis integration tests (APIs, RLS, cross-tenant, migration 0010 round trip) did not run in the close-out session because no database was running and services were not to be started (§9A).
+
 > **2026-09-30:** Phase 00 is `COMPLETED`: T00-01 … T00-10A are merged to `main` (T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12, T00-10A via PR #13). Phase 01 is `IN_PROGRESS`: the T01-00 architecture review is approved (D1–D22 with the D10 and D14 amendments) T01-01 (Backend, Database & API Foundation) is `COMPLETED` (PR #14), and T01-02 (Audit Foundation) is `COMPLETED` (PR #16). T01-03 (Tenancy Core) is `COMPLETED` (PR #19). T01-04 (Tenant Identity & Authentication) is `COMPLETED` (PR #20). T01-05 (Authorization & RBAC) is `COMPLETED` (PR #21). T01-06 (Platform Identity & MFA) is implemented and `READY_FOR_REVIEW` on `feat/T01-06-platform-identity-mfa` (not merged). T01-07 (Platform Administration Foundation) is implemented and `READY_FOR_REVIEW` on `feat/T01-07-platform-administration` (not merged). T01-08 (Tenant Administration Foundation) is implemented and `READY_FOR_REVIEW` on `feat/T01-08-tenant-administration` (not merged). All are infrastructure only: database access, migrations, request context, error envelope, logging, realm routers, the append-only audit table with its writers, the `tenants` and `campuses` tables with their isolation layers, the tenant authentication backend, and the permission catalogue, roles and authorization layer (no screens). No business tables and no product functionality exist yet, so product implementation completion remains 0%.
 
 ---
@@ -156,7 +158,7 @@ Multi-Tenancy
 |---|---|---|
 | 00 | Foundation | `COMPLETED` |
 | 01 | Authentication & Multi-Tenancy | `IN_PROGRESS` |
-| 02 | Admissions MVP (re-sequenced, L1) — 02-1 Courses + Leads | `IN_PROGRESS` (02-1 `READY_FOR_REVIEW`) |
+| 02 | Admissions MVP (re-sequenced, L1) — 02-1 Courses + Leads, 02-2 Applications → Student | `IN_PROGRESS` (02-1 `READY_FOR_REVIEW`; 02-2 implemented, `BLOCKED` on database-test verification, §9A) |
 | 02 (original) | Platform Control Plane (after the MVP, except 02-C) | `NOT_STARTED` |
 | 03 | Tenant Foundation | `NOT_STARTED` |
 | 04 | Admissions | `NOT_STARTED` |
@@ -1418,7 +1420,7 @@ Sources: [PHASE-02-MASTER-READINESS.md](docs/architecture/PHASE-02-MASTER-READIN
 | Slice | Description | Status |
 |---|---|---|
 | 02-1 | Courses + Lead Management | `READY_FOR_REVIEW` |
-| 02-2 | Applications → Documents → Admission → Student | `NOT_STARTED` |
+| 02-2 | Applications → Documents → Admission → Student | `BLOCKED` (implemented; database-test verification outstanding) |
 | 02-C | Onboarding enablers | `NOT_STARTED` |
 
 ### 02-1 — Courses + Lead Management
@@ -1490,6 +1492,78 @@ Repo      git diff --check clean; marketing website hashes unchanged; no
 Not run   D18 Chromium journeys (no browser runtime here); CI on the branch
           (not pushed); CodeQL (CI only)
 ```
+
+### 02-2 — Applications → Documents → Admission → Student
+
+**Status:** `BLOCKED` — implemented on `feat/phase-02-1-courses-leads` after the 02-1 baseline `ab02e7d`, HEAD `f190924` before this status commit (not pushed; no PR; CI not run on the branch). **Blocker:** the PostgreSQL/Redis integration tests have not been run against this code (see Verification). Move to `READY_FOR_REVIEW` once they pass. Decisions: [ADR-0021](docs/adr/0021-admissions-core.md).
+
+**Implementation (commits):**
+
+```text
+5e755be  ADR-0021 (Y1–Y11, the L2–L7 locks)
+aef9ae0  build: boto3 (S3 client) and python-multipart
+e6d1ce8  migration 0010: tenant_sequences, stored_files, applications,
+         application_documents, application_activities, students,
+         admissions; tenant RLS, composite tenant FKs, no DELETE, nothing
+         for mti_readonly; 9 campus-scoped permissions and role grants;
+         domain rules and the upload validation pipeline
+d6aefe2  ObjectStorage boundary (S3 adapter, in-memory fake); lead
+         APPLICATION_STARTED / ADMITTED transitions
+a429d28  19 API routes: applications, documents, students (Student 360)
+27d4a80  frontend: multipart client, proxy body cap (11 MiB), download
+         headers, T05 WizardTemplate
+e89ab78  screens ADM-05 … ADM-14
+f190924  development seed (Konkan: five applications across the stages;
+         Coromandel: one admitted student)
+```
+
+**Verification (local, 2026-10-10, combined 02-1 + 02-2 branch at `f190924`):**
+
+```text
+Backend   pytest: 689 passed, 462 skipped. The 462 are the PostgreSQL/Redis
+          integration tests: no TEST_* database URLs, and no MTI 360
+          containers running (services were not to be started). All 47
+          02-2 integration tests (applications, documents, students APIs,
+          admissions schema/RLS/privileges, the 0010 down/up round trip,
+          admissions cross-tenant, real S3) were SKIPPED; 92 02-2-related
+          unit/registry tests passed. alembic heads: 0010 (single head);
+          alembic check not run (needs a database).
+          ruff check, ruff format --check (266 files), mypy (265 files),
+          import-linter (2 kept, 0 broken), uv lock --check: pass
+Frontend  vitest 1349 passed (100 files); prettier, eslint
+          (--max-warnings=0), tsc (next typegen), next build: pass
+Repo      check:landing (marketing website unchanged), check:env,
+          actionlint 1.7.12: pass; git diff --check clean; no .env,
+          compose, infrastructure, ACRS or marketing files changed since
+          ab02e7d; no files deleted
+Security  gitleaks 8.30.1 over all refs: no leaks; self-test passed
+Audits    pnpm audit: only the documented braces exception;
+          pip-audit 2.10.1: no known vulnerabilities
+Review    manual review of ab02e7d..f190924 (document upload/download,
+          queue campus scope, application create/review/admit, student
+          linking, migration 0010 RLS and grants): no defects found
+Not run   backend database/Redis tests (blocker); S3 integration test
+          (storage not running); docker job (image build and smoke test);
+          D18 Chromium journeys; CI and CodeQL (branch not pushed)
+```
+
+**Known limitations and accepted risks (ADR-0021):**
+
+```text
+- Malware scanning deferred (L5): explicit risk acceptance with compensating
+  controls (type allow-list with magic numbers, PDF active-content and
+  encryption refusal, size limit, private generated keys, attachment-only
+  downloads with nosniff and a sandbox CSP); revisit before the first
+  production tenant.
+- Orphaned objects: a failed commit after the upload can leave a private,
+  unreferenced object under the tenant prefix; reconciliation job deferred.
+- Cross-campus student visibility not modelled (a student is visible at
+  the home campus only).
+- Per-course document checklists deferred (fixed document-type list, Y4).
+- INC-47: DOCUMENT_VERIFICATION and ELIGIBLE are reserved, not used.
+```
+
+**Review observation (not a defect; as specified in ADR-0021 §3):** creating an application from a lead prefills the lead's details for a holder of `application.create` without checking `lead.read`. Every system role holding `application.create` also holds `lead.read`; a custom role granted only `application.create` could read a lead's details through prefill. Decide whether to require `lead.read` for `lead_id` before custom roles are offered.
 
 ---
 

@@ -1124,7 +1124,7 @@ Sources: [PHASE-02-MASTER-READINESS.md](docs/architecture/PHASE-02-MASTER-READIN
 | ID | Slice | Covers (original task IDs) | Status |
 |---|---|---|---|
 | 02-1 | Courses + Lead Management | T05-01 (minimal: ACA-01/02/03), T04-01 (GROW-08/09; GROW-07/10 deferred), T04-02 (ADM-02 board, no drag-and-drop) | READY_FOR_REVIEW (`feat/phase-02-1-courses-leads`; see DEVELOPMENT-STATUS.md §9A) |
-| 02-2 | Applications → Documents → Admission → Student | T04-04 … T04-08 | NOT_STARTED |
+| 02-2 | Applications → Documents → Admission → Student | T04-04 … T04-08 | BLOCKED — implemented on `feat/phase-02-1-courses-leads` ([ADR-0021](docs/adr/0021-admissions-core.md)); PostgreSQL/Redis integration tests not yet run (see DEVELOPMENT-STATUS.md §9A) |
 | 02-C | Onboarding enablers (members, roles, minimal provisioning UI) | T03 admin screens, T02-04/T02-12 minimal | NOT_STARTED |
 | 02-4 | Public enquiry (V1) | T14 enquiry capture | NOT_STARTED |
 | 02-5 | Finance-lite (V1) | T06 subset | NOT_STARTED |
