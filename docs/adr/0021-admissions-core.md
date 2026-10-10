@@ -163,3 +163,18 @@ Residual limitations (not solved by this fix):
 - PDF inspection remains pattern-based, not a complete PDF parser.
 - An unusual legitimate PDF with more than 256 object streams or more than 32 MiB of object-stream content is refused as unreadable.
 - Process isolation (validation in a separate process or scanning service, alongside the deferred malware scanning) is a possible future hardening measure. It is not part of this fix.
+
+## Addendum — 2026-10-10: PDF object-stream inspection
+
+The pre-push review found that step 5 of §8 could be bypassed. Script hidden in a compressed object stream was accepted when the stream's dictionary held the text `obj`, as in `/Note (obj)` or `/objx 1`. Both are valid PDF syntax. The cause was that the dictionary was found by searching back for `obj`. It was also accepted when `stream` was followed by CR alone or by a space before LF. That is not valid syntax, but lenient readers accept it, and only LF and CRLF were recognised. The review also found that the name scan held every name of the file in memory at once. Fixed in `de005f8`. The decisions above, and the first addendum's limits and worker thread, are unchanged.
+
+- **Object headers:** one forward scan of whole tokens, which are indirect-object headers (`N G obj`) and the `stream` keyword. A stream's dictionary is the text since the later of the two, so `(obj)` or `/objx` is no longer taken for an object boundary.
+- **Stream boundaries:** after `stream`, CRLF, LF or CR, optionally preceded by spaces or tabs. An object stream without a line end, or without `endstream`, is refused as `pdf_unreadable`.
+- **Fail closed:** every `/ObjStm` declaration in the file must belong to an object stream that was decompressed and inspected, and none may occur inside one, since object streams do not nest. Otherwise the file is refused as `pdf_unreadable`. This covers declarations in strings, on objects without a stream, and behind a misleading header such as `(1 0 obj)`.
+- **Incremental name scan:** only watched names, or names with a `#xx` escape, reach Python, and only counts of the twelve watched names are kept. Memory no longer grows with the number of names (it was about 15 times the file size for short names), and the scan stays linear.
+- **Evidence:** 22 regression tests, 20 unit and 2 upload API. They cover each reported bypass, unmatched declarations, ordinary PDFs, and name-scan memory measured by allocation tracing rather than wall clock. All 13 hostile PDFs among them are accepted by the previous validation code. Full backend suite against `mti360_test` with database tests required and S3 configured: **1,183 passed, 0 failed, 0 skipped**.
+
+Residual limitations (not solved by this fix):
+
+- PDF inspection is still a token scan, not a PDF parser. Strings and comments are not interpreted, so a legitimate PDF with `/ObjStm` in a string or comment is refused as unreadable. Object streams with filters other than Flate are refused, not decoded.
+- The CPU, multipart and process-isolation limitations of the first addendum still apply. The worst hostile case measured after this fix is about 2.2 s for 10 MiB.
