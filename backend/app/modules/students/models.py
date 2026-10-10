@@ -1,7 +1,7 @@
 """Student, admission and number-sequence tables (Phase 02-2; ADR-0021 §2, §6-§7, §13).
 
-* ``tenant_sequences`` — one counter per tenant, sequence and year,
-  incremented in the caller's transaction (row lock; no gaps).
+* Numbers (student and admission) come from ``tenant_sequences``, which now
+  lives in :mod:`app.core.sequences` (ADR-0022 §3).
 * ``students`` — the person across courses. The home campus is the campus of
   the first admission (L6); the details are copied from that application.
   ``mobile_key`` / ``email_normalized`` serve the explicit-link candidates
@@ -18,12 +18,10 @@ from collections.abc import Iterable
 from datetime import date, datetime
 
 from sqlalchemy import (
-    BigInteger,
     CheckConstraint,
     Date,
     DateTime,
     Index,
-    Integer,
     String,
     UniqueConstraint,
     func,
@@ -32,32 +30,13 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db.base import Base, TimestampMixin, VersionedMixin
+from app.core.sequences import NUMBER_MAX_LENGTH
 from app.core.tenancy import TenantScopedMixin, tenant_foreign_key
-from app.modules.students.domain import (
-    NUMBER_MAX_LENGTH,
-    AdmissionStatus,
-    SequenceName,
-    StudentStatus,
-)
+from app.modules.students.domain import AdmissionStatus, StudentStatus
 
 
 def _in(column: str, values: Iterable[str]) -> str:
     return f"{column} IN ({', '.join(repr(str(value)) for value in values)})"
-
-
-class TenantSequence(TenantScopedMixin, TimestampMixin, Base):
-    __tablename__ = "tenant_sequences"
-    __table_args__ = (
-        UniqueConstraint("tenant_id", "id"),
-        UniqueConstraint("tenant_id", "name", "period"),
-        CheckConstraint(_in("name", [s.value for s in SequenceName]), name="name"),
-        CheckConstraint("period BETWEEN 2000 AND 9999", name="period"),
-        CheckConstraint("last_value > 0", name="last_value"),
-    )
-
-    name: Mapped[str] = mapped_column(String(16), nullable=False)
-    period: Mapped[int] = mapped_column(Integer, nullable=False)
-    last_value: Mapped[int] = mapped_column(BigInteger, nullable=False)
 
 
 class Student(TenantScopedMixin, TimestampMixin, VersionedMixin, Base):

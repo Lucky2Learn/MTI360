@@ -67,7 +67,7 @@
 | FIN-06 | `/app/finance/payments` | T02 | — | method, status, campus, received date | `invoice.read` |
 | FIN-07 | `/app/finance/payments/[id]`, `/[id]/receipt` (print) | T03 | Confirm, Fail (pending), Reverse, Print | — | read; `payment.record`; `payment.reverse` |
 | FIN-08 | `/app/finance/outstanding` | T02 (invoice list, balance > 0) + summary strip | — | campus, course, overdue | `invoice.read` |
-| ADM-12 Fees | Student 360 section | Card + table | Raise fee invoice, Record payment | — | `invoice.read` (+ action permissions) |
+| ADM-12 Fees | Student 360 section (data: `GET /invoices?student_id=…`, R2) | Card + table | Raise fee invoice, Record payment | — | `invoice.read` (+ action permissions) |
 
 **Navigation and shared behaviour:**
 
@@ -143,17 +143,22 @@ Fee str.     DRAFT → ACTIVE → ARCHIVED; DRAFT → ARCHIVED
 | POST | `/payments/{id}/confirm` | `payment.record` |
 | POST | `/payments/{id}/fail` | `payment.record` |
 | POST | `/payments/{id}/reverse` | `payment.reverse` |
-| GET | `/students/{id}/fees` | `invoice.read` |
 | GET | `/finance/summary` | `invoice.read` |
 
-Every route has an entry in the cross-tenant registry, with an explicit cross-tenant test.
+**16 routes.** Every route has an entry in the cross-tenant registry, with an explicit cross-tenant test. Refinements R1–R3 were approved before implementation ([ADR-0022](../adr/0022-finance-lite.md), addendum of 2026-10-10).
+
+**Student 360 Fees (R2):** there is no student-fees route. The Fees section, behind `student.read`, calls `GET /invoices?student_id=…`. That list is filtered by tenant and by the invoice's campus (`campus_visibility()`). An unknown student, another tenant's student and a student whose invoices are all at inaccessible campuses give the same 200 with an empty list. A malformed ID is 422.
+
+**Separation of duties (R1):** a reversal by the recorder is 422 `VALIDATION_ERROR` with the detail code `recorder_cannot_reverse`, after the permission (403) and campus (404) checks. Payment responses carry `recorded_by_me`, so the UI can hide or explain Reverse. The service enforces the rule regardless.
 
 **Idempotency and concurrency:**
 
-- **Idempotency key:** the client creates a UUID once per form and reuses it on retry. The table holds `UNIQUE (tenant_id, idempotency_key)` and a `request_hash`.
-  - The same key and payload return the original record (200).
-  - A different payload returns 409.
-  - Concurrent duplicates are settled by the unique constraint.
+- **Idempotency key (R3):** `idempotency_key` (a UUID) travels in the JSON body of `POST /invoices` and `POST /invoices/{id}/payments`. The proxy forwards bodies but allow-lists headers. The client creates the key once per form and reuses it on retry.
+  - **Storage:** each table holds `UNIQUE (tenant_id, idempotency_key)` and a `request_hash`.
+  - **Request hash:** SHA-256 of the canonical JSON of the normalised business payload: the operation, the target and the cleaned fields after validation. It excludes the key and `version`.
+  - **Replays:** the same key and hash return the original record in its current state with 200 (the first request answers 201), with no side effects. A different hash is 409 `CONFLICT` with the detail `idempotency_key_reused`.
+  - **Authorization:** a replay is authorized like a new request.
+  - **Concurrent requests with one key:** settled by the unique index. The loser answers as a replay, or with 409.
 - **Invoice lock:** the invoice row is locked (`SELECT … FOR UPDATE`) for every payment change.
 - **Overpayment:** refused with 422.
 - **Stale edits:** the optimistic `version` check returns 409.
@@ -205,7 +210,15 @@ Every route has an entry in the cross-tenant registry, with an explicit cross-te
   - transition tables, balance and status derivation;
   - the adjustment detection;
   - the idempotency request hash.
-- **API:** every route, covering success, validation, 409 (stale, idempotency mismatch), 422 (overpayment, invalid state, missing reason, missing reference) and 403/404 (permission and scope); separation of duties on reverse; cancel refused with a confirmed or pending payment.
+- **API:** every route, covering:
+  - success, and validation;
+  - 409 (stale, `idempotency_key_reused`);
+  - 422 (overpayment, invalid state, missing reason, missing reference, `recorder_cannot_reverse`);
+  - 403/404 (permission and scope);
+  - cancel refused with a confirmed or pending payment;
+  - `recorded_by_me` true for the recorder and false for others;
+  - idempotent replays: 200, the same record, no second number, receipt, activity or audit event;
+  - Student 360 Fees via `GET /invoices?student_id=…`: an unknown, other-tenant or campus-inaccessible student gives the same empty 200.
 - **Concurrency:**
   - two parallel payments exceeding the balance: one succeeds;
   - the same idempotency key in parallel: one payment;
@@ -268,7 +281,7 @@ Every route has an entry in the cross-tenant registry, with an explicit cross-te
 - **Overdue uses the IST date.** Campus time zones are still not modelled (INC-40).
 - **JSONB fee-structure items** are a first for this codebase. They are validated in the service and frozen by a trigger.
 - **Single-user institutes** cannot reverse a payment without a second finance member (ADR-0022 §9).
-- **The slice is large:** about 17 routes and 8 screens, similar to 02-2.
+- **The slice is large:** 16 routes and 8 screens, similar to 02-2.
 
 ## 13. Verification gaps carried from the post-merge verification (2026-10-10)
 

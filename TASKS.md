@@ -1168,7 +1168,7 @@ One branch and one PR per slice, merged with a merge commit.
 
 **Database changes:** migration `0011_finance_lite`.
 
-**API changes:** 17 tenant routes.
+**API changes:** 16 tenant routes (R2 removed the student-fees route; ADR-0022 addendum).
 
 **UI screens:** FIN-02, FIN-03, FIN-04, FIN-05, FIN-06, FIN-07, FIN-08 (with a summary strip), ADM-12 Fees. Deferred: FIN-01, FIN-09 and FIN-10.
 

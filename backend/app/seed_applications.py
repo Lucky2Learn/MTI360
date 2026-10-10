@@ -23,6 +23,7 @@ from sqlalchemy import Table, func, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.activity import record_activity
+from app.core.sequences import SequenceName, next_number
 from app.integrations.storage import ObjectStorage, StorageError
 from app.modules.applications.domain import (
     REASON_REQUIRED,
@@ -38,9 +39,7 @@ from app.modules.documents.validation import validate_upload
 from app.modules.leads.domain import ActivityKind as LeadActivityKind
 from app.modules.leads.domain import LeadStatus, clean_email, clean_mobile, mobile_key
 from app.modules.leads.models import Lead, LeadActivity
-from app.modules.students.domain import SequenceName
 from app.modules.students.models import Admission, Student
-from app.modules.students.sequences import next_number
 from app.seed_admissions import (
     FICTITIOUS_MOBILE_PREFIX,
     AdmissionsSeedError,

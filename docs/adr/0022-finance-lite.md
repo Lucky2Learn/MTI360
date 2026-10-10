@@ -154,3 +154,31 @@ The following are as set out in [PHASE-02-5-FINANCE-LITE-READINESS.md](../archit
 - **Cash, UPI and bank transfer only:** simpler, but cheques and demand drafts are common for institute fees, and treating them as paid on receipt would overstate collections. Rejected (F3).
 - **Several live invoices per admission:** needed for hostel or exam fees billed separately, but it opens double billing. Deferred (F6).
 - **Step-up for reversal:** stronger, but would block institutes whose staff have not enrolled MFA. Deferred (F8).
+
+## Addendum — 2026-10-10: API contract refinements before implementation
+
+The implementation-start review compared the plan with the code at `53df30b` and found three points to refine. All three were approved before implementation. Decisions S1 and F1–F8 are unchanged. This addendum refines §9, §11 and the readiness plan's API.
+
+### R1 — Separation of duties answers 422, not 403 (refines §9)
+
+- **Contract:** a reversal by the payment's recorder is refused with **HTTP 422**, error code `VALIDATION_ERROR`, and the detail `{ "field": "payment", "code": "recorder_cannot_reverse" }`. Nothing is written.
+- **Why not 403:** the frontend answers every 403 on an action with fixed "Your access changed" copy (T01-05 UI contract §8.3). That copy is wrong for a business rule: the member still holds `payment.reverse`, but not for this payment.
+- **Rule order:** permission (403) and campus scope (404) are checked first, as for every route. The rule applies only to a caller who may otherwise reverse the payment.
+- **`recorded_by_me`:** payment responses carry this boolean, true when the payment's `recorded_by_membership_id` is the caller's membership. The frontend hides or explains Reverse with it. Hiding is **not** a security control: the service enforces the rule on every request.
+
+### R2 — No `GET /students/{id}/fees`; Student 360 lists invoices (refines §11)
+
+- The route is removed. The API has **16** routes, not 17.
+- **Why:** the route would have required `invoice.read`, while students are authorized by home campus under `student.read`. A 404 for a student outside the caller's campuses, against an empty list for one inside, would have disclosed where a student is.
+- **Replacement:** the Student 360 Fees section, already behind `student.read`, calls **`GET /invoices?student_id=…`**. That list applies the tenant filter and the invoice campus visibility (`campus_visibility()` on the invoice's campus), like every other filter.
+- **No disclosure through this flow:** an unknown student ID, another tenant's student and a student whose invoices are all at inaccessible campuses all give the same **200 with an empty list**. The response never says whether the student exists. A malformed ID is 422 in every case.
+
+### R3 — The idempotency key travels in the JSON body (refines §11)
+
+- **Where:** `POST /invoices` and `POST /invoices/{id}/payments` take `idempotency_key` (a UUID, validated as one) in the JSON body. The same-origin proxy forwards request bodies unchanged but allow-lists request headers (`frontend/src/lib/api/proxy.ts`), so an `Idempotency-Key` header would be dropped.
+- **Request hash:** SHA-256 of the canonical JSON (sorted keys, no whitespace) of the **normalised business payload**: the operation name, the target (`admission_id`, or the invoice ID from the path) and the cleaned fields after validation. It is computed after authorization and validation, and **excludes `idempotency_key`** and `version`.
+- **Uniqueness:** `UNIQUE (tenant_id, idempotency_key)` on `invoices` and on `payments`, so each operation has its own key space.
+- **Replay with the same key and hash:** returns the record the first request created, in its current state, with **200** (the first request answers 201). It has no side effects: no second record, number, receipt, activity or audit event.
+- **Same key, different hash:** **409**, `CONFLICT`, detail code `idempotency_key_reused`. Nothing is written.
+- **A replay is authorized like a new request:** the route permission and the record's campus visibility apply. A key whose first request failed or rolled back was never stored, so its retry is processed as new.
+- **Concurrent requests with one key:** the unique index serialises them. The loser re-reads the winner's record and answers as a replay (200), or with 409 when the hashes differ.
