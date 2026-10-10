@@ -1495,7 +1495,7 @@ Not run   D18 Chromium journeys (no browser runtime here); CI on the branch
 
 ### 02-2 — Applications → Documents → Admission → Student
 
-**Status:** `READY_FOR_REVIEW` on `feat/phase-02-1-courses-leads`, implemented after the 02-1 baseline `ab02e7d` (code through `f190924`; not pushed; no PR; CI not run on the branch). The earlier `BLOCKED` status (the PostgreSQL/Redis integration tests had not run) is resolved: they ran and passed (see Verification). Merge with **Create a merge commit**. Decisions: [ADR-0021](docs/adr/0021-admissions-core.md).
+**Status:** `READY_FOR_REVIEW` on `feat/phase-02-1-courses-leads`, implemented after the 02-1 baseline `ab02e7d` (code through `f190924`, plus the review fix `8bc77c1`; not pushed; no PR; CI not run on the branch). The earlier `BLOCKED` status (the PostgreSQL/Redis integration tests had not run) is resolved: they ran and passed (see Verification). Merge with **Create a merge commit**. Decisions: [ADR-0021](docs/adr/0021-admissions-core.md).
 
 **Implementation (commits):**
 
@@ -1557,10 +1557,57 @@ Audits    pnpm audit: only the documented braces exception;
           pip-audit 2.10.1: no known vulnerabilities
 Review    manual review of ab02e7d..f190924 (document upload/download,
           queue campus scope, application create/review/admit, student
-          linking, migration 0010 RLS and grants): no defects found
+          linking, migration 0010 RLS and grants). An earlier version of
+          this line said "no defects found"; the final review found one
+          high-severity defect, fixed in 8bc77c1 (below)
 Not run   docker job (image build and smoke test); D18 Chromium journeys;
           CI and CodeQL (branch not pushed). The running local api and
           frontend containers predate Phase 02-1 and were not rebuilt.
+```
+
+**Defect found in the final review — fixed in `8bc77c1` (`fix: bound PDF validation work and run it off the event loop`):**
+
+```text
+Finding   High: PDF upload validation denial of service. A holder of
+          document.upload (system roles include Counsellor) could send a
+          small crafted PDF that was accepted after minutes of CPU on the
+          API event loop, stalling the worker:
+          - no total decompression budget across object streams (16 MiB
+            per stream only): 640 KiB took ~49 s, 10 MiB est. ~13 min;
+          - stream-dictionary lookup rescanned from the file start
+            (quadratic): 256 KiB of "stream" keywords took ~68 s;
+          - validate_upload ran synchronously in the async handler.
+Fix       INFLATED_TOTAL_MAX_BYTES = 32 MiB across all object streams of a
+          PDF (plus the 16 MiB per-stream limit; each stream inflates only
+          into the remainder); OBJECT_STREAMS_MAX = 256 per PDF; either
+          bound stops at once with the existing pdf_unreadable 422.
+          Linear stream scan. Truncated/unterminated object streams fail
+          closed. service.check_upload runs validation in a worker thread
+          (anyio.to_thread.run_sync). No dependency added; size,
+          extension, MIME, magic-number, active-content, authorization and
+          storage checks unchanged.
+Evidence  10 new tests (6 validation unit, 3 check_upload incl. a
+          deterministic worker-thread check, 1 upload API case: 422
+          pdf_unreadable, nothing stored); 6 of them fail against the
+          previous validation module. Focused: 40 unit passed, documents
+          API + storage 20 passed. Full backend, REQUIRE_DATABASE_TESTS=1
+          against mti360_test with TEST_S3_* set: 1161 passed, 0 failed,
+          0 skipped. ruff, ruff format, mypy (266 files), import-linter
+          (2 kept), uv lock --check: pass. Measured worst cases after the
+          fix (10 MiB files): 2-3 s in the worker thread.
+Residual  - Up to ~3 s CPU per hostile upload remains; the name scan holds
+            the GIL, so the event loop shares CPU with it (not blocked)
+            and latency can degrade under many concurrent hostile uploads.
+            Mitigated by the 30 uploads / 10 min per-member rate limit;
+            full isolation (separate scanning process) belongs with the
+            deferred malware scanning.
+          - A legitimate PDF with more than 256 object streams or more
+            than 32 MiB of object-stream content is refused as
+            unreadable (not expected for admission documents; revisit
+            with real files).
+          - Multipart parsing of the (capped) body still runs on the event
+            loop (Starlette's parser).
+          - The PDF checks stay heuristic, not a full parser.
 ```
 
 **Known limitations and accepted risks (ADR-0021):**
