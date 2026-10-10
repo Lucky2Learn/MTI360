@@ -6,7 +6,9 @@ stream, encrypted), PNG and JPEG signatures, and hostile file names.
 """
 
 import itertools
+import tracemalloc
 import zlib
+from collections import Counter
 from datetime import date
 
 import pytest
@@ -339,15 +341,19 @@ def test_the_stream_scan_is_linear_in_the_file_size(monkeypatch: pytest.MonkeyPa
     scanned: list[int] = []
     original = validation._names
 
-    def measuring(data: bytes) -> set[bytes]:
+    def measuring(data: bytes) -> Counter[bytes]:
         scanned.append(len(data))
         return original(data)
 
     monkeypatch.setattr(validation, "_names", measuring)
-    flood = b"%PDF-1.7\n1 0 obj\n" + b"/a stream\n" * 20_000
-    assert pdf_problem(flood) is None
-    # One pass over the file for its names, plus disjoint stream headers.
-    assert sum(scanned) <= 2 * len(flood)
+    for flood in (
+        b"%PDF-1.7\n1 0 obj\n" + b"/a stream\n" * 20_000,
+        b"%PDF-1.7\n" + b"1 0 obj /a stream\n" * 20_000,  # object headers between them
+    ):
+        scanned.clear()
+        assert pdf_problem(flood) is None
+        # One pass over the file for its names, plus disjoint stream dictionaries.
+        assert sum(scanned) <= 2 * len(flood)
 
 
 def test_object_stream_detection_survives_the_linear_scan() -> None:
@@ -361,3 +367,129 @@ def test_object_stream_detection_survives_the_linear_scan() -> None:
     # Streams after an object stream are still found.
     later = pdf(object_stream(b"6 0 << /Type /Page >>"), object_stream(b"7 0 << /S /JavaScript >>"))
     assert pdf_problem(later) is UploadProblem.PDF_ACTIVE
+
+
+# --- Object-stream association and the name scan (the active-content bypass fix) -----------
+
+HIDDEN = b"6 0 << /S /JavaScript /JS (app.alert(1)) >>"
+HARMLESS = b"6 0 << /Type /Page /Parent 2 0 R >>"
+
+
+def custom_object_stream(payload: bytes, *, extra: bytes = b"", eol: bytes = b"\n") -> bytes:
+    """``object_stream`` with extra dictionary entries and a chosen end of line."""
+    compressed = zlib.compress(payload)
+    return (
+        b"5 0 obj\n<< /Type /ObjStm /N 1 /First 4 /Filter /FlateDecode "
+        + extra
+        + b" /Length "
+        + str(len(compressed)).encode()
+        + b" >>\nstream"
+        + eol
+        + compressed
+        + b"\nendstream\nendobj"
+    )
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [b"/Note (obj)", b"/objx 1", b"/Note (endobj) /Tag /obj"],
+    ids=["string-obj", "name-objx", "endobj-and-name-obj"],
+)
+def test_text_like_obj_does_not_hide_an_object_stream(extra: bytes) -> None:
+    # Valid PDF syntax: a dictionary may hold any extra entry. These used to be taken for
+    # the object boundary, so the stream was never decompressed and the script passed.
+    assert b"JavaScript" not in pdf(custom_object_stream(HIDDEN, extra=extra))
+    assert pdf_problem(pdf(custom_object_stream(HIDDEN, extra=extra))) is UploadProblem.PDF_ACTIVE
+    assert pdf_problem(pdf(custom_object_stream(HARMLESS, extra=extra))) is None
+
+
+@pytest.mark.parametrize(
+    "eol",
+    [b"\n", b"\r\n", b"\r", b" \n", b"\t\r\n"],
+    ids=["lf", "crlf", "cr-only", "space-lf", "tab-crlf"],
+)
+def test_every_accepted_line_end_after_stream_is_inspected(eol: bytes) -> None:
+    # LF and CRLF are the conforming ends (ISO 32000-2 §7.3.8.1). CR alone and white space
+    # before the end of line are not valid syntax, but lenient readers accept them, so the
+    # stream is inspected rather than skipped. They used to be skipped (a bypass).
+    assert pdf_problem(pdf(custom_object_stream(HIDDEN, eol=eol))) is UploadProblem.PDF_ACTIVE
+    assert pdf_problem(pdf(custom_object_stream(HARMLESS, eol=eol))) is None
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        # Not a stream keyword token: the declaration is left without an inspected stream.
+        pdf(custom_object_stream(HIDDEN, eol=b"x")),
+        # A stream keyword token without a line end.
+        pdf(custom_object_stream(HIDDEN, eol=b"%")),
+        # A declaration in a string.
+        PLAIN_PDF.replace(b"/Type /Catalog", b"/Type /Catalog /Note (/ObjStm)"),
+        # A declaration on an object without a stream.
+        pdf(b"7 0 obj\n<< /Type /ObjStm /N 0 /First 0 >>\nendobj"),
+        # An object header inside a string, after the declaration: misleads the association.
+        pdf(custom_object_stream(HIDDEN, extra=b"/Note (1 0 obj)")),
+        # A declaration inside an object stream (object streams do not nest).
+        pdf(object_stream(b"6 0 << /Type /ObjStm >>")),
+        # One inspected object stream and one hidden after a misleading header.
+        pdf(object_stream(HARMLESS), custom_object_stream(HIDDEN, extra=b"/Note (9 0 obj)")),
+    ],
+    ids=[
+        "no-keyword",
+        "no-line-end",
+        "in-a-string",
+        "no-stream",
+        "header-in-string",
+        "nested",
+        "second-hidden",
+    ],
+)
+def test_object_stream_declarations_without_an_inspected_stream_fail_closed(
+    data: bytes,
+) -> None:
+    assert pdf_problem(data) is UploadProblem.PDF_UNREADABLE
+    with pytest.raises(UploadRejectedError) as raised:
+        validate_upload("odd.pdf", "application/pdf", data)
+    assert raised.value.problem is UploadProblem.PDF_UNREADABLE
+
+
+def test_ordinary_pdfs_still_pass() -> None:
+    assert pdf_problem(PLAIN_PDF) is None
+    # Several object streams, an escaped declaration, and an image stream.
+    image = (
+        b"7 0 obj\n<< /Subtype /Image /Length 4 >>\nstream\r\n\x00\x01\x02\x03\nendstream\nendobj"
+    )
+    escaped = custom_object_stream(HARMLESS).replace(b"/ObjStm", b"/Obj#53tm")
+    many = pdf(object_stream(HARMLESS), custom_object_stream(HARMLESS, eol=b"\r\n"), escaped, image)
+    assert pdf_problem(many) is None
+    assert validate_upload("marks.pdf", "application/pdf", many).content_type == "application/pdf"
+    # Ten-digit object numbers and other white space in a header.
+    spaced = custom_object_stream(HARMLESS).replace(b"5 0 obj", b"1234567890\r\n0\x00obj")
+    assert pdf_problem(pdf(spaced)) is None
+
+
+def test_the_name_scan_keeps_counts_of_watched_names_only() -> None:
+    data = (
+        b"/Type /Catalog /JavaScript /JS /J#53 /JavaScriptX /J#61vaScript /Obj#53tm /ObjStm "
+        b"/Encrypt /abc " * 3
+    )
+    names = validation._names(data)
+    assert set(names) <= validation.WATCHED_NAMES
+    assert names == Counter({b"JavaScript": 6, b"JS": 6, b"ObjStm": 6, b"Encrypt": 3})
+    # Names after a stream keyword (raw stream content) are still seen.
+    raw = pdf(b"7 0 obj\n<< /Length 30 >>\nstream\n<< /S /Launch /F (x) >>\nendstream\nendobj")
+    assert pdf_problem(raw) is UploadProblem.PDF_ACTIVE
+
+
+@pytest.mark.parametrize("name", [b"/ab", b"/a#41", b"/JS"], ids=["plain", "escaped", "watched"])
+def test_the_name_scan_does_not_retain_the_names_of_the_file(name: bytes) -> None:
+    """Memory is measured by allocation tracing, not time: the earlier scan held every
+    name of the file at once (about 15 times the file size for short names)."""
+    data = name * (2 * 1024 * 1024 // len(name))
+    tracemalloc.start()
+    try:
+        validation._names(data)
+        _, peak = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+    assert peak < 64 * 1024

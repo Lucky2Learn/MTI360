@@ -53,6 +53,14 @@ _OBJECT_STREAM = (
     + b"\nendstream\nendobj\n"
 )
 OBJECT_STREAM_FLOOD = b"%PDF-1.7\n" + _OBJECT_STREAM * (OBJECT_STREAMS_MAX + 1) + b"%%EOF\n"
+# Script hidden in an object stream whose dictionary holds the text "obj" (the
+# association bypass found in the final review), and a declaration without its stream.
+HIDDEN_SCRIPT = (
+    b"%PDF-1.7\n5 0 obj\n<< /Type /ObjStm /Note (obj) >>\nstream\n"
+    + zlib.compress(b"6 0 << /S /JavaScript /JS (x) >>")
+    + b"\nendstream\nendobj\n%%EOF\n"
+)
+UNMATCHED_DECLARATION = PDF.replace(b"/Type /Catalog", b"/Type /Catalog /Note (/ObjStm)")
 
 
 @pytest.fixture
@@ -151,8 +159,21 @@ async def test_valid_uploads_are_stored_privately_and_downloaded_as_attachments(
         ),
         ("empty.pdf", b"", "application/pdf", "file_empty"),
         ("flood.pdf", OBJECT_STREAM_FLOOD, "application/pdf", "pdf_unreadable"),
+        ("hidden.pdf", HIDDEN_SCRIPT, "application/pdf", "pdf_active_content"),
+        ("unmatched.pdf", UNMATCHED_DECLARATION, "application/pdf", "pdf_unreadable"),
     ],
-    ids=["docx", "html", "pdf-is-png", "png-is-pdf", "exe", "javascript", "empty", "streams"],
+    ids=[
+        "docx",
+        "html",
+        "pdf-is-png",
+        "png-is-pdf",
+        "exe",
+        "javascript",
+        "empty",
+        "streams",
+        "hidden-object-stream",
+        "unmatched-object-stream",
+    ],
 )
 async def test_invalid_files_are_refused_before_anything_is_stored(
     h: Harness, file_name: str, content: bytes, content_type: str, code: str

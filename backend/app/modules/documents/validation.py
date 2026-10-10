@@ -17,14 +17,20 @@ The work is bounded for hostile input: one linear scan of the file, at most
 :data:`OBJECT_STREAMS_MAX` object streams, each inflated to at most
 :data:`OBJECT_STREAM_MAX_BYTES` and all of them together to at most
 :data:`INFLATED_TOTAL_MAX_BYTES`. A PDF over any bound is refused as
-unreadable. The pipeline is synchronous CPU work: async callers run it in a
-worker thread (``service.check_upload``).
+unreadable. The name scan keeps only counts of the few names it looks for,
+not the names of the file. The pipeline is synchronous CPU work: async
+callers run it in a worker thread (``service.check_upload``).
+
+The PDF checks are a heuristic token scan, not a PDF parser. They fail
+closed: every ``/ObjStm`` declaration must belong to an object stream that
+was decompressed and inspected, otherwise the file is refused as unreadable.
 """
 
 import hashlib
 import re
 import unicodedata
 import zlib
+from collections import Counter
 from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import StrEnum
@@ -68,9 +74,38 @@ ACTIVE_PDF_NAMES: Final = frozenset(
     }
 )
 """PDF names that run code, open other files or carry attachments."""
-_NAME = re.compile(rb"/([^\s()<>\[\]{}/%]*)")
+ENCRYPT: Final = b"Encrypt"
+OBJECT_STREAM: Final = b"ObjStm"
+WATCHED_NAMES: Final = ACTIVE_PDF_NAMES | {ENCRYPT, OBJECT_STREAM}
+"""The only names the scan keeps (as counts); every other name is passed over."""
+
+_NAME_CHARACTER = rb"[^\s()<>\[\]{}/%]"
+# A name token that is watched as written, or that contains a ``#xx`` escape (decoded and
+# then compared). Any other name is skipped inside the regular-expression engine.
+_NAME = re.compile(
+    rb"/(?:(?P<plain>"
+    + b"|".join(sorted(WATCHED_NAMES))  # whole names only: the order does not matter
+    + rb")(?!"
+    + _NAME_CHARACTER
+    + rb")|(?P<escaped>[^\s()<>\[\]{}/%#]*+#"
+    + _NAME_CHARACTER
+    + rb"*+))"
+)
 _ESCAPE = re.compile(rb"#([0-9A-Fa-f]{2})")
-_STREAM = re.compile(rb"(?<!end)stream\r?\n")
+# PDF white-space and delimiter characters (ISO 32000-2 §7.2.3): a keyword is a whole token.
+_DELIMITERS = rb"\x00\t\n\x0c\r ()<>\[\]{}/%"
+_WHITE_SPACE = rb"\x00\t\n\x0c\r "
+# An indirect-object header ("12 0 obj") or the ``stream`` keyword, each a whole token.
+# Possessive quantifiers: no backtracking on long runs of digits or white space.
+_TOKEN = re.compile(
+    rb"(?<![^" + _DELIMITERS + rb"])"
+    rb"(?:(?P<header>\d++[" + _WHITE_SPACE + rb"]++\d++[" + _WHITE_SPACE + rb"]++obj)"
+    rb"|(?P<stream>stream))"
+    rb"(?![^" + _DELIMITERS + rb"])"
+)
+# After ``stream``: CRLF or LF (conforming), or CR alone and spaces or tabs before the
+# end of line (not conforming, but accepted by lenient readers, so inspected too).
+_STREAM_EOL = re.compile(rb"[ \t]*+(?:\r\n|\r|\n)")
 _UNSAFE_NAME = re.compile(r"[^\w .()\-]")
 
 
@@ -137,36 +172,55 @@ def detect_type(data: bytes) -> str | None:
     return next((kind for kind, magic in _MAGIC if data.startswith(magic)), None)
 
 
-def _names(data: bytes) -> set[bytes]:
-    """Every PDF name token, with ``#xx`` escapes decoded (``/J#61vaScript`` is JavaScript)."""
-    return {
-        _ESCAPE.sub(lambda match: bytes([int(match.group(1), 16)]), raw)
-        for raw in _NAME.findall(data)
-    }
+def _unescape(match: re.Match[bytes]) -> bytes:
+    return bytes([int(match.group(1), 16)])
 
 
-def _object_streams(data: bytes) -> Iterator[bytes]:
-    """The raw bytes of every stream whose object dictionary names ``/ObjStm``, in order.
+def _names(data: bytes) -> Counter[bytes]:
+    """How often each of :data:`WATCHED_NAMES` occurs as a name token, with ``#xx``
+    escapes decoded (``/J#61vaScript`` is JavaScript).
+
+    Incremental: one linear pass that holds one match at a time and keeps at
+    most ``len(WATCHED_NAMES)`` counters, whatever the number of names. Only
+    watched or escaped names reach Python; the rest are skipped by the
+    regular-expression engine."""
+    found: Counter[bytes] = Counter()
+    for match in _NAME.finditer(data):
+        name = match["plain"] or _ESCAPE.sub(_unescape, match["escaped"])
+        if name in WATCHED_NAMES:
+            found[name] += 1
+    return found
+
+
+def _object_streams(data: bytes) -> Iterator[tuple[int, bytes]]:
+    """For every stream whose dictionary declares ``/ObjStm``, in order: the number of
+    declarations in that dictionary and the stream's raw bytes.
 
     Actions live in objects; compressed object streams are where they can
     hide. Page content and image streams cannot define actions and are not
     decompressed (no budget can be exhausted by large images).
 
-    Linear in the file size: a stream's dictionary is looked for only after
-    the previous ``stream`` keyword (headers never overlap), and the scan
-    resumes after the ``endstream`` of each object stream."""
+    A stream's dictionary is the text since the last indirect-object header
+    (``N G obj``) or ``stream`` keyword token, whichever is later, so text
+    such as ``(obj)`` or ``/objx`` is not mistaken for an object boundary.
+    Linear in the file size: those spans never overlap, and the scan resumes
+    after the ``endstream`` of each object stream. An object stream without a
+    line end after ``stream`` or without ``endstream`` is refused as
+    unreadable; one whose association is misled is caught by the
+    declaration count in :func:`pdf_problem`."""
     position = 0
-    while (match := _STREAM.search(data, position)) is not None:
-        header_start = data.rfind(b"obj", position, match.start())
-        header = data[header_start if header_start >= 0 else position : match.start()]
-        position = match.end()
-        if b"ObjStm" not in _names(header):
+    while (match := _TOKEN.search(data, position)) is not None:
+        start, position = position, match.end()
+        if match.lastgroup == "header":
             continue
+        declarations = _names(data[start : match.start()])[OBJECT_STREAM]
+        if not declarations:
+            continue
+        line_end = _STREAM_EOL.match(data, position)
         end = data.find(b"endstream", position)
-        if end < 0:
-            yield data[position:]
-            return
-        yield data[position:end]
+        if line_end is None or end < 0:
+            raise UploadRejectedError(UploadProblem.PDF_UNREADABLE)
+        yield declarations, data[line_end.end() : end]
         position = end + len(b"endstream")
 
 
@@ -187,21 +241,36 @@ def _inflate(raw: bytes, limit: int) -> bytes:
 
 def pdf_problem(data: bytes) -> UploadProblem | None:
     """Why a PDF is refused (encrypted, active content, or unreadable within the bounds),
-    or ``None``. Stops at the first object stream that exceeds a bound."""
+    or ``None``. Stops at the first object stream that exceeds a bound.
+
+    Fails closed: every ``/ObjStm`` declaration of the file must belong to an
+    object stream that was decompressed and inspected, and none may occur
+    inside one (object streams do not nest). A declaration in a string, on an
+    object without a stream, or hidden from the association is refused as
+    unreadable rather than left uninspected."""
     names = _names(data)
-    if b"Encrypt" in names:
+    if names[ENCRYPT]:
         return UploadProblem.PDF_ENCRYPTED
     budget = INFLATED_TOTAL_MAX_BYTES
-    for count, stream in enumerate(_object_streams(data), start=1):
-        if count > OBJECT_STREAMS_MAX:
-            return UploadProblem.PDF_UNREADABLE
-        try:
+    inspected = 0
+    try:
+        for count, (declarations, stream) in enumerate(_object_streams(data), start=1):
+            if count > OBJECT_STREAMS_MAX:
+                return UploadProblem.PDF_UNREADABLE
             inflated = _inflate(stream, min(OBJECT_STREAM_MAX_BYTES, budget))
-        except UploadRejectedError as error:
-            return error.problem
-        budget -= len(inflated)
-        names |= _names(inflated)
-    if names & ACTIVE_PDF_NAMES:
+            budget -= len(inflated)
+            inspected += declarations
+            found = _names(inflated)
+            if found[OBJECT_STREAM]:
+                return UploadProblem.PDF_UNREADABLE
+            names.update(found)
+    except UploadRejectedError as error:
+        return error.problem
+    if inspected != names[OBJECT_STREAM]:
+        return UploadProblem.PDF_UNREADABLE
+    if names[ENCRYPT]:
+        return UploadProblem.PDF_ENCRYPTED
+    if names.keys() & ACTIVE_PDF_NAMES:
         return UploadProblem.PDF_ACTIVE
     return None
 
