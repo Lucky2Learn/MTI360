@@ -108,9 +108,9 @@ M0 — Foundation Ready: reached 2026-09-30 (Phase 00 complete)
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-10-08 (Phase 02-1):** the first business slice, Courses + Lead Management, is implemented on `feat/phase-02-1-courses-leads` and `READY_FOR_REVIEW` (not pushed, not merged, no CI run yet). It is the first product functionality. The percentage above is not recalculated: no agreed weighting exists, and the slice is not merged or CI-verified.
+> **2026-10-08 (Phase 02-1):** the first business slice, Courses + Lead Management, is implemented on `feat/phase-02-1-courses-leads` and `READY_FOR_REVIEW` (not merged; pushed as PR #32; CI at `9f1da62`: backend, frontend, docker, repo, secrets and both audits passed, CodeQL failed with three alerts fixed in `4367542` (local, re-run pending)). It is the first product functionality. The percentage above is not recalculated: no agreed weighting exists, and the slice is not merged or CI-verified.
 
-> **2026-10-10 (Phase 02-2):** Applications → Documents → Admission → Student is implemented on the same branch (`5e755be` … `f190924`, plus the review fixes `8bc77c1` and `de005f8` for PDF upload validation). It is `READY_FOR_REVIEW` (not pushed, not merged, no CI run yet): the latest backend suite, at `de005f8` with database tests required against `mti360_test` and S3 configured, gave 1183 passed, 0 failed, 0 skipped, and `alembic check` is clean (§9A). Chromium journeys, the Docker job, CI and CodeQL have not run. The percentage above is not recalculated.
+> **2026-10-10 (Phase 02-2):** Applications → Documents → Admission → Student is implemented on the same branch (`5e755be` … `f190924`, plus the review fixes `8bc77c1` and `de005f8` for PDF upload validation and `4367542` for the CodeQL alerts). It is `READY_FOR_REVIEW` (not merged; pushed as PR #32; CI at `9f1da62`: backend, frontend, docker, repo, secrets and both audits passed, CodeQL failed with three alerts fixed in `4367542` (local, re-run pending)): the latest backend suite, at `4367542` with database tests required against `mti360_test` and S3 configured, gave 1198 passed, 0 failed, 0 skipped, and `alembic check` is clean (§9A). The Chromium journeys have not run. The percentage above is not recalculated.
 
 > **2026-09-30:** Phase 00 is `COMPLETED`: T00-01 … T00-10A are merged to `main` (T00-02 via PR #1, T00-03 via PR #3, T00-04 via PR #4, T00-05 via PR #5, T00-06 via PR #6, T00-07 via PR #7, PR #8 and PR #9, T00-08 via PR #10, T00-09 via PR #11, T00-10 via PR #12, T00-10A via PR #13). Phase 01 is `IN_PROGRESS`: the T01-00 architecture review is approved (D1–D22 with the D10 and D14 amendments) T01-01 (Backend, Database & API Foundation) is `COMPLETED` (PR #14), and T01-02 (Audit Foundation) is `COMPLETED` (PR #16). T01-03 (Tenancy Core) is `COMPLETED` (PR #19). T01-04 (Tenant Identity & Authentication) is `COMPLETED` (PR #20). T01-05 (Authorization & RBAC) is `COMPLETED` (PR #21). T01-06 (Platform Identity & MFA) is implemented and `READY_FOR_REVIEW` on `feat/T01-06-platform-identity-mfa` (not merged). T01-07 (Platform Administration Foundation) is implemented and `READY_FOR_REVIEW` on `feat/T01-07-platform-administration` (not merged). T01-08 (Tenant Administration Foundation) is implemented and `READY_FOR_REVIEW` on `feat/T01-08-tenant-administration` (not merged). All are infrastructure only: database access, migrations, request context, error envelope, logging, realm routers, the append-only audit table with its writers, the `tenants` and `campuses` tables with their isolation layers, the tenant authentication backend, and the permission catalogue, roles and authorization layer (no screens). No business tables and no product functionality exist yet, so product implementation completion remains 0%.
 
@@ -1425,7 +1425,7 @@ Sources: [PHASE-02-MASTER-READINESS.md](docs/architecture/PHASE-02-MASTER-READIN
 
 ### 02-1 — Courses + Lead Management
 
-**Status:** `READY_FOR_REVIEW` on `feat/phase-02-1-courses-leads` (from `main` `9009db5`; not pushed; no PR; CI not run on the branch). Merge with **Create a merge commit**.
+**Status:** `READY_FOR_REVIEW` on `feat/phase-02-1-courses-leads` (from `main` `9009db5`; PR #32, not merged; CI results in 02-2 below). Merge with **Create a merge commit**.
 
 **Implementation:**
 
@@ -1495,7 +1495,7 @@ Not run   D18 Chromium journeys (no browser runtime here); CI on the branch
 
 ### 02-2 — Applications → Documents → Admission → Student
 
-**Status:** `READY_FOR_REVIEW` on `feat/phase-02-1-courses-leads`, implemented after the 02-1 baseline `ab02e7d` (code through `f190924`, plus the review fixes `8bc77c1` and `de005f8`; not pushed; no PR; CI not run on the branch). The earlier `BLOCKED` status (the PostgreSQL/Redis integration tests had not run) is resolved: they ran and passed (see Verification). Merge with **Create a merge commit**. Decisions: [ADR-0021](docs/adr/0021-admissions-core.md).
+**Status:** `READY_FOR_REVIEW` on `feat/phase-02-1-courses-leads`, implemented after the 02-1 baseline `ab02e7d` (code through `f190924`, plus the review fixes `8bc77c1`, `de005f8` and `4367542`; PR #32, not merged; CI below). The earlier `BLOCKED` status (the PostgreSQL/Redis integration tests had not run) is resolved: they ran and passed (see Verification). Merge with **Create a merge commit**. Decisions: [ADR-0021](docs/adr/0021-admissions-core.md).
 
 **Implementation (commits):**
 
@@ -1561,9 +1561,9 @@ Review    manual review of ab02e7d..f190924 (document upload/download,
           this line said "no defects found"; the final reviews found two
           high-severity defects and one medium, fixed in 8bc77c1 and
           de005f8 (below)
-Not run   docker job (image build and smoke test); D18 Chromium journeys;
-          CI and CodeQL (branch not pushed). The running local api and
-          frontend containers predate Phase 02-1 and were not rebuilt.
+Not run   D18 Chromium journeys. The running local api and frontend
+          containers predate Phase 02-1 and were not rebuilt. CI and the
+          docker job ran later on PR #32 (below).
 ```
 
 **Defect found in the final review — fixed in `8bc77c1` (`fix: bound PDF validation work and run it off the event loop`):**
@@ -1661,6 +1661,36 @@ Residual  - Still a heuristic token scan, not a PDF parser. It does not
             is refused as unreadable.
           - CPU per hostile upload (up to ~2-3 s, GIL shared with the event
             loop) and the deferred malware scanning are unchanged (above).
+```
+
+**CI on PR #32 and the CodeQL alerts — fixed in `4367542` (`fix: resolve the CodeQL alerts on email validation and the seed email guard`):**
+
+```text
+CI        at 9f1da62: backend, frontend, docker (image build + smoke),
+          repo, secrets, pip-audit, pnpm audit, CodeQL analyze (python,
+          javascript-typescript): pass. CodeQL check: fail, 3 new
+          high-severity alerts (read from the check run's annotations).
+Alert 1   py/polynomial-redos, app/modules/identity/domain.py:70: the
+          email pattern ^[^@\s]+@[^@\s]+\.[^@\s]+$ was quadratic
+          (40 000 chars ~2.6 s); new source: lead/application emails via
+          leads.domain.clean_email. Latent: the 254-character limit runs
+          first (~0.1 ms). Fixed: unambiguous [^@\s]++@[^@\s]++ plus a
+          separate inner-dot check; same strings accepted and refused.
+Alerts 2-3 py/incomplete-url-substring-sanitization, seed_admissions.py:154
+          and seed_applications.py:195: the development-email guard used
+          endswith("example.com"), so notexample.com passed. Fixed:
+          is_development_email (example.com or a subdomain).
+Evidence  15 new tests (email edge cases, exhaustive equivalence with the
+          earlier rule up to six characters, linear time on hostile
+          input, lookalike seed domains, the domain helper); the new
+          cases fail against the earlier code. No alert suppressed. Full
+          backend at 4367542, REQUIRE_DATABASE_TESTS=1 against
+          mti360_test with TEST_S3_* set: 1198 passed, 0 failed,
+          0 skipped. ruff, ruff format, mypy (266 files), import-linter
+          (2 kept), uv lock --check: pass. CodeQL re-run pending (not
+          pushed).
+Note      app/core/config.py keeps the earlier email pattern for an
+          operator-set configuration value (trusted input; not flagged).
 ```
 
 **Known limitations and accepted risks (ADR-0021):**
