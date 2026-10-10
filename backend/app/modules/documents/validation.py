@@ -12,12 +12,20 @@ Uploaded files are untrusted. Before anything is stored:
 
 Malware scanning is deferred (ADR-0021 §8, an explicit risk acceptance);
 these checks are its compensating controls. Nothing here echoes file content.
+
+The work is bounded for hostile input: one linear scan of the file, at most
+:data:`OBJECT_STREAMS_MAX` object streams, each inflated to at most
+:data:`OBJECT_STREAM_MAX_BYTES` and all of them together to at most
+:data:`INFLATED_TOTAL_MAX_BYTES`. A PDF over any bound is refused as
+unreadable. The pipeline is synchronous CPU work: async callers run it in a
+worker thread (``service.check_upload``).
 """
 
 import hashlib
 import re
 import unicodedata
 import zlib
+from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import StrEnum
 from types import MappingProxyType
@@ -30,6 +38,13 @@ MAX_REQUEST_BYTES: Final = MAX_FILE_BYTES + 64 * 1024
 FILE_NAME_MAX_LENGTH: Final = 120
 OBJECT_STREAM_MAX_BYTES: Final = 16 * 1024 * 1024
 """Decompressed size limit of one PDF object stream (refused beyond: a bomb or unreadable)."""
+INFLATED_TOTAL_MAX_BYTES: Final = 32 * 1024 * 1024
+"""Decompressed size limit of all object streams of one PDF together. Object streams hold
+only object dictionaries (no page content or images), typically a few KiB to a few MiB per
+file; without a total, many small bombs under the per-stream limit cost minutes of CPU."""
+OBJECT_STREAMS_MAX: Final = 256
+"""Object streams per PDF. Writers pack up to a few hundred objects into each, so even a
+large 10 MiB document needs far fewer; the bound stops floods of tiny streams."""
 
 PDF: Final = "application/pdf"
 JPEG: Final = "image/jpeg"
@@ -130,46 +145,62 @@ def _names(data: bytes) -> set[bytes]:
     }
 
 
-def _object_streams(data: bytes) -> list[bytes]:
-    """The raw bytes of every stream whose object dictionary names ``/ObjStm``.
+def _object_streams(data: bytes) -> Iterator[bytes]:
+    """The raw bytes of every stream whose object dictionary names ``/ObjStm``, in order.
 
     Actions live in objects; compressed object streams are where they can
     hide. Page content and image streams cannot define actions and are not
-    decompressed (no budget can be exhausted by large images)."""
-    found: list[bytes] = []
-    for match in _STREAM.finditer(data):
-        start = match.end()
-        header_start = data.rfind(b"obj", 0, match.start())
-        header = data[header_start if header_start >= 0 else 0 : match.start()]
+    decompressed (no budget can be exhausted by large images).
+
+    Linear in the file size: a stream's dictionary is looked for only after
+    the previous ``stream`` keyword (headers never overlap), and the scan
+    resumes after the ``endstream`` of each object stream."""
+    position = 0
+    while (match := _STREAM.search(data, position)) is not None:
+        header_start = data.rfind(b"obj", position, match.start())
+        header = data[header_start if header_start >= 0 else position : match.start()]
+        position = match.end()
         if b"ObjStm" not in _names(header):
             continue
-        end = data.find(b"endstream", start)
-        found.append(data[start : end if end >= 0 else len(data)])
-    return found
+        end = data.find(b"endstream", position)
+        if end < 0:
+            yield data[position:]
+            return
+        yield data[position:end]
+        position = end + len(b"endstream")
 
 
-def _inflate(raw: bytes) -> bytes:
-    """Bounded Flate decompression; :class:`UploadRejectedError` when unreadable or too big."""
+def _inflate(raw: bytes, limit: int) -> bytes:
+    """Flate decompression of a complete stream to at most ``limit`` bytes;
+    :class:`UploadRejectedError` when unreadable, truncated or bigger."""
+    if limit <= 0:  # zlib reads a max_length of 0 as "unlimited"
+        raise UploadRejectedError(UploadProblem.PDF_UNREADABLE)
     inflater = zlib.decompressobj()
     try:
-        inflated = inflater.decompress(raw, OBJECT_STREAM_MAX_BYTES)
+        inflated = inflater.decompress(raw, limit)
     except zlib.error:
         raise UploadRejectedError(UploadProblem.PDF_UNREADABLE) from None
-    if inflater.unconsumed_tail:
+    if inflater.unconsumed_tail or not inflater.eof:
         raise UploadRejectedError(UploadProblem.PDF_UNREADABLE)
     return inflated
 
 
 def pdf_problem(data: bytes) -> UploadProblem | None:
-    """Why a PDF is refused (encrypted or active content), or ``None``."""
+    """Why a PDF is refused (encrypted, active content, or unreadable within the bounds),
+    or ``None``. Stops at the first object stream that exceeds a bound."""
     names = _names(data)
     if b"Encrypt" in names:
         return UploadProblem.PDF_ENCRYPTED
-    for stream in _object_streams(data):
+    budget = INFLATED_TOTAL_MAX_BYTES
+    for count, stream in enumerate(_object_streams(data), start=1):
+        if count > OBJECT_STREAMS_MAX:
+            return UploadProblem.PDF_UNREADABLE
         try:
-            names |= _names(_inflate(stream))
+            inflated = _inflate(stream, min(OBJECT_STREAM_MAX_BYTES, budget))
         except UploadRejectedError as error:
             return error.problem
+        budget -= len(inflated)
+        names |= _names(inflated)
     if names & ACTIVE_PDF_NAMES:
         return UploadProblem.PDF_ACTIVE
     return None

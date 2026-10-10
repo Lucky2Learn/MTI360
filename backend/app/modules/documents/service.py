@@ -17,6 +17,7 @@ import uuid
 from dataclasses import dataclass
 from typing import cast
 
+import anyio
 from sqlalchemy import Table, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -61,7 +62,12 @@ from app.modules.documents.domain import (
 )
 from app.modules.documents.models import ApplicationDocument, StoredFile, object_key
 from app.modules.documents.permissions import DOCUMENT_READ, DOCUMENT_UPLOAD, DOCUMENT_VERIFY
-from app.modules.documents.validation import MESSAGES, UploadRejectedError, validate_upload
+from app.modules.documents.validation import (
+    MESSAGES,
+    UploadRejectedError,
+    ValidatedFile,
+    validate_upload,
+)
 from app.modules.leads.domain import clean_text
 from app.modules.leads.service import Caller, caller
 
@@ -190,6 +196,17 @@ async def upload_caller(db: AsyncSession, limiter: RateLimiter) -> Caller:
     return who
 
 
+async def check_upload(received: Upload) -> ValidatedFile:
+    """Run the validation pipeline in a worker thread (bounded CPU work on up to 10 MiB;
+    the event loop keeps serving other requests). A refusal is a 422 on ``file``."""
+    try:
+        return await anyio.to_thread.run_sync(
+            validate_upload, received.file_name, received.declared_type, received.data
+        )
+    except UploadRejectedError as error:
+        raise _invalid("file", error.problem.value, MESSAGES[error.problem]) from None
+
+
 async def upload(
     db: AsyncSession,
     storage: ObjectStorage,
@@ -222,10 +239,7 @@ async def upload(
             raise _invalid(
                 "document_type", "type_mismatch", "A replacement keeps the document's type."
             )
-    try:
-        checked = validate_upload(received.file_name, received.declared_type, received.data)
-    except UploadRejectedError as error:
-        raise _invalid("file", error.problem.value, MESSAGES[error.problem]) from None
+    checked = await check_upload(received)
 
     file_id = new_id()
     key = object_key(who.tenant_id, file_id)

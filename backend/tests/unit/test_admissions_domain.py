@@ -21,10 +21,14 @@ from app.modules.applications.domain import (
     missing_for_submit,
     review_problem,
 )
+from app.modules.documents import validation
 from app.modules.documents.domain import VERIFICATION, DocumentStatus
 from app.modules.documents.validation import (
     FILE_NAME_MAX_LENGTH,
+    INFLATED_TOTAL_MAX_BYTES,
     MAX_FILE_BYTES,
+    OBJECT_STREAM_MAX_BYTES,
+    OBJECT_STREAMS_MAX,
     UploadProblem,
     UploadRejectedError,
     detect_type,
@@ -263,3 +267,97 @@ def test_unreadable_or_bomb_object_streams_and_encrypted_pdfs_are_refused() -> N
         b"7 0 obj\n<< /Subtype /Image >>\nstream\n" + b"\x00" * 1000 + b"\nendstream\nendobj"
     )
     assert pdf_problem(image) is None
+
+
+# --- Resource bounds (the PDF validation denial-of-service fix) ----------------------------
+
+
+def _counting_inflate(monkeypatch: pytest.MonkeyPatch) -> list[int]:
+    """Record the limit of every decompression the pipeline starts."""
+    calls: list[int] = []
+    original = validation._inflate
+
+    def counting(raw: bytes, limit: int) -> bytes:
+        calls.append(limit)
+        return original(raw, limit)
+
+    monkeypatch.setattr(validation, "_inflate", counting)
+    return calls
+
+
+def test_the_total_decompressed_size_of_a_pdf_is_bounded(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Each stream is under the per-stream limit; three of them exceed the total.
+    each = 12 * 1024 * 1024
+    assert each < OBJECT_STREAM_MAX_BYTES
+    assert 2 * each <= INFLATED_TOTAL_MAX_BYTES < 3 * each
+    stream = object_stream(b"0" * each)
+    assert pdf_problem(pdf(stream, stream)) is None
+    calls = _counting_inflate(monkeypatch)
+    many = pdf(*([stream] * 6))
+    assert len(many) < 200 * 1024  # a small file
+    assert pdf_problem(many) is UploadProblem.PDF_UNREADABLE
+    # The third stream may only use what is left of the total, and nothing after it runs.
+    assert calls == [
+        OBJECT_STREAM_MAX_BYTES,
+        OBJECT_STREAM_MAX_BYTES,
+        INFLATED_TOTAL_MAX_BYTES - 2 * each,
+    ]
+    with pytest.raises(UploadRejectedError) as raised:
+        validate_upload("bomb.pdf", "application/pdf", many)
+    assert raised.value.problem is UploadProblem.PDF_UNREADABLE
+
+
+def test_an_exhausted_budget_refuses_the_next_stream_without_inflating_it() -> None:
+    with pytest.raises(UploadRejectedError) as raised:
+        validation._inflate(zlib.compress(b"<< >>"), 0)  # zlib would read 0 as "unlimited"
+    assert raised.value.problem is UploadProblem.PDF_UNREADABLE
+
+
+def test_the_number_of_object_streams_is_bounded(monkeypatch: pytest.MonkeyPatch) -> None:
+    stream = object_stream(b"6 0 << /Type /Page >>")
+    assert pdf_problem(pdf(*([stream] * OBJECT_STREAMS_MAX))) is None
+    calls = _counting_inflate(monkeypatch)
+    flood = pdf(*([stream] * (OBJECT_STREAMS_MAX + 50)))
+    assert pdf_problem(flood) is UploadProblem.PDF_UNREADABLE
+    assert len(calls) == OBJECT_STREAMS_MAX  # stopped at the first stream over the bound
+
+
+def test_truncated_or_malformed_object_streams_fail_closed() -> None:
+    compressed = zlib.compress(b"6 0 << /Type /Page >>" * 50)
+    truncated = pdf(
+        b"5 0 obj\n<< /Type /ObjStm >>\nstream\n" + compressed[:-8] + b"\nendstream\nendobj"
+    )
+    assert pdf_problem(truncated) is UploadProblem.PDF_UNREADABLE
+    unterminated = b"%PDF-1.7\n5 0 obj\n<< /Type /ObjStm >>\nstream\n" + compressed[:10]
+    assert pdf_problem(unterminated) is UploadProblem.PDF_UNREADABLE
+    not_flate = pdf(b"5 0 obj\n<< /Type /ObjStm >>\nstream\n\x00\x01\x02\nendstream\nendobj")
+    assert pdf_problem(not_flate) is UploadProblem.PDF_UNREADABLE
+
+
+def test_the_stream_scan_is_linear_in_the_file_size(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Many ``stream`` keywords used to rescan the file from its start for each one."""
+    scanned: list[int] = []
+    original = validation._names
+
+    def measuring(data: bytes) -> set[bytes]:
+        scanned.append(len(data))
+        return original(data)
+
+    monkeypatch.setattr(validation, "_names", measuring)
+    flood = b"%PDF-1.7\n1 0 obj\n" + b"/a stream\n" * 20_000
+    assert pdf_problem(flood) is None
+    # One pass over the file for its names, plus disjoint stream headers.
+    assert sum(scanned) <= 2 * len(flood)
+
+
+def test_object_stream_detection_survives_the_linear_scan() -> None:
+    # A decoy "stream" inside the dictionary does not hide the object stream after it.
+    decoy = (
+        b"5 0 obj\n<< /Length 9 /Note (stream\n) /Type /ObjStm >>\nstream\n"
+        + zlib.compress(b"<< /S /Launch >>")
+        + b"\nendstream\nendobj"
+    )
+    assert pdf_problem(pdf(decoy)) is UploadProblem.PDF_ACTIVE
+    # Streams after an object stream are still found.
+    later = pdf(object_stream(b"6 0 << /Type /Page >>"), object_stream(b"7 0 << /S /JavaScript >>"))
+    assert pdf_problem(later) is UploadProblem.PDF_ACTIVE

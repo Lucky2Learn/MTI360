@@ -11,6 +11,7 @@ limit, and audit metadata without file names or contents.
 """
 
 import uuid
+import zlib
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -41,9 +42,17 @@ from tenant_admin_support import data, send, sign_in
 from app.core.ratelimit import Limit
 from app.integrations.storage import InMemoryObjectStorage
 from app.modules.documents import service as document_service
-from app.modules.documents.validation import MAX_REQUEST_BYTES
+from app.modules.documents.validation import MAX_REQUEST_BYTES, OBJECT_STREAMS_MAX
 
 pytestmark = [pytest.mark.anyio, pytest.mark.integration]
+
+# More compressed object streams than the validation bound allows (a small file).
+_OBJECT_STREAM = (
+    b"5 0 obj\n<< /Type /ObjStm >>\nstream\n"
+    + zlib.compress(b"6 0 << /Type /Page >>")
+    + b"\nendstream\nendobj\n"
+)
+OBJECT_STREAM_FLOOD = b"%PDF-1.7\n" + _OBJECT_STREAM * (OBJECT_STREAMS_MAX + 1) + b"%%EOF\n"
 
 
 @pytest.fixture
@@ -141,8 +150,9 @@ async def test_valid_uploads_are_stored_privately_and_downloaded_as_attachments(
             "pdf_active_content",
         ),
         ("empty.pdf", b"", "application/pdf", "file_empty"),
+        ("flood.pdf", OBJECT_STREAM_FLOOD, "application/pdf", "pdf_unreadable"),
     ],
-    ids=["docx", "html", "pdf-is-png", "png-is-pdf", "exe", "javascript", "empty"],
+    ids=["docx", "html", "pdf-is-png", "png-is-pdf", "exe", "javascript", "empty", "streams"],
 )
 async def test_invalid_files_are_refused_before_anything_is_stored(
     h: Harness, file_name: str, content: bytes, content_type: str, code: str
