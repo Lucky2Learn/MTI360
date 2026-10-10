@@ -144,3 +144,22 @@ DRAFT ──submit──► SUBMITTED ──► UNDER_REVIEW ──► APPROVED 
 - **A raw-body upload without multipart:** avoids `python-multipart`, but the file name and type would travel in headers or the URL (personal data in URLs). Rejected.
 - **Automatic student matching:** rejected (§2): a shared family phone would merge two people.
 - **An Applicant entity:** rejected by L2.
+
+## Addendum — 2026-10-10: PDF validation resource bounds
+
+The final branch review found that step 5 of §8 could be abused for denial of service. A holder of `document.upload` could send a small crafted PDF that was accepted after minutes of CPU on the API event loop. The cause was a missing total across compressed object streams, a stream scan whose cost grew quadratically, and validation running synchronously in the async handler. Fixed in `8bc77c1`; the decisions above are unchanged except as refined here.
+
+- **Aggregate budget:** at most **32 MiB** decompressed across all object streams of one PDF.
+- **Object streams:** at most **256** per file.
+- **Per-stream limit unchanged:** each object stream still inflates to at most 16 MiB, and only into what is left of the aggregate budget.
+- **Single pass, immediate rejection:** the file is scanned once (stream headers never overlap). The first stream that exceeds a limit stops the check, and the file is refused with the existing `pdf_unreadable` 422. A truncated or unterminated object stream is refused rather than partially checked.
+- **Off the event loop:** the upload service runs `validate_upload` through `anyio.to_thread.run_sync`.
+- **Evidence:** 10 regression tests (validation bounds, the worker-thread hand-off, and the upload API refusing a flood of streams with nothing stored); six of them fail against the previous validation code. Full backend suite against `mti360_test` with database tests required and S3 configured: **1,161 passed, 0 failed, 0 skipped**.
+
+Residual limitations (not solved by this fix):
+
+- Hostile files still cost up to about 3 s of CPU in the worker thread. Pattern matching holds Python's interpreter lock, so the event loop shares CPU with it and can slow down under many concurrent hostile uploads. The per-member upload rate limit (§8) bounds this.
+- Multipart parsing of the capped request body still runs on the event loop.
+- PDF inspection remains pattern-based, not a complete PDF parser.
+- An unusual legitimate PDF with more than 256 object streams or more than 32 MiB of object-stream content is refused as unreadable.
+- Process isolation (validation in a separate process or scanning service, alongside the deferred malware scanning) is a possible future hardening measure. It is not part of this fix.
