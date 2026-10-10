@@ -22,6 +22,8 @@ class SequenceName(StrEnum):
     APPLICATION = "APPLICATION"
     ADMISSION = "ADMISSION"
     STUDENT = "STUDENT"
+    INVOICE = "INVOICE"
+    RECEIPT = "RECEIPT"
 
 
 class Period(Enum):
@@ -33,11 +35,15 @@ PREFIXES: Final = {
     SequenceName.APPLICATION: "APP",
     SequenceName.ADMISSION: "ADM",
     SequenceName.STUDENT: "STU",
+    SequenceName.INVOICE: "INV",
+    SequenceName.RECEIPT: "RCT",
 }
 PERIODS: Final = {
     SequenceName.APPLICATION: Period.CALENDAR_YEAR_UTC,
     SequenceName.ADMISSION: Period.CALENDAR_YEAR_UTC,
     SequenceName.STUDENT: Period.CALENDAR_YEAR_UTC,
+    SequenceName.INVOICE: Period.FINANCIAL_YEAR_IST,
+    SequenceName.RECEIPT: Period.FINANCIAL_YEAR_IST,
 }
 NUMBER_DIGITS: Final = 5
 NUMBER_MAX_LENGTH: Final = 32

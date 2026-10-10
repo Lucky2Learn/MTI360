@@ -61,6 +61,15 @@ PHASE_02_2 = {
     "admission.approve": PermissionScope.CAMPUS,
     "student.read": PermissionScope.CAMPUS,
 }
+PHASE_02_5 = {
+    "fee_structure.read": PermissionScope.CAMPUS,
+    "fee_structure.manage": PermissionScope.TENANT,
+    "invoice.read": PermissionScope.CAMPUS,
+    "invoice.issue": PermissionScope.CAMPUS,
+    "invoice.cancel": PermissionScope.CAMPUS,
+    "payment.record": PermissionScope.CAMPUS,
+    "payment.reverse": PermissionScope.CAMPUS,
+}
 PLATFORM_BASELINE = {
     "tenant.read",
     "tenant.create",
@@ -121,7 +130,7 @@ def test_identity_is_realm_and_code() -> None:
 def test_the_catalogue_is_exactly_the_t01_baseline_and_phase_02_1() -> None:
     tenant = {p.code: p.scope for p in all_permissions() if p.realm is Realm.TENANT}
     platform = {p.code for p in all_permissions() if p.realm is Realm.PLATFORM}
-    assert tenant == TENANT_BASELINE | PHASE_02_1 | PHASE_02_2
+    assert tenant == TENANT_BASELINE | PHASE_02_1 | PHASE_02_2 | PHASE_02_5
     assert platform == PLATFORM_BASELINE
     assert len(all_permissions()) == len({p.key for p in all_permissions()})
     # D6-5 (T01-06) extended by D7-4 (T01-07): exactly these permissions require step-up.
@@ -170,13 +179,17 @@ def test_system_role_templates() -> None:
         SystemRole.ADMIN,
         SystemRole.ADMISSIONS_MANAGER,
         SystemRole.COUNSELLOR,
+        SystemRole.FINANCE_MANAGER,
+        SystemRole.FINANCE_OFFICER,
     }
     assert templates[SystemRole.INSTITUTE_OWNER].permissions == everything
     assert templates[SystemRole.ADMIN].permissions == everything - {"role.delete"}
     assert "role.delete" not in templates[SystemRole.ADMIN].permissions
     # Phase 02-1 (L7) and 02-2 (ADR-0021 §11): the admissions team's roles hold business
     # permissions only; counsellors do not assign, manage courses, review, verify or admit.
-    assert templates[SystemRole.ADMISSIONS_MANAGER].permissions == set(PHASE_02_1) | set(PHASE_02_2)
+    assert templates[SystemRole.ADMISSIONS_MANAGER].permissions == set(PHASE_02_1) | set(
+        PHASE_02_2
+    ) | {"fee_structure.read", "invoice.read"}
     assert templates[SystemRole.COUNSELLOR].permissions == {
         "course.read",
         "lead.read",
@@ -188,9 +201,25 @@ def test_system_role_templates() -> None:
         "document.read",
         "document.upload",
         "student.read",
+        "fee_structure.read",
     }
+    # Phase 02-5 (ADR-0022): the manager holds every finance permission; the officer
+    # does not manage structures, cancel fee invoices or reverse payments.
+    assert templates[SystemRole.FINANCE_MANAGER].permissions == set(PHASE_02_5) | {
+        "course.read",
+        "student.read",
+    }
+    assert templates[SystemRole.FINANCE_OFFICER].permissions == {
+        "fee_structure.read",
+        "invoice.read",
+        "invoice.issue",
+        "payment.record",
+        "course.read",
+        "student.read",
+    }
+    business = set(PHASE_02_1) | set(PHASE_02_2) | set(PHASE_02_5)
     for template in templates.values():
-        assert template.permissions <= set(TENANT_BASELINE) | set(PHASE_02_1) | set(PHASE_02_2)
+        assert template.permissions <= set(TENANT_BASELINE) | business
         assert not any("*" in code for code in template.permissions)
 
 

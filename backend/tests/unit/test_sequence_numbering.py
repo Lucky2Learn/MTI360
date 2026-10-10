@@ -77,11 +77,23 @@ def test_financial_year_labels_refuse_out_of_range_years(start: int) -> None:
         financial_year_label(start)
 
 
-def test_existing_admissions_sequences_stay_on_the_calendar_year() -> None:
-    assert {name: PERIODS[name] for name in SequenceName} == {
+def test_admissions_numbers_use_the_calendar_year_and_finance_the_financial_year() -> None:
+    assert PERIODS == {
         SequenceName.APPLICATION: Period.CALENDAR_YEAR_UTC,
         SequenceName.ADMISSION: Period.CALENDAR_YEAR_UTC,
         SequenceName.STUDENT: Period.CALENDAR_YEAR_UTC,
+        SequenceName.INVOICE: Period.FINANCIAL_YEAR_IST,
+        SequenceName.RECEIPT: Period.FINANCIAL_YEAR_IST,
     }
     assert set(PREFIXES) == set(SequenceName)
     assert format_number(SequenceName.APPLICATION, 2026, 7) == "APP-2026-00007"
+
+
+def test_fee_invoice_and_receipt_numbers_carry_the_financial_year() -> None:
+    assert format_number(SequenceName.INVOICE, 2026, 1) == "INV-FY2026-27-00001"
+    assert format_number(SequenceName.RECEIPT, 2027, 42) == "RCT-FY2027-28-00042"
+    assert format_number(SequenceName.RECEIPT, 2099, 123456) == "RCT-FY2099-00-123456"
+    assert len(format_number(SequenceName.INVOICE, 2026, 99999)) == 19
+    for period, value in ((2026, 0), (1999, 1), (10000, 1)):
+        with pytest.raises(ValueError, match="out of range"):
+            format_number(SequenceName.INVOICE, period, value)

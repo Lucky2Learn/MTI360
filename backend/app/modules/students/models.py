@@ -86,6 +86,8 @@ class Admission(TenantScopedMixin, TimestampMixin, VersionedMixin, Base):
         UniqueConstraint("tenant_id", "id"),
         UniqueConstraint("tenant_id", "admission_number"),
         UniqueConstraint("tenant_id", "application_id"),
+        # Target of the fee invoice's composite key (migration 0011; ADR-0022 §8).
+        UniqueConstraint("tenant_id", "id", "student_id", "campus_id", "course_id"),
         tenant_foreign_key("application_id", "applications", name="fk_admissions_application"),
         tenant_foreign_key("student_id", "students", name="fk_admissions_student"),
         tenant_foreign_key("course_id", "courses", name="fk_admissions_course"),

@@ -13,6 +13,7 @@ from app.modules.applications import permissions as _applications
 from app.modules.audit import permissions as _audit
 from app.modules.courses import permissions as _courses
 from app.modules.documents import permissions as _documents
+from app.modules.finance import permissions as _finance
 from app.modules.identity import permissions as _identity
 from app.modules.institute import permissions as _institute
 from app.modules.leads import permissions as _leads
@@ -28,6 +29,7 @@ PERMISSION_MODULES = tuple(
         _audit,
         _courses,
         _documents,
+        _finance,
         _identity,
         _institute,
         _leads,

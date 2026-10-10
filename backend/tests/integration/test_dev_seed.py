@@ -85,7 +85,7 @@ async def test_the_seed_creates_working_institutes_once(h: Harness) -> None:
         "(SELECT count(*) FROM tenant_memberships WHERE tenant_id = :t AND status = 'ACTIVE')",
         t=tenant_id,
     )
-    templates = len(system_role_templates())  # four since Phase 02-1
+    templates = len(system_role_templates())  # six since Phase 02-5
     assert tuple(counts[0]) == (len(first.campuses), templates, len(first.members))
     stored = await h.owner(
         "SELECT c.password_hash FROM user_credentials c JOIN users u ON u.id = c.user_id "
