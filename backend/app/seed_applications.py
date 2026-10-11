@@ -46,6 +46,7 @@ from app.seed_admissions import (
     SeedLead,
     is_development_email,
 )
+from app.seed_finance import SeededAdmission
 
 APPLICATIONS = cast(Table, Application.__table__)
 APPLICATION_ACTIVITIES = cast(Table, ApplicationActivity.__table__)
@@ -352,8 +353,12 @@ async def seed_applications(
     course_ids: Mapping[str, uuid.UUID],
     campus_ids: Mapping[str, uuid.UUID],
     memberships: Mapping[str, uuid.UUID],
-) -> None:
-    """Insert one institute's applications, documents, admissions and students."""
+) -> dict[str, SeededAdmission]:
+    """Insert one institute's applications, documents, admissions and students.
+
+    Returns the admissions by application key (the finance seed bills them).
+    """
+    admissions: dict[str, SeededAdmission] = {}
     for item in applications:
         creator = memberships[item.created_by]
         reviewer = memberships[item.reviewed_by] if item.reviewed_by else None
@@ -520,9 +525,10 @@ async def seed_applications(
                 )
             )
             admission_number = await next_number(db, SequenceName.ADMISSION)
+            admission_id = uuid.uuid7()
             await db.execute(
                 insert(ADMISSIONS).values(
-                    id=uuid.uuid7(),
+                    id=admission_id,
                     tenant_id=tenant_id,
                     admission_number=admission_number,
                     application_id=application_id,
@@ -542,3 +548,11 @@ async def seed_applications(
                 student_number=student_number,
                 student_created=True,
             )
+            admissions[item.key] = SeededAdmission(
+                admission_id,
+                student_id,
+                student_number,
+                course_ids[item.course],
+                campus_ids[item.campus],
+            )
+    return admissions
