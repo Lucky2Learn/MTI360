@@ -657,6 +657,20 @@ Success
 
 A component is not production-ready if only its Light Mode appearance is defined.
 
+## 16.1 Print Views (Phase 02-5)
+
+Paper is light whatever the screen theme. Printable documents (the fee invoice and the receipt) use one shared rule in `frontend/src/app/globals.css` (`@media print`), through `PrintView` (`frontend/src/features/finance/PrintView.tsx`):
+
+- **Print region:** mark the document with `data-print-region`. On a page that has one, only that region prints, from the top of the first page. The shell, navigation and everything else are left out.
+- **Hidden controls:** mark on-screen controls inside or around the document (Print, Back) with `data-print-hide`.
+- **Ink:** inside the region, `--text-primary`, `--text-secondary` and `--border-subtle` take their Light-theme values (`--ocean-900`, `--ink-700`, `--pearl-200`), so a Dark-mode screen prints dark text on paper. No new colours.
+- **Tokens:** inside a print region, use only those three tokens. Any other token keeps the screen theme's value and would print Dark-mode colours. Extend the rule (Light values from existing tokens only) before using another one.
+- **Backgrounds:** the rule sets none and relies on the browser not printing background colours by default. Do not put meaning in a background.
+- **Layout:** single column, readable at any width. Status is text, never colour only.
+- **Labels:** a fee invoice print carries "Fee invoice — not a tax invoice" (ADR-0022 §2).
+- **Contract test:** `frontend/src/app/globals.test.ts` checks the region and hide selectors and the token-only Light ink.
+- **Verification:** a real browser print preview (Light and Dark, mobile and desktop) has not been run yet (V-02).
+
 ---
 
 # 17. TYPOGRAPHY

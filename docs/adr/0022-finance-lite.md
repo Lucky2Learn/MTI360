@@ -1,6 +1,6 @@
 # ADR-0022 — Finance-lite: Fee Structures, Fee Invoices, Offline Payments and Receipts (Phase 02-5)
 
-- **Status:** Accepted (decisions approved 2026-10-10; not implemented)
+- **Status:** Accepted (decisions approved 2026-10-10). Implemented on `feat/phase-02-5-finance-lite`, not merged; see "Implementation notes — 2026-10-11"
 - **Date:** 2026-10-10
 - **Task:** Phase 02-5 Finance-lite (V1)
 - **Related:** [PHASE-02-5-FINANCE-LITE-READINESS.md](../architecture/PHASE-02-5-FINANCE-LITE-READINESS.md) (the implementation plan), [PHASE-02-MASTER-READINESS.md](../architecture/PHASE-02-MASTER-READINESS.md) (§17 Finance dependency, §22 slice table, L1, L3; dated addendum), [ADR-0021](0021-admissions-core.md) (admissions, students, `tenant_sequences`), [ADR-0020](0020-courses-and-leads.md), [ADR-0004](0004-tenant-isolation.md), [ADR-0013](0013-audit-events.md), [ADR-0016](0016-authorization-rbac.md), INC-15, INC-48, INC-49
@@ -182,3 +182,38 @@ The implementation-start review compared the plan with the code at `53df30b` and
 - **Same key, different hash:** **409**, `CONFLICT`, detail code `idempotency_key_reused`. Nothing is written.
 - **A replay is authorized like a new request:** the route permission and the record's campus visibility apply. A key whose first request failed or rolled back was never stored, so its retry is processed as new.
 - **Concurrent requests with one key:** the unique index serialises them. The loser re-reads the winner's record and answers as a replay (200), or with 409 when the hashes differ.
+
+## Implementation notes — 2026-10-11
+
+Branch `feat/phase-02-5-finance-lite`, not merged or pushed. Commits: `200cd61` (sequences), `46c2481` (migration 0011, permissions, templates, domain), `0c32d35` (fee structure API), `8026e43` (fee invoices, payments, receipts, summary), `0802228` and `6dd5569` (frontend), `1cfc137` (integrity tests), `a03399e` (development seed). Verification results are recorded in DEVELOPMENT-STATUS.md (02-5), not here.
+
+**As decided:**
+
+- **§3 numbering:** the allocator is `app.core.sequences.next_number`. The FY period is computed in SQL from the transaction's `now()` in `Asia/Kolkata`, so the label and the stored timestamps agree. Applications, admissions and students are unchanged.
+- **§4–§6 states and amounts:** integer paise in `BIGINT`; `INR` fixed by CHECK. The database also enforces the balance: `0 ≤ paid_minor ≤ total_minor`, and the invoice status is tied to `paid_minor` (`ISSUED`/`CANCELLED` ⇒ 0, `PARTIALLY_PAID` ⇒ between, `PAID` ⇒ total). Pending and failed payments are allowed only for cheques and demand drafts.
+- **§8 one live invoice:** partial unique index plus the admission row lock. Locks are always taken in the order admission, invoice, payment.
+- **R1–R3:** as in the addendum.
+
+**Implementation rules not spelled out above:**
+
+- **Overpayment counts pending payments:** recording a payment is refused (422 `exceeds_balance`) when it exceeds `total − paid − pending`. Confirming a pending one is checked against `total − paid`.
+- **Cancellation refusal code:** an invoice with a `PENDING` or `CONFIRMED` payment is refused with 422 `VALIDATION_ERROR` and the detail `status/open_payments`, not `invalid_transition` as readiness plan J5 says. Cancelling an already-cancelled invoice is `invalid_transition`. The frontend maps `open_payments`.
+- **Rate limit:** payment recording is limited to 60 per member per 10 minutes. It answers 503 when the limiter is unavailable.
+- **Overdue:** decided by the database's IST date (`due_date < today in Asia/Kolkata`, unpaid). Campus time zones are still not modelled (INC-40).
+- **Print views:** a print stylesheet, no PDF dependency (DESIGN-SYSTEM.md §16.1).
+- **Development seed:** `app/seed_finance.py` writes rows the API would have written (numbers from the same allocator, lines from the domain rules, the activity timeline, request hashes, versions). It validates the history against the API's rules first, including actor permission and campus, overpayment and recorder ≠ reverser. Dates are relative to the seed run in IST. A rerun is refused, as for the rest of the seed.
+- **Raise fee invoice:** FIN-04's action links to Students. The issue form opens from the Student 360 Fees section for an admission; there is no student or admission picker yet.
+
+**Tested** (backend against PostgreSQL and Redis):
+
+- the routes and their 403/404/409/422 contracts;
+- the cross-tenant registry;
+- parallel issue, payment, confirmation and reversal;
+- issue and confirmation rolled back after a late failure (no number consumed);
+- the `paid_minor` invariant after every transition;
+- the CHECKs;
+- the seed contract.
+
+**Not yet verified:** CI and CodeQL on this branch, the D18 Chromium journeys and a real print preview (V-02).
+
+**Production use** remains conditional on §2 and §3.
