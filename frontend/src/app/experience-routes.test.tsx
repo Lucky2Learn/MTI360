@@ -257,17 +257,18 @@ describe("experience routes", () => {
   });
 
   it("renders breadcrumbs and the current page for a nested tenant route", async () => {
-    await renderRoute(ROUTES[1]!, ["finance", "fee-structure"]);
+    // Finance › Refunds stays a placeholder (Fee Structure shipped in 02-5).
+    await renderRoute(ROUTES[1]!, ["finance", "refunds"]);
     const breadcrumb = screen.getByRole("navigation", { name: "Breadcrumb" });
     expect(
       within(breadcrumb).getByRole("link", { name: "Tenant Application" }),
     ).toHaveAttribute("href", "/app");
-    expect(within(breadcrumb).getByText("Fee Structure")).toHaveAttribute(
+    expect(within(breadcrumb).getByText("Refunds")).toHaveAttribute(
       "aria-current",
       "page",
     );
     expect(
-      screen.getByRole("heading", { level: 1, name: "Fee Structure" }),
+      screen.getByRole("heading", { level: 1, name: "Refunds" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Back to Tenant Application" }),
