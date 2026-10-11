@@ -18,6 +18,12 @@ import {
 } from "@/features/applications/labels";
 import { CATEGORY_LABEL } from "@/features/courses/labels";
 import { DownloadLink } from "@/features/documents/DocumentsPanel";
+import {
+  INVOICE_ISSUE,
+  INVOICE_READ,
+  PAYMENT_RECORD,
+} from "@/features/finance/labels";
+import { StudentFees } from "@/features/finance/StudentFees";
 import { formatDate } from "@/features/shared/format";
 import { ReadErrorState } from "@/features/shared/ReadErrorState";
 import { RecordLink } from "@/features/shared/RecordLink";
@@ -27,6 +33,7 @@ import type {
   StudentWire,
   TimelineEntryWire,
 } from "@/lib/api/admissions";
+import type { InvoiceWire } from "@/lib/api/finance";
 import { tenantApiRead } from "@/lib/api/server-read";
 import { can } from "@/lib/authz/requirements";
 import {
@@ -42,9 +49,11 @@ import type { ReactNode } from "react";
 
 // ADM-12 Student profile (Student 360), /app/admissions/students/[id] (Phase
 // 02-2; ADR-0021 §6, §14) with ADM-13 Admissions and ADM-14 Documents as its
-// sections. Batch, attendance, fees, training, exams, certificates, placement
-// and communication arrive with their modules: an intentional empty state
-// says so instead of showing invented data. Read-only in the MVP.
+// sections, and Fees (Phase 02-5; ADR-0022 addendum R2) for members with
+// invoice.read, read from GET /invoices?student_id=… (no student-fees route).
+// Batch, attendance, training, exams, certificates, placement and
+// communication arrive with their modules: an intentional empty state says
+// so instead of showing invented data.
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
@@ -56,7 +65,6 @@ type Props = { params: Promise<{ studentId: string }> };
 const LATER = [
   "Batch",
   "Attendance",
-  "Fees",
   "Training",
   "Exams",
   "Certificates",
@@ -193,7 +201,8 @@ export default async function StudentPage({ params }: Props) {
       </>
     );
   }
-  const [read, documentsRead, timelineRead] = await Promise.all([
+  const readsFees = can(session.permissions, INVOICE_READ);
+  const [read, documentsRead, timelineRead, feesRead] = await Promise.all([
     tenantApiRead<StudentWire>(`/students/${id}`),
     can(session.permissions, DOCUMENT_READ)
       ? tenantApiRead<{ items: StudentDocumentWire[] }>(
@@ -201,6 +210,11 @@ export default async function StudentPage({ params }: Props) {
         )
       : null,
     tenantApiRead<TimelineEntryWire[]>(`/students/${id}/activity?limit=50`),
+    readsFees
+      ? tenantApiRead<InvoiceWire[]>(
+          `/invoices?student_id=${id}&sort=-issued_at&limit=100`,
+        )
+      : null,
   ]);
   const result = settle(read, path);
   if (result.kind !== "ok") {
@@ -237,6 +251,21 @@ export default async function StudentPage({ params }: Props) {
         main={
           <>
             <Personal student={student} />
+            {feesRead === null ? null : feesRead.kind === "ok" ? (
+              <StudentFees
+                student={student}
+                invoices={feesRead.data}
+                canIssue={can(session.permissions, INVOICE_ISSUE)}
+                canRecord={can(session.permissions, PAYMENT_RECORD)}
+              />
+            ) : (
+              <ReadErrorState
+                title="Fees couldn't be loaded"
+                reference={
+                  feesRead.kind === "error" ? feesRead.reference : null
+                }
+              />
+            )}
             <LaterModules />
           </>
         }

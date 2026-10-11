@@ -13,6 +13,7 @@ from datetime import date
 
 import pytest
 
+from app.core.sequences import SequenceName, format_number
 from app.modules.applications.domain import (
     REVIEW_TRANSITIONS,
     ApplicationStatus,
@@ -39,7 +40,6 @@ from app.modules.documents.validation import (
     validate_upload,
 )
 from app.modules.leads.domain import ActivityKind as LeadActivityKind
-from app.modules.students.domain import SequenceName, format_number
 
 S = ApplicationStatus
 

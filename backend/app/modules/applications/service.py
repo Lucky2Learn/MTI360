@@ -26,6 +26,7 @@ from app.core.audit import AuditTarget, write_audit_event
 from app.core.authz import Permission, authorize, campus_visible
 from app.core.errors import ConflictError, ErrorDetail, NotFoundError, ValidationFailedError
 from app.core.pagination import PageParams, SortField
+from app.core.sequences import SequenceName, next_number
 from app.modules.applications import events
 from app.modules.applications import repository as repo
 from app.modules.applications.domain import (
@@ -74,11 +75,10 @@ from app.modules.leads.domain import (
 from app.modules.leads.service import Caller, caller
 from app.modules.students import repository as students_repo
 from app.modules.students import service as students
-from app.modules.students.domain import SequenceName, StudentChoice
+from app.modules.students.domain import StudentChoice
 from app.modules.students.events import ADMISSION_APPROVED
 from app.modules.students.models import Admission
 from app.modules.students.permissions import ADMISSION_APPROVE
-from app.modules.students.sequences import next_number
 
 ACTIVITIES = cast(Table, ApplicationActivity.__table__)
 STALE = "This application was changed by someone else. Reload and try again."

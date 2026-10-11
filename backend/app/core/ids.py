@@ -3,7 +3,7 @@
 Primary keys are application-generated UUIDv7 values: globally unique, roughly
 time-ordered (good B-tree locality) and not guessable in sequence. Sequential
 database IDs are never exposed. Human-facing numbers (for example admission
-numbers) are separate per-tenant sequences owned by their module.
+numbers) are separate per-tenant sequences (:mod:`app.core.sequences`).
 """
 
 import uuid

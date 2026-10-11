@@ -108,6 +108,8 @@ M0 — Foundation Ready: reached 2026-09-30 (Phase 00 complete)
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
+> **2026-10-11 (02-5 Finance-lite in progress):** the backend API (16 routes) is committed on `feat/phase-02-5-finance-lite`, and the frontend screens (FIN-02 … FIN-08, print views, Student 360 Fees) are implemented and unit-tested locally. Not merged, not pushed, no CI run. Update (second session): the financial-integrity tests and the development seed are committed and tested locally (`1cfc137`, `a03399e`); CI and the D18 browser journeys are outstanding (§9A, 02-5).
+
 > **2026-10-10 (merge and Finance-lite decisions):**
 >
 > - **Merged:** Phases 02-1 and 02-2 are merged to `main` by PR #32 (merge commit `2ea72f6`). CI on `2ea72f6` passed, including the PostgreSQL integration tests (`REQUIRE_DATABASE_TESTS=1`). CodeQL passed on the PR head `230dee2`.
@@ -165,7 +167,7 @@ Multi-Tenancy
 |---|---|---|
 | 00 | Foundation | `COMPLETED` |
 | 01 | Authentication & Multi-Tenancy | `IN_PROGRESS` |
-| 02 | Admissions MVP (re-sequenced, L1) — 02-1 Courses + Leads, 02-2 Applications → Student; 02-5 Finance-lite next (ADR-0022) | `IN_PROGRESS` (02-1 and 02-2 `COMPLETED`, merged by PR #32; 02-5 `NOT_STARTED`, decisions approved; §9A) |
+| 02 | Admissions MVP (re-sequenced, L1) — 02-1 Courses + Leads, 02-2 Applications → Student; 02-5 Finance-lite next (ADR-0022) | `IN_PROGRESS` (02-1 and 02-2 `COMPLETED`, merged by PR #32; 02-5 `IN_PROGRESS` on its branch; §9A) |
 | 02 (original) | Platform Control Plane (after the MVP, except 02-C) | `NOT_STARTED` |
 | 03 | Tenant Foundation | `NOT_STARTED` |
 | 04 | Admissions | `NOT_STARTED` |
@@ -1431,7 +1433,7 @@ Sources: [PHASE-02-MASTER-READINESS.md](docs/architecture/PHASE-02-MASTER-READIN
 | 02-C | Onboarding enablers | `NOT_STARTED` |
 | 02-3 | Seed + demo hardening | `NOT_STARTED` (after 02-5) |
 | 02-4 | Public enquiry | `NOT_STARTED` (after 02-5) |
-| 02-5 | Finance-lite | `NOT_STARTED`: decisions approved for implementation planning ([ADR-0022](docs/adr/0022-finance-lite.md)); delivered next |
+| 02-5 | Finance-lite | `IN_PROGRESS`: backend, frontend, integrity tests and development seed implemented and tested locally on `feat/phase-02-5-finance-lite`; CI and browser journeys outstanding ([ADR-0022](docs/adr/0022-finance-lite.md)) |
 | 02-6 | Batches | `NOT_STARTED` (follows 02-5) |
 
 **Delivery order (2026-10-10, ADR-0022):** 02-5 is delivered ahead of 02-3 and 02-4. No identifier is renumbered (TASKS.md, "Delivery-order change").
@@ -1755,17 +1757,118 @@ Found     no security or functional regression
 
 ### 02-5 — Finance-lite
 
-**Status:** `NOT_STARTED`. The decisions are approved for implementation planning (2026-10-10). Nothing is implemented, migrated or released. The plan is in [PHASE-02-5-FINANCE-LITE-READINESS.md](docs/architecture/PHASE-02-5-FINANCE-LITE-READINESS.md), and the decisions in [ADR-0022](docs/adr/0022-finance-lite.md). It is delivered ahead of 02-3 and 02-4.
+**Status:** `IN_PROGRESS` on `feat/phase-02-5-finance-lite` (not merged, not pushed). The plan is in [PHASE-02-5-FINANCE-LITE-READINESS.md](docs/architecture/PHASE-02-5-FINANCE-LITE-READINESS.md), and the decisions in [ADR-0022](docs/adr/0022-finance-lite.md) with the addendum R1–R3. It is delivered ahead of 02-3 and 02-4.
 
 ```text
-Specification Ready   yes (ADR-0022, readiness plan, INC-48, INC-49)
-Design Ready          no (screens mapped to T02/T03/T04 templates; no design)
-Implemented           no
-Tested                no
+Specification Ready   yes (ADR-0022 + addendum R1-R3, readiness plan, INC-48, INC-49)
+Design Ready          no (screens use the T02/T03/T04 templates; no design)
+Implemented           backend: yes (migration 0011, 16 routes)
+                      frontend: yes (FIN-02 … FIN-08, print views, Student 360 Fees)
+                      seed: yes (Konkan and Coromandel finance data, a03399e)
+Tested                locally: backend (incl. concurrency, rollback and
+                      invariant tests, seed contract) and frontend suites,
+                      lint, types, build, migration check (2026-10-11,
+                      below); not in CI
+Verified              no — D18 Chromium journeys not run
 Production Ready      no — and conditional on confirming the tax treatment
                       (ADR-0022 §2, INC-48) and the receipt FY date basis
                       (ADR-0022 §3, INC-49)
 ```
+
+**Implemented (2026-10-11):**
+
+- **Backend** (commits `200cd61` … `8026e43`): sequences in `app.core` with the IST financial-year period; migration `0011_finance_lite`; 7 permissions and the two finance role templates; fee structures; fee invoices, offline payments, receipts and the summary, with R1 (`recorder_cannot_reverse`, `recorded_by_me`), R2 (no student-fees route) and R3 (`idempotency_key` in the JSON body; replays 200; reuse 409).
+- **Frontend:** the finance API client, string-only paise parsing, and the released requirement map (Fee Structure, Invoices, Payments, Outstanding; Refunds and Reports stay `UNRELEASED`).
+  - FIN-02/03: fee structures (list, detail, create, edit draft, activate, archive).
+  - FIN-04/05: fee invoices (filters in the URL), detail with record payment, cancel and a print view. Issuing is opened from Student 360 Fees.
+  - FIN-06/07: payments, the clearance flow (confirm or fail a cheque or demand draft), reversal (hidden for the recorder; the server's 422 explained) and the printable receipt (cancelled after reversal).
+  - FIN-08: outstanding fee invoices under the server's summary strip.
+  - Student 360 Fees: reads `GET /invoices?student_id=…`, raises a fee invoice for an admission without a live one, and links to record a payment.
+  - The idempotency key is created once per form, travels in the JSON body and is reused on retry until success.
+  - Print views use a new `data-print-region` / `data-print-hide` rule in `globals.css`, which prints the region in Light-theme ink from tokens.
+
+**Verification run (2026-10-11, local):**
+
+```text
+Backend (REQUIRE_DATABASE_TESTS=1, at 8026e43)  1278 passed, 1 skipped (S3 not configured)
+ruff check / format, mypy, import-linter       pass
+Frontend vitest                                105 files, 1442 tests passed
+Frontend eslint, tsc (typecheck), prettier     pass
+Frontend next build                            pass (12 /app/finance routes)
+CI, CodeQL                                     NOT RUN (not pushed)
+D18 Chromium journeys (390/768/1024/1440,
+  Light/Dark, print preview)                   NOT RUN (no in-repository harness)
+```
+
+**Second local session (2026-10-11):**
+
+- **`1cfc137` — financial-integrity tests** (`test_finance_integrity.py`, 12 tests, PostgreSQL):
+  - parallel confirmations of one cheque take effect once;
+  - confirm racing fail settles on one outcome;
+  - six parallel confirmations get unique, gap-free receipts;
+  - two reversers racing on one payment restore the balance once;
+  - a reversal or a cancellation racing a payment keeps the balance valid;
+  - an issue or a confirmation failing at its last step (a Python or PostgreSQL error) rolls back fully, with no number consumed;
+  - `0 ≤ paid_minor ≤ total_minor` and `paid_minor = Σ CONFIRMED` after every transition;
+  - the database refuses an out-of-range UPDATE.
+
+  No production code or constraint was changed.
+- **`a03399e` — development seed** (readiness plan §8, `app/seed_finance.py`, `database/seeds/dev.json`):
+  - Konkan: two finance members and six more admitted students. Fee structures for every active course, plus a draft and an archived one. Fee invoices that are paid, partly paid, unpaid and overdue, cancelled and replaced, and adjusted. One pending cheque, one failed demand draft and one reversed transfer. One admitted student is left to bill.
+  - Coromandel: one fee invoice and one payment.
+  - The seed is validated against the API's rules before writing. Numbers come from the shared allocator. Dates are relative to the run in IST. A rerun is refused.
+  - Tests: 36 unit contract tests (31 refusal cases, one valid boundary case, and the committed file's coverage) and 3 database tests (consistency with admissions, students, courses, campuses and structures; campus and tenant boundaries over the API; determinism across two runs; rerun refused without changes). The commit message says "33 refusal cases"; the correct number is 31.
+- **Docs:** ADR-0022 implementation notes; DESIGN-SYSTEM.md §16.1 (print-region rule); TASKS.md.
+
+**Verification run (2026-10-11, second session, local; database `mti360_test`, Redis db 1):**
+
+```text
+Backend pytest, REQUIRE_DATABASE_TESTS=1 (at a03399e)   1329 passed, 0 failed, 1 skipped
+                                                        (real-S3 test; no TEST_S3_*)
+  of which new: integrity 12, seed 39 (unit 36, database 3)
+  after Task 1 only (at 1cfc137):                       1290 passed, 1 skipped
+ruff check, ruff format --check, mypy (293 files),
+  lint-imports (2 contracts kept)                       pass
+alembic: heads 0011 (single); test DB at head;
+  alembic check: no new upgrade operations              pass
+  (0011 down/up/clash round-trip runs in the suite)
+Frontend vitest                                         105 files, 1442 tests passed
+Frontend prettier, eslint (0 warnings), tsc             pass
+Frontend next build                                     pass (12 /app/finance routes)
+check:landing, check:env, check:lock                    pass
+Seed against the development database (CLI)             NOT RUN (V-02 owns the dev stack);
+                                                        seed() exercised against mti360_test
+CI, CodeQL                                              NOT RUN (not pushed)
+D18 Chromium journeys and real print preview            NOT RUN (V-02)
+```
+
+**Pre-PR review (2026-10-11, local, at `2302f0f` + this commit):**
+
+- **Branch:** 10 commits on `origin/main` (`53df30b`), which has not moved; 102 files changed. The marketing site, ACRS and RevenueOS are untouched. There are 16 finance routes, each behind one permission, and nothing out of scope (no GST, refunds, gateway, instalments or discounts).
+- **Cancellation contract (authoritative):**
+  - With a `PENDING` or `CONFIRMED` payment: 422 `VALIDATION_ERROR` with exactly one detail, `status/open_payments`.
+  - An invoice already cancelled: `status/invalid_transition`.
+  - Nothing is written in either case.
+
+  The backend, the frontend and ADR-0022 agree. Readiness plan J5 is corrected (it said `invalid_transition`). New tests pin the contract: `test_the_cancellation_refusal_contract` (backend) and the frontend "already cancelled" case.
+- **Seed safety:**
+  - The file is fully validated before any write, and a seeded email refuses the whole run before any write.
+  - The seed only inserts. Every institute is new, so no existing row is overwritten or deleted, and no existing sequence is touched.
+  - Each institute is seeded in one transaction. A new failure-injection test shows that an error after its finance rows are written leaves no finance rows, no sequence numbers and no campuses for it, and the rerun is refused without changes.
+  - Known limitation (D16 structure, not new): users and the tenant row are committed before the institute transaction. A mid-run failure therefore needs a development-database reset before seeding again.
+- **Seed CLI against the development database: NOT RUN.** A read-only check found `mti360` in the MTI container empty (no tables, no `alembic_version`), and there is no `backend/.env` that names a target. Running the CLI would first need a migration and the object storage started: V-02 work that needs its own approval.
+
+```text
+Backend pytest, REQUIRE_DATABASE_TESTS=1     1331 passed, 0 failed, 1 skipped (real-S3 test)
+ruff check, ruff format --check, mypy (293), lint-imports (2 kept)   pass
+alembic heads 0011 (single); alembic check (mti360_test)            no new operations
+Frontend vitest                              105 files, 1443 tests passed
+Frontend prettier, eslint, tsc, next build   pass
+check:landing, check:env, check:lock         pass
+CI, CodeQL, D18 journeys, real print preview NOT RUN
+```
+
+**Outstanding:** push, CI and CodeQL; and the V-02 browser journeys, including a real print preview. "Raise fee invoice" on FIN-04 still links to Students, with no student or admission picker (unchanged by design).
 
 **Approved decisions:**
 

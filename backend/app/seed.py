@@ -11,7 +11,9 @@ Loads ``database/seeds/dev.json`` (realistic maritime fixtures) into a
 * (Phase 02-1) the institute's courses and leads, with follow-ups, notes and
   their timeline (``app.seed_admissions``; fictitious contact details);
 * (Phase 02-2) applications at every stage with placeholder documents in the
-  object storage, and admitted students (``app.seed_applications``).
+  object storage, and admitted students (``app.seed_applications``);
+* (Phase 02-5) fee structures, fee invoices, offline payments and receipts
+  for the admitted students (``app.seed_finance``).
 
 Rules (D16): every email uses a reserved ``.example`` domain; every password is
 random, generated here, never stored in the file, never printed, logged or
@@ -27,7 +29,7 @@ import re
 import secrets
 import uuid
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Final, cast
@@ -40,7 +42,8 @@ from app.core.tenancy import system_context
 from app.integrations.storage import ObjectStorage
 from app.modules.access import repository as access_repo
 from app.modules.access.service import clone_system_roles
-from app.modules.access.templates import OWNER_TEMPLATE, SystemRole
+from app.modules.access.templates import OWNER_TEMPLATE, SystemRole, system_role_templates
+from app.modules.applications.domain import ApplicationStatus
 from app.modules.courses.domain import CourseStatus
 from app.modules.identity.domain import (
     CampusScope,
@@ -64,6 +67,7 @@ from app.seed_admissions import (
     seed_admissions,
 )
 from app.seed_applications import SeedApplication, parse_applications, seed_applications
+from app.seed_finance import Actor, FinanceSeedError, SeedFinance, parse_finance, seed_finance
 
 DEFAULT_SEED_FILE: Final = Path(__file__).resolve().parents[2] / "database" / "seeds" / "dev.json"
 SEEDED: Final = AuditEventType("system.seed.applied", AuditCategory.ADMIN)
@@ -100,6 +104,7 @@ class SeedInstitute:
     courses: tuple[SeedCourse, ...] = ()
     leads: tuple[SeedLead, ...] = ()
     applications: tuple[SeedApplication, ...] = ()
+    finance: SeedFinance = field(default_factory=SeedFinance)
 
 
 @dataclass(frozen=True, slots=True)
@@ -144,6 +149,18 @@ def _member(raw: Mapping[str, Any], codes: set[str], where: str) -> SeedMember:
     return SeedMember(
         email, _text(raw.get("display_name"), f"{where}.display_name"), role, scope, campuses
     )
+
+
+def _actors(members: Sequence[SeedMember]) -> dict[str, Actor]:
+    """What each member's role (its code template) and campus scope allow (finance seed)."""
+    permissions = {template.code: template.permissions for template in system_role_templates()}
+    return {
+        m.email: Actor(
+            permissions[m.role],
+            None if m.campus_scope is CampusScope.ALL else frozenset(m.campuses),
+        )
+        for m in members
+    }
 
 
 def parse_seed(data: Mapping[str, Any]) -> tuple[SeedInstitute, ...]:
@@ -192,7 +209,18 @@ def parse_seed(data: Mapping[str, Any]) -> tuple[SeedInstitute, ...]:
                 campuses=codes,
                 members={m.email for m in members},
             )
-        except AdmissionsSeedError as error:
+            finance = parse_finance(
+                raw,
+                where,
+                courses={c.code: c.status for c in courses},
+                admitted={
+                    a.key: (a.course, a.campus)
+                    for a in applications
+                    if a.status is ApplicationStatus.ADMITTED
+                },
+                actors=_actors(members),
+            )
+        except (AdmissionsSeedError, FinanceSeedError) as error:
             raise SeedError(str(error)) from None
         institutes.append(
             SeedInstitute(
@@ -203,6 +231,7 @@ def parse_seed(data: Mapping[str, Any]) -> tuple[SeedInstitute, ...]:
                 courses,
                 leads,
                 applications,
+                finance,
             )
         )
     return tuple(institutes)
@@ -321,7 +350,7 @@ async def seed(
                 memberships=memberships,
             )
             try:
-                await seed_applications(
+                admissions = await seed_applications(
                     db,
                     storage,
                     tenant_id,
@@ -333,6 +362,14 @@ async def seed(
                 )
             except AdmissionsSeedError as error:
                 raise SeedError(str(error)) from None
+            await seed_finance(
+                db,
+                tenant_id,
+                finance=institute.finance,
+                course_ids=course_ids,
+                admissions=admissions,
+                memberships=memberships,
+            )
             await write_audit_event(
                 db,
                 SEEDED,
@@ -343,6 +380,9 @@ async def seed(
                     "course_count": len(institute.courses),
                     "lead_count": len(institute.leads),
                     "application_count": len(institute.applications),
+                    "fee_structure_count": len(institute.finance.fee_structures),
+                    "invoice_count": len(institute.finance.invoices),
+                    "payment_count": sum(len(i.payments) for i in institute.finance.invoices),
                 },
             )
     return [SeededAccount(email, accounts[email]) for email in emails]

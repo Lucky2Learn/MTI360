@@ -18,6 +18,7 @@ from app.core.audit import AuditTarget, write_audit_event
 from app.core.authz import authorize, campus_visible
 from app.core.errors import ErrorDetail, NotFoundError, ValidationFailedError
 from app.core.pagination import PageParams, SortField
+from app.core.sequences import SequenceName, next_number
 from app.modules.applications.models import Application
 from app.modules.applications.permissions import APPLICATION_READ
 from app.modules.documents.permissions import DOCUMENT_READ
@@ -26,10 +27,9 @@ from app.modules.leads.permissions import LEAD_READ
 from app.modules.leads.service import Caller, caller
 from app.modules.students import events
 from app.modules.students import repository as repo
-from app.modules.students.domain import SequenceName, StudentChoice, StudentStatus
+from app.modules.students.domain import StudentChoice, StudentStatus
 from app.modules.students.models import Student
 from app.modules.students.permissions import STUDENT_READ
-from app.modules.students.sequences import next_number
 
 
 @dataclass(frozen=True, slots=True)

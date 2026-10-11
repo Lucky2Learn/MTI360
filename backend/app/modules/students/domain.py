@@ -2,34 +2,12 @@
 
 * A **student** is the person across courses; an **admission** is the
   decision for one application. Both carry a campus (L6).
-* Numbers come from per-tenant, per-year sequences and read
-  ``<PREFIX>-<YYYY>-<nnnnn>`` (wider when a year exceeds 99 999).
+* Numbers come from the per-tenant sequences of :mod:`app.core.sequences`
+  and read ``<PREFIX>-<YYYY>-<nnnnn>`` (wider when a year exceeds 99 999).
 """
 
 from enum import StrEnum
 from typing import Final
-
-
-class SequenceName(StrEnum):
-    APPLICATION = "APPLICATION"
-    ADMISSION = "ADMISSION"
-    STUDENT = "STUDENT"
-
-
-PREFIXES: Final = {
-    SequenceName.APPLICATION: "APP",
-    SequenceName.ADMISSION: "ADM",
-    SequenceName.STUDENT: "STU",
-}
-NUMBER_DIGITS: Final = 5
-NUMBER_MAX_LENGTH: Final = 32
-
-
-def format_number(name: SequenceName, year: int, value: int) -> str:
-    """``APP-2026-00001``; the counter widens past 99 999 instead of wrapping."""
-    if value < 1 or not 2000 <= year <= 9999:
-        raise ValueError("sequence value out of range")
-    return f"{PREFIXES[name]}-{year}-{value:0{NUMBER_DIGITS}d}"
 
 
 class StudentStatus(StrEnum):

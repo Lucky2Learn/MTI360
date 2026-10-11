@@ -54,4 +54,30 @@
       scroll-behavior: auto !important;
     }
   }
+
+  /* Print views (Phase 02-5: fee invoices and receipts). On a page with a
+     [data-print-region], only that region prints, from the top of the first
+     page, and controls marked [data-print-hide] are left out. Paper is light
+     whatever the screen theme, so inside the region the three text and rule
+     tokens print views use take their Light-theme values (no new colours). */
+  @media print {
+    body:has([data-print-region]) * {
+      visibility: hidden;
+    }
+    [data-print-region],
+    [data-print-region] * {
+      visibility: visible;
+    }
+    [data-print-region] {
+      position: absolute;
+      inset-inline: 0;
+      top: 0;
+      --text-primary: var(--ocean-900);
+      --text-secondary: var(--ink-700);
+      --border-subtle: var(--pearl-200);
+    }
+    [data-print-hide] {
+      display: none !important;
+    }
+  }
 }

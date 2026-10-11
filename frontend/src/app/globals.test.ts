@@ -44,3 +44,21 @@ describe("global accessibility base layer", () => {
     );
   });
 });
+
+describe("print views (Phase 02-5)", () => {
+  const block = base.slice(base.indexOf("@media print"));
+
+  it("prints only the marked region and leaves out marked controls", () => {
+    expect(block).not.toBe("");
+    expect(block).toContain("body:has([data-print-region]) *");
+    expect(block).toMatch(/\[data-print-hide\]\s*{\s*display:\s*none/);
+  });
+
+  it("prints in the Light theme's ink, from tokens only", () => {
+    const region = block.slice(block.indexOf("[data-print-region] {"));
+    expect(region).toContain("--text-primary: var(--ocean-900);");
+    expect(region).toContain("--text-secondary: var(--ink-700);");
+    expect(region).toContain("--border-subtle: var(--pearl-200);");
+    expect(block).not.toMatch(/#[0-9a-f]{3,8}|rgb\(/i);
+  });
+});

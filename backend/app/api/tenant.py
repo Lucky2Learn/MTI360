@@ -21,6 +21,7 @@ from app.modules.applications.router import application_routes
 from app.modules.audit.router import tenant_audit_routes
 from app.modules.courses.router import course_routes
 from app.modules.documents.router import document_routes
+from app.modules.finance.router import finance_routes
 from app.modules.identity.members_router import member_routes
 from app.modules.identity.router import anonymous_routes, mfa_routes, session_routes
 from app.modules.institute.router import institute_routes
@@ -46,5 +47,6 @@ router.include_router(lead_routes)
 router.include_router(application_routes)
 router.include_router(document_routes)
 router.include_router(student_routes)
+router.include_router(finance_routes)
 
 ROUTERS: tuple[APIRouter, ...] = (anonymous, mfa_pending, session, router)

@@ -135,14 +135,27 @@ export const tenantExperience: ApplicationExperience = {
           // The institute course catalogue (ACA-01), Phase 02-1.
           { Courses: permission("course.read") },
         ),
-        group("Finance", FinanceIcon, [
-          "Fee Structure",
-          "Invoices",
-          "Payments",
-          "Outstanding",
-          "Refunds",
-          "Reports",
-        ]),
+        group(
+          "Finance",
+          FinanceIcon,
+          [
+            "Fee Structure",
+            "Invoices",
+            "Payments",
+            "Outstanding",
+            "Refunds",
+            "Reports",
+          ],
+          {},
+          // Finance-lite (FIN-02/04/06/08), Phase 02-5 (ADR-0022). Refunds
+          // and Reports stay UNRELEASED until full Finance.
+          {
+            "Fee Structure": permission("fee_structure.read"),
+            Invoices: permission("invoice.read"),
+            Payments: permission("invoice.read"),
+            Outstanding: permission("invoice.read"),
+          },
+        ),
         group("Compliance", ComplianceIcon, [
           "Dashboard",
           "Requirements",

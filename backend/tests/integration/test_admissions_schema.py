@@ -511,7 +511,8 @@ async def test_the_admissions_migration_round_trips(
         )
         assert left[0][0] == 0
         roles = await _system_roles(migrated_database, world.tenant_a)
-        assert set(roles) == set(expected)
+        # The system roles of revision 0009 (later templates, e.g. finance in 0011, are gone).
+        assert set(roles) == {"INSTITUTE_OWNER", "ADMIN", "ADMISSIONS_MANAGER", "COUNSELLOR"}
         assert not any(set(NEW_CODES) & codes for codes in roles.values())
         counsellor = await _owner(
             migrated_database,

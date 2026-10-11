@@ -1,5 +1,5 @@
 {
-  "_comment": "Development fixtures only (T01-08, decision D16). Load with `python -m app.cli seed` from backend/ with APP_ENV=development. Emails use reserved .example domains; passwords are generated, never shown or stored; to sign in, request a reset link from the sign-in page (Mailpit locally). Courses, leads (Phase 02-1) and applications (Phase 02-2) use fictitious contacts: example.com emails and the +91 90000 10xxx range.",
+  "_comment": "Development fixtures only (T01-08, decision D16). Load with `python -m app.cli seed` from backend/ with APP_ENV=development. Emails use reserved .example domains; passwords are generated, never shown or stored; to sign in, request a reset link from the sign-in page (Mailpit locally). Courses, leads (Phase 02-1) and applications (Phase 02-2) use fictitious contacts: example.com emails and the +91 90000 10xxx range. Finance (Phase 02-5): amounts are integer paise (INR); due and received dates are days relative to the seed run (IST), and payment references are fictitious.",
   "institutes": [
     {
       "name": "Konkan Maritime Training Institute",
@@ -47,6 +47,19 @@
           "role": "COUNSELLOR",
           "campus_scope": "SELECTED",
           "campuses": ["RTN"]
+        },
+        {
+          "email": "accounts@konkan-maritime.example",
+          "display_name": "Meera Bhide",
+          "role": "FINANCE_MANAGER",
+          "campus_scope": "ALL"
+        },
+        {
+          "email": "fees.mumbai@konkan-maritime.example",
+          "display_name": "Ajay Mhatre",
+          "role": "FINANCE_OFFICER",
+          "campus_scope": "SELECTED",
+          "campuses": ["MUM"]
         }
       ],
       "courses": [
@@ -437,6 +450,305 @@
           "created_by": "counsellor.mumbai@konkan-maritime.example",
           "status": "DRAFT",
           "documents": [{ "type": "PASSPORT", "status": "UPLOADED" }]
+        },
+        {
+          "key": "KA6",
+          "course": "DNS",
+          "campus": "MUM",
+          "created_by": "counsellor.mumbai@konkan-maritime.example",
+          "reviewed_by": "admissions@konkan-maritime.example",
+          "status": "ADMITTED",
+          "full_name": "Rohan Salvi",
+          "mobile": "+91 90000 10121",
+          "date_of_birth": "2007-02-14",
+          "highest_qualification": "12th PCM, 2025 (78%); IMU-CET qualified",
+          "city": "Kalyan",
+          "declared": true,
+          "documents": [
+            { "type": "PASSPORT", "status": "VERIFIED" },
+            { "type": "MARKSHEET_12", "status": "VERIFIED" },
+            { "type": "MEDICAL_CERTIFICATE", "status": "VERIFIED" }
+          ]
+        },
+        {
+          "key": "KA7",
+          "course": "DNS",
+          "campus": "RTN",
+          "created_by": "counsellor.ratnagiri@konkan-maritime.example",
+          "reviewed_by": "admissions@konkan-maritime.example",
+          "status": "ADMITTED",
+          "full_name": "Siddharth Kadam",
+          "mobile": "+91 90000 10122",
+          "date_of_birth": "2006-11-03",
+          "highest_qualification": "12th PCM, 2025 (71%); IMU-CET qualified",
+          "city": "Ratnagiri",
+          "declared": true,
+          "documents": [
+            { "type": "PASSPORT", "status": "VERIFIED" },
+            { "type": "MARKSHEET_12", "status": "VERIFIED" },
+            { "type": "MEDICAL_CERTIFICATE", "status": "VERIFIED" }
+          ]
+        },
+        {
+          "key": "KA8",
+          "course": "GPR",
+          "campus": "RTN",
+          "created_by": "counsellor.ratnagiri@konkan-maritime.example",
+          "reviewed_by": "admissions@konkan-maritime.example",
+          "status": "ADMITTED",
+          "full_name": "Akash Shetye",
+          "mobile": "+91 90000 10123",
+          "date_of_birth": "2007-06-29",
+          "highest_qualification": "10th, 2023 (64%)",
+          "city": "Chiplun",
+          "declared": true,
+          "documents": [
+            { "type": "MARKSHEET_10", "status": "VERIFIED" },
+            { "type": "ID_PROOF", "status": "VERIFIED" },
+            { "type": "MEDICAL_CERTIFICATE", "status": "VERIFIED" }
+          ]
+        },
+        {
+          "key": "KA9",
+          "course": "GPR",
+          "campus": "MUM",
+          "created_by": "counsellor.mumbai@konkan-maritime.example",
+          "reviewed_by": "admissions@konkan-maritime.example",
+          "status": "ADMITTED",
+          "full_name": "Yash Parab",
+          "mobile": "+91 90000 10124",
+          "date_of_birth": "2007-09-12",
+          "highest_qualification": "10th, 2023 (88%)",
+          "city": "Dadar",
+          "declared": true,
+          "documents": [
+            { "type": "MARKSHEET_10", "status": "VERIFIED" },
+            { "type": "ID_PROOF", "status": "VERIFIED" },
+            { "type": "MEDICAL_CERTIFICATE", "status": "VERIFIED" }
+          ]
+        },
+        {
+          "key": "KA10",
+          "course": "STCW-BST",
+          "campus": "RTN",
+          "created_by": "counsellor.ratnagiri@konkan-maritime.example",
+          "reviewed_by": "admissions@konkan-maritime.example",
+          "status": "ADMITTED",
+          "full_name": "Mohammed Kazi",
+          "mobile": "+91 90000 10125",
+          "date_of_birth": "1999-01-25",
+          "highest_qualification": "GP Rating (2020); 2 years at sea",
+          "city": "Dapoli",
+          "indos_number": "19KM2204",
+          "declared": true,
+          "documents": [
+            { "type": "CDC", "status": "VERIFIED" },
+            { "type": "INDOS", "status": "VERIFIED" },
+            { "type": "MEDICAL_CERTIFICATE", "status": "VERIFIED" }
+          ]
+        },
+        {
+          "key": "KA11",
+          "course": "DNS",
+          "campus": "MUM",
+          "created_by": "counsellor.mumbai@konkan-maritime.example",
+          "reviewed_by": "admissions@konkan-maritime.example",
+          "status": "ADMITTED",
+          "full_name": "Aniket Thakur",
+          "mobile": "+91 90000 10126",
+          "date_of_birth": "2007-04-08",
+          "highest_qualification": "12th PCM, 2025 (74%); IMU-CET qualified",
+          "city": "Panvel",
+          "declared": true,
+          "documents": [
+            { "type": "PASSPORT", "status": "VERIFIED" },
+            { "type": "MARKSHEET_12", "status": "VERIFIED" },
+            { "type": "MEDICAL_CERTIFICATE", "status": "VERIFIED" }
+          ]
+        }
+      ],
+      "fee_structures": [
+        {
+          "key": "GPR-2026",
+          "course": "GPR",
+          "name": "GP Rating fees 2026-27",
+          "status": "ACTIVE",
+          "created_by": "accounts@konkan-maritime.example",
+          "items": [
+            { "fee_head": "Tuition", "amount_minor": 18500000 },
+            { "fee_head": "Hostel and mess", "amount_minor": 4500000 },
+            { "fee_head": "Uniform and kit", "amount_minor": 850000 },
+            { "fee_head": "Medical examination", "amount_minor": 250000 }
+          ]
+        },
+        {
+          "key": "GPR-2027",
+          "course": "GPR",
+          "name": "GP Rating fees 2027-28 (proposed)",
+          "status": "DRAFT",
+          "created_by": "accounts@konkan-maritime.example",
+          "items": [
+            { "fee_head": "Tuition", "amount_minor": 19500000 },
+            { "fee_head": "Hostel and mess", "amount_minor": 4800000 },
+            { "fee_head": "Uniform and kit", "amount_minor": 900000 },
+            { "fee_head": "Medical examination", "amount_minor": 250000 }
+          ]
+        },
+        {
+          "key": "DNS-2025",
+          "course": "DNS",
+          "name": "DNS fees 2025-26",
+          "status": "ARCHIVED",
+          "created_by": "accounts@konkan-maritime.example",
+          "items": [
+            { "fee_head": "Tuition", "amount_minor": 34000000 },
+            { "fee_head": "Hostel and mess", "amount_minor": 9000000 },
+            { "fee_head": "Uniform and kit", "amount_minor": 1200000 }
+          ]
+        },
+        {
+          "key": "DNS-2026",
+          "course": "DNS",
+          "name": "DNS fees 2026-27",
+          "status": "ACTIVE",
+          "created_by": "accounts@konkan-maritime.example",
+          "items": [
+            { "fee_head": "Tuition", "amount_minor": 36000000 },
+            { "fee_head": "Hostel and mess", "amount_minor": 9600000 },
+            { "fee_head": "Uniform and kit", "amount_minor": 1250000 },
+            { "fee_head": "Library and laboratory", "amount_minor": 800000 }
+          ]
+        },
+        {
+          "key": "BST-2026",
+          "course": "STCW-BST",
+          "name": "STCW Basic Safety Training fees 2026-27",
+          "status": "ACTIVE",
+          "created_by": "accounts@konkan-maritime.example",
+          "items": [
+            { "fee_head": "Course fee", "amount_minor": 2150000 },
+            { "fee_head": "Course material", "amount_minor": 150000 }
+          ]
+        }
+      ],
+      "invoices": [
+        {
+          "key": "KI1",
+          "application": "KA4",
+          "structure": "BST-2026",
+          "due_in_days": -10,
+          "issued_by": "fees.mumbai@konkan-maritime.example",
+          "payments": [
+            {
+              "amount_minor": 2300000,
+              "method": "CASH",
+              "received_days_ago": 12,
+              "recorded_by": "fees.mumbai@konkan-maritime.example",
+              "status": "CONFIRMED"
+            }
+          ]
+        },
+        {
+          "key": "KI2",
+          "application": "KA7",
+          "structure": "DNS-2025",
+          "due_in_days": 20,
+          "issued_by": "accounts@konkan-maritime.example",
+          "cancelled": {
+            "by": "accounts@konkan-maritime.example",
+            "reason": "Issued on the 2025-26 fee structure; reissued on the 2026-27 structure."
+          }
+        },
+        {
+          "key": "KI3",
+          "application": "KA7",
+          "structure": "DNS-2026",
+          "due_in_days": 25,
+          "issued_by": "accounts@konkan-maritime.example"
+        },
+        {
+          "key": "KI4",
+          "application": "KA6",
+          "structure": "DNS-2026",
+          "due_in_days": 15,
+          "issued_by": "fees.mumbai@konkan-maritime.example",
+          "payments": [
+            {
+              "amount_minor": 15000000,
+              "method": "UPI",
+              "reference": "UPI 6142 0937 5528",
+              "received_days_ago": 3,
+              "recorded_by": "fees.mumbai@konkan-maritime.example",
+              "status": "CONFIRMED"
+            },
+            {
+              "amount_minor": 10000000,
+              "method": "CHEQUE",
+              "reference": "Cheque 004517, State Bank of India, Kalyan",
+              "received_days_ago": 1,
+              "recorded_by": "fees.mumbai@konkan-maritime.example",
+              "status": "PENDING"
+            }
+          ]
+        },
+        {
+          "key": "KI5",
+          "application": "KA8",
+          "structure": "GPR-2026",
+          "due_in_days": -20,
+          "issued_by": "accounts@konkan-maritime.example"
+        },
+        {
+          "key": "KI6",
+          "application": "KA9",
+          "structure": "GPR-2026",
+          "due_in_days": -5,
+          "issued_by": "fees.mumbai@konkan-maritime.example",
+          "lines": [
+            { "fee_head": "Tuition", "amount_minor": 16500000 },
+            { "fee_head": "Uniform and kit", "amount_minor": 850000 },
+            { "fee_head": "Medical examination", "amount_minor": 250000 }
+          ],
+          "adjustment_reason": "Merit scholarship of Rs 20,000 on tuition; day scholar, so no hostel and mess.",
+          "payments": [
+            {
+              "amount_minor": 5000000,
+              "method": "BANK_TRANSFER",
+              "reference": "NEFT HDFCN52026091800417",
+              "received_days_ago": 8,
+              "recorded_by": "fees.mumbai@konkan-maritime.example",
+              "status": "CONFIRMED"
+            },
+            {
+              "amount_minor": 5000000,
+              "method": "BANK_TRANSFER",
+              "reference": "NEFT HDFCN52026091800417",
+              "received_days_ago": 8,
+              "recorded_by": "fees.mumbai@konkan-maritime.example",
+              "status": "REVERSED",
+              "closed_by": "accounts@konkan-maritime.example",
+              "reason": "Recorded twice: the same NEFT transfer is already receipted."
+            }
+          ]
+        },
+        {
+          "key": "KI7",
+          "application": "KA10",
+          "structure": "BST-2026",
+          "due_in_days": 7,
+          "issued_by": "accounts@konkan-maritime.example",
+          "payments": [
+            {
+              "amount_minor": 2300000,
+              "method": "DEMAND_DRAFT",
+              "reference": "DD 228190, Bank of Baroda, Dapoli",
+              "received_days_ago": 6,
+              "recorded_by": "accounts@konkan-maritime.example",
+              "status": "FAILED",
+              "closed_by": "accounts@konkan-maritime.example",
+              "reason": "Returned unpaid by the bank: the drawer's signature did not match."
+            }
+          ]
         }
       ]
     },
@@ -523,6 +835,39 @@
           "documents": [
             { "type": "PASSPORT", "status": "VERIFIED" },
             { "type": "MEDICAL_CERTIFICATE", "status": "VERIFIED" }
+          ]
+        }
+      ],
+      "fee_structures": [
+        {
+          "key": "GME-2026",
+          "course": "GME",
+          "name": "GME fees 2026-27",
+          "status": "ACTIVE",
+          "created_by": "director@coromandel-nautical.example",
+          "items": [
+            { "fee_head": "Tuition", "amount_minor": 32000000 },
+            { "fee_head": "Hostel and mess", "amount_minor": 7200000 },
+            { "fee_head": "Workshop and kit", "amount_minor": 1100000 }
+          ]
+        }
+      ],
+      "invoices": [
+        {
+          "key": "CI1",
+          "application": "CA1",
+          "structure": "GME-2026",
+          "due_in_days": 30,
+          "issued_by": "director@coromandel-nautical.example",
+          "payments": [
+            {
+              "amount_minor": 12000000,
+              "method": "UPI",
+              "reference": "UPI 7310 4482 9051",
+              "received_days_ago": 2,
+              "recorded_by": "director@coromandel-nautical.example",
+              "status": "CONFIRMED"
+            }
           ]
         }
       ]

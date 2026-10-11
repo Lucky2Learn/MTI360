@@ -1139,7 +1139,7 @@ Sources: [PHASE-02-MASTER-READINESS.md](docs/architecture/PHASE-02-MASTER-READIN
 | 02-2 | Applications → Documents → Admission → Student | T04-04 … T04-08 | COMPLETED (merged to `main` by PR #32, merge commit `2ea72f6`; [ADR-0021](docs/adr/0021-admissions-core.md); D18 Chromium journeys not run; see DEVELOPMENT-STATUS.md §9A) |
 | 02-C | Onboarding enablers (members, roles, minimal provisioning UI) | T03 admin screens, T02-04/T02-12 minimal | NOT_STARTED |
 | 02-4 | Public enquiry (V1) | T14 enquiry capture | NOT_STARTED |
-| 02-5 | Finance-lite (V1) — **delivered next, ahead of 02-3 and 02-4** | T06 subset: T06-02 fee structure, T06-03 fee invoices (non-tax), T06-04 offline payments and receipts, T06-05 outstanding, parts of T06-09/T06-10 | NOT_STARTED — decisions approved for implementation planning ([ADR-0022](docs/adr/0022-finance-lite.md); plan [PHASE-02-5-FINANCE-LITE-READINESS.md](docs/architecture/PHASE-02-5-FINANCE-LITE-READINESS.md)); not implemented |
+| 02-5 | Finance-lite (V1) — **delivered next, ahead of 02-3 and 02-4** | T06 subset: T06-02 fee structure, T06-03 fee invoices (non-tax), T06-04 offline payments and receipts, T06-05 outstanding, parts of T06-09/T06-10 | IN_PROGRESS on `feat/phase-02-5-finance-lite` (not merged, not pushed): backend API, frontend screens, the financial-integrity tests and the development seed implemented and tested locally; CI and the D18 Chromium journeys (with a real print preview) are outstanding ([ADR-0022](docs/adr/0022-finance-lite.md); plan [PHASE-02-5-FINANCE-LITE-READINESS.md](docs/architecture/PHASE-02-5-FINANCE-LITE-READINESS.md); DEVELOPMENT-STATUS.md §9A) |
 | 02-6 | Batches (V1) | T05-03 | NOT_STARTED |
 
 One branch and one PR per slice, merged with a merge commit.
@@ -1168,11 +1168,28 @@ One branch and one PR per slice, merged with a merge commit.
 
 **Database changes:** migration `0011_finance_lite`.
 
-**API changes:** 17 tenant routes.
+**API changes:** 16 tenant routes (R2 removed the student-fees route; ADR-0022 addendum).
 
 **UI screens:** FIN-02, FIN-03, FIN-04, FIN-05, FIN-06, FIN-07, FIN-08 (with a summary strip), ADM-12 Fees. Deferred: FIN-01, FIN-09 and FIN-10.
 
 **Tests and acceptance:** [PHASE-02-5-FINANCE-LITE-READINESS.md](docs/architecture/PHASE-02-5-FINANCE-LITE-READINESS.md) §9–§10.
+
+**Progress (2026-10-11, updated after the second local session):**
+
+| Readiness §11 step | State |
+|---|---|
+| 1. Sequence allocator to `app.core`; FY period | Done (`200cd61`) |
+| 2. Migration 0011, permissions, role templates, domain rules | Done (`46c2481`) |
+| 3. Fee structure API | Done (`0c32d35`) |
+| 4. Fee invoices, payments, receipts, summary API (R1–R3) | Done (`8026e43`) |
+| 5. Cross-tenant registry, concurrency and invariant tests | Done. Registry entries and the first two concurrency tests (in `8026e43`), then `1cfc137`: parallel confirmations, confirm racing fail, parallel reversals, a reversal or a cancellation racing a payment, a rolled-back issue and confirmation (no gap), and the `paid_minor` invariant across every transition |
+| 6–7. Frontend: client, money helpers, requirement map, FIN-02…FIN-08, print views, Student 360 Fees | Implemented and unit-tested (`0802228`, `6dd5569`) |
+| 8. Development seed extension | Done (`a03399e`): Konkan and Coromandel finance data per readiness §8, validated against the API's rules, with seed contract tests |
+| 9. Docs with the verification actually run | Done: ADR-0022 implementation notes, DESIGN-SYSTEM.md §16.1 (print views), this table and DEVELOPMENT-STATUS.md |
+
+**Still open before the slice is complete:** push, CI and CodeQL (not authorized in these sessions), and the D18 Chromium journeys with a real print preview (the separate V-02 task). The status stays IN_PROGRESS until they are recorded.
+
+"Raise fee invoice" on FIN-04 leads to Students: a fee invoice is issued for an admission, so the issue form opens from the Student 360 Fees section (`/app/finance/invoices/new?student=…&admission=…`).
 
 **Deferred to full Finance (Phase 06):** refunds, discounts, scholarships, instalments, the payment gateway (T06-08), reconciliation, accounting exports, tax invoices, reminders (02-7) and the enrolment payment gate (02-6).
 
