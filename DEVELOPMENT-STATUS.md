@@ -1842,6 +1842,32 @@ CI, CodeQL                                              NOT RUN (not pushed)
 D18 Chromium journeys and real print preview            NOT RUN (V-02)
 ```
 
+**Pre-PR review (2026-10-11, local, at `2302f0f` + this commit):**
+
+- **Branch:** 10 commits on `origin/main` (`53df30b`), which has not moved; 102 files changed. The marketing site, ACRS and RevenueOS are untouched. There are 16 finance routes, each behind one permission, and nothing out of scope (no GST, refunds, gateway, instalments or discounts).
+- **Cancellation contract (authoritative):**
+  - With a `PENDING` or `CONFIRMED` payment: 422 `VALIDATION_ERROR` with exactly one detail, `status/open_payments`.
+  - An invoice already cancelled: `status/invalid_transition`.
+  - Nothing is written in either case.
+
+  The backend, the frontend and ADR-0022 agree. Readiness plan J5 is corrected (it said `invalid_transition`). New tests pin the contract: `test_the_cancellation_refusal_contract` (backend) and the frontend "already cancelled" case.
+- **Seed safety:**
+  - The file is fully validated before any write, and a seeded email refuses the whole run before any write.
+  - The seed only inserts. Every institute is new, so no existing row is overwritten or deleted, and no existing sequence is touched.
+  - Each institute is seeded in one transaction. A new failure-injection test shows that an error after its finance rows are written leaves no finance rows, no sequence numbers and no campuses for it, and the rerun is refused without changes.
+  - Known limitation (D16 structure, not new): users and the tenant row are committed before the institute transaction. A mid-run failure therefore needs a development-database reset before seeding again.
+- **Seed CLI against the development database: NOT RUN.** A read-only check found `mti360` in the MTI container empty (no tables, no `alembic_version`), and there is no `backend/.env` that names a target. Running the CLI would first need a migration and the object storage started: V-02 work that needs its own approval.
+
+```text
+Backend pytest, REQUIRE_DATABASE_TESTS=1     1331 passed, 0 failed, 1 skipped (real-S3 test)
+ruff check, ruff format --check, mypy (293), lint-imports (2 kept)   pass
+alembic heads 0011 (single); alembic check (mti360_test)            no new operations
+Frontend vitest                              105 files, 1443 tests passed
+Frontend prettier, eslint, tsc, next build   pass
+check:landing, check:env, check:lock         pass
+CI, CodeQL, D18 journeys, real print preview NOT RUN
+```
+
 **Outstanding:** push, CI and CodeQL; and the V-02 browser journeys, including a real print preview. "Raise fee invoice" on FIN-04 still links to Students, with no student or admission picker (unchanged by design).
 
 **Approved decisions:**

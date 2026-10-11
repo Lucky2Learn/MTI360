@@ -15,11 +15,12 @@ import pytest
 from conftest import DatabaseUnderTest
 from identity_support import FAST_HASHER, Harness, auth_harness
 
+from app import seed as seed_module
 from app.integrations.storage import InMemoryObjectStorage
 from app.modules.access.templates import system_role_templates
 from app.modules.leads.domain import LeadStatus
 from app.seed import SeedError, SeedInstitute, load_seed, seed
-from app.seed_finance import SeedFinance, SeedInvoice
+from app.seed_finance import SeedFinance, SeedInvoice, seed_finance
 
 pytestmark = [pytest.mark.anyio, pytest.mark.integration]
 
@@ -448,4 +449,48 @@ async def test_the_finance_seed_is_deterministic_and_refuses_a_rerun(h: Harness)
     before = await h.owner(_COUNTS)
     with pytest.raises(SeedError, match="already been applied"):
         await seed(h.factory, FAST_HASHER, first, storage=InMemoryObjectStorage())
+    assert await h.owner(_COUNTS) == before
+
+
+async def test_a_failure_while_seeding_finance_leaves_no_finance_data_or_numbers(
+    h: Harness, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Each institute is seeded in one transaction: a failure after its finance rows are
+    written rolls back every one of them and their numbers. Users and the tenant row are
+    committed earlier (the existing D16 structure), so the rerun is refused, not resumed."""
+    institutes = _unique(load_seed())
+    konkan, coromandel = institutes
+    real = seed_finance
+
+    async def failing(db: Any, tenant_id: uuid.UUID, **kwargs: Any) -> None:
+        await real(db, tenant_id, **kwargs)  # the rows and numbers are written ...
+        if kwargs["finance"] is coromandel.finance:
+            raise RuntimeError("injected failure after the finance rows were written")
+
+    monkeypatch.setattr(seed_module, "seed_finance", failing)
+    with pytest.raises(RuntimeError, match="injected"):
+        await seed(h.factory, FAST_HASHER, institutes, storage=InMemoryObjectStorage())
+
+    # The institute seeded before the failure is complete and consistent.
+    konkan_id = await _tenant(h, konkan.name)
+    assert len(await _projection(h, konkan_id)) == len(konkan.finance.invoices)
+    assert await h.owner(_INVOICE_VIOLATIONS, t=konkan_id) == []
+    # The failing institute has no finance rows, no numbers and no campuses: all rolled back.
+    coromandel_id = await _tenant(h, coromandel.name)
+    rows = await h.owner(
+        "SELECT (SELECT count(*) FROM fee_structures WHERE tenant_id = :t), "
+        "(SELECT count(*) FROM invoices WHERE tenant_id = :t), "
+        "(SELECT count(*) FROM payments WHERE tenant_id = :t), "
+        "(SELECT count(*) FROM receipts WHERE tenant_id = :t), "
+        "(SELECT count(*) FROM finance_activities WHERE tenant_id = :t), "
+        "(SELECT count(*) FROM tenant_sequences WHERE tenant_id = :t), "
+        "(SELECT count(*) FROM campuses WHERE tenant_id = :t)",
+        t=coromandel_id,
+    )
+    assert tuple(rows[0]) == (0, 0, 0, 0, 0, 0, 0)
+
+    monkeypatch.undo()
+    before = await h.owner(_COUNTS)
+    with pytest.raises(SeedError, match="already been applied"):
+        await seed(h.factory, FAST_HASHER, institutes, storage=InMemoryObjectStorage())
     assert await h.owner(_COUNTS) == before

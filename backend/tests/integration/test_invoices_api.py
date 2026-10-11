@@ -439,6 +439,48 @@ async def test_cancellation_waits_for_pending_and_confirmed_payments(
     assert errors(await pay(h, csrf, invoice["id"], 1)) == {("status", "invoice_cancelled")}
 
 
+async def test_the_cancellation_refusal_contract(h: Harness, a1: Billable) -> None:
+    """The authoritative error contract of POST /invoices/{id}/cancel (ADR-0022 notes).
+
+    * an open (PENDING or CONFIRMED) payment: 422 VALIDATION_ERROR, exactly one
+      detail ``status/open_payments``; nothing is written;
+    * an invoice already cancelled: 422 VALIDATION_ERROR, ``status/invalid_transition``.
+    """
+    csrf = await sign_in(h, "fiona")
+    invoice = data(await issue(h, csrf, a1.admission_id), 201)
+    data(await pay(h, csrf, invoice["id"], 1_000_000, method="CHEQUE", reference="Cheque 7"), 201)
+    path = f"{INVOICES}/{invoice['id']}/cancel"
+    before = await _invoice(h, invoice["id"])
+
+    refused = await send(h, "POST", path, csrf, {"reason": "Wrong course", "version": 1})
+
+    assert refused.status_code == 422
+    error = refused.json()["error"]
+    assert error["code"] == "VALIDATION_ERROR"
+    assert [(d["field"], d["code"]) for d in error["details"]] == [("status", "open_payments")]
+    assert await h.audit(refused) == []
+    after = await _invoice(h, invoice["id"])
+    assert (after["status"], after["version"], after["status_reason"]) == (
+        before["status"],
+        before["version"],
+        None,
+    )
+    assert [item["kind"] for item in after["activity"]] == [
+        item["kind"] for item in before["activity"]
+    ]
+
+    other = await billable(h, h.world.campus_a1, prefix="ETO")
+    csrf = await sign_in(h, "fiona")
+    clean = data(await issue(h, csrf, other.admission_id), 201)
+    other_path = f"{INVOICES}/{clean['id']}/cancel"
+    data(await send(h, "POST", other_path, csrf, {"reason": "Wrong course", "version": 1}))
+    again = await send(h, "POST", other_path, csrf, {"reason": "Again", "version": 2})
+    assert again.status_code == 422
+    error = again.json()["error"]
+    assert error["code"] == "VALIDATION_ERROR"
+    assert [(d["field"], d["code"]) for d in error["details"]] == [("status", "invalid_transition")]
+
+
 async def test_payment_recording_is_idempotent(h: Harness, a1: Billable) -> None:
     csrf = await sign_in(h, "farah")
     invoice = data(await issue(h, csrf, a1.admission_id), 201)

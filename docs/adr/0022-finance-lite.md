@@ -197,7 +197,11 @@ Branch `feat/phase-02-5-finance-lite`, not merged or pushed. Commits: `200cd61` 
 **Implementation rules not spelled out above:**
 
 - **Overpayment counts pending payments:** recording a payment is refused (422 `exceeds_balance`) when it exceeds `total − paid − pending`. Confirming a pending one is checked against `total − paid`.
-- **Cancellation refusal code:** an invoice with a `PENDING` or `CONFIRMED` payment is refused with 422 `VALIDATION_ERROR` and the detail `status/open_payments`, not `invalid_transition` as readiness plan J5 says. Cancelling an already-cancelled invoice is `invalid_transition`. The frontend maps `open_payments`.
+- **Cancellation refusal contract (authoritative):** `POST /invoices/{id}/cancel` answers 422 `VALIDATION_ERROR` in two cases. Nothing is written in either.
+  - **Open payments:** an invoice with a `PENDING` or `CONFIRMED` payment gets exactly one detail, `{ "field": "status", "code": "open_payments" }`. The frontend names the payments to resolve.
+  - **Already cancelled:** the detail is `{ "field": "status", "code": "invalid_transition" }`. The frontend says the invoice is already cancelled.
+
+  Readiness plan J5 first said `invalid_transition` for open payments and was corrected on 2026-10-11. `test_the_cancellation_refusal_contract` (backend) and the FIN-05 Cancel tests (frontend) pin the contract.
 - **Rate limit:** payment recording is limited to 60 per member per 10 minutes. It answers 503 when the limiter is unavailable.
 - **Overdue:** decided by the database's IST date (`due_date < today in Asia/Kolkata`, unpaid). Campus time zones are still not modelled (INC-40).
 - **Print views:** a print stylesheet, no PDF dependency (DESIGN-SYSTEM.md §16.1).

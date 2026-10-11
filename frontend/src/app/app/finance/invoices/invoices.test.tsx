@@ -627,6 +627,46 @@ describe("FIN-05 Cancel fee invoice", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(state.refresh).toHaveBeenCalled();
   });
+
+  it("explains an invoice someone else already cancelled (invalid_transition, not open_payments)", async () => {
+    const user = userEvent.setup();
+    const api = installFetch();
+    const route = `POST /invoices/${FIN.invoice}/cancel`;
+    api.on(
+      route,
+      apiError(422, "VALIDATION_ERROR", {
+        details: [{ field: "status", code: "invalid_transition" }],
+      }),
+    );
+    state.reads.push([
+      `/invoices/${FIN.invoice}`,
+      ok(
+        invoiceDetail({
+          status: "ISSUED",
+          paid_minor: 0,
+          balance_minor: 25_350_000,
+          payments: [],
+        }),
+      ),
+    ]);
+    await show(detail());
+    await user.click(
+      screen.getByRole("button", { name: "Cancel fee invoice" }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    await user.type(
+      within(dialog).getByRole("textbox", { name: /Reason/ }),
+      "Issued for the wrong admission",
+    );
+    await user.click(
+      within(dialog).getByRole("button", { name: "Save status" }),
+    );
+    expect(
+      await within(dialog).findByText("This fee invoice is already cancelled"),
+    ).toBeInTheDocument();
+    expect(within(dialog).queryByText("Resolve the payments first")).toBeNull();
+    expect(api.callsTo(route)).toHaveLength(1);
+  });
 });
 
 describe("FIN-05 Print view", () => {
