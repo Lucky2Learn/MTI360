@@ -14,6 +14,7 @@ import {
   studentItem,
   timelineEntry,
 } from "@/test/admissions-fixtures";
+import { FIN, FINANCE_OFFICER, invoice } from "@/test/finance-fixtures";
 import { readySession } from "@/test/session-fixtures";
 
 import { TenantFrame } from "../../tenant-frame";
@@ -248,5 +249,88 @@ describe("ADM-12 Student 360", () => {
     await expect(
       StudentPage({ params: Promise.resolve({ studentId: "STU-2026-00007" }) }),
     ).rejects.toThrow("NEXT_NOT_FOUND");
+  });
+});
+
+describe("ADM-12 Student 360 Fees (Phase 02-5; ADR-0022 addendum R2)", () => {
+  it.each(["light", "dark"] as const)(
+    "lists the student's fee invoices from GET /invoices?student_id=, never a student-fees route (%s)",
+    async (theme) => {
+      state.session = readySession({ permissions: FINANCE_OFFICER });
+      profileReads();
+      state.reads.unshift([
+        "/invoices",
+        ok(
+          [invoice({ admission: { id: "adm-1", number: "ADM-2026-00007" } })],
+          1,
+        ),
+      ]);
+      const { container } = await show(profile(), theme);
+      const read = state.paths.find((p) => p.startsWith("/invoices"))!;
+      const query = new URLSearchParams(read.split("?")[1]);
+      expect(query.get("student_id")).toBe(IDS.student);
+      expect(state.paths.some((p) => p.includes("/fees"))).toBe(false);
+      const fees = screen.getByRole("list", { name: "Fee invoices" });
+      expect(
+        within(fees).getByRole("link", { name: "INV-FY2026-27-00012" }),
+      ).toHaveAttribute("href", `/app/finance/invoices/${FIN.invoice}`);
+      expect(within(fees).getByText("₹1,53,500.00")).toBeInTheDocument();
+      expect(
+        within(fees).getByRole("link", {
+          name: "Record payment on INV-FY2026-27-00012",
+        }),
+      ).toHaveAttribute("href", `/app/finance/invoices/${FIN.invoice}?pay=1`);
+      // The admission already has a live fee invoice: nothing to raise.
+      expect(
+        screen.queryByRole("link", { name: /Raise fee invoice/ }),
+      ).toBeNull();
+      expect(
+        screen.getByText(/Training, Exams, Certificates/),
+      ).not.toHaveTextContent("Fees");
+      expectHeadingOutline(container);
+      await expectNoA11yViolations(container);
+    },
+  );
+
+  it("offers Raise fee invoice for an admission without a live one; empty says only what is visible", async () => {
+    state.session = readySession({ permissions: FINANCE_OFFICER });
+    profileReads();
+    state.reads.unshift(["/invoices", ok([], 0)]);
+    await show(profile());
+    expect(screen.getByText("No fee invoices")).toBeInTheDocument();
+    expect(
+      screen.getByText(/at your campuses appear here/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", {
+        name: "Raise fee invoice for ADM-2026-00007",
+      }),
+    ).toHaveAttribute(
+      "href",
+      `/app/finance/invoices/new?student=${IDS.student}&admission=adm-1`,
+    );
+  });
+
+  it("reads no fees without invoice.read, and shows a failed read as an error state", async () => {
+    profileReads();
+    await show(profile());
+    expect(state.paths.some((p) => p.startsWith("/invoices"))).toBe(false);
+    expect(screen.queryByRole("heading", { name: "Fees" })).toBeNull();
+
+    state.session = readySession({
+      permissions: ["student.read", "invoice.read"],
+    });
+    state.paths = [];
+    state.reads.unshift([
+      "/invoices",
+      { kind: "error", reference: "req-5521" },
+    ]);
+    await show(profile());
+    expect(
+      screen.getByRole("heading", { name: "Fees couldn't be loaded" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /Raise fee invoice/ }),
+    ).toBeNull();
   });
 });
