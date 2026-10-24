@@ -12,7 +12,7 @@ Configuration for the services MTI 360 runs on, starting with local development.
 | `redis` | infra | `redis:8.8-alpine` | Cache / sessions / future queue (no client yet) |
 | `object-storage` | infra | `chrislusf/seaweedfs:4.47` | S3-compatible storage, authenticated S3 API only |
 | `object-storage-init` | infra | `chrislusf/seaweedfs:4.47` | One-shot private bucket creation ([object-storage/create-bucket.sh](object-storage/create-bucket.sh)) |
-| `mailpit` | infra | `axllent/mailpit:v1.31` | Local SMTP catcher (1025) and web UI (8025) |
+| `mailpit` | infra | `axllent/mailpit:v1.31` | Local SMTP catcher and web UI (container ports 1025 / 8025; host 11025 / 18025) |
 | `api` | app | `mti360-api:local` (backend/Dockerfile) | Production-shaped FastAPI image |
 | `frontend` | app | `mti360-frontend:local` (frontend/Dockerfile) | Production-shaped Next.js standalone image |
 

@@ -102,16 +102,17 @@ Run from the repository root.
 | `pnpm build` | `next build` | frontend |
 | `pnpm lint` | ESLint (`--max-warnings=0`) + `ruff check` | both |
 | `pnpm typecheck` | `next typegen && tsc --noEmit` + `mypy` (strict) | both |
-| `pnpm test` | `vitest run` + `pytest` | both |
+| `pnpm test` | `node --test` (scripts) + `vitest run` + `pytest`; `test:scripts` runs the script tests alone | both |
 | `pnpm format` / `pnpm format:check` | Prettier (frontend/ only) + `ruff format` (backend/ only); `format:check:frontend` / `format:check:backend` run one side (T00-05) | both |
 | `pnpm check:lock` | `uv lock --check`: `uv.lock` matches `pyproject.toml` (T00-05) | backend |
 | `pnpm check:landing` | Fails if `index.html`, `app.js` or `styles.css` differ from tag `marketing-site-v1` | repo |
 | `pnpm check:env` | Environment template and secret hygiene (T00-04, [environments.md](environments.md)) | repo |
+| `pnpm ports:check` | Read-only port preflight: each MTI 360 host port is free or held by the expected `mti360` container (IPv4 and IPv6), and the backend/frontend settings point at those ports ([local-development.md §5](../runbooks/local-development.md#5-running-beside-other-local-projects-two-saas-isolation)) | repo |
 | `pnpm check` | `check:landing` → `check:env` → `check:lock` → `format:check` → `lint` → `typecheck` → `test` → `build` | repo |
 | `pnpm infra:up` / `infra:down` / `infra:reset` / `infra:logs` | Local Docker infrastructure (T00-03) — see [local-development.md](../runbooks/local-development.md) | Docker |
 | `pnpm stack:up` | Build and run infrastructure + api + frontend images (T00-03) | Docker |
 
-**Ports:** `FRONTEND_PORT` (default 3000) and `API_PORT` (default 8000) are read from the shell environment, e.g. `FRONTEND_PORT=3100 API_PORT=8100 pnpm dev`. pnpm's `shellEmulator` makes this syntax work identically on Windows, macOS, Linux and CI. Dev servers bind to `localhost` / `127.0.0.1` only.
+**Ports:** `FRONTEND_PORT` (default 3100) and `API_PORT` (default 8100) are read from the shell environment, e.g. `FRONTEND_PORT=3200 API_PORT=8200 pnpm dev`. `pnpm dev` runs the read-only port preflight first ([local-development.md §5](../runbooks/local-development.md#5-running-beside-other-local-projects-two-saas-isolation)). pnpm's `shellEmulator` makes this syntax work identically on Windows, macOS, Linux and CI. Dev servers bind to `localhost` / `127.0.0.1` only.
 
 The backend has no build step: it is not packaged, and import correctness is covered by `mypy` and the tests.
 
@@ -142,5 +143,5 @@ Since T00-04 the backend types and validates every variable in `backend/.env.exa
 
 - **Windows without administrator rights:** `corepack enable` fails when Node is installed under `C:\Program Files`. Use `corepack enable --install-directory "%APPDATA%\npm" pnpm`.
 - **uv:** install with the official installer (`https://astral.sh/uv/<version>/install.ps1` or `install.sh`); run `uv python install 3.14` or let `uv sync` fetch it.
-- **Port conflicts:** if 3000/8000 are taken (for example by another project's Docker containers), set `FRONTEND_PORT` / `API_PORT`.
+- **Port conflicts:** run `pnpm ports:check`; it names the port and the address family (IPv4/IPv6) in conflict. Choose another `*_PORT` ([local-development.md §5](../runbooks/local-development.md#5-running-beside-other-local-projects-two-saas-isolation)).
 - **AI coding agents:** when `next dev` detects an AI agent, it writes `frontend/AGENTS.md` and `frontend/CLAUDE.md` (a Next.js documentation pointer). These are not committed; whether to commit or ignore them is an open decision.

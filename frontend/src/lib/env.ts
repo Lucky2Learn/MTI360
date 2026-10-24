@@ -38,7 +38,7 @@ export interface PublicEnv {
 
 type EnvSource = Readonly<Record<string, string | undefined>>;
 
-const LOCAL_API_BASE_URL = "http://localhost:8000";
+const LOCAL_API_BASE_URL = "http://127.0.0.1:8100";
 const DEFAULT_APP_NAME = "MTI 360";
 
 /** Invalid environment. The message names variables and rules, never values. */

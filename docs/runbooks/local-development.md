@@ -22,11 +22,11 @@ Application source code is **not** bind-mounted into containers for day-to-day w
 
 | Command | Effect |
 |---|---|
-| `pnpm infra:up` | Start PostgreSQL, Redis, SeaweedFS, Mailpit; wait until healthy; create the private bucket (idempotent) |
-| `pnpm dev` | Native frontend + backend (ports from the shell: `FRONTEND_PORT`, `API_PORT`) |
+| `pnpm infra:up` | Port preflight, then start PostgreSQL, Redis, SeaweedFS, Mailpit; wait until healthy; create the private bucket (idempotent) |
+| `pnpm dev` | Port preflight, then native frontend + backend (ports from the shell: `FRONTEND_PORT`, `API_PORT`; default 3100 / 8100) |
 | `pnpm infra:logs` | Follow infrastructure / app container logs |
 | `pnpm infra:down` | Stop and remove MTI 360 containers and network. **Data volumes are kept.** |
-| `pnpm stack:up` | Build images and run infrastructure, the one-shot `migrate` container, **then** the api and frontend containers |
+| `pnpm stack:up` | Port preflight, then build images and run infrastructure, the one-shot `migrate` container, **then** the api and frontend containers |
 | `pnpm db:migrate` / `pnpm db:check` | Apply migrations to the local database (native) / fail when models and migrations differ |
 | `pnpm infra:reset` | **Deletes all local MTI 360 data**: removes MTI 360 containers, network and `mti360_*` volumes. Nothing else. |
 
@@ -34,16 +34,16 @@ Stop the native `pnpm dev` servers before `pnpm stack:up` (and vice versa) — t
 
 ## 4. Services, ports and endpoints
 
-All host ports bind to **127.0.0.1**. Defaults can be overridden in the local `.env`.
+All host ports bind to **127.0.0.1**. The defaults deliberately avoid the ports other local projects commonly use (3000, 8000, 5432, 6379, …). Container ports are unchanged. Defaults can be overridden in the local `.env`. No object-storage console port is published (the SeaweedFS admin UI is disabled).
 
 | Service | Container | Default host port | Endpoint (from the host) | Notes |
 |---|---|---|---|---|
-| PostgreSQL 18.6 | `mti360-postgres-1` | 5432 (`POSTGRES_PORT`) | `127.0.0.1:5432/mti360` | Roles `mti_owner`, `mti_app`, `mti_readonly` |
-| Redis 8.8 | `mti360-redis-1` | 6379 (`REDIS_PORT`) | `redis://127.0.0.1:6379/0` | Authentication rate limits (T01-04); tests use database 1 |
-| SeaweedFS 4.47 (S3) | `mti360-object-storage-1` | 8333 (`S3_PORT`) | `http://127.0.0.1:8333` | Private bucket `S3_BUCKET` (default `mti360-local`); signed requests only |
-| Mailpit 1.31 | `mti360-mailpit-1` | 1025 SMTP, 8025 UI | `http://127.0.0.1:8025` | Catches all outgoing mail |
-| API (app profile) | `mti360-api-1` | 8000 (`API_PORT`) | `http://127.0.0.1:8000/health` | |
-| Frontend (app profile) | `mti360-frontend-1` | 3000 (`FRONTEND_PORT`) | `http://127.0.0.1:3000` | |
+| PostgreSQL 18.6 | `mti360-postgres-1` | 15432 (`POSTGRES_PORT`) | `127.0.0.1:15432/mti360` | Roles `mti_owner`, `mti_app`, `mti_readonly` |
+| Redis 8.8 | `mti360-redis-1` | 16379 (`REDIS_PORT`) | `redis://127.0.0.1:16379/0` | Authentication rate limits (T01-04); tests use database 1 |
+| SeaweedFS 4.47 (S3) | `mti360-object-storage-1` | 18333 (`S3_PORT`) | `http://127.0.0.1:18333` | Private bucket `S3_BUCKET` (default `mti360-local`); signed requests only |
+| Mailpit 1.31 | `mti360-mailpit-1` | 11025 SMTP (`MAILPIT_SMTP_PORT`), 18025 UI (`MAILPIT_UI_PORT`) | `http://127.0.0.1:18025` | Catches all outgoing mail |
+| API (native or app profile) | `mti360-api-1` | 8100 (`API_PORT`) | `http://127.0.0.1:8100/health` | The native frontend targets `http://127.0.0.1:8100` |
+| Frontend (native or app profile) | `mti360-frontend-1` | 3100 (`FRONTEND_PORT`) | `http://localhost:3100` | Browser origin; matches `CORS_ALLOWED_ORIGINS` and `APP_BASE_URL` |
 
 Inside the Compose network services are reached by name (`postgres:5432`, `redis:6379`, `object-storage:8333`, `mailpit:1025`, `api:8000`).
 
@@ -55,9 +55,19 @@ Another SaaS project (ACRS) may run on the same machine with its own Compose pro
 
 - the Compose project name is fixed to **`mti360`** in `compose.yaml` — never pass `-p` and never set `COMPOSE_PROJECT_NAME`;
 - every volume is explicitly named `mti360_*`; the network is `mti360_default`;
-- all published ports bind to `127.0.0.1` and are overridable.
+- all published ports bind to `127.0.0.1`, use MTI 360's own defaults (§4) and are overridable;
+- service targets use `127.0.0.1`, not `localhost`. On Windows `localhost` resolves to `::1` first, so a server of another project listening on `[::]` or `[::1]` would receive requests meant for MTI 360 even while MTI 360 holds `127.0.0.1` on the same port.
 
-**Port conflicts:** set overrides in the local `.env` for the containers and in the shell for native dev, e.g. `.env`: `FRONTEND_PORT=3100`, `API_PORT=8100`, and `FRONTEND_PORT=3100 API_PORT=8100 pnpm dev`.
+**Port preflight** (`scripts/port-preflight.mjs`). `pnpm dev`, `pnpm infra:up` and `pnpm stack:up` run it first; `pnpm ports:check` runs it on its own. It is read-only: it never stops, kills or restarts anything and never changes a port.
+
+- It binds each MTI 360 host port for an instant on `127.0.0.1`, `0.0.0.0`, `::1` and `::`. Each address is checked separately because a listener on one does not block the others.
+- A busy port counts as MTI 360's own only when `docker compose ps` (project `mti360`) shows the expected service publishing it on `127.0.0.1`. Any other listener, an IPv6 listener beside an MTI 360 container, or an OS-reserved port (Windows excluded port ranges) is a conflict.
+- In `dev` mode it also checks that `backend/.env` (database, Redis, S3, SMTP, `CORS_ALLOWED_ORIGINS`, `APP_BASE_URL`) and the frontend's `API_BASE_URL` point at those ports. It prints variable names, hosts and ports only, never credentials.
+- It exits 1 on any conflict or configuration problem. Stopped MTI 360 infrastructure is only a warning in `dev` mode.
+
+**Port conflicts:** choose another port for the conflicting service. Set it in the local `.env` for the containers (and update the matching URL in `backend/.env`); native dev servers read `FRONTEND_PORT` / `API_PORT` from the shell only, e.g. `FRONTEND_PORT=3200 API_PORT=8200 pnpm dev`. Then also set `CORS_ALLOWED_ORIGINS` / `APP_BASE_URL` in `backend/.env` and `API_BASE_URL` in `frontend/.env.local`.
+
+**Moving an existing setup to these defaults** changes only host ports. Volumes and data are kept. Existing containers keep their old port bindings until they are next recreated (`pnpm infra:up` recreates a container whose configuration changed).
 
 **Never** run, from any directory, broad Docker cleanup commands (`docker system prune`, `docker volume prune`, `docker network prune`) or `docker compose down` in another project's directory. Use only the `pnpm infra:*` scripts (or `docker compose` from this repository) for MTI 360.
 
@@ -85,10 +95,10 @@ Another SaaS project (ACRS) may run on the same machine with its own Compose pro
 - **Database tests** run only when the test URLs are set; otherwise they are skipped. Use the passwords from the root `.env` (URL-safe values):
 
   ```bash
-  export TEST_DATABASE_URL=postgresql+asyncpg://mti_app:<MTI_APP_PASSWORD>@127.0.0.1:5432/mti360_test
-  export TEST_MIGRATIONS_DATABASE_URL=postgresql+asyncpg://mti_owner:<MTI_OWNER_PASSWORD>@127.0.0.1:5432/mti360_test
-  export TEST_READONLY_DATABASE_URL=postgresql+asyncpg://mti_readonly:<MTI_READONLY_PASSWORD>@127.0.0.1:5432/mti360_test
-  export TEST_REDIS_URL=redis://127.0.0.1:6379/1   # T01-04 rate-limit and API tests (per-test key namespace)
+  export TEST_DATABASE_URL=postgresql+asyncpg://mti_app:<MTI_APP_PASSWORD>@127.0.0.1:15432/mti360_test
+  export TEST_MIGRATIONS_DATABASE_URL=postgresql+asyncpg://mti_owner:<MTI_OWNER_PASSWORD>@127.0.0.1:15432/mti360_test
+  export TEST_READONLY_DATABASE_URL=postgresql+asyncpg://mti_readonly:<MTI_READONLY_PASSWORD>@127.0.0.1:15432/mti360_test
+  export TEST_REDIS_URL=redis://127.0.0.1:16379/1   # T01-04 rate-limit and API tests (per-test key namespace)
   pnpm test:backend      # REQUIRE_DATABASE_TESTS=1 turns skips into failures (CI)
   ```
 
@@ -106,7 +116,7 @@ Another SaaS project (ACRS) may run on the same machine with its own Compose pro
 | Symptom | Cause / fix |
 |---|---|
 | `required variable ... is missing a value` | `.env` missing or incomplete — copy `.env.example` and fill every value |
-| `address already in use` / `EADDRINUSE` | Port used by another project — override the port (§5) |
+| `address already in use` / `EADDRINUSE`, or a page from another project | Run `pnpm ports:check`; it names the conflicting port and address family. Choose another port (§5) |
 | Native frontend: "Another next dev server is already running" | Next.js allows one `next dev` per project directory — stop the other one |
 | Roles/passwords unchanged after editing `.env` | Init scripts run only on an empty volume (§6) |
 | `pnpm` fails in Git Bash with `Cannot find module ...corepack/dist/pnpm.js` | Git-Bash path conversion; use PowerShell/cmd, or do not set `MSYS_NO_PATHCONV` when running pnpm and add `%APPDATA%\npm` to PATH in POSIX form |

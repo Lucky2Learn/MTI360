@@ -107,7 +107,7 @@ def test_test_environment_allows_the_fake_provider_and_defaults() -> None:
     settings = build("test")
 
     assert settings.ai_provider == "fake"
-    assert settings.redis_url.get_secret_value() == "redis://localhost:6379/0"
+    assert settings.redis_url.get_secret_value() == "redis://127.0.0.1:16379/0"
 
 
 # --- Rules for every environment ---------------------------------------------------

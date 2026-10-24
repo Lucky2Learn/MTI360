@@ -1814,7 +1814,7 @@ Do not add infrastructure unless the application actually requires it.
 > Local development will use a root `compose.yaml` (the current Compose file name) with an `infra` profile (`postgres`, `redis`, an S3-compatible **object-storage emulator**, `mailpit` for local email) and an `app` profile (`migrate` one-shot Alembic service, `api`, `worker`, `frontend`). The backend `api`, `worker` and `migrate` services share one image. Ports bind to `127.0.0.1`. The emulator product and queue library are chosen in T00-03. See [`docs/architecture/repository-structure.md`](docs/architecture/repository-structure.md#6-local-infrastructure-t00-03).
 
 > **T00-03 update — implemented (2026-09-26).**
-> - Compose project name fixed to **`mti360`**; volumes `mti360_*`; every host port bound to `127.0.0.1` (defaults 3000, 8000, 5432, 6379, 8333, 1025, 8025, overridable in `.env`) so MTI 360 coexists with other local projects (e.g. ACRS).
+> - Compose project name fixed to **`mti360`**; volumes `mti360_*`; every host port bound to `127.0.0.1` (defaults 3000, 8000, 5432, 6379, 8333, 1025, 8025 until 2026-10-24; since then 3100, 8100, 15432, 16379, 18333, 11025, 18025 with a read-only port preflight, see `docs/runbooks/local-development.md` §5; overridable in `.env`) so MTI 360 coexists with other local projects (e.g. ACRS).
 > - **Hybrid development:** `infra` profile in Docker (`pnpm infra:up`); Next.js and FastAPI run natively (`pnpm dev`). The `app` profile (`api`, `frontend`) runs the production-shaped images (`pnpm stack:up`).
 > - **PostgreSQL 18** (`pgvector/pgvector:0.8.6-pg18-trixie`; pgvector not enabled) with bootstrap roles `mti_owner` / `mti_app` / `mti_readonly` (no BYPASSRLS) for ADR-0004.
 > - **Redis 8.8** (`redis:8.8-alpine`).

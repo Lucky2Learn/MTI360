@@ -1936,6 +1936,40 @@ Marketing website hashes                     unchanged
 Not run                                      backend integration tests; Chromium journeys; CI
 ```
 
+Merged into `main` by PR #36 (merge commit `810677a`). certifi PYSEC-2026-4320 is still open until its fix clears the cooldown (2026-10-26).
+
+**Port isolation and startup preflight (2026-10-24, branch `fix/port-isolation`, from `810677a`, not pushed):**
+
+- **Why:** another local project listens on `[::]` / `[::1]` ports 3000 and 8000. MTI 360 could still bind `127.0.0.1` on those ports, and `localhost` (`::1` first on Windows) sent requests to the other service. With no `frontend/.env.local`, the native frontend's default API target was `http://localhost:8000`.
+- **Host-port policy (container ports unchanged):** frontend 3100, API 8100, PostgreSQL 15432, Redis 16379, S3 18333, Mailpit SMTP 11025 / UI 18025. No object-storage console port is published (admin UI disabled).
+  - Applied in `compose.yaml`, `.env.example`, `backend/.env.example`, the `Settings` defaults, `frontend/.env.example`, `src/lib/env.ts` (`http://127.0.0.1:8100`), the root and frontend dev scripts, and the CI test-database script.
+  - Service targets use `127.0.0.1`. `CORS_ALLOWED_ORIGINS` / `APP_BASE_URL` use `http://localhost:3100`.
+  - The `api` container now also receives `S3_ENDPOINT_URL=http://object-storage:8333` and `FRONTEND_PORT`-based CORS and base URL.
+- **Preflight (`scripts/port-preflight.mjs`):**
+  - `pnpm dev`, `pnpm infra:up` and `pnpm stack:up` run it first; `pnpm ports:check` runs it alone.
+  - It is read-only. It probes `127.0.0.1`, `0.0.0.0`, `::1` and `::` by an instant bind, recognises MTI 360 containers through `docker compose ps`, flags OS-reserved ports, and in `dev` mode checks the backend and frontend settings against the ports.
+  - It never stops, kills or restarts anything and never prints credentials.
+- **Tests:** 29 `node:test` cases (`pnpm test:scripts`, added to `pnpm test` and to the CI `repo` job) cover:
+  - real sockets: free ports, IPv4 loopback, IPv4 wildcard, IPv6 loopback and IPv6 wildcard listeners;
+  - MTI 360 ownership and its edge cases (a foreign IPv6 listener beside an MTI container, the wrong service, a non-loopback publish, reserved ports);
+  - mode rules, configuration drift without leaking credentials, and the template / Compose / script defaults agreeing.
+- **Local files not changed:** the root `.env` still sets the old infrastructure ports, and `backend/.env` still targets them and allows origin `localhost:3000`. `pnpm ports:check` reports exactly this.
+- **Checks:**
+
+```text
+pnpm test:scripts                             29 passed (IPv6 cases ran)
+docker compose config (template, both profiles)   valid; host ports as above
+check:landing, check:env, check:lock          pass
+Frontend vitest                               105 files, 1445 tests passed
+Frontend prettier, eslint, tsc, next build    pass
+Backend pytest                                806 passed, 526 skipped (no test database configured)
+Backend ruff, ruff format, mypy, import-linter    pass
+Lockfiles, dependency pins (PR #36)           unchanged
+Marketing website hashes, git diff --check    unchanged / clean
+Not run                                       live runtime (no service started or stopped); backend
+                                              integration tests; actionlint; CI
+```
+
 ---
 
 # 10. PHASE 02 — PLATFORM CONTROL PLANE

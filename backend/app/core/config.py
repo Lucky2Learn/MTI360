@@ -200,21 +200,21 @@ class Settings(BaseSettings):
     # --- PostgreSQL (T00-03 roles; ADR-0004) -----------------------------------------
     # Validated only: no engine or connection exists yet.
     database_url: SecretStr = SecretStr(
-        "postgresql+asyncpg://mti_app:change-me@localhost:5432/mti360"
+        "postgresql+asyncpg://mti_app:change-me@127.0.0.1:15432/mti360"
     )
     migrations_database_url: SecretStr = SecretStr(
-        "postgresql+asyncpg://mti_owner:change-me@localhost:5432/mti360"
+        "postgresql+asyncpg://mti_owner:change-me@127.0.0.1:15432/mti360"
     )
     readonly_database_url: SecretStr = SecretStr(
-        "postgresql+asyncpg://mti_readonly:change-me@localhost:5432/mti360"
+        "postgresql+asyncpg://mti_readonly:change-me@127.0.0.1:15432/mti360"
     )
 
     # --- Redis (the URL may carry a password) -------------------------------------------
-    redis_url: SecretStr = SecretStr("redis://localhost:6379/0")
+    redis_url: SecretStr = SecretStr("redis://127.0.0.1:16379/0")
 
     # --- Object storage (S3-compatible) -------------------------------------------------
     # Empty endpoint = the provider's default endpoint.
-    s3_endpoint_url: str = "http://127.0.0.1:8333"
+    s3_endpoint_url: str = "http://127.0.0.1:18333"
     s3_region: str = Field(default="us-east-1", min_length=1)
     s3_bucket: str = Field(default="mti360-local", min_length=1)
     s3_access_key_id: SecretStr = SecretStr("change-me")
@@ -230,9 +230,9 @@ class Settings(BaseSettings):
     platform_session_idle_timeout_minutes: int = Field(default=15, gt=0)
     platform_session_absolute_timeout_minutes: int = Field(default=240, gt=0)
     # Comma-separated in the environment. Validated only: no CORS middleware yet.
-    cors_allowed_origins: Annotated[tuple[str, ...], NoDecode] = ("http://localhost:3000",)
+    cors_allowed_origins: Annotated[tuple[str, ...], NoDecode] = ("http://localhost:3100",)
     # Origin of the frontend; reset and invitation links point here (T01-04, D15).
-    app_base_url: str = "http://localhost:3000"
+    app_base_url: str = "http://localhost:3100"
     # Proxies in front of the API whose X-Forwarded-For entries are trusted (D08).
     # 0 = ignore X-Forwarded-For and use the socket peer.
     trusted_proxy_hops: int = Field(default=0, ge=0, le=5)
@@ -253,8 +253,8 @@ class Settings(BaseSettings):
     argon2_parallelism: int = Field(default=4, ge=1, le=16)
 
     # --- Email ---------------------------------------------------------------------------
-    smtp_host: str = Field(default="localhost", min_length=1)
-    smtp_port: int = Field(default=1025, gt=0, le=65_535)
+    smtp_host: str = Field(default="127.0.0.1", min_length=1)
+    smtp_port: int = Field(default=11025, gt=0, le=65_535)
     smtp_username: str = ""
     smtp_password: SecretStr = SecretStr("")
     email_from_address: str = "no-reply@mti360.local"

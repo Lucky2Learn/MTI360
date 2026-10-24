@@ -68,6 +68,9 @@ jobs:
       - name: Environment template and secret hygiene
         run: pnpm run check:env
 
+      - name: Script tests (port preflight)
+        run: pnpm run test:scripts
+
       - name: Install actionlint (pinned, checksum-verified)
         run: |
           bash scripts/ci/install-tool.sh actionlint "${RUNNER_TEMP}/bin"

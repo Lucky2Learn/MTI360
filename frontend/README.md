@@ -12,7 +12,7 @@ Run from the repository root (`pnpm dev:frontend`, `pnpm lint:frontend`, …) or
 
 | Command | Purpose |
 |---|---|
-| `pnpm dev` | Next.js dev server on `localhost:${FRONTEND_PORT:-3000}` |
+| `pnpm dev` | Next.js dev server on `localhost:${FRONTEND_PORT:-3100}` |
 | `pnpm build` / `pnpm start` | Production build / serve |
 | `pnpm lint` | ESLint (Next.js core-web-vitals + TypeScript, type-aware rules, jsx-a11y, import order), zero warnings |
 | `pnpm typecheck` | `next typegen && tsc --noEmit` |
