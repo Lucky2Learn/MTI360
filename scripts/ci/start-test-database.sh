@@ -48,12 +48,12 @@ set -a
 . ./.env
 set +a
 
-base="127.0.0.1:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-mti360}_test"
+base="127.0.0.1:${POSTGRES_PORT:-15432}/${POSTGRES_DB:-mti360}_test"
 {
   echo "TEST_DATABASE_URL=postgresql+asyncpg://mti_app:${MTI_APP_PASSWORD}@${base}"
   echo "TEST_MIGRATIONS_DATABASE_URL=postgresql+asyncpg://mti_owner:${MTI_OWNER_PASSWORD}@${base}"
   echo "TEST_READONLY_DATABASE_URL=postgresql+asyncpg://mti_readonly:${MTI_READONLY_PASSWORD}@${base}"
-  echo "TEST_REDIS_URL=redis://127.0.0.1:${REDIS_PORT:-6379}/1"
+  echo "TEST_REDIS_URL=redis://127.0.0.1:${REDIS_PORT:-16379}/1"
   echo "REQUIRE_DATABASE_TESTS=1"
 } >> "${GITHUB_ENV}"
 

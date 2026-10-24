@@ -28,7 +28,7 @@ describe("parseServerEnv", () => {
   it("works with zero configuration in development", () => {
     expect(parseServerEnv({})).toEqual({
       appEnv: "development",
-      apiBaseUrl: "http://localhost:8000",
+      apiBaseUrl: "http://127.0.0.1:8100",
       trustedProxyHops: 0,
     });
   });

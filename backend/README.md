@@ -9,7 +9,7 @@ Run from the repository root (`pnpm dev:backend`, `pnpm lint:backend`, …) or i
 | Command | Purpose |
 |---|---|
 | `uv sync --locked` | Create `.venv` with Python 3.14 (uv-managed) from `uv.lock` |
-| `uv run --locked uvicorn app.main:create_app --factory --reload --host 127.0.0.1 --port 8000 --no-server-header --no-access-log` | Dev server; `GET /health` → `{"status": "ok"}`; `/docs` only when `APP_ENV=development` |
+| `uv run --locked uvicorn app.main:create_app --factory --reload --host 127.0.0.1 --port 8100 --no-server-header --no-access-log` | Dev server; `GET /health` → `{"status": "ok"}`; `/docs` only when `APP_ENV=development` |
 | `uv run --locked ruff check .` | Lint (includes import sorting and bandit security rules) |
 | `uv run --locked ruff format .` | Format (`--check` in CI) |
 | `uv run --locked mypy` | Strict type checking (pydantic plugin) |

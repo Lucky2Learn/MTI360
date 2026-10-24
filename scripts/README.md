@@ -1,10 +1,11 @@
 # scripts/
 
-**Status:** `check-env.mjs` (T00-04); CI helpers in `ci/` (T00-05).
+**Status:** `check-env.mjs` (T00-04); CI helpers in `ci/` (T00-05); `port-preflight.mjs` (port isolation, 2026-10-24).
 
 | Script | Command | Purpose |
 |---|---|---|
 | `check-env.mjs` | `pnpm check:env` (part of `pnpm check`) | Environment template and secret hygiene: no tracked real `.env` files, placeholders only in secret-like template variables and URL credentials, no secret-like `NEXT_PUBLIC_*` names, and `backend/.env.example` ↔ `Settings` consistency. Node built-ins only; prints names, never values. |
+| `port-preflight.mjs` | `pnpm ports:check` (also first step of `pnpm dev`, `pnpm infra:up`, `pnpm stack:up`); modes `dev`, `infra`, `stack` | Read-only port preflight. Each MTI 360 host port must be free, or held by the expected running `mti360` container, on `127.0.0.1`, `0.0.0.0`, `::1` and `::`. In `dev` mode it also checks that the backend/frontend settings point at those ports. Never stops, kills or restarts anything; prints names, hosts and ports, never credentials. Tests: `port-preflight.test.mjs` (`pnpm test:scripts`). |
 | `ci/install-tool.sh` | `bash scripts/ci/install-tool.sh <gitleaks\|actionlint> <dir>` | Installs a pinned CI tool after verifying the SHA-256 recorded in the script; a mismatch aborts before extraction (linux-x64, windows-x64, darwin-arm64). |
 | `ci/gitleaks-selftest.sh` | `bash scripts/ci/gitleaks-selftest.sh` | Proves gitleaks detects runtime-generated secrets and that the `.gitleaks.toml` allowlist is value- and path-specific; fixtures live under `mktemp` and are never committed. |
 | `ci/docker-smoke.sh` | `bash scripts/ci/docker-smoke.sh mti360-api:ci` | API image smoke test (`/health` 200, HEALTHCHECK healthy) and production fail-fast check; touches only `mti360-ci-*` containers. |

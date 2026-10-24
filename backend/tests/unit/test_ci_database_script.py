@@ -86,10 +86,10 @@ def test_generates_masked_passwords_and_exports_test_urls(workdir: Path) -> None
         ("TEST_READONLY_DATABASE_URL", "mti_readonly", "MTI_READONLY_PASSWORD"),
     ):
         assert (
-            f"{variable}=postgresql+asyncpg://{role}:{values[password]}@127.0.0.1:5432/mti360_test"
+            f"{variable}=postgresql+asyncpg://{role}:{values[password]}@127.0.0.1:15432/mti360_test"
             in exported
         )
-    assert "TEST_REDIS_URL=redis://127.0.0.1:6379/1" in exported
+    assert "TEST_REDIS_URL=redis://127.0.0.1:16379/1" in exported
     assert "REQUIRE_DATABASE_TESTS=1" in exported
     assert (workdir / "docker_calls").read_text().split("\n")[0] == (
         "compose --profile infra up --detach --wait postgres redis"

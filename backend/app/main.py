@@ -2,7 +2,7 @@
 
 Run locally (from ``backend/``)::
 
-    uv run uvicorn app.main:create_app --factory --reload --port 8000 --no-access-log
+    uv run uvicorn app.main:create_app --factory --reload --port 8100 --no-access-log
 
 (or ``pnpm dev:backend`` from the repository root).
 

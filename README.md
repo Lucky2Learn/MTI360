@@ -133,11 +133,11 @@ Phase 00 order: T00-01 Repository Structure â†’ T00-02 Development Environment â
 cp .env.example .env   # then replace every change-me with a long random value (never commit .env)
 pnpm bootstrap         # install frontend (frozen lockfile) and backend (locked) dependencies
 pnpm infra:up          # PostgreSQL 18, Redis 8.8, SeaweedFS S3, Mailpit in Docker (project "mti360")
-pnpm dev               # native frontend http://localhost:3000, backend http://127.0.0.1:8000/health
+pnpm dev               # port preflight, then native frontend http://localhost:3100, backend http://127.0.0.1:8100/health
 pnpm check             # CI's repo/frontend/backend checks: landing, env, lock, format, lint, typecheck, tests, build
 ```
 
-Ports can be changed if 3000/8000 are in use (for example by another local project): `FRONTEND_PORT=3100 API_PORT=8100 pnpm dev`, and the same variables in `.env` for containers. Full guide: [docs/runbooks/local-development.md](docs/runbooks/local-development.md).
+MTI 360 uses its own host ports (frontend 3100, API 8100, PostgreSQL 15432, Redis 16379, S3 18333, Mailpit 11025/18025) so it runs beside other local projects. `pnpm ports:check` reports conflicts (IPv4 and IPv6) and configuration drift without changing anything. Full guide: [docs/runbooks/local-development.md](docs/runbooks/local-development.md).
 
 ### Commands
 

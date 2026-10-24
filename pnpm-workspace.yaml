@@ -39,7 +39,7 @@ audit:
     - GHSA-vfj7-8cjw-p6xm
 
 # Run package scripts with pnpm's cross-platform shell so the same POSIX-style
-# syntax (e.g. ${API_PORT:-8000}) works on Windows, macOS, Linux and CI.
+# syntax (e.g. ${API_PORT:-8100}) works on Windows, macOS, Linux and CI.
 shellEmulator: true
 
 # pnpm is deliberately pinned (packageManager in package.json); suppress
