@@ -1884,6 +1884,29 @@ CI, CodeQL, D18 journeys, real print preview NOT RUN
 
 **Carried verification gaps:** D18 browser journeys, the stale local images, and the real-S3 test outside CI (above). A separate task, V-02 Runtime and browser verification, is proposed and not approved (readiness plan §13).
 
+**V-02 Fix 1: blank invoice and receipt prints (2026-10-14, branch `fix/v02-print-region-visibility`, not pushed):**
+
+- **Defect (found by V-02):** every invoice and receipt print came out blank (PDFs of 1.3 KB). `body:has([data-print-region]) *` has specificity (0,1,1) and outranked `[data-print-region] *` at (0,1,0), so the print rule hid the document too.
+- **Fix (`globals.css`, print block only):**
+  - The hide rule is wrapped in `:where()`, which gives it zero specificity.
+  - The page background is set to `--white` in print. Without it, Dark mode printed a dark page when the browser's "Background graphics" option was on. `transparent` is not enough, because the Dark theme's `color-scheme` darkens the canvas.
+  - Screen styles are unchanged.
+- **Contract test:** `globals.test.ts` adds 2 tests: the cascade (they fail on the old CSS) and the paper background.
+- **Real print output:** checked with the out-of-repository V-02 Chromium harness against the running development app. This covered 4 documents (an adjusted invoice, a cancelled invoice, a receipt and a reversed receipt) at 390 and 1440 px, in Light and Dark. All 16 cases pass:
+  - The region and all its descendants are visible.
+  - The shell, navigation and Print/Back controls are hidden.
+  - The expected text is present.
+  - Each print is one A4 page of 83–107 KB, with Light ink in both themes.
+  - The PDFs, with backgrounds off and on, were inspected visually.
+  - The seed was not rerun and no data-changing journey was repeated. One sign-in was made as the finance manager.
+- **Checks:**
+
+```text
+Frontend vitest                              105 files, 1445 tests passed
+Frontend prettier, eslint, tsc, next build   pass
+Chromium print (V-02 harness, 390/1440 x Light/Dark x 4 documents)   16/16 pass
+```
+
 ---
 
 # 10. PHASE 02 — PLATFORM CONTROL PLANE

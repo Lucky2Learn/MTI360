@@ -665,11 +665,18 @@ Paper is light whatever the screen theme. Printable documents (the fee invoice a
 - **Hidden controls:** mark on-screen controls inside or around the document (Print, Back) with `data-print-hide`.
 - **Ink:** inside the region, `--text-primary`, `--text-secondary` and `--border-subtle` take their Light-theme values (`--ocean-900`, `--ink-700`, `--pearl-200`), so a Dark-mode screen prints dark text on paper. No new colours.
 - **Tokens:** inside a print region, use only those three tokens. Any other token keeps the screen theme's value and would print Dark-mode colours. Extend the rule (Light values from existing tokens only) before using another one.
-- **Backgrounds:** the rule sets none and relies on the browser not printing background colours by default. Do not put meaning in a background.
+- **Backgrounds:** the page prints on white paper (`--white`), even in Dark mode with the browser's "Background graphics" option on. Inside the region, set no backgrounds, and never put meaning in a background.
+- **Cascade:** the hide-everything rule is wrapped in `:where()` (zero specificity) so the region's visibility rule wins. Without it, the region itself was hidden and prints were blank (V-02).
 - **Layout:** single column, readable at any width. Status is text, never colour only.
 - **Labels:** a fee invoice print carries "Fee invoice — not a tax invoice" (ADR-0022 §2).
-- **Contract test:** `frontend/src/app/globals.test.ts` checks the region and hide selectors and the token-only Light ink.
-- **Verification:** a real browser print preview (Light and Dark, mobile and desktop) has not been run yet (V-02).
+- **Contract test:** `frontend/src/app/globals.test.ts` checks:
+  - the region and hide selectors
+  - the cascade
+  - the paper background
+  - the token-only Light ink
+
+  It does not prove print output.
+- **Verification:** Chromium print PDFs of the invoice and receipt views were checked at 390 and 1440 px, in Light and Dark (V-02 Fix 1, 2026-10-14).
 
 ---
 

@@ -59,9 +59,19 @@
      [data-print-region], only that region prints, from the top of the first
      page, and controls marked [data-print-hide] are left out. Paper is light
      whatever the screen theme, so inside the region the three text and rule
-     tokens print views use take their Light-theme values (no new colours). */
+     tokens print views use take their Light-theme values (no new colours).
+     The hide rule sits in :where() (zero specificity) so the region's own
+     visibility rule wins the cascade; unwrapped, body:has(...) * outranks
+     [data-print-region] * and the whole document printed blank (V-02).
+     The page background is white paper, so a Dark-mode screen still prints
+     light when the browser's "Background graphics" option is on (transparent
+     is not enough: the Dark theme's color-scheme makes the canvas dark). */
   @media print {
-    body:has([data-print-region]) * {
+    html:has([data-print-region]),
+    html:has([data-print-region]) body {
+      background-color: var(--white);
+    }
+    :where(body:has([data-print-region])) * {
       visibility: hidden;
     }
     [data-print-region],

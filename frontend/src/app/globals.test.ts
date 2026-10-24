@@ -50,8 +50,30 @@ describe("print views (Phase 02-5)", () => {
 
   it("prints only the marked region and leaves out marked controls", () => {
     expect(block).not.toBe("");
-    expect(block).toContain("body:has([data-print-region]) *");
+    expect(block).toContain(":where(body:has([data-print-region])) *");
     expect(block).toMatch(/\[data-print-hide\]\s*{\s*display:\s*none/);
+  });
+
+  it("lets the region's visibility outrank the hide-everything rule (V-02)", () => {
+    // Same layer, so specificity decides. Unwrapped, body:has([attr]) * is
+    // (0,1,1) and beats [data-print-region] * at (0,1,0): a blank page.
+    // :where() makes the hide rule (0,0,0). Real print output is checked in
+    // Chromium (PDF), not here.
+    const hide = block.match(/([^{}]+)\{\s*visibility:\s*hidden;/);
+    expect(hide?.[1]?.trim()).toMatch(/^:where\([^]*\)\s+\*$/);
+    const show = block.match(/([^{}]+)\{\s*visibility:\s*visible;/);
+    expect(
+      show?.[1]
+        ?.split(",")
+        .map((s) => s.trim())
+        .sort(),
+    ).toEqual(["[data-print-region]", "[data-print-region] *"]);
+  });
+
+  it("prints on paper, not the Dark page background (V-02)", () => {
+    expect(block).toMatch(
+      /html:has\(\[data-print-region\]\),\s*html:has\(\[data-print-region\]\) body\s*{\s*background-color:\s*var\(--white\);/,
+    );
   });
 
   it("prints in the Light theme's ink, from tokens only", () => {
