@@ -21,13 +21,13 @@ This document records the exact toolchain versions, why each was chosen, which n
 
 | Package | Version | Package | Version |
 |---|---|---|---|
-| next | 16.3.5 | eslint | 9.39.5 |
-| react / react-dom | 19.2.8 | eslint-config-next | 16.3.5 |
+| next | 16.4.2 | eslint | 9.39.5 |
+| react / react-dom | 19.2.8 | eslint-config-next | 16.4.2 |
 | typescript | 6.0.3 | typescript-eslint | 8.70.0 |
 | @types/node | 24.13.6 | eslint-plugin-jsx-a11y | 6.10.2 |
 | @types/react / -dom | 19.2.18 / 19.2.7 | prettier | 3.9.8 |
-| vitest | 4.1.11 | vite | 8.3.0 |
-| @vitejs/plugin-react | 6.1.1 | jsdom | 30.1.0 |
+| vitest | 4.1.12 | vite | 8.3.4 |
+| @vitejs/plugin-react | 6.1.1 | jsdom | 30.1.3 |
 | @testing-library/react | 16.3.3 | @testing-library/dom | 10.4.2 |
 | @testing-library/jest-dom | 7.0.1 | server-only (T00-04) | 0.0.1 |
 | tailwindcss (T00-06) | 4.3.3 | @tailwindcss/postcss (T00-06) | 4.3.3 |
@@ -73,7 +73,7 @@ Verified with Docker Engine 29.8.0 and Docker Compose v5.5.1 (Docker Desktop, WS
 | TypeScript 6.0.3 | 7.0.x | `typescript-eslint` 8.x declares `typescript <6.1.0` (hard constraint). | typescript-eslint supports TS 7. |
 | ESLint 9.39.5 | 10.x | `eslint-plugin-react`, `eslint-plugin-import`, `eslint-plugin-jsx-a11y` (used by `eslint-config-next`) declare ESLint ≤ 9 (hard constraint). **Note:** npm marks ESLint 9 as no longer supported. Dev-only tool; no runtime exposure. | The three plugins support ESLint 10. |
 | pnpm 11.28.0 | 12.x | pnpm 12.0.0 was ~4 weeks old at T00-02. | A planned upgrade task. |
-| Vitest 4.1.11 | 5.x | Vitest 5.0.0 was ~3 weeks old. | A planned upgrade task. |
+| Vitest 4.1.12 | 5.x | Vitest 5.0.0 was ~3 weeks old. | A planned upgrade task. |
 | React 19.2.8 | 19.3.x | 19.3.0 was ~2.5 weeks old; the App Router renders with Next.js's vendored React. | A planned upgrade task. |
 | SQLAlchemy 2.0.x (target) | 2.1.x | 2.1.0 was released 2 days before T00-02. | Re-evaluate when database work starts. |
 

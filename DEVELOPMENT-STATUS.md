@@ -1907,6 +1907,35 @@ Frontend prettier, eslint, tsc, next build   pass
 Chromium print (V-02 harness, 390/1440 x Light/Dark x 4 documents)   16/16 pass
 ```
 
+Merged into `main` by PR #35 (merge commit `7fb3281`).
+
+**Dependency security remediation (2026-10-24, branch `fix/dependency-security-remediation`, from `7fb3281`, not pushed):**
+
+- **Why:** the Audit workflow (reporting only) failed on PR #35. The advisories were published after the lockfiles last changed and affect `main` too.
+- **Frontend (direct pins, same majors, all at least 7 days old):** next 16.3.8 → 16.4.2, eslint-config-next 16.3.6 → 16.4.2, vitest 4.1.11 → 4.1.12, vite 8.3.0 → 8.3.4, jsdom 30.1.0 → 30.1.3.
+- **Frontend (transitive, in range, no overrides):** undici 8.10.2 → 8.12.2 (via jsdom 30.1.3), zod 4.6.5 → 4.6.7 (lockfile refresh of eslint-plugin-react-hooks' `^4.0.0` range), @vitest/mocker 4.1.11 → 4.1.12 (via vitest).
+- **Resolved (15):**
+  - next: GHSA-2464-fhr4-w9xw, GHSA-673q-mjm6-r5xr (critical), GHSA-p3m5-59mp-jv5r.
+  - vite: GHSA-587h-7wmj-h5pm, GHSA-698v-4r3x-3vcv, GHSA-r825-w8mm-5pxw, GHSA-rq7h-c2jc-7f22, GHSA-vfpm-58rq-9qcg, GHSA-9jrq-w75r-8gcw.
+  - @vitest/mocker: GHSA-qxg6-89mg-rqv8, GHSA-xp26-3454-mjgp.
+  - zod: GHSA-mrhx-c7xc-m3w5.
+  - undici: GHSA-xjj6-f33q-929c, GHSA-4qv8-2p9j-2685, GHSA-f72v-6w45-q472.
+- **Not resolved: certifi PYSEC-2026-4320** (locked 2026.7.22, fixed in 2026.10.19). The fix was published on 2026-10-19, inside the 7-day `exclude-newer` cooldown (T00-02 D7), so `uv lock --upgrade-package certifi` makes no change. It becomes eligible on 2026-10-26. The cooldown was not bypassed.
+- **Unchanged:** the braces exception GHSA-vfj7-8cjw-p6xm is still needed (same chain through eslint-config-next 16.4.2; no patched braces). Only its comment's versions were updated.
+- **Checks:**
+
+```text
+pnpm audit                                   No known vulnerabilities found
+pip-audit 2.10.1 (as in audit.yml)           1: certifi PYSEC-2026-4320 (above)
+Frontend vitest                              105 files, 1445 tests passed
+Frontend prettier, eslint, tsc               pass
+Frontend next build                          pass (Next.js 16.4.2, Turbopack)
+Backend pytest                               806 passed, 526 skipped (no test database configured)
+Backend ruff, ruff format, mypy, import-linter, uv lock --check   pass
+Marketing website hashes                     unchanged
+Not run                                      backend integration tests; Chromium journeys; CI
+```
+
 ---
 
 # 10. PHASE 02 — PLATFORM CONTROL PLANE
