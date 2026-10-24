@@ -32,7 +32,7 @@ audit:
   ignore:
     # GHSA-vfj7-8cjw-p6xm — braces <=3.0.3: stack-exhaustion denial of service
     # through deeply nested patterns (high). Development/tooling dependency only:
-    # eslint-config-next 16.3.6 > @next/eslint-plugin-next 16.3.6 > fast-glob
+    # eslint-config-next 16.4.2 > @next/eslint-plugin-next 16.4.2 > fast-glob
     # 3.3.1 > micromatch 4.0.8 > braces 3.0.3. No patched braces release exists
     # upstream, and updating the chain does not remove it.
     # Revisit: remove this entry as soon as a patched braces is published.
