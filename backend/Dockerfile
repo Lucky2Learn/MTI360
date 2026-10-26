@@ -15,7 +15,7 @@
 
 ARG PYTHON_IMAGE=python:3.14.7-slim-trixie
 
-FROM ghcr.io/astral-sh/uv:0.12.19 AS uv
+FROM ghcr.io/astral-sh/uv:0.12.21 AS uv
 
 # --- builder: resolve and install locked dependencies into /app/.venv --------
 FROM ${PYTHON_IMAGE} AS builder
