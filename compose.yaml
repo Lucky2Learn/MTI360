@@ -78,7 +78,7 @@ services:
   # as root only to fix /data ownership, then drops to the "seaweed" user.
   # --------------------------------------------------------------------------
   object-storage:
-    image: chrislusf/seaweedfs:4.47
+    image: chrislusf/seaweedfs:4.50
     profiles: ["infra"]
     command:
       - mini
@@ -106,7 +106,7 @@ services:
 
   # One-shot: create the private application bucket (idempotent).
   object-storage-init:
-    image: chrislusf/seaweedfs:4.47
+    image: chrislusf/seaweedfs:4.50
     profiles: ["infra"]
     entrypoint: ["/bin/sh", "/init/create-bucket.sh"]
     environment:
@@ -127,7 +127,7 @@ services:
   # Mailpit 1.31 — local SMTP catcher and web UI (password-reset email, T01-04).
   # --------------------------------------------------------------------------
   mailpit:
-    image: axllent/mailpit:v1.31
+    image: axllent/mailpit:v1.32
     profiles: ["infra"]
     ports:
       - "127.0.0.1:${MAILPIT_SMTP_PORT:-11025}:1025"
