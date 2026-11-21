@@ -38,6 +38,17 @@ audit:
     # Revisit: remove this entry as soon as a patched braces is published.
     - GHSA-vfj7-8cjw-p6xm
 
+# Dependency overrides. Narrowly scoped: one parent > child selector per entry, each
+# with a justification and the condition for removing it.
+overrides:
+  # minimatch >=7.0.0 <11.0.1: denial of service via globparts amplification
+  # (moderate). @typescript-eslint/typescript-estree 8.70.0 declares ^10.2.2 and no
+  # patched 10.x exists. typescript-estree 8.73.0 moves to ^11.0.1 with the same single
+  # minimatch(path, pattern, { dot: true }) call, but is not yet past minimumReleaseAge.
+  # eslint's own minimatch 3.x is not affected and is deliberately not overridden.
+  # Remove: when typescript-eslint is upgraded to >=8.73.0.
+  "@typescript-eslint/typescript-estree>minimatch": ^11.0.1
+
 # Run package scripts with pnpm's cross-platform shell so the same POSIX-style
 # syntax (e.g. ${API_PORT:-8100}) works on Windows, macOS, Linux and CI.
 shellEmulator: true
