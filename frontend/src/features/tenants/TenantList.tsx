@@ -157,25 +157,21 @@ export function TenantList({
         resultCount={`${page.total} ${page.total === 1 ? "tenant" : "tenants"}`}
         onClear={() => params.set({ status: null })}
         filters={
-          // Fields are full width; bound the filter from tablet up (the
-          // design-system layout example) so it sits beside the search and
-          // "Clear filters" instead of filling the row.
-          <div className="w-full tablet:w-56">
-            <Select
-              label="Status"
-              options={[
-                { id: ANY, label: "Any status" },
-                ...TENANT_STATUSES.map((id) => ({
-                  id,
-                  label: STATUS_LABEL[id],
-                })),
-              ]}
-              value={status ?? ANY}
-              onChange={(value) =>
-                params.set({ status: value === ANY ? null : value })
-              }
-            />
-          </div>
+          // One cell of the FilterBar's filter grid (the shared layout).
+          <Select
+            label="Status"
+            options={[
+              { id: ANY, label: "Any status" },
+              ...TENANT_STATUSES.map((id) => ({
+                id,
+                label: STATUS_LABEL[id],
+              })),
+            ]}
+            value={status ?? ANY}
+            onChange={(value) =>
+              params.set({ status: value === ANY ? null : value })
+            }
+          />
         }
       />
       <DataTable

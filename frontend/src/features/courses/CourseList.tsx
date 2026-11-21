@@ -77,6 +77,7 @@ export function CourseList({
   const columns: DataTableColumn<CourseWire>[] = [
     {
       id: "code",
+      noWrap: true,
       header: "Code",
       isSortable: true,
       cell: (course) => (

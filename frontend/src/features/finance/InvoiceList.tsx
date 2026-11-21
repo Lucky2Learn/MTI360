@@ -87,6 +87,7 @@ export function InvoiceList({
   const columns: DataTableColumn<InvoiceWire>[] = [
     {
       id: "number",
+      noWrap: true,
       header: "Fee invoice",
       isRowHeader: true,
       cell: (invoice) => (
@@ -107,6 +108,7 @@ export function InvoiceList({
     },
     {
       id: "course",
+      noWrap: true,
       header: "Course",
       visibleFrom: "desktop",
       cell: (invoice) => `${invoice.course.code} · ${invoice.campus.code}`,

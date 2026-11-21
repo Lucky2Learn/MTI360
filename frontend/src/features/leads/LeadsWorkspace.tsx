@@ -135,6 +135,7 @@ function LeadFilters({
   return (
     <FilterBar
       label="Lead filters"
+      quickFilters={<QuickFilters />}
       search={
         <Search
           label="Search leads"
@@ -298,7 +299,6 @@ export function LeadsWorkspace({
           <Tab id="list">List</Tab>
           <Tab id="board">Board</Tab>
         </TabList>
-        <QuickFilters />
         <LeadFilters
           total={`${total} ${total === 1 ? "lead" : "leads"}`}
           courses={courses}

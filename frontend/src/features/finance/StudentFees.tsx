@@ -78,7 +78,10 @@ export function StudentFees({
               {invoices.map((invoice) => (
                 <li
                   key={invoice.id}
-                  className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 tablet:flex-row tablet:items-start tablet:justify-between tablet:gap-4"
+                  // Side by side only where the Student 360 column is wide
+                  // enough; below that the details keep the full width so the
+                  // status badges are never squeezed (and truncated).
+                  className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 large:flex-row large:items-start large:justify-between large:gap-4"
                 >
                   <span className="flex min-w-0 flex-col gap-1">
                     <span className="flex flex-wrap items-center gap-2 text-body-sm">
@@ -94,7 +97,7 @@ export function StudentFees({
                       {`${invoice.admission.number} · ${invoice.course.code} · due ${formatDate(invoice.due_date)}`}
                     </span>
                   </span>
-                  <span className="flex flex-col gap-2 tablet:items-end">
+                  <span className="flex flex-col gap-2 large:shrink-0 large:items-end">
                     <span className="text-body-sm text-text-primary">
                       <span className="text-text-secondary">Balance </span>
                       <Amount minor={invoice.balance_minor} strong />

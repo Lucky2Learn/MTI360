@@ -81,10 +81,15 @@ export function LeadTable({
       id: "contact",
       header: "Contact",
       cell: (lead) => (
-        <span className="flex flex-col break-all">
-          {lead.mobile && <span>{lead.mobile}</span>}
+        // A phone number never breaks; an email wraps only when it can't fit.
+        <span className="flex min-w-0 flex-col">
+          {lead.mobile && (
+            <span className="whitespace-nowrap">{lead.mobile}</span>
+          )}
           {lead.email && (
-            <span className="text-text-secondary">{lead.email}</span>
+            <span className="break-words text-text-secondary">
+              {lead.email}
+            </span>
           )}
         </span>
       ),

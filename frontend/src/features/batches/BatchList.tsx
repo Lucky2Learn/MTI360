@@ -86,6 +86,7 @@ export function BatchList({
   const columns: DataTableColumn<BatchWire>[] = [
     {
       id: "code",
+      noWrap: true,
       header: "Code",
       isSortable: true,
       cell: (batch) => (

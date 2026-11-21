@@ -44,7 +44,9 @@ export function TabList({ children, ...props }: TabListProps) {
   return (
     <AriaTabList
       {...props}
-      className="flex max-w-full gap-1 overflow-x-auto border-b border-border-subtle"
+      // Horizontal scroll only: the indicator must not create a vertical
+      // scroll (and a visible scrollbar) on the list.
+      className="flex max-w-full gap-1 overflow-x-auto overflow-y-hidden border-b border-border-subtle"
     >
       {children}
     </AriaTabList>
@@ -63,7 +65,7 @@ export function Tab({ id, children, isDisabled }: TabProps) {
       id={id}
       isDisabled={isDisabled}
       className={cx(
-        "-mb-px flex h-control-md shrink-0 cursor-pointer items-center border-b-2 border-transparent px-3 text-body-sm font-medium whitespace-nowrap text-text-secondary",
+        "flex h-control-md shrink-0 cursor-pointer items-center border-b-2 border-transparent px-3 text-body-sm font-medium whitespace-nowrap text-text-secondary",
         "transition-colors motion-reduce:transition-none",
         "data-hovered:text-text-primary",
         "data-selected:border-accent-maritime data-selected:font-semibold data-selected:text-text-primary",

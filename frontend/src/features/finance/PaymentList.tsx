@@ -103,6 +103,7 @@ export function PaymentList({
     },
     {
       id: "receipt",
+      noWrap: true,
       header: "Receipt",
       visibleFrom: "desktop",
       cell: (payment) =>

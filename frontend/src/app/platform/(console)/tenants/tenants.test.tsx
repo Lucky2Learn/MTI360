@@ -300,19 +300,19 @@ describe("PLAT-04 Tenant list: states", () => {
     });
   });
 
-  it("bounds the status filter so it sits beside the search and Clear filters", async () => {
+  it("lays the status filter out in the shared filter grid, with Clear filters in the toolbar", async () => {
     state.search = "status=TRIAL";
     serve("/tenants", okRead([], 0));
     await show(list({ status: "TRIAL" }));
     const group = screen.getByRole("group", { name: "Tenant filters" });
-    // The Select root is full width; its wrapper sets the width from tablet.
-    const wrapper = within(group)
-      .getByText("Status")
-      .closest(String.raw`div.tablet\:w-56`);
-    expect(wrapper).toHaveClass("w-full");
-    expect(wrapper?.parentElement).toBe(group);
+    // FilterBar sizes the filters as cells of its grid (no page wrapper);
+    // Clear filters sits at the end of the search row of the same toolbar.
+    expect(group).toHaveClass("tablet:grid", "desktop:grid-cols-3");
+    expect(within(group).getByText("Status")).toBeInTheDocument();
+    // The toolbar's own Clear filters (the empty state offers another).
+    const toolbar = group.parentElement!;
     expect(
-      within(group).getByRole("button", { name: "Clear filters" }),
+      within(toolbar).getByRole("button", { name: "Clear filters" }),
     ).toBeInTheDocument();
   });
 

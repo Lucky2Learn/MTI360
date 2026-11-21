@@ -292,6 +292,34 @@ describe("ADM-12 Student 360 Fees (Phase 02-5; ADR-0022 addendum R2)", () => {
     },
   );
 
+  it("keeps the Partly paid and Overdue badges whole: the row stacks below the large breakpoint", async () => {
+    state.session = readySession({ permissions: FINANCE_OFFICER });
+    profileReads();
+    state.reads.unshift([
+      "/invoices",
+      ok(
+        [
+          invoice({
+            admission: { id: "adm-1", number: "ADM-2026-00007" },
+            status: "PARTIALLY_PAID",
+            overdue: true,
+          }),
+        ],
+        1,
+      ),
+    ]);
+    await show(profile());
+    const fees = screen.getByRole("list", { name: "Fee invoices" });
+    expect(within(fees).getByText("Partly paid")).toBeInTheDocument();
+    expect(within(fees).getByText("Overdue")).toBeInTheDocument();
+    // Side by side only from `large`: at 768-1439 px the details (and so the
+    // badges) keep the full column width instead of being squeezed by the
+    // balance and the Record payment button.
+    const row = within(fees).getByText("Overdue").closest("li")!;
+    expect(row).toHaveClass("flex-col", "large:flex-row");
+    expect(row.className).not.toMatch(/(^|\s)tablet:flex-row/);
+  });
+
   it("offers Raise fee invoice for an admission without a live one; empty says only what is visible", async () => {
     state.session = readySession({ permissions: FINANCE_OFFICER });
     profileReads();

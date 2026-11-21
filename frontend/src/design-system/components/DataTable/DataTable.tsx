@@ -43,6 +43,10 @@ export type DataTableColumn<Row> = {
   isRowHeader?: boolean;
   /** Hide in table layout below this breakpoint. */
   visibleFrom?: "tablet" | "desktop";
+  /** Keep the cell on one line in the table (identifiers such as numbers and
+   *  codes, which must not break at their hyphens); the table scrolls
+   *  horizontally instead. Mobile cards still wrap. */
+  noWrap?: boolean;
 };
 
 export type DataTableEmptyState = {
@@ -354,6 +358,7 @@ export function DataTable<Row>({
                                 : "text-left",
                               column.visibleFrom &&
                                 visibility[column.visibleFrom],
+                              column.noWrap && "whitespace-nowrap",
                             )}
                           >
                             {column.cell(row)}
