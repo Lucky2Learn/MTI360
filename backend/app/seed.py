@@ -146,6 +146,8 @@ def _member(raw: Mapping[str, Any], codes: set[str], where: str) -> SeedMember:
         raise SeedError(f"{where}.campuses: leave empty for all campuses")
     if not set(campuses) <= codes:
         raise SeedError(f"{where}.campuses: unknown campus code")
+    if role is OWNER_TEMPLATE and scope is CampusScope.SELECTED:
+        raise SeedError(f"{where}: an institute owner needs all-campus access (ADR-0023)")
     return SeedMember(
         email, _text(raw.get("display_name"), f"{where}.display_name"), role, scope, campuses
     )

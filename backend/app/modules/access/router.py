@@ -23,6 +23,7 @@ from app.modules.access.schemas import (
     RoleOut,
     UpdateRoleRequest,
 )
+from app.modules.access.templates import OWNER_TEMPLATE
 
 
 def role_out(role: RoleDetail) -> RoleOut:
@@ -31,6 +32,7 @@ def role_out(role: RoleDetail) -> RoleOut:
         name=role.name,
         description=role.description,
         is_system=role.is_system,
+        is_owner=role.is_system and role.template_code == OWNER_TEMPLATE.value,
         permissions=list(role.permissions),
         member_count=role.member_count,
         version=role.version,

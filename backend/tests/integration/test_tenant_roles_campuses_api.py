@@ -10,7 +10,7 @@ from collections.abc import AsyncIterator
 
 import pytest
 from conftest import DatabaseUnderTest
-from identity_support import Harness, auth_harness
+from identity_support import Harness, add_role, auth_harness
 from tenant_admin_support import add_owner, data, send, sign_in
 
 from app.modules.access.catalog import tenant_permissions
@@ -179,6 +179,10 @@ async def test_campus_rename_is_versioned_and_scoped(h: Harness) -> None:
         campus["code"],
         campus["version"] + 1,
     )
+    events = await h.audit(renamed)
+    assert [
+        (e.event_type, e.tenant_id, e.target_type, e.target_id, e.metadata) for e in events
+    ] == [("campus.updated", h.world.tenant_a, "campus", h.world.campus_a1, {"name_changed": True})]
     stale = await send(
         h,
         "PATCH",
@@ -191,3 +195,89 @@ async def test_campus_rename_is_versioned_and_scoped(h: Harness) -> None:
         h, "PATCH", f"/api/v1/campuses/{h.world.campus_b1}", csrf, {"name": "X", "version": 1}
     )
     assert foreign.status_code == 404
+
+
+async def _campus_row(h: Harness, campus_id: uuid.UUID) -> tuple[str, str, int]:
+    rows = await h.owner("SELECT name, code, version FROM campuses WHERE id = :c", c=campus_id)
+    return (rows[0][0], rows[0][1], rows[0][2])
+
+
+async def test_campus_rename_outside_the_members_campuses_is_not_found(h: Harness) -> None:
+    csrf = await sign_in(h, "bob", h.world.tenant_a)  # Administrator, campus A1 only (D-B1)
+    before = await _campus_row(h, h.world.campus_a2)
+    outside = await send(
+        h,
+        "PATCH",
+        f"/api/v1/campuses/{h.world.campus_a2}",
+        csrf,
+        {"name": "Pune Hinjewadi Campus", "version": before[2]},
+    )
+    assert outside.status_code == 404
+    assert outside.json()["error"]["code"] == "NOT_FOUND"
+    assert await h.audit(outside) == []
+    assert await _campus_row(h, h.world.campus_a2) == before
+
+
+async def test_campus_rename_needs_campus_update(h: Harness) -> None:
+    await add_role(
+        h.factory,
+        h.world,
+        "campus_reader_a",
+        tenant_id=h.world.tenant_a,
+        permissions=("campus.read",),
+    )
+    await add_owner(h, "ivan", h.world.tenant_a, "campus_reader_a")  # all campuses, read only
+    csrf = await sign_in(h, "ivan")
+    campus = data(await h.client.get(f"/api/v1/campuses/{h.world.campus_a1}"))
+    refused = await send(
+        h,
+        "PATCH",
+        f"/api/v1/campuses/{h.world.campus_a1}",
+        csrf,
+        {"name": "Mumbai Andheri Campus", "version": campus["version"]},
+    )
+    assert refused.status_code == 403
+    assert refused.json()["error"]["code"] == "PERMISSION_DENIED"
+    assert await _campus_row(h, h.world.campus_a1) == (
+        campus["name"],
+        campus["code"],
+        campus["version"],
+    )
+
+
+async def test_campus_rename_validates_the_body(h: Harness) -> None:
+    csrf = await sign_in(h, "alice")
+    before = await _campus_row(h, h.world.campus_a1)
+    version = before[2]
+    for body in (
+        {"name": "", "version": version},
+        {"name": "   ", "version": version},
+        {"name": "Mumbai Andheri Campus"},
+        {"name": "Mumbai Andheri Campus", "version": 0},
+        {"name": "Mumbai Andheri Campus", "version": version, "code": "BOM"},  # INC-41
+    ):
+        response = await send(h, "PATCH", f"/api/v1/campuses/{h.world.campus_a1}", csrf, body)
+        assert response.status_code == 422, body
+        assert response.json()["error"]["code"] == "VALIDATION_ERROR", body
+        assert await h.audit(response) == [], body
+    assert await _campus_row(h, h.world.campus_a1) == before
+
+
+async def test_campus_codes_are_unique_per_tenant_whatever_the_case_or_spacing(h: Harness) -> None:
+    csrf = await sign_in(h, "alice")
+    for code in ("mum", " Mum ", "MUM ", "\tmum"):
+        duplicate = await send(
+            h, "POST", "/api/v1/campuses", csrf, {"name": "Mumbai Annexe", "code": code}
+        )
+        assert duplicate.status_code == 409, repr(code)
+        assert duplicate.json()["error"]["code"] == "CONFLICT", repr(code)
+        assert await h.audit(duplicate) == [], repr(code)
+    rows = await h.owner(
+        "SELECT count(*) FROM campuses WHERE tenant_id = :t AND code = 'MUM'", t=h.world.tenant_a
+    )
+    assert rows[0][0] == 1
+    # Institute B's code is free in institute A, normalized the same way.
+    created = await send(
+        h, "POST", "/api/v1/campuses", csrf, {"name": "Goa Campus", "code": " goa "}
+    )
+    assert data(created, 201)["code"] == "GOA"

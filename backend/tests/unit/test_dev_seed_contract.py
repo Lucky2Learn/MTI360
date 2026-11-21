@@ -47,11 +47,28 @@ def test_the_committed_seed_file_is_valid_and_development_only() -> None:
         ({"role": "SUPER_ADMIN"}, "unknown role"),
         ({"campus_scope": "SELECTED"}, "at least one campus"),
         ({"campus_scope": "SELECTED", "campuses": ["XYZ"]}, "unknown campus"),
+        # ADR-0023: an owner keeps all-campus access.
+        ({"campus_scope": "SELECTED", "campuses": ["KOC"]}, "all-campus access"),
     ],
 )
 def test_invalid_members_are_refused(member: dict[str, Any], message: str) -> None:
     with pytest.raises(SeedError, match=message):
         parse_seed(_document(**member))
+
+
+def test_a_campus_limited_administrator_is_still_accepted() -> None:
+    document = _document()
+    document["institutes"][0]["members"].append(
+        {
+            "email": "admissions@malabar-seafarers.example",
+            "display_name": "Anita Kurian",
+            "role": "ADMIN",
+            "campus_scope": "SELECTED",
+            "campuses": ["KOC"],
+        }
+    )
+    (institute,) = parse_seed(document)
+    assert [m.campus_scope.value for m in institute.members] == ["ALL", "SELECTED"]
 
 
 def test_every_institute_needs_an_owner() -> None:

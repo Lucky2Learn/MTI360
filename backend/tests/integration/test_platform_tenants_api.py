@@ -6,8 +6,10 @@ owner role); suspension ends the institute's sessions; the platform never
 reaches another tenant's rows.
 """
 
+import logging
 import uuid
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
+from datetime import UTC, datetime
 from typing import Any
 
 import pytest
@@ -16,7 +18,11 @@ from identity_support import COOKIE as TENANT_COOKIE
 from identity_support import add_session, add_user, build_world
 from platform_support import PlatformHarness, platform_harness
 
+from app.core.context import Realm, RequestContext, context_scope
+from app.core.errors import PermissionDeniedError
 from app.core.tenancy import system_context
+from app.integrations.email import FakeEmailSender
+from app.modules.tenants.service import TenantAdmin
 
 pytestmark = [pytest.mark.anyio, pytest.mark.integration]
 
@@ -199,6 +205,67 @@ async def test_provisioning_needs_the_permission(h: PlatformHarness) -> None:
     assert (await h.client.get(TENANTS)).status_code == 403
 
 
+async def test_every_tenant_route_needs_its_permission(h: PlatformHarness) -> None:
+    """A platform user without ``tenant.*`` (Security/Audit Admin) changes and learns nothing."""
+    world = await build_world(h.factory)
+    csrf = await h.admin("nora")
+    created = await _provision(h, csrf)
+    invited = created["tenant"]["id"]
+    sent = len(h.email.sent)
+    h.client.cookies.clear()
+    csrf = await h.admin("omar")
+    body = {"reason": "Unpaid invoices", "version": 1}
+    responses = [
+        await h.client.get(f"{TENANTS}/{world.tenant_a}"),
+        await h.post(f"{TENANTS}/{world.tenant_a}/suspend", csrf, body),
+        await h.post(f"{TENANTS}/{world.tenant_a}/reactivate", csrf, body),
+        await h.post(f"{TENANTS}/{invited}/owner-invitation/resend", csrf),
+    ]
+    assert [(r.status_code, r.json()["error"]["code"]) for r in responses] == [
+        (403, "PERMISSION_DENIED")
+    ] * 4
+    status = await h.owner("SELECT status FROM tenants WHERE id = :t", t=world.tenant_a)
+    assert status[0][0] == "ACTIVE"
+    assert len(h.email.sent) == sent
+
+
+async def test_the_service_authorizes_without_the_route(h: PlatformHarness) -> None:
+    """``TenantAdmin`` refuses on its own: the route dependency is not the only check."""
+    world = await build_world(h.factory)
+    admin: TenantAdmin = h.app.state.tenant_admin
+    context = RequestContext(
+        realm=Realm.PLATFORM,
+        request_id=uuid.uuid7(),
+        principal_id=h.world.users["omar"],
+        permissions=frozenset({"audit.read"}),
+        mfa_verified_at=datetime.now(UTC),
+    )
+    operations: list[Callable[[], Awaitable[object]]] = [
+        lambda: admin.list_tenants(search=None, status=None, sort=(), limit=25, offset=0),
+        lambda: admin.get_tenant(world.tenant_a),
+        lambda: admin.suspend(world.tenant_a, reason="Unpaid invoices", version=1),
+        lambda: admin.reactivate(world.tenant_a, reason="Audit closed", version=1),
+        lambda: admin.resend_owner_invitation(world.tenant_a),
+    ]
+    with context_scope(context):
+        for operation in operations:
+            with pytest.raises(PermissionDeniedError):
+                await operation()
+        # A tenant-realm context holding the codes is refused too (realm check).
+        tenant = RequestContext(
+            realm=Realm.TENANT,
+            request_id=uuid.uuid7(),
+            principal_id=world.users["alice"],
+            tenant_id=world.tenant_a,
+            permissions=frozenset({"tenant.read", "tenant.suspend"}),
+            mfa_verified_at=datetime.now(UTC),
+        )
+        with context_scope(tenant), pytest.raises(PermissionDeniedError):
+            await admin.suspend(world.tenant_a, reason="Unpaid invoices", version=1)
+    status = await h.owner("SELECT status FROM tenants WHERE id = :t", t=world.tenant_a)
+    assert status[0][0] == "ACTIVE"
+
+
 async def test_a_tenant_session_cannot_administer_tenants(h: PlatformHarness) -> None:
     world = await build_world(h.factory)
     _, token = await add_session(h.factory, world, "alice", tenant_id=world.tenant_a)
@@ -224,6 +291,29 @@ async def test_list_search_filter_and_detail(h: PlatformHarness) -> None:
     assert (await h.client.get(f"{TENANTS}/{uuid.uuid7()}")).status_code == 404
     assert (await h.client.get(TENANTS, params={"sort": "owner"})).status_code == 422
     assert (await h.client.get(TENANTS, params={"limit": 101})).status_code == 422
+
+
+async def test_list_pages_and_sorts(h: PlatformHarness) -> None:
+    """The Platform Tenants list (PLAT-04) pages with limit/offset and sorts by name or date."""
+    csrf = await h.admin()
+    marker = uuid.uuid7().hex[-10:]
+    names = [f"{place} Maritime Academy {marker}" for place in ("Coromandel", "Andaman", "Bengal")]
+    for name in names:
+        await _provision(h, csrf, name=name)
+
+    async def page(**params: Any) -> tuple[list[str], dict[str, int]]:
+        body = (await h.client.get(TENANTS, params={"q": marker, **params})).json()
+        return [item["name"] for item in body["data"]], body["meta"]["page"]
+
+    first, meta = await page(sort="name", limit=2)
+    assert first == sorted(names)[:2]
+    assert meta == {"limit": 2, "offset": 0, "total": 3}
+    rest, meta = await page(sort="name", limit=2, offset=2)
+    assert rest == sorted(names)[2:]
+    assert meta == {"limit": 2, "offset": 2, "total": 3}
+    assert (await page(sort="-name"))[0] == sorted(names, reverse=True)
+    # The default order is newest first.
+    assert (await page())[0] == list(reversed(names))
 
 
 async def test_the_detail_shows_only_the_owner(h: PlatformHarness) -> None:
@@ -311,6 +401,71 @@ async def test_suspension_ends_the_institutes_sessions_only(h: PlatformHarness) 
     assert still[0][0] is True
 
 
+async def test_reactivation_needs_step_up(h: PlatformHarness) -> None:
+    world = await build_world(h.factory)
+    csrf = await h.admin()
+    version = _data(await h.client.get(f"{TENANTS}/{world.tenant_a}"))["version"]
+    suspended = await h.post(
+        f"{TENANTS}/{world.tenant_a}/suspend", csrf, {"reason": "Unpaid", "version": version}
+    )
+    version = _data(suspended)["version"]
+    await h.stale("nora")
+    response = await h.post(
+        f"{TENANTS}/{world.tenant_a}/reactivate", csrf, {"reason": "Paid", "version": version}
+    )
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "STEP_UP_REQUIRED"
+    status = await h.owner("SELECT status FROM tenants WHERE id = :t", t=world.tenant_a)
+    assert status[0][0] == "SUSPENDED"
+
+
+async def test_lifecycle_step_up_follows_the_ten_minute_window(h: PlatformHarness) -> None:
+    """D6-5: a verification within 10 minutes (sign-in counts) needs no new code; a stale
+    one is refused until a valid step-up; a wrong code changes nothing; a pending session
+    never reaches the route."""
+    world = await build_world(h.factory)
+    path = f"{TENANTS}/{world.tenant_a}"
+
+    async def status() -> str:
+        rows = await h.owner("SELECT status FROM tenants WHERE id = :t", t=world.tenant_a)
+        return str(rows[0][0])
+
+    # An MFA-pending session (password only) is not authenticated for the route.
+    pending = _data(await h.login("nora"))["csrf_token"]
+    refused = await h.post(f"{path}/suspend", pending, {"reason": "Unpaid", "version": 1})
+    assert refused.status_code == 401
+    h.client.cookies.clear()
+
+    # Fresh from sign-in: no step-up prompt (the browser test of 2026-10-25).
+    csrf = await h.admin()
+    version = _data(await h.client.get(path))["version"]
+    fresh = await h.post(f"{path}/suspend", csrf, {"reason": "Unpaid", "version": version})
+    assert _data(fresh)["status"] == "SUSPENDED"
+    version = _data(fresh)["version"]
+
+    # Stale: refused, and a wrong code neither verifies nor unlocks the action.
+    await h.stale("nora")
+    body = {"reason": "Invoices paid", "version": version}
+    assert (await h.post(f"{path}/reactivate", csrf, body)).json()["error"][
+        "code"
+    ] == "STEP_UP_REQUIRED"
+    wrong = await h.post(
+        "/api/v1/platform/session/step-up", csrf, {"code": h.code("nora", offset=5)}
+    )
+    assert wrong.status_code == 422
+    assert [row[0] for row in await h.audit(wrong)] == ["platform.auth.step_up.failed"]
+    still = await h.post(f"{path}/reactivate", csrf, body)
+    assert still.json()["error"]["code"] == "STEP_UP_REQUIRED"
+    assert await status() == "SUSPENDED"
+
+    # A valid step-up refreshes the window; the same request now succeeds once.
+    stepped = await h.post("/api/v1/platform/session/step-up", csrf, {"code": h.code("nora")})
+    assert _data(stepped)["mfa"]["step_up_expires_at"] is not None
+    reactivated = await h.post(f"{path}/reactivate", csrf, body)
+    assert _data(reactivated)["status"] == "ACTIVE"
+    assert [row[0] for row in await h.audit(reactivated)] == ["platform.tenant.reactivated"]
+
+
 async def test_only_suspended_institutes_are_reactivated(h: PlatformHarness) -> None:
     world = await build_world(h.factory)
     csrf = await h.admin()
@@ -350,3 +505,29 @@ async def test_the_owner_invitation_can_be_resent_until_accepted(h: PlatformHarn
     assert (
         await h.post(f"{TENANTS}/{uuid.uuid7()}/owner-invitation/resend", csrf)
     ).status_code == 404
+
+
+async def test_a_failed_invitation_email_is_logged_not_reported(
+    h: PlatformHarness, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Delivery runs after the response (D10): the API answers 202 and the new
+    invitation stands; the failure is logged without the token or the address."""
+    csrf = await h.admin()
+    created = await _provision(h, csrf)
+    tenant_id = uuid.UUID(created["tenant"]["id"])
+    failing = FakeEmailSender(fail=True)
+    h.service.email_sender = failing
+    with caplog.at_level(logging.ERROR):
+        response = await h.post(f"{TENANTS}/{tenant_id}/owner-invitation/resend", csrf)
+    assert response.status_code == 202
+    assert failing.attempts == 1
+    assert failing.sent == []
+    open_invitations = await h.owner(
+        "SELECT count(*) FROM user_invitations WHERE tenant_id = :t AND revoked_at IS NULL",
+        t=tenant_id,
+    )
+    assert open_invitations[0][0] == 1
+    failures = [r for r in caplog.records if r.getMessage() == "email.send_failed"]
+    assert len(failures) == 1
+    assert created["tenant"]["owner"]["email"] not in str(failures[0].__dict__)
+    assert "token" not in str(failures[0].__dict__).lower()

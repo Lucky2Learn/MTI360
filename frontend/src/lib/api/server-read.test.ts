@@ -1,10 +1,11 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Server-side tenant reads for business pages (Phase 02-1; blueprint §3,
-// §28): only the tenant session cookie travels (never the platform cookie or
-// other cookies of the origin, never a forged tenant header), and every API
-// answer maps to one page state.
+// Server-side reads for business pages (Phase 02-1; blueprint §3, §28): a
+// tenant read sends only the tenant session cookie and a platform read only
+// the platform session cookie (never the other realm's cookie or other
+// cookies of the origin, never a forged tenant header), and every API answer
+// maps to one page state.
 
 const request = vi.hoisted(() => ({
   cookies: new Map<string, string>(),
@@ -30,7 +31,7 @@ vi.mock("@/lib/env", () => ({
   }),
 }));
 
-const { tenantApiRead } = await import("./server-read");
+const { platformApiRead, tenantApiRead } = await import("./server-read");
 
 const fetchMock = vi.fn<typeof fetch>();
 
@@ -120,5 +121,52 @@ describe("tenantApiRead", () => {
       kind: "error",
       reference: null,
     });
+  });
+});
+
+describe("platformApiRead", () => {
+  it("does not call the API without a platform session cookie", async () => {
+    request.cookies.set("__Host-mti360_tsid", "tenant-session");
+    await expect(platformApiRead("/tenants")).resolves.toEqual({
+      kind: "unauthenticated",
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("forwards the platform cookie only, under /api/v1/platform", async () => {
+    request.cookies.set("__Host-mti360_psid", "platform-session");
+    request.cookies.set("__Host-mti360_tsid", "tenant-session");
+    request.headers = new Headers({
+      "user-agent": "Chromium test",
+      "x-tenant-id": "forged",
+    });
+    respond(200, {
+      data: [{ id: "tenant-1" }],
+      meta: { page: { limit: 25, offset: 0, total: 1 } },
+    });
+    await expect(platformApiRead("/tenants?q=konkan")).resolves.toEqual({
+      kind: "ok",
+      data: [{ id: "tenant-1" }],
+      page: { limit: 25, offset: 0, total: 1 },
+    });
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe(
+      "http://api.internal:8000/api/v1/platform/tenants?q=konkan",
+    );
+    expect(init?.headers).toEqual({
+      accept: "application/json",
+      cookie: "__Host-mti360_psid=platform-session",
+      "user-agent": "Chromium test",
+    });
+  });
+
+  it.each([
+    [401, { kind: "unauthenticated" }],
+    [403, { kind: "denied" }],
+    [404, { kind: "not-found" }],
+  ])("maps %i to a page state", async (status, expected) => {
+    request.cookies.set("__Host-mti360_psid", "platform-session");
+    respond(status, { error: { code: "X", message: "SERVER TEXT" } });
+    await expect(platformApiRead("/tenants/abc")).resolves.toEqual(expected);
   });
 });
