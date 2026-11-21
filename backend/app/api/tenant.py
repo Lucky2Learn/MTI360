@@ -9,7 +9,7 @@ Tenant context comes only from the server-side session → validated membership
   a valid session, institute optional (T01-04, ``Access.SESSION``);
 * ``router``: every other tenant route — a session with an institute
   (tenant administration in T01-08; courses and leads in Phase 02-1;
-  applications, documents and students in Phase 02-2).
+  applications, documents and students in Phase 02-2; batches in Phase 02-6).
 """
 
 from fastapi import APIRouter
@@ -19,6 +19,7 @@ from app.core.context import Realm
 from app.modules.access.router import role_routes
 from app.modules.applications.router import application_routes
 from app.modules.audit.router import tenant_audit_routes
+from app.modules.batches.router import batch_routes
 from app.modules.courses.router import course_routes
 from app.modules.documents.router import document_routes
 from app.modules.finance.router import finance_routes
@@ -48,5 +49,6 @@ router.include_router(application_routes)
 router.include_router(document_routes)
 router.include_router(student_routes)
 router.include_router(finance_routes)
+router.include_router(batch_routes)
 
 ROUTERS: tuple[APIRouter, ...] = (anonymous, mfa_pending, session, router)

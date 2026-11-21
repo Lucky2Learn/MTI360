@@ -355,6 +355,8 @@ export type StudentListItemWire = {
   created_at: string;
 };
 
+export type AdmissionStatus = "ADMITTED" | "ENROLLED";
+
 /** `StudentOut` (Student 360). */
 export type StudentWire = {
   id: string;
@@ -370,7 +372,8 @@ export type StudentWire = {
   admissions: {
     id: string;
     admission_number: string;
-    status: "ADMITTED";
+    /** ENROLLED once allocated to a batch (Phase 02-6); withdrawal returns ADMITTED. */
+    status: AdmissionStatus;
     application_id: string;
     application_number: string;
     course_id: string;
@@ -380,6 +383,8 @@ export type StudentWire = {
     campus: { id: string; code: string; name: string };
     approved_at: string;
     approved_by: { display_name: string } | null;
+    /** The current batch; present only for batch.read holders (Phase 02-6). */
+    current_batch?: { id: string; code: string; name: string } | null;
   }[];
   created_at: string;
   updated_at: string;
@@ -399,10 +404,10 @@ export type StudentDocumentWire = {
   created_at: string;
 };
 
-/** `TimelineEntry`: the Student 360 history (lead and application activity). */
+/** `TimelineEntry`: the Student 360 history (lead, application and batch activity). */
 export type TimelineEntryWire = {
   id: string;
-  source: "lead" | "application";
+  source: "lead" | "application" | "batch";
   kind: string;
   actor: { display_name: string } | null;
   details: Record<string, unknown>;

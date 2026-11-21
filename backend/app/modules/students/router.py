@@ -22,6 +22,7 @@ from app.modules.students.permissions import STUDENT_READ
 from app.modules.students.repository import SORTS
 from app.modules.students.schemas import (
     AdmissionOut,
+    BatchRef,
     StudentDocument,
     StudentDocumentsOut,
     StudentListItem,
@@ -37,6 +38,10 @@ student_routes = APIRouter(tags=["tenant-students"])
 
 def _person(name: str | None) -> PersonRef | None:
     return PersonRef(display_name=name) if name else None
+
+
+def _batch(found: tuple[uuid.UUID, str, str] | None) -> BatchRef | None:
+    return BatchRef(id=found[0], code=found[1], name=found[2]) if found else None
 
 
 @student_routes.get("/students", dependencies=[require_permission(STUDENT_READ)])
@@ -95,6 +100,7 @@ async def read_student(student_id: uuid.UUID, db: DbSession) -> Envelope[Student
                     campus=CampusRef(id=row.campus_id, code=row.campus_code, name=row.campus_name),
                     approved_at=row.approved_at,
                     approved_by=_person(row.approver_name),
+                    current_batch=_batch(profile.batches.get(row.id)),
                 )
                 for row in profile.admissions
             ],
@@ -124,7 +130,7 @@ async def student_activity(
     entries = [
         TimelineEntry(
             id=view.item.id,
-            source=cast(Literal["lead", "application"], sources[view.item.id]),
+            source=cast(Literal["lead", "application", "batch"], sources[view.item.id]),
             kind=view.item.kind,
             actor=_person(view.actor_name),
             details=view.details,

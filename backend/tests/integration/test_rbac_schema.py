@@ -98,6 +98,7 @@ PHASE_02_5_CODES = {
     "payment.record",
     "payment.reverse",
 }
+PHASE_02_6_CODES = {"batch.read", "batch.manage", "batch.allocate"}
 FINANCE_OFFICER_CODES = {
     "course.read",
     "fee_structure.read",
@@ -270,7 +271,7 @@ async def test_the_rbac_migration_clones_system_roles_and_assigns_nobody(
     # World A existed before the upgrade: 0005 cloned the two T01 system roles; 0009
     # (Phase 02-1) added Admissions manager and Counsellor and extended the first two;
     # 0010 (Phase 02-2) extended all four; 0011 (Phase 02-5) added the two finance roles
-    # and extended the other four.
+    # and extended the other four; 0014 (Phase 02-6) extended all six with batches.
     roles = await _owner(
         migrated_database,
         "SELECT r.template_code, r.name, array_agg(rp.permission_code ORDER BY 1) "
@@ -279,25 +280,28 @@ async def test_the_rbac_migration_clones_system_roles_and_assigns_nobody(
         tenant=world.tenant_a,
     )
     by_template = {row[0]: (row[1], set(row[2])) for row in roles}
-    head = TENANT_CODES | PHASE_02_1_CODES | PHASE_02_2_CODES | PHASE_02_5_CODES
+    head = TENANT_CODES | PHASE_02_1_CODES | PHASE_02_2_CODES | PHASE_02_5_CODES | PHASE_02_6_CODES
     assert by_template == {
         "INSTITUTE_OWNER": ("Institute owner", head),
         "ADMIN": ("Administrator", head - {"role.delete"}),
         "ADMISSIONS_MANAGER": (
             "Admissions manager",
-            PHASE_02_1_CODES | PHASE_02_2_CODES | {"fee_structure.read", "invoice.read"},
+            PHASE_02_1_CODES
+            | PHASE_02_2_CODES
+            | {"fee_structure.read", "invoice.read"}
+            | PHASE_02_6_CODES,
         ),
         "COUNSELLOR": (
             "Counsellor",
             (PHASE_02_1_CODES - {"course.manage", "lead.assign"})
             | COUNSELLOR_02_2
-            | {"fee_structure.read"},
+            | {"fee_structure.read", "batch.read"},
         ),
         "FINANCE_MANAGER": (
             "Finance manager",
-            PHASE_02_5_CODES | {"course.read", "student.read"},
+            PHASE_02_5_CODES | {"course.read", "student.read", "batch.read"},
         ),
-        "FINANCE_OFFICER": ("Finance officer", FINANCE_OFFICER_CODES),
+        "FINANCE_OFFICER": ("Finance officer", FINANCE_OFFICER_CODES | {"batch.read"}),
     }
     # ... and no member was given a role.
     assigned = await _owner(

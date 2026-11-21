@@ -21,6 +21,8 @@ from app.core.pagination import PageParams, SortField
 from app.core.sequences import SequenceName, next_number
 from app.modules.applications.models import Application
 from app.modules.applications.permissions import APPLICATION_READ
+from app.modules.batches.permissions import BATCH_READ
+from app.modules.batches.repository import current_batches
 from app.modules.documents.permissions import DOCUMENT_READ
 from app.modules.leads import follow_ups
 from app.modules.leads.permissions import LEAD_READ
@@ -71,6 +73,8 @@ async def list_students(
 class StudentProfile:
     detail: repo.StudentDetailRow
     admissions: list[repo.AdmissionRow]
+    batches: dict[uuid.UUID, tuple[uuid.UUID, str, str]]
+    """Admission → current batch (ID, code, name); only for ``batch.read`` holders."""
 
 
 async def get_student(db: AsyncSession, student_id: uuid.UUID) -> StudentProfile:
@@ -80,7 +84,12 @@ async def get_student(db: AsyncSession, student_id: uuid.UUID) -> StudentProfile
     if detail is None:  # pragma: no cover - read in this transaction
         raise NotFoundError()
     admissions = await repo.admissions_of(db, who.tenant_id, who.context, student_id)
-    return StudentProfile(detail, admissions)
+    batches = (
+        await current_batches(db, who.tenant_id, [row.id for row in admissions])
+        if BATCH_READ.code in who.context.permissions
+        else {}
+    )
+    return StudentProfile(detail, admissions, batches)
 
 
 async def student_documents(
@@ -99,7 +108,8 @@ async def student_activity(
     db: AsyncSession, student_id: uuid.UUID, page: PageParams
 ) -> tuple[list[follow_ups.ActivityView], dict[uuid.UUID, str], int]:
     """The Student 360 timeline: lead history for ``lead.read`` holders, application history
-    for ``application.read`` holders (ADR-0021 §11). Returns views, sources and the total."""
+    for ``application.read`` holders (ADR-0021 §11) and batch history for ``batch.read``
+    holders (Phase 02-6). Returns views, sources and the total."""
     who = await caller(db, STUDENT_READ)
     await authorized_student(db, who, student_id)
     rows, total = await repo.timeline(
@@ -109,6 +119,7 @@ async def student_activity(
         student_id,
         include_leads=LEAD_READ.code in who.context.permissions,
         include_applications=APPLICATION_READ.code in who.context.permissions,
+        include_batches=BATCH_READ.code in who.context.permissions,
         page=page,
     )
     views = await follow_ups.activity_views(db, who, rows)

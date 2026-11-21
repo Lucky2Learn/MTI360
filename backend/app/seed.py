@@ -14,6 +14,8 @@ Loads ``database/seeds/dev.json`` (realistic maritime fixtures) into a
   object storage, and admitted students (``app.seed_applications``);
 * (Phase 02-5) fee structures, fee invoices, offline payments and receipts
   for the admitted students (``app.seed_finance``);
+* (Phase 02-6) batches with allocations, payment overrides, transfers and
+  withdrawals of the admitted students (``app.seed_batches``);
 * (Phase 02-4) with ``site_slug``, the institute's platform-issued address
   ``<slug>.<PUBLIC_SITE_DOMAIN>`` for the hosted enquiry page.
 
@@ -80,6 +82,7 @@ from app.seed_admissions import (
     seed_admissions,
 )
 from app.seed_applications import SeedApplication, parse_applications, seed_applications
+from app.seed_batches import BatchSeedError, SeedBatches, parse_batch_section, seed_batches
 from app.seed_finance import Actor, FinanceSeedError, SeedFinance, parse_finance, seed_finance
 
 DEFAULT_SEED_FILE: Final = Path(__file__).resolve().parents[2] / "database" / "seeds" / "dev.json"
@@ -119,6 +122,7 @@ class SeedInstitute:
     leads: tuple[SeedLead, ...] = ()
     applications: tuple[SeedApplication, ...] = ()
     finance: SeedFinance = field(default_factory=SeedFinance)
+    batches: SeedBatches = field(default_factory=SeedBatches)
     tag: str | None = None
     """Set by :func:`tag_seed`; recorded in the ``system.seed.applied`` audit event."""
     site_slug: str | None = None
@@ -240,7 +244,20 @@ def parse_seed(data: Mapping[str, Any]) -> tuple[SeedInstitute, ...]:
                 },
                 actors=_actors(members),
             )
-        except (AdmissionsSeedError, FinanceSeedError) as error:
+            batches = parse_batch_section(
+                raw,
+                where,
+                courses={c.code: c.status for c in courses},
+                campuses=codes,
+                admitted={
+                    a.key: (a.course, a.campus)
+                    for a in applications
+                    if a.status is ApplicationStatus.ADMITTED
+                },
+                finance=finance,
+                actors=_actors(members),
+            )
+        except (AdmissionsSeedError, FinanceSeedError, BatchSeedError) as error:
             raise SeedError(str(error)) from None
         site_slug: str | None = None
         if raw.get("site_slug") is not None:
@@ -258,6 +275,7 @@ def parse_seed(data: Mapping[str, Any]) -> tuple[SeedInstitute, ...]:
                 leads,
                 applications,
                 finance,
+                batches,
                 site_slug=site_slug,
             )
         )
@@ -316,6 +334,23 @@ def tag_seed(institutes: Sequence[SeedInstitute], tag: str) -> tuple[SeedInstitu
             ),
         )
 
+    def batches(b: SeedBatches) -> SeedBatches:
+        def move(m: Any) -> Any:
+            return replace(m, by=email(m.by)) if m is not None else None
+
+        return SeedBatches(
+            batches=tuple(replace(x, created_by=email(x.created_by)) for x in b.batches),
+            allocations=tuple(
+                replace(
+                    a,
+                    allocated_by=email(a.allocated_by),
+                    transfer=move(a.transfer),
+                    withdraw=move(a.withdraw),
+                )
+                for a in b.allocations
+            ),
+        )
+
     return tuple(
         replace(
             institute,
@@ -334,6 +369,7 @@ def tag_seed(institutes: Sequence[SeedInstitute], tag: str) -> tuple[SeedInstitu
                 for application in institute.applications
             ),
             finance=finance(institute.finance),
+            batches=batches(institute.batches),
             tag=tag,
             site_slug=f"{institute.site_slug}-{tag}" if institute.site_slug else None,
         )
@@ -478,6 +514,15 @@ async def seed(
                 admissions=admissions,
                 memberships=memberships,
             )
+            await seed_batches(
+                db,
+                tenant_id,
+                section=institute.batches,
+                course_ids=course_ids,
+                campus_ids=campus_ids,
+                admissions=admissions,
+                memberships=memberships,
+            )
             await write_audit_event(
                 db,
                 SEEDED,
@@ -493,6 +538,8 @@ async def seed(
                     "fee_structure_count": len(institute.finance.fee_structures),
                     "invoice_count": len(institute.finance.invoices),
                     "payment_count": sum(len(i.payments) for i in institute.finance.invoices),
+                    "batch_count": len(institute.batches.batches),
+                    "allocation_count": len(institute.batches.allocations),
                 },
             )
     return [SeededAccount(email, accounts[email]) for email in emails]

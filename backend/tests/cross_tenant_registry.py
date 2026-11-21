@@ -27,11 +27,13 @@ BUSINESS_MODULES: Final = (
     "app.modules.documents",
     "app.modules.students",
     "app.modules.finance",  # Phase 02-5
+    "app.modules.batches",  # Phase 02-6
 )
 CROSS_TENANT_SUITES: Final = (
     "tests/integration/test_courses_leads_cross_tenant.py",
     "tests/integration/test_admissions_cross_tenant.py",
     "tests/integration/test_finance_cross_tenant.py",
+    "tests/integration/test_batches_cross_tenant.py",
 )
 
 _C = "/api/v1/courses"
@@ -55,6 +57,13 @@ _P = "/api/v1/payments"
 _PI = f"{_P}/{{payment_id}}"
 _INVOICE_CHANGES = "test_other_tenant_invoice_changes_are_not_found"
 _PAYMENT_CHANGES = "test_other_tenant_payment_changes_are_not_found"
+_B = "/api/v1/batches"
+_BI = f"{_B}/{{batch_id}}"
+_BA = "/api/v1/batch-allocations"
+_BAI = f"{_BA}/{{allocation_id}}"
+_BATCH_READS = "test_other_tenant_batch_reads_are_not_found"
+_BATCH_CHANGES = "test_other_tenant_batch_changes_are_not_found"
+_ALLOCATION_CHANGES = "test_other_tenant_allocation_changes_are_not_found"
 
 BUSINESS_ROUTES: Final = MappingProxyType(
     {
@@ -115,6 +124,19 @@ BUSINESS_ROUTES: Final = MappingProxyType(
         ("POST", f"{_PI}/fail"): _PAYMENT_CHANGES,
         ("POST", f"{_PI}/reverse"): _PAYMENT_CHANGES,
         ("GET", "/api/v1/finance/summary"): "test_finance_summary_counts_no_other_tenant_invoice",
+        # Phase 02-6
+        ("GET", _B): "test_batch_list_holds_no_other_tenant_batch",
+        ("POST", _B): "test_batch_create_refuses_other_tenant_references",
+        ("GET", _BI): _BATCH_READS,
+        ("PATCH", _BI): _BATCH_CHANGES,
+        ("POST", f"{_BI}/status"): _BATCH_CHANGES,
+        ("GET", f"{_BI}/allocations"): _BATCH_READS,
+        ("GET", f"{_BI}/eligible-admissions"): _BATCH_READS,
+        ("GET", f"{_BI}/activity"): _BATCH_READS,
+        ("POST", f"{_BI}/allocations"): "test_allocation_refuses_other_tenant_references",
+        ("GET", _BA): "test_allocation_list_holds_no_other_tenant_allocation",
+        ("POST", f"{_BAI}/transfer"): _ALLOCATION_CHANGES,
+        ("POST", f"{_BAI}/withdraw"): _ALLOCATION_CHANGES,
     }
 )
 
