@@ -5,6 +5,7 @@
         --break-glass --reason "Only SUPER_ADMIN lost their authenticator"
 
     python -m app.cli seed [--file PATH] [--tag TAG]
+    python -m app.cli issue-site --tenant UUID --slug SLUG
 
 ``seed`` (T01-08, decision D16) loads ``database/seeds/dev.json`` into a
 **development** database only (``APP_ENV=development``). Each account gets a
@@ -12,6 +13,11 @@ random password that is never printed, logged or stored in clear: developers
 set their own with the password reset flow (Mailpit locally). It refuses to
 run twice. ``--tag`` (Phase 02-3) loads the same demo again as new, separate
 institutes and accounts (``principal.TAG@...``), without touching earlier ones.
+
+``issue-site`` (Phase 02-4, ADR-0024) gives an institute its platform-issued
+address ``<slug>.<PUBLIC_SITE_DOMAIN>`` for the hosted enquiry page; it is
+refused when any institute holds that address or the institute already has
+an active one. Audited as ``platform.tenant.site_issued``.
 
 ``create-platform-admin`` (decision D6-1) creates the first ``SUPER_ADMIN``,
 or recovers access with ``--break-glass``. The password is **never** an
@@ -27,12 +33,17 @@ import argparse
 import asyncio
 import getpass
 import sys
+import uuid
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import TextIO
 
+from sqlalchemy import select
+
+from app.core.audit import AuditTarget, write_audit_event
 from app.core.config import ConfigurationError, Settings, load_settings
 from app.core.db import create_engine, create_sessionmaker
+from app.core.tenancy import system_context
 from app.integrations.storage import S3ObjectStorage
 from app.modules.identity.passwords import PasswordHasher
 from app.modules.platform_identity.bootstrap import (
@@ -41,6 +52,14 @@ from app.modules.platform_identity.bootstrap import (
     create_platform_admin,
     validate_password,
 )
+from app.modules.tenants.domains import (
+    DomainLimitError,
+    DomainTakenError,
+    issue_platform_subdomain,
+)
+from app.modules.tenants.events import SITE_ISSUED
+from app.modules.tenants.models import Tenant
+from app.modules.tenants.sites import InvalidSlugError, clean_slug
 from app.seed import (
     DEFAULT_SEED_FILE,
     SeededAccount,
@@ -82,7 +101,66 @@ def parser() -> argparse.ArgumentParser:
         "--tag",
         help="Load another, independent copy of the demo (1-16 lowercase letters or digits).",
     )
+    site = commands.add_parser(
+        "issue-site",
+        help="Give an institute its platform-issued site address (<slug>.<site domain>).",
+    )
+    site.add_argument("--tenant", required=True, type=uuid.UUID)
+    site.add_argument("--slug", required=True)
     return root
+
+
+async def _issue_site(settings: Settings, tenant_id: uuid.UUID, slug: str) -> str:
+    engine = create_engine(settings)
+    try:
+        async with system_context(create_sessionmaker(engine), tenant_id=tenant_id) as db:
+            if await db.scalar(select(Tenant.id).where(Tenant.id == tenant_id)) is None:
+                raise SiteRefusedError("no such institute")
+            hostname = await issue_platform_subdomain(
+                db, tenant_id, slug, site_domain=settings.public_site_domain
+            )
+            await write_audit_event(
+                db,
+                SITE_ISSUED,
+                target=AuditTarget("tenant", tenant_id),
+                metadata={"hostname": hostname},
+            )
+            return hostname
+    finally:
+        await engine.dispose()
+
+
+class SiteRefusedError(Exception):
+    """The address cannot be issued; the message is safe to print."""
+
+
+def run_issue_site(
+    tenant_id: uuid.UUID,
+    slug: str,
+    *,
+    settings_loader: Callable[[], Settings] = load_settings,
+) -> int:
+    try:
+        cleaned = clean_slug(slug)  # refused before any connection
+        settings = settings_loader()
+        hostname = asyncio.run(_issue_site(settings, tenant_id, cleaned))
+    except InvalidSlugError as error:
+        _out(sys.stderr, f"Refused: {error}")
+        return EXIT_REFUSED
+    except DomainTakenError:
+        _out(sys.stderr, "Refused: this address belongs to an institute already.")
+        return EXIT_REFUSED
+    except DomainLimitError:
+        _out(sys.stderr, "Refused: the institute already has an active site address.")
+        return EXIT_REFUSED
+    except SiteRefusedError as error:
+        _out(sys.stderr, f"Refused: {error}")
+        return EXIT_REFUSED
+    except ConfigurationError as error:
+        _out(sys.stderr, str(error))
+        return EXIT_CONFIGURATION
+    _out(sys.stdout, f"Site address issued: https://{hostname}/enquiry")
+    return EXIT_OK
 
 
 def read_password(prompt: Callable[[str], str] = getpass.getpass) -> str:
@@ -140,6 +218,7 @@ async def _seed(settings: Settings, institutes: tuple[SeedInstitute, ...]) -> li
             hasher,
             institutes,
             storage=storage,
+            site_domain=settings.public_site_domain,
         )
     finally:
         await engine.dispose()
@@ -180,6 +259,8 @@ def main(argv: Sequence[str] | None = None, *, prompt: Callable[[str], str] | No
     args = parser().parse_args(argv)
     if args.command == "seed":
         return run_seed(args.file, tag=args.tag)
+    if args.command == "issue-site":
+        return run_issue_site(args.tenant, args.slug)
     try:
         password = read_password(prompt or getpass.getpass)
         result = asyncio.run(_run(args, password))

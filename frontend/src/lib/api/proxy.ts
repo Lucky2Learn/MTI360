@@ -1,5 +1,5 @@
 import { UPSTREAM_UNAVAILABLE } from "./errors";
-import { apiCookieHeader, clientAddress } from "./forwarding";
+import { apiCookieHeader, clientAddress, publicHost } from "./forwarding";
 
 // Same-origin API proxy (T01-09A; D17, repository-structure.md §2). The
 // browser calls /api/v1/* on the application origin; the Next.js server
@@ -10,8 +10,11 @@ import { apiCookieHeader, clientAddress } from "./forwarding";
 // tenant cookie; T01-09B D9B-10),
 // X-CSRF-Token, Origin, Sec-Fetch-Site, Content-Type, Accept, User-Agent, and
 // X-Forwarded-For rebuilt with exactly one entry: the browser address
-// (clientAddress, trusting TRUSTED_PROXY_HOPS proxies in front of Next.js). Everything else — including a client-supplied
-// X-Forwarded-For chain or X-Request-ID — is dropped.
+// (clientAddress, trusting TRUSTED_PROXY_HOPS proxies in front of Next.js),
+// and for /api/v1/public/* only X-Forwarded-Host, rebuilt from this request's
+// Host (publicHost; Phase 02-4, ADR-0024). Everything else — including a
+// client-supplied X-Forwarded-For chain, X-Forwarded-Host or X-Request-ID —
+// is dropped.
 //
 // Returned response headers (allow-list): Set-Cookie (every one), X-Request-ID,
 // Retry-After, Content-Type, Cache-Control (no-store when the API sets none),
@@ -112,6 +115,8 @@ export function upstreamRequestHeaders(
     trustedProxyHops,
   );
   if (address) headers.set("x-forwarded-for", address);
+  const host = publicHost(incoming.get("host"), apiPath);
+  if (host) headers.set("x-forwarded-host", host);
   return headers;
 }
 

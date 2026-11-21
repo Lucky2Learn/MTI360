@@ -25,9 +25,12 @@ from app.core.db import create_engine, create_sessionmaker
 from app.core.errors import install_exception_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import RequestContextMiddleware
-from app.core.ratelimit import RedisRateLimiter
+from app.core.outbox import OutboxSignal
+from app.core.ratelimit import Limit, RedisRateLimiter
 from app.integrations.email import SmtpEmailSender
 from app.integrations.storage import S3ObjectStorage
+from app.modules.enquiries.service import RATE_LIMIT_NAMESPACE as ENQUIRY_RATE_LIMIT_NAMESPACE
+from app.modules.enquiries.service import EnquiryConfig, PublicEnquiries
 from app.modules.identity.members import MemberAdmin
 from app.modules.identity.passwords import PasswordHasher
 from app.modules.identity.service import IdentityConfig, IdentityService
@@ -144,12 +147,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         settings.redis_url.get_secret_value(), namespace=UPLOAD_RATE_LIMIT_NAMESPACE
     )
 
+    # Public enquiry (Phase 02-4, ADR-0024): its own rate-limit namespace, and the
+    # outbox wake-up signal. Neither opens a connection before it is used.
+    enquiries = PublicEnquiries(
+        factory=sessionmaker,
+        limiter=RedisRateLimiter.from_url(
+            settings.redis_url.get_secret_value(), namespace=ENQUIRY_RATE_LIMIT_NAMESPACE
+        ),
+        signal=OutboxSignal.from_url(settings.redis_url.get_secret_value()),
+        config=enquiry_config(settings),
+    )
+
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         yield
         await app.state.identity.rate_limiter.close()
         await app.state.platform_identity.rate_limiter.close()
         await app.state.upload_limiter.close()
+        await app.state.enquiries.limiter.close()
+        if app.state.enquiries.signal is not None:
+            await app.state.enquiries.signal.close()
         await engine.dispose()
 
     app = FastAPI(
@@ -172,6 +189,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.members = members
     app.state.storage = storage
     app.state.upload_limiter = upload_limiter
+    app.state.enquiries = enquiries
 
     install_exception_handlers(app)
     app.add_middleware(RequestContextMiddleware)
@@ -183,3 +201,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return HealthResponse()
 
     return app
+
+
+def enquiry_config(settings: Settings) -> EnquiryConfig:
+    """Public enquiry limits and retention from the settings (Phase 02-4)."""
+    return EnquiryConfig(
+        ip_limit=Limit(settings.enquiry_ip_limit, settings.enquiry_ip_window_seconds),
+        tenant_limit=Limit(settings.enquiry_tenant_limit, settings.enquiry_tenant_window_seconds),
+        duplicate_window=timedelta(seconds=settings.enquiry_duplicate_window_seconds),
+        retention_months=settings.enquiry_retention_months,
+        outbox_max_attempts=settings.outbox_max_attempts,
+    )

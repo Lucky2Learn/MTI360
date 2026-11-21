@@ -505,3 +505,34 @@ async def test_a_tagged_demo_is_a_separate_copy_next_to_an_earlier_one(h: Harnes
     assert visible <= own
     assert not visible & set(other)
     assert (await h.client.get(f"/api/v1/leads/{other[0]}")).status_code == 404
+
+
+async def test_the_seed_issues_each_institute_its_site_address(h: Harness) -> None:
+    """Phase 02-4: with a site domain, each institute gets ``<slug>-<tag>.<domain>``,
+    active and verified; an address already held refuses the seed with a clear error."""
+    tag = uuid.uuid7().hex[-12:]
+    institutes = tag_seed(load_seed(), tag)
+    await seed(
+        h.factory,
+        FAST_HASHER,
+        institutes,
+        storage=InMemoryObjectStorage(),
+        site_domain="mti360.in",
+    )
+    for institute, slug in zip(institutes, ("konkan", "coromandel"), strict=True):
+        rows = await h.owner(
+            "SELECT d.hostname, d.status, d.verified_at IS NOT NULL FROM tenant_domains d "
+            "JOIN tenants t ON t.id = d.tenant_id WHERE t.name = :n",
+            n=institute.name,
+        )
+        assert [tuple(row) for row in rows] == [(f"{slug}-{tag}.mti360.in", "ACTIVE", True)]
+    clash = tag_seed(load_seed(), f"{tag}x")
+    clash = (dataclasses.replace(clash[0], site_slug=f"konkan-{tag}"), *clash[1:])
+    with pytest.raises(SeedError, match=r"site address .* is taken"):
+        await seed(
+            h.factory,
+            FAST_HASHER,
+            clash,
+            storage=InMemoryObjectStorage(),
+            site_domain="mti360.in",
+        )

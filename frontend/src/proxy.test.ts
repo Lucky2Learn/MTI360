@@ -2,7 +2,7 @@
 import { NextRequest } from "next/server";
 import { describe, expect, it } from "vitest";
 
-import { config, proxy } from "./proxy";
+import { config, proxy, SITE_NOT_FOUND } from "./proxy";
 
 // src/proxy.ts (T01-09A; T01-04 UI contract §6.2 row 1): cookie presence
 // only — UX routing, never authorization.
@@ -43,13 +43,37 @@ describe("proxy", () => {
     expect(response.status).toBe(307);
   });
 
-  it("runs only for the tenant application and the platform", () => {
-    expect(config.matcher).toEqual([
+  it("runs for every page path, never for the API, Next.js internals or files", () => {
+    expect(config.matcher).toHaveLength(1);
+    const pattern = new RegExp(`^${config.matcher[0]}$`);
+    for (const path of [
+      "/",
       "/app",
-      "/app/:path*",
-      "/platform",
-      "/platform/:path*",
-    ]);
+      "/app/admissions/leads",
+      "/platform/tenants",
+      "/enquiry",
+      "/sites/x/y",
+      "/login",
+    ]) {
+      expect(pattern.test(path), path).toBe(true);
+    }
+    for (const path of [
+      "/api/v1/public/enquiries",
+      "/_next/static/chunks/a.js",
+      "/__nextjs_original-stack-frame",
+      "/favicon.ico",
+      "/fonts/inter.woff2",
+    ]) {
+      expect(pattern.test(path), path).toBe(false);
+    }
+  });
+
+  it("lets other application pages through untouched", () => {
+    for (const path of ["/", "/login", "/design-system"]) {
+      const response = proxy(request(path));
+      expect(response.headers.get("x-middleware-next")).toBe("1");
+      expect(response.headers.get("x-middleware-rewrite")).toBeNull();
+    }
   });
 
   it("never lets a platform cookie through to /app", () => {
@@ -106,5 +130,77 @@ describe("proxy — platform (T01-09B)", () => {
   it("does not treat a look-alike segment as an authentication route", () => {
     const response = proxy(request("/platform/login-history"));
     expect(response.status).toBe(307);
+  });
+});
+
+// Hosted institute pages (Phase 02-4, ADR-0024): routing by Host only.
+describe("proxy: hosted institute pages", () => {
+  const site = (path: string, host: string, cookie?: string) =>
+    new NextRequest(`http://${host}${path}`, {
+      headers: cookie ? { host, cookie } : { host },
+    });
+  const rewrite = (path: string, host: string, cookie?: string) =>
+    proxy(site(path, host, cookie)).headers.get("x-middleware-rewrite");
+
+  it("rewrites /enquiry on an institute address to the internal site route", () => {
+    expect(rewrite("/enquiry", "Konkan.mti360.in")).toBe(
+      "http://konkan.mti360.in/sites/konkan.mti360.in/enquiry",
+    );
+  });
+
+  it("ignores the port of the address", () => {
+    expect(rewrite("/enquiry", "konkan.mti360.in:8443")).toContain(
+      "/sites/konkan.mti360.in/enquiry",
+    );
+  });
+
+  it.each([
+    "/",
+    "/about",
+    "/app",
+    "/app/admissions/leads",
+    "/platform",
+    "/login",
+    "/sites/x/enquiry",
+  ])("serves the branded public 404 for %s on an institute address", (path) => {
+    expect(rewrite(path, "konkan.mti360.in", "__Host-mti360_tsid=x")).toBe(
+      `http://konkan.mti360.in/sites/konkan.mti360.in/${SITE_NOT_FOUND}`,
+    );
+  });
+
+  it("never redirects to a staff sign-in page on an institute address", () => {
+    const response = proxy(site("/app", "konkan.mti360.in"));
+    expect(response.status).not.toBe(307);
+    expect(response.headers.get("location")).toBeNull();
+  });
+
+  it.each([
+    "mti360.in",
+    "localhost:3100",
+    "app.example.com",
+    "a.b.mti360.in",
+    "konkan.mti360.in.evil.example",
+  ])("answers /enquiry on %s with the public 404", (host) => {
+    const name = host.replace(/:[0-9]+$/, "");
+    expect(rewrite("/enquiry", host)).toBe(
+      `http://${host}/sites/${name}/${SITE_NOT_FOUND}`,
+    );
+  });
+
+  it("never serves the internal route directly", () => {
+    for (const path of ["/sites", "/sites/konkan.mti360.in/enquiry"]) {
+      expect(rewrite(path, "localhost:3100")).toBe(
+        `http://localhost:3100/sites/localhost/${SITE_NOT_FOUND}`,
+      );
+    }
+  });
+
+  it("keeps /app and /platform behaviour on the application host", () => {
+    expect(proxy(site("/app", "localhost:3100")).status).toBe(307);
+    expect(
+      proxy(site("/platform/tenants", "localhost:3100")).headers.get(
+        "location",
+      ),
+    ).toContain("/platform/session-ended");
   });
 });

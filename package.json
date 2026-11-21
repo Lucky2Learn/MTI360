@@ -38,6 +38,7 @@
     "db:migrate": "uv run --locked --directory backend alembic upgrade head",
     "db:check": "uv run --locked --directory backend alembic check",
     "db:seed": "uv run --locked --directory backend python -m app.cli seed",
+    "worker": "uv run --locked --directory backend python -m app.worker",
     "stack:up": "node scripts/port-preflight.mjs stack && docker compose --profile infra --profile app up -d --wait postgres redis object-storage mailpit && docker compose --profile infra run --rm object-storage-init && docker compose --profile infra --profile app run --rm --build migrate && docker compose --profile infra --profile app up -d --build --wait api frontend"
   }
 }

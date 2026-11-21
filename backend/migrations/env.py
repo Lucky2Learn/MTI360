@@ -32,7 +32,11 @@ from app.core.db.base import Base
 config = context.config
 
 # Core packages that define tables.
-CORE_MODEL_MODULES: tuple[str, ...] = ("app.core.audit.models", "app.core.sequences.models")
+CORE_MODEL_MODULES: tuple[str, ...] = (
+    "app.core.audit.models",
+    "app.core.sequences.models",
+    "app.core.outbox.models",  # Phase 02-4
+)
 
 
 def load_all_models() -> MetaData:

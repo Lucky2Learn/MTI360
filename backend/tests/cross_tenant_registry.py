@@ -118,6 +118,18 @@ BUSINESS_ROUTES: Final = MappingProxyType(
     }
 )
 
+PUBLIC_SUITE: Final = "tests/integration/test_public_enquiry_api.py"
+PUBLIC_ROUTES: Final = MappingProxyType(
+    {
+        # Phase 02-4 (ADR-0024): the institute comes from the verified host only.
+        ("GET", "/api/v1/public/enquiry-form"): "test_the_form_belongs_to_the_verified_host_only",
+        ("POST", "/api/v1/public/enquiries"): (
+            "test_an_enquiry_becomes_a_website_lead_of_the_host_institute_only"
+        ),
+    }
+)
+"""Every public-realm route → its cross-tenant test in :data:`PUBLIC_SUITE`."""
+
 T01_SUITES: Final = MappingProxyType(
     {
         "app.modules.institute": "tests/integration/test_tenant_roles_campuses_api.py",

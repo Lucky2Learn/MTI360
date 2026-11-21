@@ -13,7 +13,9 @@ Loads ``database/seeds/dev.json`` (realistic maritime fixtures) into a
 * (Phase 02-2) applications at every stage with placeholder documents in the
   object storage, and admitted students (``app.seed_applications``);
 * (Phase 02-5) fee structures, fee invoices, offline payments and receipts
-  for the admitted students (``app.seed_finance``).
+  for the admitted students (``app.seed_finance``);
+* (Phase 02-4) with ``site_slug``, the institute's platform-issued address
+  ``<slug>.<PUBLIC_SITE_DOMAIN>`` for the hosted enquiry page.
 
 Rules (D16): every email uses a reserved ``.example`` domain; every password is
 random, generated here, never stored in the file, never printed, logged or
@@ -62,7 +64,13 @@ from app.modules.identity.models import MembershipCampus, TenantMembership, User
 from app.modules.identity.passwords import PasswordHasher, common_passwords
 from app.modules.institute.models import CAMPUS_CODE_PATTERN, Campus
 from app.modules.tenants.domain import TenantStatus
+from app.modules.tenants.domains import (
+    DomainLimitError,
+    DomainTakenError,
+    issue_platform_subdomain,
+)
 from app.modules.tenants.models import Tenant
+from app.modules.tenants.sites import InvalidSlugError, clean_slug
 from app.seed_admissions import (
     AdmissionsSeedError,
     SeedCourse,
@@ -113,6 +121,8 @@ class SeedInstitute:
     finance: SeedFinance = field(default_factory=SeedFinance)
     tag: str | None = None
     """Set by :func:`tag_seed`; recorded in the ``system.seed.applied`` audit event."""
+    site_slug: str | None = None
+    """Phase 02-4: the platform-issued address ``<slug>.<site domain>`` (none if unset)."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -232,6 +242,12 @@ def parse_seed(data: Mapping[str, Any]) -> tuple[SeedInstitute, ...]:
             )
         except (AdmissionsSeedError, FinanceSeedError) as error:
             raise SeedError(str(error)) from None
+        site_slug: str | None = None
+        if raw.get("site_slug") is not None:
+            try:
+                site_slug = clean_slug(str(raw["site_slug"]))
+            except InvalidSlugError as error:
+                raise SeedError(f"{where}.site_slug: {error}") from None
         institutes.append(
             SeedInstitute(
                 _text(raw.get("name"), f"{where}.name"),
@@ -242,6 +258,7 @@ def parse_seed(data: Mapping[str, Any]) -> tuple[SeedInstitute, ...]:
                 leads,
                 applications,
                 finance,
+                site_slug=site_slug,
             )
         )
     return tuple(institutes)
@@ -318,6 +335,7 @@ def tag_seed(institutes: Sequence[SeedInstitute], tag: str) -> tuple[SeedInstitu
             ),
             finance=finance(institute.finance),
             tag=tag,
+            site_slug=f"{institute.site_slug}-{tag}" if institute.site_slug else None,
         )
         for institute in institutes
     )
@@ -352,6 +370,7 @@ async def seed(
     *,
     storage: ObjectStorage,
     password_factory: Callable[[], str] = generate_password,
+    site_domain: str | None = None,
 ) -> list[SeededAccount]:
     """Create the fixtures; return each new account's one-time password (refused if seeded).
 
@@ -380,6 +399,16 @@ async def seed(
                     id=tenant_id, name=institute.name, status=institute.status.value, version=1
                 )
             )
+            if institute.site_slug and site_domain:
+                try:
+                    await issue_platform_subdomain(
+                        db, tenant_id, institute.site_slug, site_domain=site_domain
+                    )
+                except DomainTakenError, DomainLimitError:
+                    raise SeedError(
+                        f"the site address {institute.site_slug}.{site_domain} is taken; "
+                        "load another copy with a new --tag"
+                    ) from None
         async with system_context(factory, tenant_id=tenant_id) as db:
             campus_ids: dict[str, uuid.UUID] = {}
             for code, name in institute.campuses:
@@ -455,6 +484,7 @@ async def seed(
                 target=AuditTarget("tenant", tenant_id),
                 metadata={
                     "tag": institute.tag,
+                    "site_issued": bool(institute.site_slug and site_domain),
                     "campus_count": len(institute.campuses),
                     "member_count": len(institute.members),
                     "course_count": len(institute.courses),

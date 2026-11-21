@@ -29,6 +29,7 @@ Application source code is **not** bind-mounted into containers for day-to-day w
 | `pnpm stack:up` | Port preflight, then build images and run infrastructure, the one-shot `migrate` container, **then** the api and frontend containers |
 | `pnpm db:migrate` / `pnpm db:check` | Apply migrations to the local database (native) / fail when models and migrations differ |
 | `pnpm db:seed [--tag TAG]` | Load the development and demo fixtures (`APP_ENV=development` only; refuses a second untagged run). `--tag` loads another, independent copy and never changes existing data. See [demo.md](demo.md) |
+| `pnpm worker` | Outbox worker (Phase 02-4): delivers enquiry acknowledgement emails to Mailpit; `--once` for one pass. Hosted enquiry page setup: [public-enquiry.md](public-enquiry.md) |
 | `pnpm infra:reset` | **Deletes all local MTI 360 data**: removes MTI 360 containers, network and `mti360_*` volumes. Nothing else. |
 
 Stop the native `pnpm dev` servers before `pnpm stack:up` (and vice versa) — they use the same host ports.

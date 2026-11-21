@@ -3,6 +3,7 @@
   "institutes": [
     {
       "name": "Konkan Maritime Training Institute",
+      "site_slug": "konkan",
       "status": "ACTIVE",
       "campuses": [
         { "code": "MUM", "name": "Mumbai Campus" },
@@ -754,6 +755,7 @@
     },
     {
       "name": "Coromandel Nautical Academy",
+      "site_slug": "coromandel",
       "status": "TRIAL",
       "campuses": [{ "code": "CHE", "name": "Chennai Campus" }],
       "members": [

@@ -1,6 +1,7 @@
 """Development seed contract (T01-08, decision D16): the file and the command's guard."""
 
 import dataclasses
+import uuid
 from types import SimpleNamespace
 from typing import Any
 
@@ -387,3 +388,39 @@ def test_the_command_line_accepts_a_tag() -> None:
     args = cli.parser().parse_args(["seed", "--tag", "demo2"])
     assert (args.command, args.tag) == ("seed", "demo2")
     assert cli.parser().parse_args(["seed"]).tag is None
+
+
+# --- Site addresses (Phase 02-4) ----------------------------------------------------------
+
+
+def test_the_committed_institutes_have_site_addresses_and_tags_keep_them_apart() -> None:
+    institutes = load_seed(DEFAULT_SEED_FILE)
+    assert [i.site_slug for i in institutes] == ["konkan", "coromandel"]
+    tagged = tag_seed(institutes, "demo2")
+    assert [i.site_slug for i in tagged] == ["konkan-demo2", "coromandel-demo2"]
+
+
+@pytest.mark.parametrize("slug", ["www", "ab", "Konkan Maritime"])
+def test_an_invalid_site_slug_is_refused(slug: str) -> None:
+    document = _document()
+    document["institutes"][0]["site_slug"] = slug
+    with pytest.raises(SeedError, match="site_slug"):
+        parse_seed(document)
+
+
+def test_the_issue_site_command_refuses_an_invalid_slug_before_connecting(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    code = cli.run_issue_site(
+        uuid.uuid7(),
+        "www",
+        settings_loader=lambda: SimpleNamespace(public_site_domain="mti360.in"),  # type: ignore[arg-type,return-value]
+    )
+    assert code == cli.EXIT_REFUSED
+    assert "reserved" in capsys.readouterr().err
+
+
+def test_the_issue_site_command_line() -> None:
+    tenant = uuid.uuid7()
+    args = cli.parser().parse_args(["issue-site", "--tenant", str(tenant), "--slug", "konkan"])
+    assert (args.command, args.tenant, args.slug) == ("issue-site", tenant, "konkan")
