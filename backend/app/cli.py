@@ -4,13 +4,14 @@
     python -m app.cli create-platform-admin --email ADDRESS --display-name NAME \\
         --break-glass --reason "Only SUPER_ADMIN lost their authenticator"
 
-    python -m app.cli seed [--file PATH]
+    python -m app.cli seed [--file PATH] [--tag TAG]
 
 ``seed`` (T01-08, decision D16) loads ``database/seeds/dev.json`` into a
 **development** database only (``APP_ENV=development``). Each account gets a
 random password that is never printed, logged or stored in clear: developers
 set their own with the password reset flow (Mailpit locally). It refuses to
-run twice.
+run twice. ``--tag`` (Phase 02-3) loads the same demo again as new, separate
+institutes and accounts (``principal.TAG@...``), without touching earlier ones.
 
 ``create-platform-admin`` (decision D6-1) creates the first ``SUPER_ADMIN``,
 or recovers access with ``--break-glass``. The password is **never** an
@@ -40,7 +41,15 @@ from app.modules.platform_identity.bootstrap import (
     create_platform_admin,
     validate_password,
 )
-from app.seed import DEFAULT_SEED_FILE, SeededAccount, SeedError, load_seed, seed
+from app.seed import (
+    DEFAULT_SEED_FILE,
+    SeededAccount,
+    SeedError,
+    SeedInstitute,
+    load_seed,
+    seed,
+    tag_seed,
+)
 
 EXIT_OK = 0
 EXIT_REFUSED = 2
@@ -69,6 +78,10 @@ def parser() -> argparse.ArgumentParser:
         description="Passwords are random and never shown; use the password reset flow.",
     )
     seed_command.add_argument("--file", type=Path, default=DEFAULT_SEED_FILE)
+    seed_command.add_argument(
+        "--tag",
+        help="Load another, independent copy of the demo (1-16 lowercase letters or digits).",
+    )
     return root
 
 
@@ -107,8 +120,7 @@ def _out(stream: TextIO, message: str) -> None:
     stream.write(message + "\n")
 
 
-async def _seed(settings: Settings, path: Path) -> list[SeededAccount]:
-    institutes = load_seed(path)
+async def _seed(settings: Settings, institutes: tuple[SeedInstitute, ...]) -> list[SeededAccount]:
     engine = create_engine(settings)
     try:
         hasher = PasswordHasher(
@@ -123,18 +135,31 @@ async def _seed(settings: Settings, path: Path) -> list[SeededAccount]:
             access_key_id=settings.s3_access_key_id.get_secret_value(),
             secret_access_key=settings.s3_secret_access_key.get_secret_value(),
         )
-        return await seed(create_sessionmaker(engine), hasher, institutes, storage=storage)
+        return await seed(
+            create_sessionmaker(engine),
+            hasher,
+            institutes,
+            storage=storage,
+        )
     finally:
         await engine.dispose()
 
 
-def run_seed(path: Path, *, settings_loader: Callable[[], Settings] = load_settings) -> int:
+def run_seed(
+    path: Path,
+    *,
+    tag: str | None = None,
+    settings_loader: Callable[[], Settings] = load_settings,
+) -> int:
     try:
         settings = settings_loader()
         if settings.app_env != "development":
             _out(sys.stderr, "Refused: the development seed runs only with APP_ENV=development.")
             return EXIT_REFUSED
-        accounts = asyncio.run(_seed(settings, path))
+        institutes = load_seed(path)
+        if tag is not None:
+            institutes = tag_seed(institutes, tag)
+        accounts = asyncio.run(_seed(settings, institutes))
     except SeedError as refused:
         _out(sys.stderr, f"Refused: {refused}")
         return EXIT_REFUSED
@@ -142,7 +167,10 @@ def run_seed(path: Path, *, settings_loader: Callable[[], Settings] = load_setti
         _out(sys.stderr, str(error))
         return EXIT_CONFIGURATION
     # Never the passwords (CodeQL: clear-text logging): emails only.
-    _out(sys.stdout, "Development seed applied. Accounts (set a password with password reset):")
+    _out(sys.stdout, "Development seed applied. Institutes:")
+    for institute in institutes:
+        _out(sys.stdout, f"  {institute.name}")
+    _out(sys.stdout, "Accounts (set a password with password reset):")
     for account in accounts:
         _out(sys.stdout, f"  {account.email}")
     return EXIT_OK
@@ -151,7 +179,7 @@ def run_seed(path: Path, *, settings_loader: Callable[[], Settings] = load_setti
 def main(argv: Sequence[str] | None = None, *, prompt: Callable[[str], str] | None = None) -> int:
     args = parser().parse_args(argv)
     if args.command == "seed":
-        return run_seed(args.file)
+        return run_seed(args.file, tag=args.tag)
     try:
         password = read_password(prompt or getpass.getpass)
         result = asyncio.run(_run(args, password))

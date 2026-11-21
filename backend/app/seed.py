@@ -20,6 +20,11 @@ random, generated here, never stored in the file, never printed, logged or
 audited (developers set their own through the password reset flow); the seed
 refuses to run twice (an email already exists) and the command refuses to run
 outside ``APP_ENV=development``.
+
+Repeatable demo (Phase 02-3): :func:`tag_seed` gives the fixtures a tag, so the
+same demo can be loaded again as independent institutes (``seed --tag demo2``)
+next to an earlier copy. Nothing existing is changed, reset or deleted; a tag
+already used is refused like an untagged second run.
 Role names come from the file and are mapped to the code templates; they are
 never authorization logic.
 """
@@ -29,7 +34,7 @@ import re
 import secrets
 import uuid
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Final, cast
@@ -72,6 +77,7 @@ from app.seed_finance import Actor, FinanceSeedError, SeedFinance, parse_finance
 DEFAULT_SEED_FILE: Final = Path(__file__).resolve().parents[2] / "database" / "seeds" / "dev.json"
 SEEDED: Final = AuditEventType("system.seed.applied", AuditCategory.ADMIN)
 SEED_STATUSES: Final = frozenset({TenantStatus.TRIAL, TenantStatus.ACTIVE})
+SEED_TAG_PATTERN: Final = re.compile(r"[a-z0-9]{1,16}")
 
 USERS = cast(Table, User.__table__)
 CREDENTIALS = cast(Table, UserCredential.__table__)
@@ -105,6 +111,8 @@ class SeedInstitute:
     leads: tuple[SeedLead, ...] = ()
     applications: tuple[SeedApplication, ...] = ()
     finance: SeedFinance = field(default_factory=SeedFinance)
+    tag: str | None = None
+    """Set by :func:`tag_seed`; recorded in the ``system.seed.applied`` audit event."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -249,6 +257,72 @@ def load_seed(path: Path = DEFAULT_SEED_FILE) -> tuple[SeedInstitute, ...]:
     return parse_seed(data)
 
 
+def tag_seed(institutes: Sequence[SeedInstitute], tag: str) -> tuple[SeedInstitute, ...]:
+    """The same fixtures as new institutes and accounts, for a repeatable demo (02-3).
+
+    ``tag`` (1-16 lowercase letters or digits) goes into every member email
+    (``principal.demo2@konkan-maritime.example``, still a ``.example`` domain)
+    and every reference to one, and after each institute name. Codes, keys and
+    contacts are per institute, so they stay as they are.
+    """
+    if not SEED_TAG_PATTERN.fullmatch(tag):
+        raise SeedError("tag: 1-16 lowercase letters or digits")
+
+    def email(address: str) -> str:
+        local, domain = address.split("@")
+        return f"{local}.{tag}@{domain}"
+
+    def optional(address: str | None) -> str | None:
+        return email(address) if address else None
+
+    def finance(f: SeedFinance) -> SeedFinance:
+        return SeedFinance(
+            fee_structures=tuple(
+                replace(s, created_by=email(s.created_by)) for s in f.fee_structures
+            ),
+            invoices=tuple(
+                replace(
+                    invoice,
+                    issued_by=email(invoice.issued_by),
+                    cancelled_by=optional(invoice.cancelled_by),
+                    payments=tuple(
+                        replace(
+                            payment,
+                            recorded_by=email(payment.recorded_by),
+                            confirmed_by=optional(payment.confirmed_by),
+                            closed_by=optional(payment.closed_by),
+                        )
+                        for payment in invoice.payments
+                    ),
+                )
+                for invoice in f.invoices
+            ),
+        )
+
+    return tuple(
+        replace(
+            institute,
+            name=f"{institute.name} ({tag})",
+            members=tuple(replace(m, email=email(m.email)) for m in institute.members),
+            leads=tuple(
+                replace(lead, owner=optional(lead.owner), created_by=email(lead.created_by))
+                for lead in institute.leads
+            ),
+            applications=tuple(
+                replace(
+                    application,
+                    created_by=email(application.created_by),
+                    reviewed_by=optional(application.reviewed_by),
+                )
+                for application in institute.applications
+            ),
+            finance=finance(institute.finance),
+            tag=tag,
+        )
+        for institute in institutes
+    )
+
+
 async def _identity(
     db: AsyncSession, email: str, display_name: str, password_hash: str, now: datetime
 ) -> uuid.UUID:
@@ -286,7 +360,10 @@ async def seed(
     async with system_context(factory) as db:
         taken = await db.scalars(select(USERS.c.email).where(USERS.c.email.in_(emails)))
         if list(taken):
-            raise SeedError("the development seed has already been applied (an email exists)")
+            raise SeedError(
+                "the development seed has already been applied (an email exists); "
+                "load another copy with a new --tag"
+            )
     accounts = {email: password_factory() for email in emails}
     hashes = {email: await hasher.hash(password) for email, password in accounts.items()}
     names = {m.email: m.display_name for i in institutes for m in i.members}
@@ -377,6 +454,7 @@ async def seed(
                 SEEDED,
                 target=AuditTarget("tenant", tenant_id),
                 metadata={
+                    "tag": institute.tag,
                     "campus_count": len(institute.campuses),
                     "member_count": len(institute.members),
                     "course_count": len(institute.courses),

@@ -2,13 +2,14 @@
 
 The seed creates working institutes (owners sign in with the one-time
 passwords it returns), refuses to run twice, and stores no password in
-clear. Emails are made unique per run because the test database keeps rows.
+clear. Emails are made unique per run because the test database keeps rows:
+each test loads its own tagged copy (Phase 02-3, ``tag_seed``).
 """
 
 import dataclasses
 import uuid
 from collections import Counter
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator
 from typing import Any
 
 import pytest
@@ -19,8 +20,8 @@ from app import seed as seed_module
 from app.integrations.storage import InMemoryObjectStorage
 from app.modules.access.templates import system_role_templates
 from app.modules.leads.domain import LeadStatus
-from app.seed import SeedError, SeedInstitute, load_seed, seed
-from app.seed_finance import SeedFinance, SeedInvoice, seed_finance
+from app.seed import SeedError, SeedInstitute, load_seed, seed, tag_seed
+from app.seed_finance import SeedInvoice, seed_finance
 
 pytestmark = [pytest.mark.anyio, pytest.mark.integration]
 
@@ -32,71 +33,9 @@ async def h(migrated_database: DatabaseUnderTest, redis_url: str) -> AsyncIterat
 
 
 def _unique(institutes: tuple[SeedInstitute, ...]) -> tuple[SeedInstitute, ...]:
-    suffix = uuid.uuid7().hex[-8:]
-
-    def email(address: str) -> str:
-        local, domain = address.split("@")
-        return f"{local}.{suffix}@{domain}"
-
-    return tuple(
-        dataclasses.replace(
-            institute,
-            name=f"{institute.name} {suffix}",
-            members=tuple(
-                dataclasses.replace(member, email=email(member.email))
-                for member in institute.members
-            ),
-            # Phase 02-1: leads reference members by their seed email.
-            leads=tuple(
-                dataclasses.replace(
-                    lead,
-                    owner=email(lead.owner) if lead.owner else None,
-                    created_by=email(lead.created_by),
-                )
-                for lead in institute.leads
-            ),
-            # Phase 02-2: applications reference members by their seed email too.
-            applications=tuple(
-                dataclasses.replace(
-                    application,
-                    created_by=email(application.created_by),
-                    reviewed_by=email(application.reviewed_by) if application.reviewed_by else None,
-                )
-                for application in institute.applications
-            ),
-            # Phase 02-5: fee structures, fee invoices and payments name members by email.
-            finance=_finance_emails(institute.finance, email),
-        )
-        for institute in institutes
-    )
-
-
-def _finance_emails(finance: SeedFinance, email: Callable[[str], str]) -> SeedFinance:
-    def optional(address: str | None) -> str | None:
-        return email(address) if address else None
-
-    return SeedFinance(
-        fee_structures=tuple(
-            dataclasses.replace(s, created_by=email(s.created_by)) for s in finance.fee_structures
-        ),
-        invoices=tuple(
-            dataclasses.replace(
-                invoice,
-                issued_by=email(invoice.issued_by),
-                cancelled_by=optional(invoice.cancelled_by),
-                payments=tuple(
-                    dataclasses.replace(
-                        payment,
-                        recorded_by=email(payment.recorded_by),
-                        confirmed_by=optional(payment.confirmed_by),
-                        closed_by=optional(payment.closed_by),
-                    )
-                    for payment in invoice.payments
-                ),
-            )
-            for invoice in finance.invoices
-        ),
-    )
+    """A fresh copy per test, through the product's demo tag (Phase 02-3): the test
+    database keeps rows, and every member reference must follow its member."""
+    return tag_seed(institutes, uuid.uuid7().hex[-12:])
 
 
 async def test_the_seed_creates_working_institutes_once(h: Harness) -> None:
@@ -494,3 +433,75 @@ async def test_a_failure_while_seeding_finance_leaves_no_finance_data_or_numbers
     with pytest.raises(SeedError, match="already been applied"):
         await seed(h.factory, FAST_HASHER, institutes, storage=InMemoryObjectStorage())
     assert await h.owner(_COUNTS) == before
+
+
+# --- Repeatable demo (Phase 02-3) -----------------------------------------------------------
+
+_TENANT_ROWS = (
+    "SELECT (SELECT count(*) FROM tenant_memberships WHERE tenant_id = :t), "
+    "(SELECT count(*) FROM leads WHERE tenant_id = :t), "
+    "(SELECT count(*) FROM applications WHERE tenant_id = :t), "
+    "(SELECT count(*) FROM invoices WHERE tenant_id = :t), "
+    "(SELECT max(version) FROM tenants WHERE id = :t)"
+)
+
+
+async def test_a_tagged_demo_is_a_separate_copy_next_to_an_earlier_one(h: Harness) -> None:
+    """The same demo loads again under a new tag as new institutes and accounts. The
+    earlier copy is untouched, a used tag is refused with nothing written, and the
+    copies are isolated from each other like any two institutes."""
+    template = load_seed()
+    earlier = _unique(template)
+    await seed(h.factory, FAST_HASHER, earlier, storage=InMemoryObjectStorage())
+    earlier_konkan = await _tenant(h, earlier[0].name)
+    untouched = await h.owner(_TENANT_ROWS, t=earlier_konkan)
+
+    tag = uuid.uuid7().hex[-12:]
+    demo = tag_seed(template, tag)
+    accounts = {
+        a.email: a.password
+        for a in await seed(h.factory, FAST_HASHER, demo, storage=InMemoryObjectStorage())
+    }
+    assert set(accounts) == {m.email for i in demo for m in i.members}
+    assert all(f".{tag}@" in email for email in accounts)
+    assert await h.owner(_TENANT_ROWS, t=earlier_konkan) == untouched
+
+    konkan = await _tenant(h, demo[0].name)
+    assert konkan != earlier_konkan
+    for institute in demo:
+        audit = await h.owner(
+            "SELECT metadata FROM audit_events WHERE event_type = 'system.seed.applied' "
+            "AND tenant_id = :t",
+            t=await _tenant(h, institute.name),
+        )
+        assert [row[0]["tag"] for row in audit] == [tag]
+
+    before = await h.owner("SELECT count(*) FROM tenants")
+    with pytest.raises(SeedError, match="already been applied"):
+        await seed(h.factory, FAST_HASHER, demo, storage=InMemoryObjectStorage())
+    assert await h.owner("SELECT count(*) FROM tenants") == before
+
+    # The new copy's Mumbai counsellor sees their own institute's leads only.
+    counsellor = next(m for m in demo[0].members if m.campuses == ("MUM",))
+    h.client.cookies.clear()
+    login = await h.client.post(
+        "/api/v1/auth/login",
+        json={"email": counsellor.email, "password": accounts[counsellor.email]},
+    )
+    assert login.status_code == 200, login.text
+    leads = await h.client.get(
+        "/api/v1/leads", params={"status": [s.value for s in LeadStatus], "limit": 100}
+    )
+    assert leads.status_code == 200
+    visible = {lead["id"] for lead in leads.json()["data"]}
+    own = {
+        str(row[0]) for row in await h.owner("SELECT id FROM leads WHERE tenant_id = :t", t=konkan)
+    }
+    other = [
+        str(row[0])
+        for row in await h.owner("SELECT id FROM leads WHERE tenant_id = :t", t=earlier_konkan)
+    ]
+    assert visible
+    assert visible <= own
+    assert not visible & set(other)
+    assert (await h.client.get(f"/api/v1/leads/{other[0]}")).status_code == 404
