@@ -49,6 +49,7 @@ export function StudentList({
   const columns: DataTableColumn<StudentListItemWire>[] = [
     {
       id: "student_number",
+      noWrap: true,
       header: "Student number",
       isSortable: true,
       cell: (student) => (

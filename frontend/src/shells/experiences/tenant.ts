@@ -132,8 +132,12 @@ export const tenantExperience: ApplicationExperience = {
             "Certificates",
           ],
           {},
-          // The institute course catalogue (ACA-01), Phase 02-1.
-          { Courses: permission("course.read") },
+          // The institute course catalogue (ACA-01), Phase 02-1; batches
+          // (ACA-05/06/07), Phase 02-6.
+          {
+            Courses: permission("course.read"),
+            Batches: permission("batch.read"),
+          },
         ),
         group(
           "Finance",

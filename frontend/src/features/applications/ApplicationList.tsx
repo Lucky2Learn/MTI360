@@ -79,6 +79,7 @@ export function ApplicationList({
   const columns: DataTableColumn<ApplicationListItemWire>[] = [
     {
       id: "number",
+      noWrap: true,
       header: "Application",
       isSortable: true,
       cell: (item) => (

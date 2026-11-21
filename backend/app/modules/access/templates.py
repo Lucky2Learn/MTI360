@@ -28,7 +28,9 @@ migration ``0010`` extended them (and the Owner/Admin clones) with the 02-2
 permissions. Migration ``0011`` added the finance templates, gave the
 Owner/Admin clones every finance permission, the Admissions manager
 ``fee_structure.read`` and ``invoice.read``, and the Counsellor
-``fee_structure.read``.
+``fee_structure.read``. Migration ``0014`` (Phase 02-6) gave the Owner/Admin
+clones and the Admissions manager every batch permission, and the Counsellor
+and both finance templates ``batch.read``.
 
 Templates are expanded here to explicit permission codes, never stored as
 wildcards (D-B3).
@@ -46,6 +48,7 @@ from app.modules.applications.permissions import (
     APPLICATION_REVIEW,
     APPLICATION_UPDATE,
 )
+from app.modules.batches.permissions import BATCH_ALLOCATE, BATCH_MANAGE, BATCH_READ
 from app.modules.courses.permissions import COURSE_MANAGE, COURSE_READ
 from app.modules.documents.permissions import DOCUMENT_READ, DOCUMENT_UPLOAD, DOCUMENT_VERIFY
 from app.modules.finance.permissions import (
@@ -139,6 +142,9 @@ def system_role_templates() -> tuple[RoleTemplate, ...]:
                 STUDENT_READ,
                 FEE_STRUCTURE_READ,
                 INVOICE_READ,
+                BATCH_READ,
+                BATCH_MANAGE,
+                BATCH_ALLOCATE,
             ),
         ),
         RoleTemplate(
@@ -157,6 +163,7 @@ def system_role_templates() -> tuple[RoleTemplate, ...]:
                 DOCUMENT_UPLOAD,
                 STUDENT_READ,
                 FEE_STRUCTURE_READ,
+                BATCH_READ,
             ),
         ),
         RoleTemplate(
@@ -173,6 +180,7 @@ def system_role_templates() -> tuple[RoleTemplate, ...]:
                 PAYMENT_REVERSE,
                 COURSE_READ,
                 STUDENT_READ,
+                BATCH_READ,
             ),
         ),
         RoleTemplate(
@@ -186,6 +194,7 @@ def system_role_templates() -> tuple[RoleTemplate, ...]:
                 PAYMENT_RECORD,
                 COURSE_READ,
                 STUDENT_READ,
+                BATCH_READ,
             ),
         ),
     )

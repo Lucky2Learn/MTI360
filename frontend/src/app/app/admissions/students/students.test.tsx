@@ -292,6 +292,34 @@ describe("ADM-12 Student 360 Fees (Phase 02-5; ADR-0022 addendum R2)", () => {
     },
   );
 
+  it("keeps the Partly paid and Overdue badges whole: the row stacks below the large breakpoint", async () => {
+    state.session = readySession({ permissions: FINANCE_OFFICER });
+    profileReads();
+    state.reads.unshift([
+      "/invoices",
+      ok(
+        [
+          invoice({
+            admission: { id: "adm-1", number: "ADM-2026-00007" },
+            status: "PARTIALLY_PAID",
+            overdue: true,
+          }),
+        ],
+        1,
+      ),
+    ]);
+    await show(profile());
+    const fees = screen.getByRole("list", { name: "Fee invoices" });
+    expect(within(fees).getByText("Partly paid")).toBeInTheDocument();
+    expect(within(fees).getByText("Overdue")).toBeInTheDocument();
+    // Side by side only from `large`: at 768-1439 px the details (and so the
+    // badges) keep the full column width instead of being squeezed by the
+    // balance and the Record payment button.
+    const row = within(fees).getByText("Overdue").closest("li")!;
+    expect(row).toHaveClass("flex-col", "large:flex-row");
+    expect(row.className).not.toMatch(/(^|\s)tablet:flex-row/);
+  });
+
   it("offers Raise fee invoice for an admission without a live one; empty says only what is visible", async () => {
     state.session = readySession({ permissions: FINANCE_OFFICER });
     profileReads();
@@ -332,5 +360,147 @@ describe("ADM-12 Student 360 Fees (Phase 02-5; ADR-0022 addendum R2)", () => {
     expect(
       screen.queryByRole("link", { name: /Raise fee invoice/ }),
     ).toBeNull();
+  });
+});
+
+describe("ADM-12 Student 360 Batch (Phase 02-6)", () => {
+  const BATCH = "0199a1b2-0000-7000-8000-00000000b001";
+  const enrolled = () =>
+    student({
+      admissions: student().admissions.map((admission) => ({
+        ...admission,
+        status: "ENROLLED" as const,
+        current_batch: {
+          id: BATCH,
+          code: "DNS-2026-C",
+          name: "DNS Batch 2026-C",
+        },
+      })),
+    });
+  const allocation = (overrides: Record<string, unknown> = {}) => ({
+    id: "alloc-1",
+    batch: { id: BATCH, code: "DNS-2026-C", name: "DNS Batch 2026-C" },
+    course: { id: "c1", code: "DNS", name: "Diploma in Nautical Science" },
+    campus_id: "k1",
+    campus_name: "Kochi Campus",
+    admission_id: "adm-1",
+    admission_number: "ADM-2026-00007",
+    student: {
+      id: IDS.student,
+      number: "STU-2026-00007",
+      full_name: "Arjun Nair",
+    },
+    status: "ACTIVE",
+    payment_basis: "TRANSFER",
+    payment_override: null,
+    transferred_from_id: "alloc-0",
+    transferred_from_batch_code: "DNS-2026-B",
+    transferred_to_batch_code: null,
+    allocated_at: "2026-10-20T05:30:00Z",
+    allocated_by: { display_name: "Maya Iyer" },
+    end_reason: null,
+    end_note: null,
+    ended_at: null,
+    ended_by: null,
+    version: 1,
+    ...overrides,
+  });
+
+  it.each(["light", "dark"] as const)(
+    "shows the current batch, transfers and the payment override, and passes axe (%s)",
+    async (theme) => {
+      state.session = readySession({
+        permissions: [...ADMISSIONS_COUNSELLOR, "batch.read"],
+      });
+      profileReads();
+      state.reads = state.reads.map((entry): [string, ReadResult<unknown>] =>
+        entry[0] === S ? [S, ok(enrolled())] : entry,
+      );
+      state.reads.unshift([
+        "/batch-allocations",
+        ok(
+          [
+            allocation(),
+            allocation({
+              id: "alloc-0",
+              batch: {
+                id: "b0",
+                code: "DNS-2026-B",
+                name: "DNS Batch 2026-B",
+              },
+              status: "ENDED",
+              payment_basis: "OVERRIDE",
+              payment_override: {
+                reason: "Sponsor letter from the shipping company",
+                invoice_state: "NO_INVOICE",
+                outstanding_minor: null,
+              },
+              transferred_from_id: null,
+              transferred_from_batch_code: null,
+              transferred_to_batch_code: "DNS-2026-C",
+              end_reason: "TRANSFERRED",
+              end_note: "Prefers the evening batch",
+              ended_at: "2026-10-20T05:30:00Z",
+              ended_by: { display_name: "Maya Iyer" },
+            }),
+          ],
+          2,
+        ),
+      ]);
+      const { container } = await show(profile(), theme);
+      const read = state.paths.find((p) => p.startsWith("/batch-allocations"))!;
+      expect(new URLSearchParams(read.split("?")[1]).get("student_id")).toBe(
+        IDS.student,
+      );
+      expect(screen.getByText("Enrolled")).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", {
+          name: "Batch DNS-2026-C · DNS Batch 2026-C",
+        }),
+      ).toHaveAttribute("href", `/app/academics/batches/${BATCH}`);
+      const card = screen
+        .getByRole("heading", { name: "Batch" })
+        .closest("section")!;
+      expect(within(card).getByText("Current")).toBeInTheDocument();
+      expect(within(card).getByText("Transferred out")).toBeInTheDocument();
+      expect(within(card).getByText(/from DNS-2026-B/)).toBeInTheDocument();
+      expect(
+        within(card).getByText(/Prefers the evening batch/),
+      ).toBeInTheDocument();
+      expect(within(card).getByText("Fee override")).toBeInTheDocument();
+      expect(within(card).getByText(/Sponsor letter/)).toBeInTheDocument();
+      expectHeadingOutline(container);
+      await expectNoA11yViolations(container);
+    },
+  );
+
+  it("labels batch history in the timeline; reads no batches without batch.read", async () => {
+    profileReads();
+    state.reads.unshift([
+      `${S}/activity`,
+      ok(
+        [
+          timelineEntry({
+            id: "tl-b",
+            source: "batch",
+            kind: "ALLOCATED",
+            details: {
+              batch_code: "DNS-2026-B",
+              admission_number: "ADM-2026-00007",
+              payment_basis: "PAID",
+            },
+          }),
+        ],
+        1,
+      ),
+    ]);
+    await show(profile());
+    expect(
+      screen.getByText(/Batch: Allocated to DNS-2026-B/),
+    ).toBeInTheDocument();
+    expect(state.paths.some((p) => p.startsWith("/batch-allocations"))).toBe(
+      false,
+    );
+    expect(screen.queryByRole("heading", { name: "Batch" })).toBeNull();
   });
 });

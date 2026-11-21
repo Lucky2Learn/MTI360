@@ -16,7 +16,8 @@ class StudentStatus(StrEnum):
 
 class AdmissionStatus(StrEnum):
     ADMITTED = "ADMITTED"
-    """``ENROLLED`` and ``CANCELLED`` arrive with batches and finance (L3)."""
+    ENROLLED = "ENROLLED"
+    """Allocated to a batch (Phase 02-6); withdrawal returns it to ``ADMITTED``."""
 
 
 class StudentChoice(StrEnum):

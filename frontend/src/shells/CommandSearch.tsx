@@ -75,7 +75,9 @@ export function CommandSearch({
 
   return (
     <>
-      <span className="hidden tablet:flex">
+      {/* The labelled trigger from desktop; the icon below it (the tablet header
+          also carries the institute and campus context). */}
+      <span className="hidden desktop:flex">
         <Button
           variant="secondary"
           iconStart={SearchIcon}
@@ -91,7 +93,7 @@ export function CommandSearch({
           </kbd>
         </Button>
       </span>
-      <span className="flex tablet:hidden">
+      <span className="flex desktop:hidden">
         <IconButton
           label="Search"
           icon={SearchIcon}

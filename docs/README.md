@@ -53,6 +53,9 @@ Recommended reading order (CLAUDE.md §2):
 | [0020](adr/0020-courses-and-leads.md) | Courses and Leads (Phase 02-1) | Accepted |
 | [0021](adr/0021-admissions-core.md) | Admissions Core: Applications, Documents, Admission and Students (Phase 02-2) | Accepted |
 | [0022](adr/0022-finance-lite.md) | Finance-lite: fee structures, non-tax fee invoices, offline payments and receipts, financial-year numbering (Phase 02-5) | Accepted (not implemented) |
+| [0023](adr/0023-membership-owner-scope-and-reinvitation.md) | Membership owner scope and safe re-invitation: owners keep all-campus access, owner counting, re-invitation clears roles, `is_owner` role flag (supersedes ADR-0019 §10.3 in part and §10.4) | Accepted |
+| [0024](adr/0024-public-enquiry.md) | Public enquiry: platform-issued institute hosts (`tenant_domains`), host-only tenant resolution, consented website leads, transactional outbox and worker | Accepted |
+| [0025](adr/0025-batches.md) | Batches: allocation of admitted students, payment gate with recorded override (decision B), transfer and withdrawal with history, database-enforced seats | Accepted |
 
 ADR format: Status, Context, Decision, Consequences, Alternatives considered. ADRs are immutable once accepted; a change is made by a new ADR that supersedes the old one.
 

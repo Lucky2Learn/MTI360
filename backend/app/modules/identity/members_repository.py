@@ -21,6 +21,7 @@ from app.core.ids import new_id
 from app.core.pagination import SortField
 from app.core.search import escape_like
 from app.modules.access.models import MembershipRole, Role
+from app.modules.access.templates import OWNER_TEMPLATE
 from app.modules.identity.domain import CampusScope, MembershipStatus, UserStatus
 from app.modules.identity.models import MembershipCampus, TenantMembership, User, UserInvitation
 from app.modules.institute.models import Campus
@@ -50,6 +51,8 @@ class MemberRole:
     id: uuid.UUID
     name: str
     is_system: bool
+    is_owner: bool = False
+    """The ``INSTITUTE_OWNER`` system role (ADR-0023 §5)."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,7 +95,13 @@ async def _details(db: AsyncSession, tenant_id: uuid.UUID, rows: Sequence[Any]) 
     campuses: dict[uuid.UUID, list[uuid.UUID]] = {member_id: [] for member_id in ids}
     if ids:
         role_rows = await db.execute(
-            select(MEMBERSHIP_ROLES.c.membership_id, ROLES.c.id, ROLES.c.name, ROLES.c.is_system)
+            select(
+                MEMBERSHIP_ROLES.c.membership_id,
+                ROLES.c.id,
+                ROLES.c.name,
+                ROLES.c.is_system,
+                ROLES.c.template_code,
+            )
             .select_from(
                 MEMBERSHIP_ROLES.join(
                     ROLES,
@@ -107,7 +116,8 @@ async def _details(db: AsyncSession, tenant_id: uuid.UUID, rows: Sequence[Any]) 
             .order_by(ROLES.c.is_system.desc(), ROLES.c.name, ROLES.c.id)
         )
         for row in role_rows:
-            roles[row.membership_id].append(MemberRole(row.id, row.name, row.is_system))
+            is_owner = row.is_system and row.template_code == OWNER_TEMPLATE.value
+            roles[row.membership_id].append(MemberRole(row.id, row.name, row.is_system, is_owner))
         campus_rows = await db.execute(
             select(MEMBERSHIP_CAMPUSES.c.membership_id, MEMBERSHIP_CAMPUSES.c.campus_id)
             .where(

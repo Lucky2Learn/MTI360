@@ -15,3 +15,5 @@ OWNER_INVITED = AuditEventType("platform.tenant.owner_invited", _A)
 OWNER_INVITATION_RESENT = AuditEventType("platform.tenant.owner_invitation.resent", _A)
 TENANT_SUSPENDED = AuditEventType("platform.tenant.suspended", _A)
 TENANT_REACTIVATED = AuditEventType("platform.tenant.reactivated", _A)
+SITE_ISSUED = AuditEventType("platform.tenant.site_issued", _A)
+"""A platform-issued site address (Phase 02-4, ADR-0024); metadata: the hostname."""

@@ -16,6 +16,8 @@ import {
   STUDENTS_PATH,
   studentPath,
 } from "@/features/applications/labels";
+import { BATCH_READ, batchPath } from "@/features/batches/labels";
+import { StudentBatches } from "@/features/batches/StudentBatches";
 import { CATEGORY_LABEL } from "@/features/courses/labels";
 import { DownloadLink } from "@/features/documents/DocumentsPanel";
 import {
@@ -33,6 +35,7 @@ import type {
   StudentWire,
   TimelineEntryWire,
 } from "@/lib/api/admissions";
+import type { AllocationWire } from "@/lib/api/batches";
 import type { InvoiceWire } from "@/lib/api/finance";
 import { tenantApiRead } from "@/lib/api/server-read";
 import { can } from "@/lib/authz/requirements";
@@ -51,9 +54,10 @@ import type { ReactNode } from "react";
 // 02-2; ADR-0021 §6, §14) with ADM-13 Admissions and ADM-14 Documents as its
 // sections, and Fees (Phase 02-5; ADR-0022 addendum R2) for members with
 // invoice.read, read from GET /invoices?student_id=… (no student-fees route).
-// Batch, attendance, training, exams, certificates, placement and
-// communication arrive with their modules: an intentional empty state says
-// so instead of showing invented data.
+// Batch (Phase 02-6) for members with batch.read, read from
+// GET /batch-allocations?student_id=…. Attendance, training, exams,
+// certificates, placement and communication arrive with their modules: an
+// intentional empty state says so instead of showing invented data.
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
@@ -63,7 +67,6 @@ export const metadata: Metadata = {
 type Props = { params: Promise<{ studentId: string }> };
 
 const LATER = [
-  "Batch",
   "Attendance",
   "Training",
   "Exams",
@@ -126,11 +129,22 @@ function Admissions({ student }: { student: StudentWire }) {
               <li key={admission.id} className="flex flex-col gap-1">
                 <span className="flex flex-wrap items-center gap-2 text-body-sm font-medium text-text-primary">
                   {`${admission.course_code} · ${admission.course_name}`}
-                  <Badge tone="success">Admitted</Badge>
+                  <Badge
+                    tone={admission.status === "ENROLLED" ? "info" : "success"}
+                  >
+                    {admission.status === "ENROLLED" ? "Enrolled" : "Admitted"}
+                  </Badge>
                 </span>
                 <span className="text-caption text-text-secondary">
                   {`${admission.admission_number} · ${CATEGORY_LABEL[admission.course_category]} · ${admission.campus.name} · ${formatDate(admission.approved_at)}`}
                 </span>
+                {admission.current_batch && (
+                  <span className="text-caption">
+                    <RecordLink href={batchPath(admission.current_batch.id)}>
+                      {`Batch ${admission.current_batch.code} · ${admission.current_batch.name}`}
+                    </RecordLink>
+                  </span>
+                )}
                 <span className="text-caption">
                   <RecordLink href={applicationPath(admission.application_id)}>
                     {`Application ${admission.application_number}`}
@@ -202,20 +216,27 @@ export default async function StudentPage({ params }: Props) {
     );
   }
   const readsFees = can(session.permissions, INVOICE_READ);
-  const [read, documentsRead, timelineRead, feesRead] = await Promise.all([
-    tenantApiRead<StudentWire>(`/students/${id}`),
-    can(session.permissions, DOCUMENT_READ)
-      ? tenantApiRead<{ items: StudentDocumentWire[] }>(
-          `/students/${id}/documents`,
-        )
-      : null,
-    tenantApiRead<TimelineEntryWire[]>(`/students/${id}/activity?limit=50`),
-    readsFees
-      ? tenantApiRead<InvoiceWire[]>(
-          `/invoices?student_id=${id}&sort=-issued_at&limit=100`,
-        )
-      : null,
-  ]);
+  const readsBatches = can(session.permissions, BATCH_READ);
+  const [read, documentsRead, timelineRead, feesRead, batchesRead] =
+    await Promise.all([
+      tenantApiRead<StudentWire>(`/students/${id}`),
+      can(session.permissions, DOCUMENT_READ)
+        ? tenantApiRead<{ items: StudentDocumentWire[] }>(
+            `/students/${id}/documents`,
+          )
+        : null,
+      tenantApiRead<TimelineEntryWire[]>(`/students/${id}/activity?limit=50`),
+      readsFees
+        ? tenantApiRead<InvoiceWire[]>(
+            `/invoices?student_id=${id}&sort=-issued_at&limit=100`,
+          )
+        : null,
+      readsBatches
+        ? tenantApiRead<AllocationWire[]>(
+            `/batch-allocations?student_id=${id}&limit=100`,
+          )
+        : null,
+    ]);
   const result = settle(read, path);
   if (result.kind !== "ok") {
     return (
@@ -251,6 +272,14 @@ export default async function StudentPage({ params }: Props) {
         main={
           <>
             <Personal student={student} />
+            {batchesRead === null ? null : batchesRead.kind === "ok" ? (
+              <StudentBatches allocations={batchesRead.data} />
+            ) : (
+              <ReadErrorState
+                title="Batch couldn't be loaded"
+                reference={null}
+              />
+            )}
             {feesRead === null ? null : feesRead.kind === "ok" ? (
               <StudentFees
                 student={student}
@@ -292,7 +321,7 @@ export default async function StudentPage({ params }: Props) {
               ) : (
                 <EmptyState
                   title="No history to show"
-                  description="Enquiry and application history appears here for members who may read leads and applications."
+                  description="Enquiry, application and batch history appears here for members who may read them."
                 />
               )
             ) : (

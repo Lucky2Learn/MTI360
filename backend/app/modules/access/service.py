@@ -20,6 +20,7 @@ parameter, and another tenant's role or membership is not found.
 import uuid
 from collections.abc import Iterable
 from dataclasses import dataclass
+from typing import Final
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -45,6 +46,11 @@ from app.modules.access.permissions import (
     ROLE_UPDATE,
 )
 from app.modules.access.templates import OWNER_TEMPLATE, system_role_templates
+from app.modules.identity.domain import CampusScope
+from app.modules.identity.permissions import MEMBER_INVITE
+
+OWNER_SCOPE_CODE: Final = "owner_requires_all_campuses"
+"""422 detail code: an owner must keep all-campus access (ADR-0023 §1)."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -309,12 +315,36 @@ async def _assignment(
     return membership, role
 
 
-async def assign_role(db: AsyncSession, membership_id: uuid.UUID, role_id: uuid.UUID) -> None:
-    """Give a member a role (409 if it already has it)."""
+def _is_owner_role(role: repo.RoleRow) -> bool:
+    return role.is_system and role.template_code == OWNER_TEMPLATE.value
+
+
+def _owner_scope_error(field: str) -> ValidationFailedError:
+    return _invalid(field, OWNER_SCOPE_CODE, "An institute owner must have access to all campuses.")
+
+
+async def assign_role(
+    db: AsyncSession,
+    membership_id: uuid.UUID,
+    role_id: uuid.UUID,
+    *,
+    owner_scope_field: str = "role_id",
+) -> None:
+    """Give a member a role (409 if it already has it).
+
+    The owner role needs all-campus access (ADR-0023 §1): ``422`` on
+    ``owner_scope_field`` otherwise, checked under the owner lock after the
+    authorization and no-escalation checks.
+    """
     context = current_context()
     membership, role = await _assignment(db, context, membership_id, role_id)
     if await repo.membership_has_role(db, membership.tenant_id, membership.id, role.id):
         raise ConflictError("The member already has this role.")
+    if _is_owner_role(role):
+        await repo.lock_owners(db, membership.tenant_id)
+        scope = await repo.membership_campus_scope(db, membership.tenant_id, membership.id)
+        if scope != CampusScope.ALL.value:
+            raise _owner_scope_error(owner_scope_field)
     await repo.assign(db, membership.tenant_id, membership.id, role.id)
     await write_audit_event(
         db,
@@ -357,6 +387,30 @@ async def keep_an_owner(db: AsyncSession, membership_id: uuid.UUID) -> None:
         raise ConflictError("The institute must keep at least one active owner.")
 
 
+async def refuse_limited_owner(db: AsyncSession, membership_id: uuid.UUID) -> None:
+    """422 before limiting ``membership_id`` to selected campuses if it holds the owner role.
+
+    ADR-0023 §1-§2: takes the owner lock first, like the owner-role assignment,
+    so the two changes cannot interleave into a campus-limited owner.
+    """
+    tenant_id = _tenant(current_context())
+    await repo.lock_owners(db, tenant_id)
+    if await repo.holds_owner_role(db, tenant_id, membership_id, OWNER_TEMPLATE.value):
+        raise _owner_scope_error("campus_scope")
+
+
+async def clear_roles(db: AsyncSession, membership_id: uuid.UUID) -> list[repo.ClearedRole]:
+    """Remove every role of a membership, for re-invitation (ADR-0023 §3).
+
+    It only takes access away, so the no-escalation rule does not apply, and
+    the member is not active, so the last-owner rule does not either. The
+    caller audits the change in its own event (``member.reinvited``).
+    """
+    context = current_context()
+    authorize(context, MEMBER_INVITE)
+    return await repo.unassign_all(db, _tenant(context), membership_id)
+
+
 async def remove_role(db: AsyncSession, membership_id: uuid.UUID, role_id: uuid.UUID) -> None:
     """Take a role away from a member (404 if the member does not have it).
 
@@ -365,7 +419,7 @@ async def remove_role(db: AsyncSession, membership_id: uuid.UUID, role_id: uuid.
     context = current_context()
     membership, role = await _assignment(db, context, membership_id, role_id)
     refuse_self(context, membership.user_id, membership.id, "remove_role")
-    if role.is_system and role.template_code == OWNER_TEMPLATE.value:
+    if _is_owner_role(role):
         await keep_an_owner(db, membership.id)
     if not await repo.unassign(db, membership.tenant_id, membership.id, role.id):
         raise NotFoundError()

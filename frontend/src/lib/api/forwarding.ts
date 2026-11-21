@@ -50,6 +50,38 @@ export function apiCookieHeader(
   return kept.length > 0 ? kept.join("; ") : null;
 }
 
+const PUBLIC_API_PREFIX = "/api/v1/public/";
+const HOST_LIKE = /^[A-Za-z0-9.-]{1,253}(?::[0-9]{1,5})?$/;
+
+/**
+ * The host the browser asked for, forwarded as X-Forwarded-Host to the public
+ * API realm only (Phase 02-4, ADR-0024): the API resolves the institute from
+ * it, when it trusts this server. Built from this request's Host — a
+ * client-supplied X-Forwarded-Host is never passed on — and null for any other
+ * path or an implausible value. The API still serves only verified hostnames.
+ */
+export function publicHost(
+  host: string | null,
+  apiPath: string,
+): string | null {
+  if (!apiPath.startsWith(PUBLIC_API_PREFIX) || !host) return null;
+  return HOST_LIKE.test(host) ? host.toLowerCase() : null;
+}
+
+/**
+ * `<slug>.<siteDomain>` (port ignored): a platform-issued institute address
+ * the proxy serves the hosted pages for. Whether the institute exists is the
+ * API's decision; this only routes the request.
+ */
+export function isSiteHost(host: string | null, siteDomain: string): boolean {
+  if (!host) return false;
+  const name = host.toLowerCase().replace(/:[0-9]{1,5}$/, "");
+  const suffix = `.${siteDomain}`;
+  if (!name.endsWith(suffix)) return false;
+  const label = name.slice(0, -suffix.length);
+  return /^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/.test(label);
+}
+
 const IP_LIKE = /^[0-9A-Fa-f:.]{2,45}$/;
 
 /**

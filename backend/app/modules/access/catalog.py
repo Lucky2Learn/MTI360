@@ -11,6 +11,7 @@ from app.core.context import Realm
 from app.modules.access import permissions as _access
 from app.modules.applications import permissions as _applications
 from app.modules.audit import permissions as _audit
+from app.modules.batches import permissions as _batches
 from app.modules.courses import permissions as _courses
 from app.modules.documents import permissions as _documents
 from app.modules.finance import permissions as _finance
@@ -27,6 +28,7 @@ PERMISSION_MODULES = tuple(
         _access,
         _applications,
         _audit,
+        _batches,
         _courses,
         _documents,
         _finance,

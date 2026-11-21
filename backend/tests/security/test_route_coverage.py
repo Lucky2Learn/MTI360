@@ -86,6 +86,13 @@ def test_every_route_of_the_application_is_covered(app: FastAPI) -> None:
     assert coverage_violations(app) == []
 
 
+PHASE_02_4_PUBLIC = {
+    ("GET", "/api/v1/public/enquiry-form"),
+    ("POST", "/api/v1/public/enquiries"),
+}
+"""The hosted enquiry page (ADR-0024): the only public-realm routes so far."""
+
+
 def test_the_reviewed_exemptions_are_the_authentication_routes_with_reasons() -> None:
     assert set(REVIEWED_EXEMPTIONS) == (
         T01_04_ROUTES
@@ -95,6 +102,7 @@ def test_the_reviewed_exemptions_are_the_authentication_routes_with_reasons() ->
         | T01_07_PLATFORM_PUBLIC
         | T01_06_PLATFORM_MFA_PENDING
         | T01_06_PLATFORM_SESSION
+        | PHASE_02_4_PUBLIC
     )
     for exemption in REVIEWED_EXEMPTIONS.values():
         assert len(exemption.reason) >= 20

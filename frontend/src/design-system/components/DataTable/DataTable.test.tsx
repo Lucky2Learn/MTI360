@@ -350,3 +350,39 @@ describe("DataTable announcements (T00-10)", () => {
     expect(status).toBeEmptyDOMElement();
   });
 });
+
+describe("DataTable noWrap columns", () => {
+  it("keeps identifier cells on one line in the table only", () => {
+    const columns: DataTableColumn<Vessel>[] = [
+      {
+        id: "name",
+        header: "Vessel",
+        cell: (row) => row.name,
+        isRowHeader: true,
+      },
+      {
+        id: "imo",
+        header: "IMO",
+        cell: (row) => `IMO-${row.id}-2026`,
+        noWrap: true,
+      },
+      { id: "type", header: "Type", cell: (row) => row.type },
+    ];
+    render(
+      <DataTable
+        label="Fleet"
+        columns={columns}
+        rows={ROWS}
+        getRowId={(row) => row.id}
+        getRowLabel={(row) => row.name}
+        mobileLayout="cards"
+      />,
+    );
+    const table = screen.getByRole("table", { name: "Fleet" });
+    const imo = within(table).getByText("IMO-v1-2026");
+    expect(imo.closest("td")).toHaveClass("whitespace-nowrap");
+    expect(within(table).getByText("Research").closest("td")).not.toHaveClass(
+      "whitespace-nowrap",
+    );
+  });
+});

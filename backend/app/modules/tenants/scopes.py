@@ -21,7 +21,13 @@ tenant being suspended, nothing else.
 **Owner** (:func:`publish_owner`, D7-8) — ``app.platform_owner_membership_id``:
 one owner membership, its invitations and its user.
 
-Only this module publishes these keys or builds a platform context with a
+**Public site** (:func:`public_site_transaction`, Phase 02-4, ADR-0024) — a
+public-realm request has no tenant until its host resolves to a verified
+``tenant_domains`` row; this transaction then carries that server-resolved
+tenant (and nothing else: no principal, no permissions), so the ordinary
+tenant policies admit exactly that institute's rows.
+
+Only this module publishes these keys or builds a context with a
 tenant (``tests/security/test_platform_administration_boundaries.py``).
 ``system_context`` is not used: it refuses to run inside an HTTP request.
 """
@@ -75,3 +81,22 @@ async def publish_suspension_target(session: AsyncSession, tenant_id: uuid.UUID)
 async def publish_owner(session: AsyncSession, membership_id: uuid.UUID) -> None:
     """Open one owner membership, its invitations and its user."""
     await session.execute(_SET_LOCAL, {"name": OWNER_MEMBERSHIP_ID, "value": str(membership_id)})
+
+
+@asynccontextmanager
+async def public_site_transaction(
+    factory: async_sessionmaker[AsyncSession], *, context: RequestContext, tenant_id: uuid.UUID
+) -> AsyncIterator[AsyncSession]:
+    """A public-realm transaction for the institute resolved from the request host.
+
+    ``tenant_id`` must come from :func:`app.modules.tenants.domains.resolve_public_host`,
+    never from the request. The context is bound for the block (activity, audit).
+    """
+    if context.realm is not Realm.PUBLIC or context.principal_id is not None:
+        raise ValueError("public site scopes run in the anonymous public realm")
+    if context.tenant_id is not None:
+        raise ValueError("a public request has no tenant before its host resolves")
+    scoped = replace(context, tenant_id=tenant_id)
+    with context_scope(scoped):
+        async with context_transaction(factory, scoped) as session:
+            yield session

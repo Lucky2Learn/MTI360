@@ -26,6 +26,8 @@ class RoleOut(ResponseModel):
     name: str
     description: str | None
     is_system: bool
+    is_owner: bool
+    """The ``INSTITUTE_OWNER`` system role: needs all-campus access (ADR-0023)."""
     permissions: list[str]
     member_count: int
     version: int

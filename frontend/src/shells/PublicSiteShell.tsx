@@ -20,12 +20,16 @@ import type { ReactNode } from "react";
 // footer with the appearance control. It carries no tenant identity or
 // branding yet (Phase 14 resolves the tenant server-side from a verified
 // domain); it is not the MTI 360 marketing website (ADR-0003, INC-26).
+// An empty navigation renders no menu at all (the public not-found page of an
+// unknown host, Phase 02-4).
 
 export type PublicSiteShellProps = {
   siteLabel: string;
   homeHref: string;
   navigation: Navigation;
   navigationLabel: string;
+  /** Footer text; the preview notice by default (Phase 02-4 pages pass their own). */
+  footerNote?: ReactNode;
   children: ReactNode;
 };
 
@@ -34,6 +38,7 @@ export function PublicSiteShell({
   homeHref,
   navigation,
   navigationLabel,
+  footerNote,
   children,
 }: PublicSiteShellProps) {
   const pathname = usePathname() ?? homeHref;
@@ -44,12 +49,14 @@ export function PublicSiteShell({
       <SkipNavigation />
       <header className="sticky top-0 z-(--z-sticky) border-b border-border-subtle bg-surface-primary">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-2 px-2 tablet:px-6 desktop:px-8">
-          <MobileNavigation
-            experienceLabel={siteLabel}
-            navigationLabel={navigationLabel}
-            navigation={navigation}
-            pathname={pathname}
-          />
+          {items.length > 0 && (
+            <MobileNavigation
+              experienceLabel={siteLabel}
+              navigationLabel={navigationLabel}
+              navigation={navigation}
+              pathname={pathname}
+            />
+          )}
           <Link
             href={homeHref}
             className={cx(
@@ -68,33 +75,35 @@ export function PublicSiteShell({
               <span className="sr-only"> home</span>
             </span>
           </Link>
-          <nav
-            aria-label={navigationLabel}
-            className="ml-auto hidden desktop:block"
-          >
-            <ul className="flex items-center gap-1">
-              {items.map((item) => {
-                const current = isCurrentPage(item, pathname);
-                return (
-                  <li key={item.id}>
-                    <Link
-                      href={item.href}
-                      aria-current={current ? "page" : undefined}
-                      className={cx(
-                        "flex h-control-md items-center rounded-md px-3 text-body-sm text-text-primary underline-offset-8",
-                        "transition-colors hover:bg-surface-hover motion-reduce:transition-none",
-                        current &&
-                          "font-semibold underline decoration-accent-maritime decoration-2",
-                        focusRing,
-                      )}
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+          {items.length > 0 && (
+            <nav
+              aria-label={navigationLabel}
+              className="ml-auto hidden desktop:block"
+            >
+              <ul className="flex items-center gap-1">
+                {items.map((item) => {
+                  const current = isCurrentPage(item, pathname);
+                  return (
+                    <li key={item.id}>
+                      <Link
+                        href={item.href}
+                        aria-current={current ? "page" : undefined}
+                        className={cx(
+                          "flex h-control-md items-center rounded-md px-3 text-body-sm text-text-primary underline-offset-8",
+                          "transition-colors hover:bg-surface-hover motion-reduce:transition-none",
+                          current &&
+                            "font-semibold underline decoration-accent-maritime decoration-2",
+                          focusRing,
+                        )}
+                      >
+                        {item.label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+          )}
         </div>
       </header>
       <main
@@ -108,8 +117,12 @@ export function PublicSiteShell({
       <footer className="border-t border-border-subtle bg-surface-secondary">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 tablet:flex-row tablet:items-start tablet:justify-between tablet:px-6 desktop:px-8">
           <p className="max-w-md text-body-sm text-text-secondary">
-            Website preview. The institute&apos;s own name, branding and content
-            are added when the public website is built.
+            {footerNote ?? (
+              <>
+                Website preview. The institute&apos;s own name, branding and
+                content are added when the public website is built.
+              </>
+            )}
           </p>
           <ThemeSelector />
         </div>

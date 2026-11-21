@@ -25,6 +25,9 @@ is not found.
   role removal on one's own membership (``403``); the last ACTIVE owner is
   never suspended, revoked or stripped of the owner role (``409``, per-tenant
   advisory lock in the access service).
+* **Owner scope and re-invitation (ADR-0023).** An owner always has
+  all-campus access (``422`` ``owner_requires_all_campuses`` otherwise);
+  re-invitation removes every previous role.
 
 Nothing returned, logged or audited contains a token. Global identity and
 credentials are never changed (D14).
@@ -314,8 +317,10 @@ class MemberAdmin:
                         "role_count": len(roles),
                     },
                 )
-                for role_id in roles:  # role.assign and no-escalation, audited
-                    await access.assign_role(db, membership_id, role_id)
+                for role_id in roles:  # role.assign, no escalation, owner scope; audited
+                    await access.assign_role(
+                        db, membership_id, role_id, owner_scope_field="campus_scope"
+                    )
                 member = await self._member(db, membership_id)
                 message, _ = await self._invitation(db, member, now_revoke=False)
         except IntegrityError:  # the email or the membership was created concurrently
@@ -342,7 +347,12 @@ class MemberAdmin:
         return message
 
     async def reinvite(self, membership_id: uuid.UUID, *, version: int) -> Invited:
-        """``REVOKED → INVITED`` on the same membership row, with a new invitation (D8-3)."""
+        """``REVOKED → INVITED`` on the same row, with no roles and a new invitation.
+
+        D8-3; ADR-0023 §3: every previous role is removed in the same
+        transaction, so nothing is restored outside the no-escalation rule.
+        The campus scope is kept.
+        """
         context = current_context()
         authorize(context, MEMBER_INVITE)
         async with context_transaction(self.identity.factory, context) as db:
@@ -352,12 +362,18 @@ class MemberAdmin:
                     "This email belongs to a disabled account and cannot be invited."
                 )
             await self._transition(db, member, MembershipAction.REINVITE, version=version)
+            cleared = await access.clear_roles(db, member.id)
             message, revoked = await self._invitation(db, member, now_revoke=True)
             await write_audit_event(
                 db,
                 events.MEMBER_REINVITED,
                 target=AuditTarget("tenant_membership", member.id),
-                metadata={"revoked": revoked},
+                metadata={
+                    "revoked": revoked,
+                    "roles_cleared": len(cleared),
+                    "cleared_role_ids": [role.id for role in cleared[:16]],
+                    "cleared_role_names": [role.name for role in cleared[:16]],
+                },
             )
             refreshed = await self._member(db, membership_id)
         return Invited(refreshed, "existing", message)
@@ -425,6 +441,8 @@ class MemberAdmin:
         async with context_transaction(self.identity.factory, context) as db:
             member = await self._member(db, membership_id)
             access.refuse_self(context, member.user_id, member.id, "change_campus_scope")
+            if scope is CampusScope.SELECTED:  # owners keep all campuses (ADR-0023 §1)
+                await access.refuse_limited_owner(db, member.id)
             campuses = await self._campus_scope(db, scope, campus_ids)
             if not await repo.set_campus_scope(
                 db, member.tenant_id, member.id, version=version, scope=scope

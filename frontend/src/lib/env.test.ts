@@ -30,6 +30,7 @@ describe("parseServerEnv", () => {
       appEnv: "development",
       apiBaseUrl: "http://127.0.0.1:8100",
       trustedProxyHops: 0,
+      publicSiteDomain: "mti360.in",
     });
   });
 
@@ -92,6 +93,24 @@ describe("parseServerEnv", () => {
     expect(message).not.toContain("SENTINEL");
     expect(message).not.toContain(value);
   });
+});
+
+describe("PUBLIC_SITE_DOMAIN (Phase 02-4, ADR-0024)", () => {
+  it("defaults to the platform domain and accepts localhost", () => {
+    expect(parseServerEnv({}).publicSiteDomain).toBe("mti360.in");
+    expect(
+      parseServerEnv({ PUBLIC_SITE_DOMAIN: "localhost" }).publicSiteDomain,
+    ).toBe("localhost");
+  });
+
+  it.each(["MTI360.in", "https://mti360.in", "mti360.in/x", "-x.in", "a b"])(
+    "rejects %s",
+    (value) => {
+      expect(() => parseServerEnv({ PUBLIC_SITE_DOMAIN: value })).toThrow(
+        /PUBLIC_SITE_DOMAIN: must be a lowercase DNS name/,
+      );
+    },
+  );
 });
 
 describe("parsePublicEnv", () => {

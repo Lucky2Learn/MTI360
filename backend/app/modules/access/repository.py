@@ -262,6 +262,75 @@ async def unassign(
     return bool(result.rowcount)  # type: ignore[attr-defined]
 
 
+@dataclass(frozen=True, slots=True)
+class ClearedRole:
+    id: uuid.UUID
+    name: str
+
+
+async def unassign_all(
+    db: AsyncSession, tenant_id: uuid.UUID, membership_id: uuid.UUID
+) -> list[ClearedRole]:
+    """Remove every role of a membership; returns the removed roles by name (ADR-0023 §3)."""
+    rows = (
+        await db.execute(
+            select(ROLES.c.id, ROLES.c.name)
+            .select_from(
+                MEMBERSHIP_ROLES.join(
+                    ROLES,
+                    (ROLES.c.tenant_id == MEMBERSHIP_ROLES.c.tenant_id)
+                    & (ROLES.c.id == MEMBERSHIP_ROLES.c.role_id),
+                )
+            )
+            .where(
+                MEMBERSHIP_ROLES.c.tenant_id == tenant_id,
+                MEMBERSHIP_ROLES.c.membership_id == membership_id,
+            )
+            .order_by(ROLES.c.name, ROLES.c.id)
+        )
+    ).all()
+    await db.execute(
+        delete(MEMBERSHIP_ROLES).where(
+            MEMBERSHIP_ROLES.c.tenant_id == tenant_id,
+            MEMBERSHIP_ROLES.c.membership_id == membership_id,
+        )
+    )
+    return [ClearedRole(row.id, row.name) for row in rows]
+
+
+async def membership_campus_scope(
+    db: AsyncSession, tenant_id: uuid.UUID, membership_id: uuid.UUID
+) -> str | None:
+    return cast(
+        str | None,
+        await db.scalar(
+            select(MEMBERSHIPS.c.campus_scope).where(
+                MEMBERSHIPS.c.tenant_id == tenant_id, MEMBERSHIPS.c.id == membership_id
+            )
+        ),
+    )
+
+
+async def holds_owner_role(
+    db: AsyncSession, tenant_id: uuid.UUID, membership_id: uuid.UUID, owner_template: str
+) -> bool:
+    """Whether the membership holds the owner system role, in any membership status."""
+    return bool(
+        await db.scalar(
+            select(
+                exists().where(
+                    MEMBERSHIP_ROLES.c.tenant_id == tenant_id,
+                    MEMBERSHIP_ROLES.c.membership_id == membership_id,
+                    ROLES.c.tenant_id == MEMBERSHIP_ROLES.c.tenant_id,
+                    ROLES.c.id == MEMBERSHIP_ROLES.c.role_id,
+                    ROLES.c.is_system,
+                    ROLES.c.template_code == owner_template,
+                )
+            )
+        )
+    )
+
+
 async def assigned_roles(
     db: AsyncSession, tenant_id: uuid.UUID, membership_id: uuid.UUID
 ) -> list[AssignedRole]:
@@ -315,6 +384,8 @@ def _active_owner_memberships(tenant_id: uuid.UUID, owner_template: str) -> Any:
             ROLES.c.is_system,
             ROLES.c.template_code == owner_template,
             MEMBERSHIPS.c.status == "ACTIVE",
+            # Only an all-campus owner administers the institute (D-B1; ADR-0023 §2).
+            MEMBERSHIPS.c.campus_scope == "ALL",
         )
     )
 

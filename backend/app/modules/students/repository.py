@@ -22,6 +22,8 @@ from app.core.context import RequestContext
 from app.core.pagination import PageParams, SortField
 from app.core.search import escape_like
 from app.modules.applications.models import Application, ApplicationActivity
+from app.modules.batches.domain import STUDENT_TIMELINE_KINDS
+from app.modules.batches.models import BatchActivity, BatchAllocation
 from app.modules.courses.models import Course
 from app.modules.documents.models import ApplicationDocument, StoredFile
 from app.modules.identity.models import TenantMembership, User
@@ -381,10 +383,12 @@ async def timeline(
     *,
     include_leads: bool,
     include_applications: bool,
+    include_batches: bool = False,
     page: PageParams,
 ) -> tuple[list[TimelineRow], int]:
     """The Student 360 history: the source leads' and the admitted applications' activity,
-    each only for holders of its read permission and within the caller's campuses."""
+    and batch allocation, transfer and withdrawal (Phase 02-6), each only for holders of its
+    read permission and within the caller's campuses."""
     applications = (
         select(Application.id, Application.lead_id)
         .join(
@@ -440,6 +444,32 @@ async def timeline(
                     select(applications.c.lead_id).where(applications.c.lead_id.is_not(None))
                 ),
                 campus_visibility(Lead.campus_id, context),
+            )
+        )
+    if include_batches:
+        parts.append(
+            select(
+                BatchActivity.id,
+                literal("batch").label("source"),
+                BatchActivity.batch_id.label("subject_id"),
+                BatchActivity.kind,
+                BatchActivity.actor_membership_id,
+                BatchActivity.details,
+                null().label("body"),
+                BatchActivity.created_at,
+            )
+            .join(
+                BatchAllocation,
+                and_(
+                    BatchAllocation.tenant_id == BatchActivity.tenant_id,
+                    BatchAllocation.id == BatchActivity.allocation_id,
+                ),
+            )
+            .where(
+                BatchActivity.tenant_id == tenant_id,
+                BatchAllocation.student_id == student_id,
+                BatchActivity.kind.in_([kind.value for kind in STUDENT_TIMELINE_KINDS]),
+                campus_visibility(BatchAllocation.campus_id, context),
             )
         )
     if not parts:

@@ -25,6 +25,12 @@ class StudentListItem(ResponseModel):
     created_at: datetime
 
 
+class BatchRef(ResponseModel):
+    id: uuid.UUID
+    code: str
+    name: str
+
+
 class AdmissionOut(ResponseModel):
     id: uuid.UUID
     admission_number: str
@@ -38,6 +44,8 @@ class AdmissionOut(ResponseModel):
     campus: CampusRef
     approved_at: datetime
     approved_by: PersonRef | None
+    current_batch: BatchRef | None = None
+    """The batch the admission is enrolled in (Phase 02-6); only for ``batch.read`` holders."""
 
 
 class StudentOut(ResponseModel):
@@ -75,7 +83,7 @@ class StudentDocumentsOut(ResponseModel):
 
 class TimelineEntry(ResponseModel):
     id: uuid.UUID
-    source: Literal["lead", "application"]
+    source: Literal["lead", "application", "batch"]
     kind: str
     actor: PersonRef | None
     details: dict[str, Any]

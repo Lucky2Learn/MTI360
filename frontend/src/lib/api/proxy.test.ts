@@ -3,12 +3,18 @@ import { describe, expect, it, vi } from "vitest";
 
 import { inputUrl } from "@/test/fetch-mock";
 
-import { apiCookieHeader, clientAddress } from "./forwarding";
+import {
+  apiCookieHeader,
+  clientAddress,
+  isSiteHost,
+  publicHost,
+} from "./forwarding";
 import {
   isForwardablePath,
   MAX_REQUEST_BYTES,
   proxyToApi,
   type ProxyLogRecord,
+  upstreamRequestHeaders,
 } from "./proxy";
 
 // Same-origin API proxy (T01-09A, D17): exactly the allow-listed headers in
@@ -480,7 +486,28 @@ describe("document uploads and downloads (Phase 02-2, ADR-0021 §8)", () => {
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(response.headers.get("x-amz-request-id")).toBeNull();
     expect(response.headers.get("server")).toBeNull();
+    // Never the upstream framing (GHSA-pc58-hwjq-p385).
+    expect(response.headers.get("content-length")).toBeNull();
     expect(await response.text()).toBe("%PDF-1.7");
+  });
+
+  it("never forwards an upstream Content-Length that disagrees with the body", async () => {
+    // fetch() decodes compressed bodies, so the declared length can be stale.
+    const { fetchImpl } = upstream(
+      new Response('{"data":{"ok":true}}', {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+          "content-length": "999",
+        },
+      }),
+    );
+    const response = await proxyToApi(browserRequest("/api/v1/session"), {
+      apiBaseUrl: API,
+      fetchImpl,
+    });
+    expect(response.headers.get("content-length")).toBeNull();
+    expect(await response.text()).toBe('{"data":{"ok":true}}');
   });
 });
 
@@ -515,5 +542,51 @@ describe("forwardable paths", () => {
     });
     expect(response.status).toBe(404);
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
+
+// Phase 02-4 (ADR-0024): the public API realm receives the page's host.
+describe("public host forwarding", () => {
+  it("forwards this request's Host to the public realm only", () => {
+    const incoming = new Headers({
+      host: "Konkan.mti360.in",
+      "x-forwarded-host": "victim.mti360.in",
+    });
+    expect(
+      upstreamRequestHeaders(incoming, "/api/v1/public/enquiries").get(
+        "x-forwarded-host",
+      ),
+    ).toBe("konkan.mti360.in");
+    for (const path of [
+      "/api/v1/leads",
+      "/api/v1/platform/tenants",
+      "/api/v1/publicity",
+    ]) {
+      expect(
+        upstreamRequestHeaders(incoming, path).get("x-forwarded-host"),
+      ).toBeNull();
+    }
+  });
+
+  it("never forwards an implausible host", () => {
+    expect(publicHost("konkan.mti360.in x: y", "/api/v1/public/x")).toBeNull();
+    expect(publicHost("user@konkan.mti360.in", "/api/v1/public/x")).toBeNull();
+    expect(publicHost(null, "/api/v1/public/x")).toBeNull();
+    expect(publicHost("konkan.mti360.in:3100", "/api/v1/public/x")).toBe(
+      "konkan.mti360.in:3100",
+    );
+  });
+
+  it.each([
+    ["konkan.mti360.in", true],
+    ["KONKAN.mti360.in:443", true],
+    ["konkan-2.mti360.in", true],
+    ["mti360.in", false],
+    ["a.b.mti360.in", false],
+    ["konkan.mti360.in.evil.example", false],
+    ["konkan-.mti360.in", false],
+    ["ab.mti360.in", false], // slugs have at least 3 characters
+  ] as const)("recognises %s as a site host: %s", (host, expected) => {
+    expect(isSiteHost(host, "mti360.in")).toBe(expected);
   });
 });

@@ -27,6 +27,8 @@ class MemberRoleOut(ResponseModel):
     id: uuid.UUID
     name: str
     is_system: bool
+    is_owner: bool
+    """The ``INSTITUTE_OWNER`` system role: needs all-campus access (ADR-0023)."""
 
 
 class MemberOut(ResponseModel):
@@ -37,6 +39,8 @@ class MemberOut(ResponseModel):
     campus_ids: list[uuid.UUID]
     """Only for ``SELECTED``; empty for ``ALL``."""
     roles: list[MemberRoleOut]
+    is_owner: bool
+    """Holds the ``INSTITUTE_OWNER`` role, so keeps all-campus access (ADR-0023)."""
     invited_at: datetime
     joined_at: datetime | None
     version: int

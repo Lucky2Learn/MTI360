@@ -90,25 +90,46 @@ IN_PROGRESS
 ## Current Phase
 
 ```text
-PHASE 01 — AUTHENTICATION & MULTI-TENANCY
+PHASE 02 — ADMISSIONS MVP (re-sequenced, L1; TASKS.md "Re-sequencing after Phase 01")
+Active slice: 02-C Onboarding enablers (§9A, §10 T02-04, §11)
 ```
 
 ## Current Milestone
 
 ```text
-M1 — Secure SaaS Foundation (Phase 01)
 M0 — Foundation Ready: reached 2026-09-30 (Phase 00 complete)
+M1 — Secure SaaS Foundation (Phase 01): Phase 01 complete per L1 (2026-10-08; last
+     merge PR #31, 9009db5). The D18 Chromium journeys stay deferred (T01-10).
+Next: no milestone ID covers the re-sequenced Phase 02 Admissions MVP. M2 is
+     defined as the original Phase 02 (Platform Control Plane); see
+     docs/architecture/requirements-traceability.md, open tracker items.
 ```
 
 ## Overall Completion
 
 ```text
-0%
+Not expressed as a percentage: no agreed weighting exists (§42.3).
+Evidence-based counts (2026-10-28):
+  Phase 00            10 / 10 tasks COMPLETED, plus the corrective T00-10A
+  Phase 01            10 / 11 tasks COMPLETED; T01-10 READY_WITH_D18_DEFERRED (merged by PR #31)
+  Phase 02 MVP (L1)   02-1, 02-2 COMPLETED; 02-5 merged (PR #34), verification outstanding;
+                      02-C IN_PROGRESS (uncommitted); 02-3 COMPLETED (seed commands and
+                      automated verification, 2026-10-31; uncommitted; browser walkthrough
+                      pending); 02-4 IN_PROGRESS (uncommitted, 2026-11-01; automated
+                      tests and browser E1-E12 pass; E13 pending); 02-6 IN_PROGRESS
+                      (2026-11-20, uncommitted; implemented, seeded, all automated
+                      tests pass, browser-verified on the disposable database;
+                      not committed, no CI, development database not migrated)
+  Phases 03 – 17      no task COMPLETED (§10, §11 and later sections)
+  UI screens          43 of 217 defined entries built and merged (one partial),
+                      8 in progress, 0 browser-verified (§27)
 ```
 
 > The percentage must be updated only from actual completed work. Do not estimate completion merely from the number of files or screens generated.
 
-> **2026-10-11 (02-5 Finance-lite in progress):** the backend API (16 routes) is committed on `feat/phase-02-5-finance-lite`, and the frontend screens (FIN-02 … FIN-08, print views, Student 360 Fees) are implemented and unit-tested locally. Not merged, not pushed, no CI run. Update (second session): the financial-integrity tests and the development seed are committed and tested locally (`1cfc137`, `a03399e`); CI and the D18 browser journeys are outstanding (§9A, 02-5).
+> **2026-10-28 (R0 tracker correction):** the trackers are aligned with git. Finance-lite was merged by PR #34 (`a5bd01a`, 2026-10-11); T01-09B, T01-09C and the T01-10 commits were merged by PR #31 (`9009db5`, 2026-10-07). No CI result for either PR is recorded here. Requirement and screen traceability: [docs/architecture/requirements-traceability.md](docs/architecture/requirements-traceability.md).
+
+> **2026-10-11 (02-5 Finance-lite in progress):** the backend API (16 routes) is committed on `feat/phase-02-5-finance-lite`, and the frontend screens (FIN-02 … FIN-08, print views, Student 360 Fees) are implemented and unit-tested locally. Not merged, not pushed, no CI run. Update (second session): the financial-integrity tests and the development seed are committed and tested locally (`1cfc137`, `a03399e`); CI and the D18 browser journeys are outstanding (§9A, 02-5). **Superseded:** merged to `main` by PR #34 (`a5bd01a`, 2026-10-11); the CI result and the D18 journeys are still not recorded.
 
 > **2026-10-10 (merge and Finance-lite decisions):**
 >
@@ -166,10 +187,10 @@ Multi-Tenancy
 | Phase | Description | Status |
 |---|---|---|
 | 00 | Foundation | `COMPLETED` |
-| 01 | Authentication & Multi-Tenancy | `IN_PROGRESS` |
-| 02 | Admissions MVP (re-sequenced, L1) — 02-1 Courses + Leads, 02-2 Applications → Student; 02-5 Finance-lite next (ADR-0022) | `IN_PROGRESS` (02-1 and 02-2 `COMPLETED`, merged by PR #32; 02-5 `IN_PROGRESS` on its branch; §9A) |
+| 01 | Authentication & Multi-Tenancy | `COMPLETED` per L1 (2026-10-08): every T01 task merged, the last by PR #31 (`9009db5`). T01-10 is `READY_WITH_D18_DEFERRED`; the D18 Chromium journeys were not run (§9) |
+| 02 | Admissions MVP (re-sequenced, L1) — 02-1 Courses + Leads, 02-2 Applications → Student, 02-5 Finance-lite (ADR-0022), 02-C onboarding enablers | `IN_PROGRESS` (02-1 and 02-2 `COMPLETED`, merged by PR #32; 02-5 merged by PR #34 (`a5bd01a`), `IN_PROGRESS` until CI and D18 are recorded; 02-C `IN_PROGRESS`, uncommitted; §9A) |
 | 02 (original) | Platform Control Plane (after the MVP, except 02-C) | `NOT_STARTED` |
-| 03 | Tenant Foundation | `NOT_STARTED` |
+| 03 | Tenant Foundation | `IN_PROGRESS` (T03-03, T03-04 and T03-05 through the 02-C tenant part; uncommitted, not browser-verified; §11) |
 | 04 | Admissions | `NOT_STARTED` |
 | 05 | Academics | `NOT_STARTED` |
 | 06 | Finance | `NOT_STARTED` |
@@ -812,13 +833,14 @@ PASS. Compose config: valid.
 ## Phase Status
 
 ```text
-IN_PROGRESS
+COMPLETED (per L1, 2026-10-08; D18 Chromium journeys deferred, T01-10)
 ```
 
 ## Phase Completion
 
 ```text
-5 / 11 tasks completed (T01-00 … T01-04 COMPLETED)
+10 / 11 tasks COMPLETED (T01-00 … T01-09); T01-10 READY_WITH_D18_DEFERRED
+(gate passed locally, merged by PR #31; D18 not run)
 ```
 
 Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TASKS.md, Phase 01).
@@ -834,8 +856,8 @@ Re-sequenced by T01-00 (decision D1; the mapping from the previous IDs is in TAS
 | T01-06 | Platform Identity & MFA | `COMPLETED` (PR #25, `9fdb40a`) |
 | T01-07 | Platform Administration Foundation (API) | `COMPLETED` (PR #27, `fe0b019`) |
 | T01-08 | Tenant Administration Foundation (API) | `COMPLETED` (PR #29, `fd70d7d`) |
-| T01-09 | Frontend Authentication & Session Integration | `IN_PROGRESS` — T01-09A (tenant) `COMPLETED` (PR #30, `2af531b`); T01-09B (platform/MFA UX) `READY_FOR_REVIEW` on `feat/T01-09B-platform-identity-mfa-ux`, B1 resolved; T01-09C (tenant MFA UX) `READY_FOR_REVIEW` on the same branch |
-| T01-10 | Security Verification Gate | `READY_WITH_D18_DEFERRED` (local gate 2026-10-07; D18 not run) |
+| T01-09 | Frontend Authentication & Session Integration | `COMPLETED` — T01-09A (tenant) PR #30 (`2af531b`); T01-09B (platform/MFA UX, `5190a7b`) and T01-09C (tenant MFA UX, `77773dd`) PR #31 (`9009db5`). D18 Chromium journeys not run (deferred, T01-10); no CI result recorded for PR #31 |
+| T01-10 | Security Verification Gate | `READY_WITH_D18_DEFERRED` (local gate 2026-10-07; merged by PR #31, `9009db5`; D18 not run). The label is not in the §4 status list (open tracker item, requirements-traceability.md) |
 
 ### T01-01 — Backend, Database & API Foundation
 
@@ -1238,6 +1260,8 @@ rules); CI not run.
 
 **Status:** `READY_FOR_REVIEW` (implemented and verified on `feat/T01-09B-platform-identity-mfa-ux`; one implementation commit; not pushed, not merged). Blocker **B1 is resolved** by the frozen contract `docs/ui/T01-09B-PLATFORM-IDENTITY-MFA-UI.md` (readiness review 2026-10-07, `READY_FOR_IMPLEMENTATION`; decisions D9B-1 … D9B-12). **D9B-8 accepted** (partial PLAT-52). **D9B-9 accepted** (tenant MFA enrolment/removal deferred to **T01-09C**).
 
+> **Update 2026-10-28 (R0 tracker correction):** `COMPLETED`. Merged to `main` by PR #31 (merge commit `9009db5`, 2026-10-07), together with T01-09C and the T01-10 commits. No CI result for PR #31 is recorded. The D18 Chromium journeys were not run (deferred, T01-10).
+
 **Implementation:**
 
 ```text
@@ -1311,6 +1335,8 @@ rules); CI not run.
 
 **Status:** `READY_FOR_REVIEW` (implemented and verified on `feat/T01-09B-platform-identity-mfa-ux` as a second local commit after T01-09B `5190a7b`; not pushed, not merged). Completes **D9B-9**. Contract `docs/ui/T01-09C-TENANT-MFA-UI.md` (D9C-1 … D9C-6).
 
+> **Update 2026-10-28 (R0 tracker correction):** `COMPLETED`. Merged to `main` by PR #31 (merge commit `9009db5`, 2026-10-07). No CI result for PR #31 is recorded. The D18 Chromium journeys were not run (deferred, T01-10).
+
 **Implementation:**
 
 ```text
@@ -1358,6 +1384,8 @@ Not run: D18 Chromium journeys (environment/runtime limitation); CI not run.
 ### T01-10 — Security Verification Gate & Phase Close-out
 
 **Status:** `READY_WITH_D18_DEFERRED` (gate run locally on 2026-10-07 on `feat/T01-09B-platform-identity-mfa-ux`; not pushed, no PR). The automated and security gates pass. The D18 Chromium journeys were **not run** (environment/runtime limitation), so T01 is not classified `READY_FOR_T01_CLOSE`.
+
+> **Update 2026-10-28 (R0 tracker correction):** the gate's commits (`f55ff50`, `71f3d87`, `32d3eaa`) were merged to `main` by PR #31 (merge commit `9009db5`, 2026-10-07). The status label is unchanged: the D18 Chromium journeys have still not run. `READY_WITH_D18_DEFERRED` is not one of the §4 statuses; this is recorded as an open tracker item in [requirements-traceability.md](docs/architecture/requirements-traceability.md).
 
 **Scope verified:** T01-01 … T01-08 (backend unchanged since `main` `2af531b`) and T01-09A/B/C (frontend).
 
@@ -1430,11 +1458,11 @@ Sources: [PHASE-02-MASTER-READINESS.md](docs/architecture/PHASE-02-MASTER-READIN
 |---|---|---|
 | 02-1 | Courses + Lead Management | `COMPLETED` (PR #32, `2ea72f6`; D18 not run) |
 | 02-2 | Applications → Documents → Admission → Student | `COMPLETED` (PR #32, `2ea72f6`; D18 not run) |
-| 02-C | Onboarding enablers | `NOT_STARTED` |
-| 02-3 | Seed + demo hardening | `NOT_STARTED` (after 02-5) |
-| 02-4 | Public enquiry | `NOT_STARTED` (after 02-5) |
-| 02-5 | Finance-lite | `IN_PROGRESS`: backend, frontend, integrity tests and development seed implemented and tested locally on `feat/phase-02-5-finance-lite`; CI and browser journeys outstanding ([ADR-0022](docs/adr/0022-finance-lite.md)) |
-| 02-6 | Batches | `NOT_STARTED` (follows 02-5) |
+| 02-C | Onboarding enablers | `IN_PROGRESS`: **platform part** (PLAT-04/05/06 minimal, `feat/platform-tenant-management`) built and tested, review pending browser checks (§10 T02-04); **tenant part** (UI over the T01-08 API) `IN_PROGRESS`: ADMIN-05/06 Users, ADMIN-07 Roles & Permissions (read-only) and ADMIN-03/04 Campuses implemented and passing automated checks, none browser-verified (INC-50; §11 T03-03, T03-04, T03-05) |
+| 02-3 | Seed + demo hardening | `COMPLETED` for the seed commands and automated verification (2026-10-31; uncommitted on `feat/platform-tenant-management`). `pnpm db:seed` and `--tag demo2` were run on the disposable `mti360_seed_verification` database, with repeat and invalid tags refused and 21 API isolation checks passed. **Browser verification is separate and pending** (docs/runbooks/demo.md §7). See 02-3 below |
+| 02-4 | Public enquiry | `IN_PROGRESS` (2026-11-01, uncommitted on `feat/platform-tenant-management`; [ADR-0024](docs/adr/0024-public-enquiry.md)): implemented; **all automated tests pass** (backend 1480, frontend 1630; migrations 0012 and 0013 on `mti360_test`); **browser checks E1–E12 pass and accepted** (headless Chromium, 2026-11-01); branded public 404 implemented and verified. Pending: E13 (screen reader) and legal review of the consent wording. See 02-4 below |
+| 02-5 | Finance-lite | `IN_PROGRESS`: merged to `main` by PR #34 (`a5bd01a`, 2026-10-11); backend, frontend, integrity tests and development seed tested locally before the merge; real print output checked by V-02 (PR #35). Outstanding: a recorded CI and CodeQL result (none recorded for PR #34) and the D18 Chromium journeys ([ADR-0022](docs/adr/0022-finance-lite.md)) |
+| 02-6 | Batches | `IN_PROGRESS` (2026-11-20, uncommitted on `feat/platform-tenant-management`; [ADR-0025](docs/adr/0025-batches.md)): migration 0014, batch API, ACA-05/06/07, Student 360, admissions integration and the batch demo seed implemented; **all automated tests pass** (backend 1547, frontend 1672); **browser-verified** on `mti360_seed_verification` (2026-11-20: workflow, 64 responsive x theme cells, roles, campus scope, tenant isolation); production build passes. Pending: commit and review, CI, development database migration (needs approval). See 02-6 below |
 
 **Delivery order (2026-10-10, ADR-0022):** 02-5 is delivered ahead of 02-3 and 02-4. No identifier is renumbered (TASKS.md, "Delivery-order change").
 
@@ -1757,7 +1785,9 @@ Found     no security or functional regression
 
 ### 02-5 — Finance-lite
 
-**Status:** `IN_PROGRESS` on `feat/phase-02-5-finance-lite` (not merged, not pushed). The plan is in [PHASE-02-5-FINANCE-LITE-READINESS.md](docs/architecture/PHASE-02-5-FINANCE-LITE-READINESS.md), and the decisions in [ADR-0022](docs/adr/0022-finance-lite.md) with the addendum R1–R3. It is delivered ahead of 02-3 and 02-4.
+> **Update 2026-10-28 (R0 tracker correction):** merged to `main` by PR #34 (merge commit `a5bd01a`, 2026-10-11; branch head `bea73e6`). The status stays `IN_PROGRESS` because the slice's own completion items are not recorded: a CI and CodeQL result for PR #34, and the D18 Chromium journeys. The real print output was checked later by V-02 ("V-02 Fix 1" below, PR #35).
+
+**Status:** `IN_PROGRESS` on `feat/phase-02-5-finance-lite` (at the time: not merged, not pushed; since merged, see the update above). The plan is in [PHASE-02-5-FINANCE-LITE-READINESS.md](docs/architecture/PHASE-02-5-FINANCE-LITE-READINESS.md), and the decisions in [ADR-0022](docs/adr/0022-finance-lite.md) with the addendum R1–R3. It is delivered ahead of 02-3 and 02-4.
 
 ```text
 Specification Ready   yes (ADR-0022 + addendum R1-R3, readiness plan, INC-48, INC-49)
@@ -1868,7 +1898,7 @@ check:landing, check:env, check:lock         pass
 CI, CodeQL, D18 journeys, real print preview NOT RUN
 ```
 
-**Outstanding:** push, CI and CodeQL; and the V-02 browser journeys, including a real print preview. "Raise fee invoice" on FIN-04 still links to Students, with no student or admission picker (unchanged by design).
+**Outstanding:** push, CI and CodeQL; and the V-02 browser journeys, including a real print preview. (2026-10-28: pushed and merged by PR #34; the real print preview was checked by V-02 Fix 1; a CI and CodeQL result and the D18 journeys are still not recorded.) "Raise fee invoice" on FIN-04 still links to Students, with no student or admission picker (unchanged by design).
 
 **Approved decisions:**
 
@@ -1938,6 +1968,8 @@ Not run                                      backend integration tests; Chromium
 
 Merged into `main` by PR #36 (merge commit `810677a`). certifi PYSEC-2026-4320 is still open until its fix clears the cooldown (2026-10-26).
 
+**Next.js security update (2026-11-21, uncommitted on `feat/platform-tenant-management`; a separate change from 02-6):** `next` and `eslint-config-next` 16.4.2 -> **16.4.6** (React and React DOM stay 19.2.8). Fixes the seven moderate advisories for `>=16.x <=16.4.4` (first patched 16.4.5), among them GHSA-pc58-hwjq-p385, which applies to the `/api/v1/*` proxy; the npm advisory database reports none for 16.4.6. `pnpm-lock.yaml` changes only the Next.js family (`next`, `@next/env`, `@next/eslint-plugin-next`, 8 `@next/swc-*` binaries, `eslint-config-next`) and their integrity hashes — no other package moved. The API proxy no longer forwards the upstream `Content-Length` (the server frames the streamed body; request-size checks unchanged). Verified: frontend 1675 passed (PowerShell), eslint, Prettier, typecheck, and `next build` on the first attempt with the advisory gate gone.
+
 **Port isolation and startup preflight (2026-10-24, branch `fix/port-isolation`, from `810677a`, not pushed):**
 
 - **Why:** another local project listens on `[::]` / `[::1]` ports 3000 and 8000. MTI 360 could still bind `127.0.0.1` on those ports, and `localhost` (`::1` first on Windows) sent requests to the other service. With no `frontend/.env.local`, the native frontend's default API target was `http://localhost:8000`.
@@ -1970,11 +2002,218 @@ Not run                                       live runtime (no service started o
                                               integration tests; actionlint; CI
 ```
 
+### 02-3 — Seed + demo hardening
+
+**Status:** `COMPLETED` for the seed commands and automated verification (2026-10-31; uncommitted on `feat/platform-tenant-management`, beside the 02-C work; not pushed). **Browser verification:** pending, tracked separately (checklist B1–B15 in [docs/runbooks/demo.md](docs/runbooks/demo.md) §7). Scope from PHASE-02-MASTER-READINESS §22: "Repeatable demo · seed extension · seed tests · one command seeds the §21 demo"; no frontend, no database change.
+
+**Implemented:**
+
+- **One command:** `pnpm db:seed` (root `package.json`) runs `python -m app.cli seed`, which still refuses outside `APP_ENV=development`. It prints the institutes and accounts it created, never a password.
+- **Repeatable demo without a reset:** `seed --tag TAG` loads the same fixtures as new institutes and accounts.
+  - Tags are 1–16 lowercase letters or digits, and anything else is refused before any connection.
+  - Institutes are named `… (TAG)`, and every member email becomes `local.TAG@….example`.
+  - Earlier copies and other tenants are never changed, and a used tag is refused like an untagged second run. `system.seed.applied` records `tag`.
+  - `app.seed.tag_seed` rewrites every member reference: members, lead owners and creators, application creators and reviewers, fee structures, invoices and payments.
+  - The integration tests now load their per-test copies through it, replacing their private helper.
+  - No reset or delete command exists. A full reset is still only `pnpm infra:reset`.
+- **§21 demo runbook:** [docs/runbooks/demo.md](docs/runbooks/demo.md) maps each §21 step to the seeded Konkan and Coromandel accounts and records. Konkan stands in for "Coastal": Mumbai for Kochi, Ratnagiri for Visakhapatnam. `docs/runbooks/local-development.md` lists the command, and the `dev.json` comment points to it.
+- **Unchanged:** the fixture content (it already covered every §21 step), the D16 rules (`.example` emails, random passwords never shown), migrations and dependencies.
+
+```text
+Backend seed contract (test_dev_seed_contract.py)   55 passed (12 new: §21 storyline step by step;
+                                             a tag moves every member reference, by walking the
+                                             whole fixture; 7 invalid tags refused; the command
+                                             passes the tag, prints tagged names, never a password,
+                                             refuses an invalid tag before seeding; --tag parsed)
+Backend seed (test_dev_seed.py, mti360_test)  8 passed (1 new: a tagged copy loads next to an
+                                             earlier one, which is unchanged; tag audited; a used
+                                             tag is refused with nothing written; the new copy's
+                                             Mumbai counsellor sees only its own institute's
+                                             leads, and the earlier copy's lead is 404)
+Backend full suite (mti360_test, database tests required, S3 set)  1370 passed, 0 failed, 0 errors,
+                                             0 skipped (1357 + 13 new)
+Ruff / Ruff format / import contracts / mypy  pass
+Frontend                                      no frontend change (§22: none for 02-3); last full run
+                                             109 files, 1591 passed
+Development database                          untouched (counters and counts identical before/after)
+Not run                                       the command against a development database (the
+                                             existing one must not be reseeded); the §21
+                                             walkthrough in a browser
+```
+
+**Isolated seed verification (2026-10-31; no code change needed):**
+- **Disposable database:** `mti360_seed_verification` on the local PostgreSQL server. It was created with the statements of `02-test-database.sh` (owner `mti_owner`, the same grants), with its own bucket `mti360-seed-verification` and Redis db 2. Migrated with `pnpm db:migrate`.
+- **Settings check:** before any write, the resolved settings named only that database and bucket.
+- **Development data unchanged:** row-write counters, counts, audit events, revision `0011`, all 4 tenants (TEST included) and the 32 objects in the development bucket were identical before and after.
+- The ADR-0023 data queries were not run.
+
+```text
+pnpm db:seed                       Konkan: 2 campuses, 8 members, 6 system roles, 5 courses, 17 leads,
+                                   11 applications (DRAFT 1, SUBMITTED 1, CORRECTION_REQUIRED 1,
+                                   APPROVED 1, ADMITTED 7), 30 documents, 7 students, 7 invoices,
+                                   6 payments, 4 receipts; Coromandel: 1 campus, 2 members, 2 courses,
+                                   3 leads, 1 application, 1 student, 1 invoice/payment/receipt;
+                                   9 accounts; no password printed; exit 0
+pnpm db:seed --tag demo2           "(demo2)" institutes, 9 ".demo2@" accounts; all counts doubled
+                                   (tenants 2→4, users 9→18, leads 20→40, applications 12→24);
+                                   first copy unchanged; audit tag = demo2; exit 0
+pnpm db:seed --tag demo2 (again)   refused, exit 2; every count unchanged
+pnpm db:seed (untagged again)      refused, exit 2
+--tag Demo-2 | ../x | 17 chars     refused before connecting, exit 2; nothing written
+API isolation (API on the disposable database; sign-in through password reset + Mailpit;
+  passwords random, in memory only)  21/21 passed: Konkan copies share no lead/application/student;
+                                   cross-copy lead, application and student 404 for the demo2 owner,
+                                   Mumbai counsellor and Coromandel owner; original owner 404 on a
+                                   demo2 lead; demo2 Mumbai counsellor sees no Ratnagiri lead (404);
+                                   demo2 Coromandel sees its 3 leads only
+Focused regression (seed contract, finance seed contract, seed integration, CLI bootstrap)  107 passed
+Ruff / Ruff format / import contracts / mypy  pass
+Frontend                           no frontend change; not re-run (last: 109 files, 1591 passed)
+```
+
+**§21 coverage:** every step maps to built screens and APIs (docs/runbooks/demo.md §6). Missing, and kept out of the demo:
+- the dashboards: DASH-01 `/app` and ADM-01 (02-8) are `UNRELEASED` placeholders;
+- drag-and-drop on the lead board;
+- the 02-C administration screens are not merged yet.
+
+**Outstanding (separate from completion):**
+- The browser checklist B1–B15 at 390/768/1024/1440 in Light, Dark and System.
+- Commit and review.
+- Drop the disposable database and bucket when no longer needed. That is a destructive step, so do it on purpose.
+
+### 02-4 — Public enquiry (V1)
+
+**Status:** `IN_PROGRESS` (2026-11-01; uncommitted on `feat/platform-tenant-management`, beside the 02-C and 02-3 work; not pushed). Decisions: [ADR-0024](docs/adr/0024-public-enquiry.md) (approved 2026-10-31). **All automated tests pass**: the backend full suite, including the database tests; the frontend full suite; the static and migration checks. **Not browser-verified**, and the consent wording is not legally reviewed.
+
+**Implemented (code and tests written):**
+- **Institute domains:** `tenant_domains` (migration `0012`): platform-issued `{slug}.mti360.in`, verified by construction, unique hostname, one active address per institute, realm-aware RLS (the public realm reads only active, verified rows). `issue-site` command (audited); the seed issues `konkan` / `coromandel` (`<slug>-<tag>` for tagged copies).
+- **Host-only tenant resolution:** `Host`, or the right-most `X-Forwarded-Host` only behind a trusted proxy (`TRUSTED_PROXY_HOPS ≥ 1`); the Next.js proxy rebuilds that header from its own `Host` for `/api/v1/public/*` only. Unknown, inactive, unverified, malformed and closed-institute hosts are the same 404, before the body is read. `tenants.scopes.public_site_transaction` is the single place that gives a public context its resolved tenant.
+- **API:** `GET /api/v1/public/enquiry-form`, `POST /api/v1/public/enquiries`. 202 with the same body for stored, repeated and spam-trap enquiries; mandatory versioned consent (`enquiry-2026-10`); email and/or mobile; an open course of the resolved institute; 413 above 16 KiB; per-IP and per-institute Redis limits (429; 503 if Redis is down); duplicate suppression with an advisory lock; cross-site `Origin` is 403.
+- **Lead:** `NEW`, `WEBSITE`, institute pool, no owner, no creator (`created_by_membership_id` nullable only for a consented website lead, CHECK), `consent_version` / `consented_at`, the message as a note, `lead.created` audit (realm public, flags only).
+- **Outbox and worker:** `outbox_messages` (identifiers-only payload, idempotency key, tenant RLS plus a system-realm policy), committed with the lead; `python -m app.worker` / `pnpm worker`: `SKIP LOCKED` claims, delivery outside transactions, fenced settle, 1–60 minute backoff, `FAILED` after 6 attempts or a permanent failure, stale reclaim, Redis wake-up, logs without recipients.
+- **Hosted page:** `/enquiry` on a site host is rewritten to `/sites/<host>/enquiry` (direct `/sites/*` is 404; INC-27 resolved); T18 via `PublicSiteShell`; name, email, phone, course, message, consent, hidden spam trap, accessible validation, confirmation.
+- **Documents:** ADR-0024, [docs/legal/enquiry-privacy-notice.md](docs/legal/enquiry-privacy-notice.md) (draft for review, not legal approval), [docs/runbooks/public-enquiry.md](docs/runbooks/public-enquiry.md) (setup, operations, browser checklist E1–E13), INC-27 resolved, INC-52 opened (no UI-SCREENS entry), env templates.
+
+**Database verification (2026-11-01; `mti360_test` only):**
+- Before any change: `mti360_test` at `0012` without `uq_outbox_messages_tenant_id_id`; the new tables empty; the development database at `0011` and untouched.
+- `0012` was restored to exactly what had been applied, and the key was added by a new revision **`0013`** (`ADD CONSTRAINT … UNIQUE (tenant_id, id)`). `id` is the primary key, so no data can violate it, and no rollback was needed: `alembic upgrade head` (0012 → 0013), then `alembic check` reported no drift.
+- **Fixes from the database runs:**
+  1. The test harness did not close the enquiry rate-limit and wake-signal Redis clients. With warnings as errors, those unclosed clients turned into errors in later tests. `auth_harness` now closes them.
+  2. Two crash-recovery tests claimed with a time before the message was available. They now claim at the current time and run the rescuing worker 10 minutes later.
+  3. A mobile-only test matched leads by a random mobile that can repeat across runs. It now uses a unique name.
+  4. **`0012` downgrade:** its refusal ("leads without a creator exist") broke the 13 existing migration round-trip tests, because the enquiry tests leave public leads in the shared test database. The downgrade now deletes leads without a creator, with their follow-ups and activities (development data loss, like `0011`). It still refuses when such a lead has an application or is a duplicate target. The impact on `mti360_test` was inspected first: 120 test-created website leads and 125 activities, with no linked application or duplicate.
+  5. Frontend: the spam-trap wrapper used a Tailwind arbitrary value, which the design-system guard forbids. It is now `sr-only` inside the `aria-hidden` wrapper.
+
+```text
+pytest test_tenant_domains.py, test_public_enquiry_api.py, test_outbox_worker.py,
+  test_dev_seed.py (mti360_test, REQUIRE_DATABASE_TESTS=1)
+                                              first run: 58 passed, 4 failed, 5 errors (fixes 1-3);
+                                              after fixes: 66 passed; plus the new seed site-address
+                                              test and test_public_enquiry_schema.py (consent CHECKs,
+                                              0012/0013 round trip and refusal): passed
+  covers: host resolution; unknown/inactive/malformed/closed hosts 404; X-Forwarded-Host ignored at
+  hops 0, right-most only at hops 1; cross-tenant isolation (form, lead, staff view); body tenant_id
+  422; another institute's course 422; consent required/outdated; contact rules; spam trap; IP and
+  institute rate limits; Redis down 503; duplicate window; 5 concurrent repeats store one lead;
+  cross-site Origin 403; 413; lead + outbox atomic (an enqueue failure stores nothing); worker
+  sends once; retry with backoff; exhaustion; permanent failure; idempotency key; 4 concurrent
+  workers send each message once; crash reclaim with a fenced late result; stale without attempts
+  fails; logs without recipients; domain uniqueness, one active, reserved slugs, RLS (public sees
+  active only, tenant its own only, only platform/system insert); seed site addresses
+Backend migration and schema tests (13 previously failing)  145 passed after fix 4
+Backend full suite (uv run --locked --directory backend pytest; mti360_test,
+  REQUIRE_DATABASE_TESTS=1, Redis db 1, S3 set)   first run: 1465 passed, 13 failed (fix 4);
+                                                  final: 1480 passed, 0 failed, 0 errors, 0 skipped
+Backend ruff / ruff format / import contracts / mypy / uv lock --check   pass
+alembic heads / check on mti360_test          0013 (single head) / no new upgrade operations
+Frontend full suite (pnpm --filter @mti360/frontend test)   first run: 1629 passed, 1 failed
+                                                  (fix 5); final: 110 files, 1630 passed
+Frontend tsc / eslint / prettier / check:env  pass
+Development database and TEST tenant          untouched (counters, counts, audit, revision 0011,
+                                              all four tenants identical before and after)
+NOT RUN                                       any browser check (E1-E13); next build; the
+                                              development database was not migrated (still 0011)
+```
+
+**Browser verification (2026-11-01):**
+- **E1–E12 pass; E13 (screen reader) not performed.**
+- Headless Chromium 1243, driven by Playwright from outside the repository, against a local stack: frontend `:3200` → API `:8200` → the disposable `mti360_seed_verification` database (migrated to `0013`; `konkan.localhost` and `coromandel.localhost` issued with `issue-site`); `PUBLIC_SITE_DOMAIN=localhost` on both sides, `TRUSTED_PROXY_HOPS=1`, Redis db 2, Mailpit, `pnpm worker`.
+- Evidence per check (widths, themes, overflow, focus, database rows, Mailpit email): docs/runbooks/public-enquiry.md §3, "Results".
+- **Defect found and fixed:** proxy refusals returned an empty 404 (Chromium error page); they now render the not-found page with status 404. Frontend full suite afterwards: 110 files, 1630 passed; tsc, eslint and prettier pass.
+- **Open observations:** the not-found page on an institute host is Next.js's unbranded default (no root `not-found.tsx`); the dev-only Next.js badge overlaps content at 390. Not covered: Safari, Firefox, real devices, the production build.
+- Development database, TEST tenant, containers, ACRS: untouched (database snapshot identical before and after).
+
+**Branded public 404 (approved and implemented 2026-11-01):**
+- **Routing:** on an institute address, every non-page path is rewritten to `/sites/<host>/not-found`, which calls `notFound()` (HTTP 404). Its `not-found.tsx` names the institute only when the API resolves the host (verified, active address) and links to `/enquiry`; otherwise a neutral page with no institute, link or navigation. Never staff or platform navigation. `PublicSiteShell` renders no menu for an empty navigation. No logo exists in the data model.
+- **Proxy:** now matches every page path except `/api/*`, Next.js internals and files; `/app` and `/platform` behaviour on the application host is unchanged.
+- **Tests:**
+  - New `src/app/sites/site-not-found.test.tsx` (10): `publicSiteRead` forwards only the request's host, never a cookie or a client `X-Forwarded-Host`; branded, neutral (404 and API down) and the `notFound()` 404; axe in Light and Dark; site-only navigation.
+  - `proxy.test.ts` 33 (+10).
+  - Affected frontend files 16, 315 passed.
+  - Affected backend tests (public enquiry API, domains, rules, cross-tenant registry, route coverage; no backend change) 105 passed on `mti360_test`.
+  - **Full frontend suite: 111 files, 1649 passed**; tsc, eslint, prettier pass.
+- **Browser (headless Chromium, local stack on the disposable database, read-only):** 16/16 (docs/runbooks/public-enquiry.md §3).
+- **Open (dev only):** React's "script tag" console warning for the root layout's theme pre-paint script when a `notFound()` boundary renders; theme still correct; `/app` RESOURCE-02 and the production build not checked.
+
+**Remaining before `COMPLETED`:**
+- E13 with a real screen reader (NVDA or VoiceOver).
+- Legal review of the consent wording and privacy notice.
+- Migrating a development database to `0013` when you choose (`pnpm db:migrate`; not yet, by decision of 2026-11-01).
+- Commit and review.
+
 ---
 
 # 10. PHASE 02 — PLATFORM CONTROL PLANE
 
 > **Re-sequenced (L1, 2026-10-08):** follows the Admissions MVP (section 9A), except the thin provisioning UI (02-C).
+
+### 02-6 — Batches (V1)
+
+**Status:** `IN_PROGRESS` — implemented, seeded, automatically tested and **browser-verified on the disposable database; not committed, no CI** (2026-11-20, working tree of `feat/platform-tenant-management`, alongside the uncommitted 02-C, 02-3 and 02-4 work). Decisions: [ADR-0025](docs/adr/0025-batches.md) (payment decision B).
+
+**Implemented**
+
+- **Database (migration `0014`):** `batches`, `batch_allocations`, `batch_activities` (append-only); `admissions.status` accepts `ENROLLED` (no backfill). Composite keys bind an allocation to one admission (admission, student, campus, course) and one batch (batch, course, campus); one `ACTIVE` allocation per admission (partial unique index); capacity 1–500, dates, statuses and the payment-basis / override rules as CHECKs; trigger `batch_allocations_count` counts seats only into `OPEN` batches, never beyond capacity, and makes ended allocations immutable. Tenant RLS; no DELETE for the runtime role; the read-only role reads `batches` only.
+- **Permissions:** `batch.read`, `batch.manage`, `batch.allocate` (campus-scoped). Owner, Administrator, Admissions manager: all; Counsellor, Finance manager, Finance officer: read. Registry, role templates and every tenant's system roles (migration) agree.
+- **API (`app/modules/batches`):** `GET/POST /batches`, `GET/PATCH /batches/{id}`, `POST /batches/{id}/status`, `GET /batches/{id}/allocations`, `GET /batches/{id}/eligible-admissions`, `POST /batches/{id}/allocations`, `POST /batch-allocations/{id}/transfer`, `POST /batch-allocations/{id}/withdraw`, plus `GET /batches/{id}/activity` and `GET /batch-allocations?student_id=` (Student 360). Row locks in a fixed order; optimistic versions; activity and `domain` audit events on every change (override audited separately; no names or reasons in metadata).
+- **Payment gate (decision B):** `PAID` live invoice passes; otherwise an override reason is required and recorded with the invoice state and outstanding amount. Missing or cancelled invoices are not paid.
+- **Frontend:** ACA-05 Batches (search; course, campus, status and seat filters; seat utilisation), ACA-07 create/edit (course, campus and code fixed after creation), ACA-06 detail (summary and seats, close/reopen/cancel, allocated students and history tabs, allocate dialog with fee position and override reason, transfer and withdraw dialogs, batch history). Student 360: Batch card (current batch, transfers, withdrawals, override details), Enrolled badge and current batch on admissions, batch entries in the history. Navigation: Academics › Batches requires `batch.read`.
+
+**Verified (automated, 2026-11-20)**
+
+- Backend: 1524 passed (1 skipped: S3 not configured); ruff, format, mypy (332 files) and import contracts clean. New: `test_batches_api.py` (13, incl. last-seat race, one admission into two batches at once, transfer racing withdrawal), `test_batches_schema.py` (8: RLS, privileges, composite keys, one-active index, trigger with application checks bypassed, migration 0014 down/up and `alembic check`), `test_batches_cross_tenant.py` (7, every route registered), `test_batches_domain.py` (17). Updated permission expectations in `test_authz_registry.py`, `test_rbac_schema.py`, `test_session_permissions.py`.
+- Frontend: 1671 tests in 112 files at the first session; 1672 after the second (new `batches.test.tsx` 20 incl. axe in Light and Dark; Student 360 batch tests), eslint, Prettier, typecheck and `next build` pass. Run Vitest from PowerShell: under Git Bash the session-provider tests fail falsely (module-path casing), not a code fault.
+- Databases: tests ran against `mti360_test` only. The development database stays at `0011`; nothing was reset or deleted.
+
+**Demo seed (2026-11-20, second session)**
+
+- `app/seed_batches.py` + `batches` / `allocations` in `database/seeds/dev.json`: validated against the API's rules before writing (active course, campus, code, capacity, `batch.manage` / `batch.allocate` scope, the admission's course and campus, one allocation per admission, seats incl. transfers, payment decision B, no cancelled batch with students), then written through the real tables and seat-count trigger with the API's history (activity, versions, `ENROLLED`/`ADMITTED`). Tagged copies rewrite every actor email; an untagged rerun is refused.
+- Konkan: an open batch with seats (paid student), a **full** open batch (two overrides: part paid; no invoice), a **closed** batch with a student, a **transfer** between two GP Rating batches; two admitted students left unallocated for a live demo. Coromandel: one open batch with an override.
+- Tests: `tests/unit/test_dev_seed_batches_contract.py` (20: demo coverage, 17 refusals, withdrawal and cancelled-empty cases), `tests/integration/test_dev_seed_batches.py` (3: consistency and invariants; works through the API with roles, campus scope, the full batch and tenant isolation; rerun refused, earlier copy untouched).
+- `mti360_seed_verification`: migrated `0013 -> 0014`; `seed --tag batches1` loaded; reruns refused (exit 2) with no count changed; earlier copies (untagged, `demo2`) unchanged.
+
+**Browser verification (2026-11-20, headless Chromium 1243 via Playwright outside the repository; frontend `:3200` -> API `:8200` -> `mti360_seed_verification`; evidence outside the repository: `D:\workspace\mti360-verification-evidence\2026-11-20-phase-02-6\` — 81 screenshots, `results.json`, the Playwright script, `backend-pytest.log`)** — details in docs/runbooks/demo.md §8.
+
+- Workflow as the admissions manager (11 checks): ACA-07 validation, create, edit; allocation with payment override and refresh without reload; full capacity (UI and API 422 `batch_full`); capacity below allocations; close and reopen; transfer; withdrawal; Student 360 history; audit events — all pass.
+- 64 cells (ACA-05, ACA-06, ACA-07, Student 360 x 390/768/1024/1440 x Light, Dark, System on OS dark and OS light): all pass (200, theme applied, no page-content overflow, heading, no console errors). Touch targets at 390 pass.
+- Roles and scope: Mumbai counsellor and finance officer read-only and Mumbai-only; Ratnagiri-only administrator Ratnagiri-only; Coromandel owner isolated from Konkan — all pass.
+
+**Second-session regression:** backend 1547 passed, 1 skipped (ruff, format, mypy 335 files, import contracts clean); a first full run failed `test_permission_codes_are_written_only_in_permissions_modules` (literal codes in `seed_batches.py`, fixed) and had one setup error in `test_batches_schema.py` that did not reproduce alone or in the next full run. Frontend 1672 passed (PowerShell), eslint, Prettier, typecheck, `next build` pass.
+
+**Defects found in the browser and fixed:** hydration error on ACA-05/ACA-06 (`<div>` inside the mobile card's `<p>`; regression test added), stretched payment badges, 32 px Transfer/Withdraw buttons at 390.
+
+**Open**
+
+1. Commit and review (nothing committed), CI run, migration of the development database to `0014` (needs approval).
+2. **Fixed in the release-readiness review (2026-11-20):** the shell header no longer overflows at tablet widths (`AppHeader` utilities may shrink so the institute name truncates; `CommandSearch` uses its icon form below desktop); the mobile payment badge reads "Fee override" and fits; read-only roles get no Actions column; the ACA-06 summary seat label wraps (it caused 39 px document overflow at 1024). Browser re-check: 124/128 cells (8 tenant pages x 390/768/1024/1440 x Light, Dark, System-dark, System-light) with no document or header overflow; the 4 remaining cells are 02-5 fee badges ("Partly paid", "Overdue") truncating on Student 360 at 1024 (Finance component, not changed). Frontend 1672 passed; build passes. Explained, not defects: the `/login` "404" was the browser's `/favicon.ico` request (the app has no icon asset; `/login` returns 200); the ACRS stack was recreated/restarted by its own compose (restart count 0, exit 0, no OOM), not by this work.
+3. Known limits: ACA-06 shows the first 100 active and 100 ended allocations; no BatchCard component; screen-reader pass not done.
+
+**UI consistency pass (2026-11-20/21, uncommitted):** shared-component fixes behind the list-screen misalignment. `FilterBar` is one toolbar section (search row with Clear/Apply; filters in a 2/3-column grid; compact "Filters (n)" drawer button beside the search on mobile; optional `quickFilters` row, used by Leads); `Select` shows only the selected text (the option's check-mark box had pushed the value below centre); `Tabs` no longer scrolls vertically (the scrollbar artifact); `DataTable` columns gain `noWrap` (identifiers no longer break at hyphens), used by Batches, Courses, Applications, Invoices, Payments, Students; the Leads contact cell no longer breaks phone numbers; the Tenants list's filter-width workaround is removed. Frontend 1673 passed; lint, Prettier, typecheck and build pass. Browser before/after (Leads, Leads board, Applications, Courses, Batches, Student 360, Invoices x 390/768/1024/1440 x Light, Dark, System-light, System-dark: 112 views) verified the FilterBar, Select, Tabs and Leads fixes; the `noWrap` columns and the Tenants change are covered by unit tests but not yet browser-checked (Docker Desktop was stopped). Evidence: `D:\workspace\mti360-verification-evidence\2026-11-20-phase-02-6\ui-consistency`.
+
+**Student 360 fee badges (2026-11-21):** fee invoice rows sit side by side only from `large`; below it the details keep the full width, so "Partly paid" and "Overdue" are no longer squeezed (test added).
+
+**Browser checks pending (no safe browser session: Docker Desktop is stopped and was not started):** DataTable `noWrap` identifiers (Batches, Courses, Applications, Invoices, Payments, Students); the Platform Tenants filter toolbar; the Student 360 fee-badge layout at 390/768/1024/1440; a smoke check of the app on Next.js 16.4.6, including a document download through the proxy without `Content-Length`. All are covered by unit tests only until then.
+4. `next build` / `next dev` intermittently stop on a Next.js security advisory (dependency upgrade outside this slice).
 
 ## Phase Status
 
@@ -1993,7 +2232,7 @@ NOT_STARTED
 | T02-01 | Platform Shell | `NOT_STARTED` |
 | T02-02 | Platform Login | `NOT_STARTED` |
 | T02-03 | Platform Dashboard | `NOT_STARTED` |
-| T02-04 | Tenant Management | `NOT_STARTED` |
+| T02-04 | Tenant Management | `IN_PROGRESS`. The 02-C minimal slice (PLAT-04/05/06) is built (Phases 1–2 and the final gate below; core browser journey verified). Its responsive, theme, edge-state and expired-MFA browser checks are pending. Not started: the PLAT-04 Plan/Users columns, the full PLAT-05 Tenant 360, and PLAT-07 … PLAT-10 |
 | T02-05 | Tenant Lifecycle | `NOT_STARTED` |
 | T02-06 | Plans & Pricing | `NOT_STARTED` |
 | T02-07 | Subscription Management | `NOT_STARTED` |
@@ -2014,6 +2253,143 @@ NOT_STARTED
 | T02-22 | Platform Branding / Domains | `NOT_STARTED` |
 | T02-23 | Platform Administrators | `NOT_STARTED` |
 
+**T02-04 Phase 1: Platform Tenants UI (2026-10-25, branch `feat/platform-tenant-management`, from `921460d`, not committed):**
+
+- **Already implemented (T01-07, unchanged):** the platform tenant API `/api/v1/platform/tenants`:
+  - list with `q`, `status`, `sort` (`name`, `status`, `created_at`), `limit` and `offset`;
+  - detail with the owner only;
+  - provisioning (TRIAL, primary campus, system roles, owner invitation);
+  - suspend and reactivate (step-up, reason, version);
+  - resending the owner invitation.
+
+  Each route has one `require_permission`, and the service authorizes again. `tenant.*` is held by `SUPER_ADMIN` only, and a tenant session gets 401 (realm guard). Before this task the Tenants navigation item rendered `ExperiencePlaceholder`.
+- **Added (frontend):**
+  - `/platform/tenants` (PLAT-04): search, status filter, sort, pagination and the empty / filtered-empty / error / denied states.
+  - `/platform/tenants/[tenantId]` (PLAT-05, partial): status, dates and the administrator.
+  - `/platform/tenants/new` (PLAT-06): the provisioning form, with client validation that mirrors the API, mapping of 422 and 409 to fixed copy, and the CSRF token through the platform session.
+  - Supporting code: `platformApiRead` (platform cookie only; it shares one read implementation with `tenantApiRead`), `platformPageAccess` / `settlePlatform`, and `features/tenants`.
+- **Tests:**
+  - 25 page tests: the gate order, permission and not role name, every state, URL → API mapping, detail, form validation and errors, axe in Light/Dark.
+  - 5 `platformApiRead` tests.
+  - 1 backend integration test for list pagination and sort.
+- **Not in Phase 1:** suspend/reactivate and resend-invitation UI; subscription and trial dates (the data model has none; status only).
+- **Known (shared, not changed here):** `DataTable` renders its empty state as an `h3` directly under the page `h1` (axe heading-order); Courses and Leads have the same.
+- **Checks:**
+
+```text
+Frontend vitest (--maxWorkers=3)              106 files, 1475 tests passed
+                                              (a default run first crashed on worker memory: environment, not a test)
+Frontend prettier, eslint, tsc, next build    pass (3 new dynamic routes)
+Backend tenant API + realm guards             26 passed against mti360_test (REQUIRE_DATABASE_TESTS=1)
+Backend pytest (no database)                  806 passed, 527 skipped
+Backend ruff, ruff format, mypy, import-linter    pass
+Live (anonymous)                              /platform/tenants* → 307 platform session ended; API 401
+Not run                                       a signed-in browser journey: no platform administrator exists in
+                                              the development database (none was created)
+```
+
+**T02-04 Phase 2: tenant list fixes and tenant actions (2026-10-25, same branch, not committed):**
+
+- **Verified working (no change):**
+  - Backend: all six tenant routes (documented in `/openapi.json`); one permission per route plus the service check; step-up on suspend and reactivate; reason and version; the realm guard.
+  - Frontend: list / detail / create page gates, states, validation and error mapping (the Phase 1 tests).
+- **Defects fixed (list, PLAT-04):**
+  - An unknown `sort` in the URL (`status`, `owner`) was dropped for the API but drawn as "Created ↑", while the data was newest first. The indicator now reads the same `tenantSort` as the API query.
+  - A page past the end (stale link: `offset` ≥ total) showed "No tenants yet" next to "3 tenants". It now shows "No tenants on this page" with "Go to the first page".
+  - An offset that was not a multiple of 25 showed the wrong page number. It is now aligned to the start of its page.
+  - The create success toast said the invitation "was sent". The API emails after its 202/201 answer (D10), so the toast now says it "is being emailed".
+- **Added (frontend, PLAT-05):** `features/tenants/TenantActions.tsx`.
+  - **Suspend / Reactivate:**
+    - Offered by permission and by status, mirroring D15 (UX only; the API answers 409 otherwise).
+    - Confirmation through the finance `ReasonDialog`, with a required reason (≤ 500) and the loaded version.
+    - `403 STEP_UP_REQUIRED` → PAUTH-07 through the session provider, with exactly one resend. Cancel or failure → "wasn't suspended/reactivated"; 409 → no success, and the page re-reads.
+    - Success → toast and re-read, only after the API answers.
+  - **Resend invitation:**
+    - Shown while the owner is `INVITED`, with `tenant.create`.
+    - `AlertDialog` confirmation; on 202 → "A new invitation was issued … is being emailed".
+    - 409 → "wasn't resent" and a re-read; any other failure → an error toast, never success.
+- **Tests:**
+  - Frontend: 23 new tenant page tests (48 in total). They cover the list defects, the action gating, the step-up resend, cancel, 409, 422 / denial, reactivate, and resend 202 / 409 / 500. Toasts are cleared between tests.
+  - Backend: 4 new integration tests (18 in total):
+    - every route refuses a platform user without `tenant.*` (403, nothing changed, no email);
+    - `TenantAdmin` refuses without the route dependency, and refuses a tenant-realm context;
+    - reactivation needs step-up;
+    - a failed invitation email still returns 202 and is logged without the address or token.
+- **Step-up investigation (signed-in browser test, 2026-10-25):**
+  - **Observed:** AMET suspend and reactivate succeeded without an authenticator prompt.
+  - **Cause:** expected behaviour. D6-5 / D7-4 / ADR-0017 §4: step-up is needed only when the session's last MFA verification (sign-in or step-up) is older than 10 minutes (`authorize()` → `require_fresh_mfa`). A read-only audit trace shows the actions at 6 min 21 s and 7 min 45 s after verification, with no `authz.step_up_required`.
+  - No code change.
+  - **Tests added:**
+    - backend (19 tenant API tests): the pending session gets 401; fresh needs no code; stale gets 403; a wrong code gives 422 and is still refused; a valid step-up lets the action succeed once;
+    - frontend (50 tenant page tests): fresh = one request and no prompt; a repeated STEP_UP_REQUIRED gives an error and no success.
+- **Gaps:**
+  - Invitation delivery is not reported to the UI (by design, D10): a failed email is only logged. A delivery status needs a new decision (ADR) and is not invented here.
+  - `ReasonDialog` lives in `features/finance` and is imported by tenants; moving it to `features/shared` is a small follow-up.
+  - Subscription and trial dates: still none in the data model.
+- **Checks:**
+
+```text
+Frontend tenant pages + platformApiRead       59 passed (48 page, 11 read)
+Frontend vitest (--maxWorkers=3)              106 files, 1497 passed, 1 failed → fixed: the design-system
+                                              guard matched the word "transition" in a new comment
+                                              (reworded; guard 24/24 passed after)
+Frontend prettier, eslint, tsc, next build    pass
+Backend tenant API                            18 passed against mti360_test (REQUIRE_DATABASE_TESTS=1)
+Backend pytest (full, mti360_test)            1336 passed, 1 skipped (S3 not configured)
+Backend ruff, ruff format, mypy, import-linter    pass
+Live (anonymous)                              API 401 for list and suspend; tenant routes in /openapi.json
+Not run                                       a signed-in browser journey (no browser tool in this session;
+                                              sign-in needs the administrator's TOTP). The native dev server
+                                              on :3100 stopped responding during the full vitest run and was
+                                              not restarted here.
+```
+
+**T02-04 final quality gate (2026-10-25, same branch, not committed):**
+
+- **Signed-in browser journey (run by the user, Platform Admin, native dev servers):**
+  - sign-in with MFA;
+  - the tenant list showing the existing tenants;
+  - creating the test tenant AMET and opening its detail page;
+  - Resend invitation → the success toast saying the email is being sent;
+  - suspending AMET with a reason, then reactivating it. There was no authenticator prompt because the session was inside the 10-minute window (D6-5; see the step-up investigation above).
+- **Not verified:**
+  - **Email delivery.** Only the API's acceptance of the resend request (202) was observed. Whether the invitation reached the inbox (SMTP / mail catcher) was not checked.
+  - **The step-up prompt in a real browser** (an action more than 10 minutes after the last verification). It is covered by automated frontend and backend tests only.
+  - **Browser checks of Mobile / Tablet / Large Desktop and of Dark / System themes** on the tenant pages. Automated axe in Light and Dark covers the list, detail, form and dialogs, but no viewport or theme was checked in a browser.
+  - The past-the-end page, filtered-empty and error states were checked only in tests, not in the browser.
+- **Checks:**
+
+```text
+Frontend vitest (full, --maxWorkers=2)        106 files, 1500 passed, 0 failed (design-system guard included)
+Frontend prettier, eslint (0 warnings), tsc   pass
+Frontend next build                           pass (/platform/tenants, /[tenantId], /new)
+Backend tenant, platform auth/users/security,
+  authorization, tenancy isolation, security,
+  authz engine/registry, tenancy domain       217 passed against mti360_test (REQUIRE_DATABASE_TESTS=1)
+Backend ruff, ruff format, mypy, import-linter    pass
+Repository guards                             uv lock --check, check:env pass; marketing website unchanged
+Dev server :3100                              stayed up through the full suite and the build this time
+```
+
+- **Review readiness check (2026-10-25):**
+  - **Scope.** TASKS.md T02-04 lists PLAT-04 … PLAT-10: tenant 360, onboarding, status, usage, health and support access. What is built is the 02-C minimal slice (PHASE-02-MASTER-READINESS §22: "PLAT-04/05/06 minimal (list, summary, create with owner invite; step-up)"). PLAT-07 Onboarding, PLAT-08 Status, PLAT-09 Usage & Health and PLAT-10 Support Access are **not implemented**. PLAT-04 columns Plan and Users are not shown (no data model). T02-04 therefore stays `IN_PROGRESS`. The minimal slice can be reviewed as 02-C (platform part) once the browser checks below pass.
+  - **Scope decision (approved by the user, 2026-10-25; documentation only):**
+    - 02-C is tracked in two parts: platform (this branch) and tenant (ADMIN-05/06/07 UI, `NOT_STARTED`; INC-50).
+    - TASKS.md T02-04 records what was delivered and what remains, and keeps its original list.
+    - T02-04 stays `IN_PROGRESS`. The platform part moves to `READY_FOR_REVIEW` only after the browser evidence is recorded.
+  - **Invitation email (verified):** reached the local Mailpit catcher (UI http://localhost:18025).
+    - Two "You're invited to administer AMET on MTI 360" messages: 14:34:46 UTC (provisioning) and 14:36:42 UTC (resend).
+    - Both carry an accept-invitation link, and the resend carries a new token (compared by hash; read-only).
+    - Mailpit captures mail and does not forward it, so delivery to a real inbox is not verified (no real provider is configured locally).
+  - **Edge states (automated, 12 tests passed):** filtered empty / no search match, page past the end, list and detail read errors, access denied (no `tenant.read` / `tenant.create`, API 403), ended session, and failed actions.
+    - In a browser, only the no-match search and the past-the-end URL can be checked safely.
+    - Error and denied states would need a stopped API or a second platform account; neither was done.
+  - **Pending (no browser tool available to Claude; checklist given to the user):**
+    - phone (390), tablet (768), desktop (1024) and large (1440) widths;
+    - Light, Dark and System themes;
+    - the step-up prompt more than 10 minutes after the last MFA verification.
+- **Status:** `IN_PROGRESS`. All automated checks pass and the main journey works in a browser. The outstanding browser checks above (responsive and theme; the step-up prompt) and an invitation delivery check remain before `READY_FOR_REVIEW` (CLAUDE.md §57).
+
 ---
 
 # 11. PHASE 03 — TENANT FOUNDATION
@@ -2021,28 +2397,218 @@ NOT_STARTED
 ## Phase Status
 
 ```text
-NOT_STARTED
+IN_PROGRESS (through the 02-C tenant part only; see T03-03, T03-04, T03-05)
 ```
 
 ## Phase Completion
 
 ```text
-0 / 11 tasks
+0 / 11 tasks COMPLETED; 3 IN_PROGRESS (T03-03, T03-04, T03-05)
 ```
 
 | Task | Description | Status |
 |---|---|---|
 | T03-01 | Tenant Shell | `NOT_STARTED` |
 | T03-02 | Institute Profile | `NOT_STARTED` |
-| T03-03 | Campus Management | `NOT_STARTED` |
-| T03-04 | Tenant Users | `NOT_STARTED` |
-| T03-05 | Tenant Roles | `NOT_STARTED` |
+| T03-03 | Campus Management | `IN_PROGRESS` (02-C tenant part, Slice 3: ADMIN-03/04 implemented over the T01-08 API, uncommitted; automated tests pass; browser checks pending; archiving not built, INC-40; see below) |
+| T03-04 | Tenant Users | `IN_PROGRESS` (02-C tenant part, Slice 1: ADMIN-05/06 implemented, uncommitted; automated tests pass; browser checks and the invite → accept journey pending; see below) |
+| T03-05 | Tenant Roles | `IN_PROGRESS` (02-C tenant part, Slice 2: ADMIN-07 read-only, uncommitted; automated tests pass; browser checks pending; creating, editing and deleting custom roles not built; see below) |
 | T03-06 | Tenant Integrations | `NOT_STARTED` |
 | T03-07 | Tenant AI Configuration | `NOT_STARTED` |
 | T03-08 | Notifications | `NOT_STARTED` |
 | T03-09 | Tenant Billing | `NOT_STARTED` |
 | T03-10 | Tenant Audit | `NOT_STARTED` |
 | T03-11 | Tenant Settings | `NOT_STARTED` |
+
+## T03-04 — Tenant Users (02-C tenant part, Slice 1; 2026-10-26)
+
+- **Branch:** `feat/platform-tenant-management` (uncommitted, on top of the platform part). Screen numbering follows UI-SCREENS.md (INC-50).
+- **Built (frontend only; T01-08 API unchanged):**
+  - **ADMIN-05 Users** (`/app/administration/users`, `member.read`):
+    - search, status filter, sort and paging in the URL;
+    - status shown as text;
+    - the signed-in person's own row marked "You";
+    - empty, filtered-empty, past-the-end, error and access-denied states.
+  - **Invite member** dialog (`member.invite`):
+    - email and name;
+    - initial roles, offered only with `role.assign` and `role.read`; roles holding access the caller lacks are shown disabled (a no-escalation hint);
+    - campus access: all campuses, or a selection from `GET /campuses`;
+    - different confirmation copy for a new and an existing account;
+    - `409` / `403` / `422` shown inside the dialog, never as success.
+  - **ADMIN-06 User Detail** (`/app/administration/users/[memberId]`):
+    - membership, roles and campus access (campuses outside the caller's access are counted, not named);
+    - status actions offered only in the statuses the API accepts, each confirmed first: resend invitation, re-invite, reinstate, suspend, remove;
+    - add a role and remove a role;
+    - versioned campus-access editing.
+  - **Own membership:** the UI hides suspension, removal, campus changes and role removal on it (D8-4). The email match is a UX hint only; the API refuses these actions with `403` regardless.
+- **Error handling:** every member `409` has the same code and the UI never shows server messages, so each action names the reasons that apply to it (for example: changed in the meantime, or the last active owner). The page then re-renders from the server.
+- **Verification (2026-10-26):**
+
+```text
+Frontend Users tests (users.test.tsx)        32 passed (gates, states, invite, roles, campuses,
+                                             status actions, self-protection, 403/409/422,
+                                             axe Light and Dark); mocked API only, no email sent
+Frontend full suite                          107 files, 1532 tests passed
+Frontend lint / typecheck / prettier         pass
+Frontend build (next build)                  pass (both routes compiled)
+Backend members, roles/campuses, authz API   38 passed (mti360_test database; no code change)
+Backend security + unit                      781 passed
+Not run                                      any real-browser check (no browser tool in this session)
+```
+
+- **Pending before `READY_FOR_REVIEW`:**
+  - browser checks at 390 / 768 / 1024 / 1440, in Light, Dark and System;
+  - the invite → accept → roles/campuses journey with a real owner account (invitation via Mailpit).
+- **Slice 2 — ADMIN-07 Roles & Permissions (read-only; frontend only; T01-08 API unchanged; uncommitted):**
+  - **Roles list** (`/app/administration/roles`, `role.read`; `GET /roles`): name and description, system/custom type (text, with a lock icon for system roles), member count, permission count (from tablet); cards below tablet; empty, error (with reference) and access-denied states. No paging or filters: the API returns every role at once.
+  - **Role detail** (`/app/administration/roles/[roleId]`, `role.read`; `GET /roles/{id}` and `GET /permissions` in parallel): type, description, member and permission counts; the permission catalogue grouped by the API's `module` slug, each permission shown by its API description, code and scope (Institute-wide / Per campus) and marked "Granted" (badge) or "Not granted" (text); per-module "n of m granted". A held code missing from the catalogue is listed by code; if the catalogue read fails, the role's codes are listed with a warning and reference. Another institute's role or a malformed ID is RESOURCE-02.
+  - **Links:** list → detail; detail → Users (with `member.read`); User Detail role names → role detail (with `role.read`).
+  - **Not built:** creating, editing or deleting custom roles (future work; the API exists). UI-SCREENS.md lists ADMIN-07 as template T15 (Settings), which does not exist yet; the list uses T02 Data List and the detail T03 Detail.
+  - **API limits:** module headings are the backend module slug humanised (e.g. `identity` → "Identity"; there is no display-name field). `GET /members` has no role filter, so "View users" opens the whole Users list.
+- **Verification, Slice 2 (2026-10-27):**
+
+```text
+Frontend Roles tests (roles.test.tsx)        19 passed (gates, unauthenticated, loading boundary,
+                                             empty, error, denied, not-found, system/custom,
+                                             member counts, grouping, granted/ungranted,
+                                             catalogue failure, mobile cards, User Detail links,
+                                             axe Light and Dark); mocked API only
+Frontend Users tests (regression)            32 passed
+Frontend full suite                          108 files, 1551 tests passed
+Frontend lint / typecheck / prettier         pass
+Frontend build (next build)                  pass
+Backend roles/campuses, members, authz,
+  permission sync, session permissions       48 passed (mti360_test database; no code change)
+Not run                                      any real-browser check; backend security + unit suites
+```
+
+- **Pending before `READY_FOR_REVIEW` (Slice 2):** browser checks of both Roles pages at 390 / 768 / 1024 / 1440, in Light, Dark and System, with a real owner account.
+- **Slice 3 — ADMIN-03 Campuses and ADMIN-04 Campus Detail (frontend only; T01-08 API unchanged; uncommitted):**
+  - **Campuses list** (`/app/administration/campuses`, `campus.read`; `GET /campuses`): the caller's own campuses as the API returns them (D-B1), by name: name (link), code, added (from tablet), last changed (from desktop); cards below tablet; empty (with or without Add campus), error (with reference) and access-denied states. No paging or filters: the API returns every campus at once.
+  - **Add campus** (`campus.create`; `POST /campuses`): name (1–200, collapsed whitespace) and code (typed as uppercase; 1–32 letters, digits or hyphens, starting with a letter or digit; "can't be changed later"), checked in the browser as the API checks them; `409` → "Another campus already uses this code." on the code field (dialog stays open); `422` → field errors; `403` → an alert in the dialog; never a success toast for a refusal.
+  - **Campus detail** (`/app/administration/campuses/[campusId]`, `campus.read`; `GET /campuses/{id}`): name, code (marked permanent), added and last changed. A campus of another institute, outside the caller's campuses, or a malformed ID is RESOURCE-02.
+  - **Rename** (`campus.update`; `PATCH /campuses/{id}` with `version`): name only, no code field; `409` → a warning and the latest data; `404` → "no longer available" and the page re-renders (not found); `403` and `422` → shown in the dialog.
+  - **Not built:** archiving or deleting campuses (INC-40, out of scope); campus status, address or members (not in the API).
+- **Verification, Slice 3 (2026-10-27):**
+
+```text
+Frontend Campuses tests (campuses.test.tsx)  24 passed (gates, unauthenticated, loading boundary,
+                                             empty with/without campus.create, error, denied,
+                                             not-found, add validation, uppercase code, 409/422/403
+                                             on add, rename with version, no code field, 409/404/
+                                             403/422 on rename, mobile cards, axe Light and Dark);
+                                             mocked API only, no campus created
+Frontend full suite                          109 files, 1575 tests passed
+Frontend lint / typecheck / prettier         pass
+Frontend build (next build)                  pass (campuses routes compiled)
+Backend roles/campuses, members, authz,
+  tenancy isolation, tenant-admin schema,
+  tenant-admin boundaries, cross-tenant
+  registry                                   81 passed (mti360_test database; no code change)
+Not run                                      any real-browser check
+```
+
+- **Test hardening, Slice 3 (2026-10-30; tests only, no production code change, no defect found):**
+
+```text
+Backend campus API (test_tenant_roles_campuses_api.py)   11 passed (7 → 11): rename outside the
+                                             member's campuses → 404 (row unchanged, no audit);
+                                             rename without campus.update → 403; rename 422 for
+                                             blank / whitespace name, missing / zero version and
+                                             an extra code field (INC-41); campus.updated audit
+                                             event on rename (tenant, target, metadata); duplicate
+                                             codes in any case or spacing → 409 with no audit,
+                                             another institute's code accepted (normalized)
+Frontend Campuses tests (campuses.test.tsx)  32 passed (24 → 32): empty Add form (both errors,
+                                             focus on Campus name, no request); "-KOC" with empty
+                                             name (no request); blank rename (focus, no request);
+                                             Cancel and Escape close Add and Rename, focus returns
+                                             to the opening button, no request; breadcrumb and
+                                             added / last-changed dates
+Backend full suite                           1341 passed, 1 skipped (S3 not configured; mti360_test)
+Backend ruff / import contracts / mypy       pass
+Frontend full suite                          109 files, 1584 tests passed
+Frontend eslint / prettier / tsc             pass (changed test file; tsc whole project)
+Not run                                      any real-browser check; ADMIN-03/04 not browser-verified
+```
+
+- **ADR-0023 membership security, ADMIN-05/06 (2026-10-30; backend + frontend; uncommitted; not browser-verified):**
+  - **Owner all-campus invariant:** a membership holding the Institute owner role always has `campus_scope = ALL`. Refused with `422` `VALIDATION_ERROR`, detail code `owner_requires_all_campuses`: limiting an owner's campuses (`field = campus_scope`; self-protection `403` stays first), giving the owner role to a campus-limited member (`field = role_id`; the no-escalation `403` stays first; never widened silently), and inviting an owner with selected campuses (`field = campus_scope`; nothing is left behind). The development seed refuses a campus-limited owner.
+  - **Owner counting and concurrency:** only `ACTIVE` owners with all campuses count for the last-owner rule. Campus limiting and owner-role assignment both take the per-tenant owner advisory lock before checking.
+  - **Re-invitation:** removes every previous role in the same transaction (`access.repository.unassign_all`, `access.service.clear_roles`; not `remove_role`). The response lists no roles, campus scope is kept, and `member.reinvited` records `roles_cleared`, `cleared_role_ids` and `cleared_role_names`. A stale version or disabled account rolls back and keeps the roles. Reinstatement still keeps roles.
+  - **API addition:** `is_owner` on `RoleOut`, `MemberRoleOut` and `MemberOut` (additive; requests unchanged), so the UI never compares role names or inspects role lists.
+  - **UI:** campus access disables "Selected campuses" for an owner and says why; the invite form refuses Institute owner with selected campuses (no request sent) and shows the API error at the campus access field; Institute owner is not offered to a campus-limited member, with the reason; the re-invite confirmation says previous roles are removed.
+  - **No migration, no data change.** Documentation: ADR-0023 (supersedes ADR-0019 §10.3 in part and §10.4), ADR-0019 marked, INC-51 resolved, docs/README ADR index, TASKS.md T03-04.
+
+```text
+Backend ADR-0023 tests (test_members_owner_scope_api.py)  13 passed (new): last and non-last owner
+                                             can't be limited; self-protection first; non-owners can
+                                             be limited; owner role needs all campuses (403 first);
+                                             owner invitation with selected campuses leaves nothing;
+                                             limited owners don't count; 3 concurrent races never
+                                             leave a limited owner; re-invitation clears roles
+                                             (database, response, audit, acceptance → ACTIVE with no
+                                             roles); Administrator re-invites a removed owner without
+                                             the owner role; stale/disabled refusals keep roles;
+                                             reinstatement keeps roles; another institute's member 404
+Backend seed contract (test_dev_seed_contract.py)  43 passed (2 new: limited owner refused, limited
+                                             Administrator accepted)
+Backend full suite                           1355 passed, 1 skipped (S3), 1 error: argon2 HashingError
+                                             in a test fixture while the frontend suite ran
+                                             concurrently; that file rerun alone: 22 passed
+Backend ruff / ruff format / import contracts / mypy   pass
+Frontend Users tests (users.test.tsx)        39 passed (7 new, 1 updated for ADR-0023)
+Frontend full suite                          109 files, 1591 tests passed
+Frontend tsc / eslint / prettier             pass
+Not run                                      any real-browser check; next build
+```
+
+- **ADR-0023 close-out verification (2026-10-31; verification only, no code change): implementation-complete.** Each suite ran on its own; the Argon2 `HashingError` above did not reproduce (it is raised only when libargon2 cannot allocate memory or start a thread; the test hasher uses 8 KiB, so the cause was most likely the frontend suite running in parallel; the original traceback was not kept).
+
+```text
+Backend full suite (uv run --locked --directory backend pytest; mti360_test,
+  REQUIRE_DATABASE_TESTS=1, TEST_REDIS_URL db 1, TEST_S3_* set)   1357 passed, 0 failed, 0 errors, 0 skipped
+Backend focused security suite (ADR-0023 owner scope, members and
+  invitations, roles/campuses, access service, authorization API, tenancy
+  isolation, cross-tenant admissions/courses-leads/finance, platform tenants,
+  tenant audit, tests/security, authz engine/registry, seed contract and seed)  325 passed
+  incl. concurrency: limiting + making owner at once; two owners removing each other
+Frontend full suite                          109 files, 1591 tests passed
+Ruff / Ruff format / import contracts / mypy  pass
+ESLint / TypeScript / Prettier                pass
+Development database                          untouched (row-write counters, row counts, audit
+                                             events and alembic revision identical before/after)
+Production database                           no change (none exists; no data change in this work)
+Not run                                       browser verification; next build; the two ADR-0023
+                                             data checks below (approval pending)
+```
+
+- **ADR-0023 data checks (read-only, prepared, NOT run; need approval; run as the database owner because RLS hides other tenants):**
+
+```sql
+-- 1. Institute owners with selected campuses (any status).
+SELECT m.tenant_id, m.id AS membership_id, m.status, m.campus_scope
+FROM tenant_memberships m
+JOIN membership_roles mr ON mr.tenant_id = m.tenant_id AND mr.membership_id = m.id
+JOIN roles r ON r.tenant_id = mr.tenant_id AND r.id = mr.role_id
+WHERE r.is_system AND r.template_code = 'INSTITUTE_OWNER' AND m.campus_scope = 'SELECTED'
+ORDER BY m.tenant_id, m.id;
+
+-- 2. Pending (INVITED) re-invited memberships that still hold roles (re-invited before ADR-0023).
+SELECT m.tenant_id, m.id AS membership_id, count(DISTINCT mr.role_id) AS roles_held,
+       max(a.created_at) AS last_reinvited_at
+FROM tenant_memberships m
+JOIN audit_events a ON a.tenant_id = m.tenant_id AND a.event_type = 'member.reinvited'
+                   AND a.target_type = 'tenant_membership' AND a.target_id = m.id
+JOIN membership_roles mr ON mr.tenant_id = m.tenant_id AND mr.membership_id = m.id
+WHERE m.status = 'INVITED'
+GROUP BY m.tenant_id, m.id
+ORDER BY m.tenant_id, m.id;
+```
+
+  Handling: any row is reviewed with the institute and changed only with approval, through the API as an administrator (check 1: change the campus access to all campuses, or remove the owner role while another all-campus owner remains; check 2: remove the roles, or remove and re-invite the member). No cleanup SQL is prepared.
+
+- **Pending before `READY_FOR_REVIEW` (all of 02-C tenant part):** browser checks of ADMIN-03/04/05/06/07 at 390 / 768 / 1024 / 1440, in Light, Dark and System, with a real owner account; the invite → accept → roles/campuses journey (Mailpit); adding and renaming a campus against a running API. 02-C stays `IN_PROGRESS`.
 
 ---
 
@@ -2093,7 +2659,7 @@ NOT_STARTED
 |---|---|---|
 | T05-01 | Courses | `NOT_STARTED` |
 | T05-02 | Curriculum | `NOT_STARTED` |
-| T05-03 | Batches | `NOT_STARTED` |
+| T05-03 | Batches | `IN_PROGRESS` (slice 02-6: ACA-05/06/07 implemented, tested and browser-verified on the disposable database; not committed) |
 | T05-04 | Timetable | `NOT_STARTED` |
 | T05-05 | Attendance | `NOT_STARTED` |
 | T05-06 | Faculty | `NOT_STARTED` |
@@ -2465,67 +3031,20 @@ NOT_STARTED
 
 # 27. UI IMPLEMENTATION STATUS
 
-## Platform Control Plane
+Counts of the screen entries in UI-SCREENS.md (corrected 2026-10-28, R0). The per-screen inventory, with the evidence for each status, is in [docs/architecture/requirements-traceability.md](docs/architecture/requirements-traceability.md) §5.
 
-```text
-0 / 53 screens implemented
-```
+- **Defined:** a headed screen entry in UI-SCREENS.md. There are 217, not the ~222 stated elsewhere (INC-01).
+- **Built and merged:** the screen exists on `main` with automated tests, recorded in this file.
+- **In progress:** built in the working tree, not yet committed.
+- **Browser-verified:** the §57 gate (CLAUDE.md) checked in a real browser at the four widths and in the three themes. §48 requires responsive behaviour before a screen counts as implemented, so no screen meets §48 yet.
 
-Status:
-
-```text
-NOT_STARTED
-```
-
----
-
-## Tenant Application
-
-```text
-0 / approximately 153 screens implemented
-```
-
-Status:
-
-```text
-NOT_STARTED
-```
-
----
-
-## Student Portal
-
-```text
-0 / 10 screens implemented
-```
-
-Status:
-
-```text
-NOT_STARTED
-```
-
----
-
-## Public Website
-
-```text
-0 / 6 screens implemented
-```
-
-Status:
-
-```text
-NOT_STARTED
-```
-
----
-
-## Total
-
-```text
-0 / approximately 222 screens implemented
-```
+| Experience | Defined | Built and merged | In progress | Deferred by approval | Browser-verified (§57) |
+|---|---|---|---|---|---|
+| Platform Control Plane (PLAT 53, PAUTH 7) | 60 | 9, plus PLAT-52 partial (D9B-8) | 3 (PLAT-04/05/06 minimal, 02-C) | 0 | 0 (PLAT-04/05/06 core journey only, 2026-10-25) |
+| Tenant Application (AUTH, AUTHZ, RESOURCE, DASH, GROW, ADM, ACA, FIN, COM, PLC, COMMS, AUTO, AI, ANA, ADMIN) | 141 | 33 | 5 (ADMIN-03 … ADMIN-07, 02-C) | 5 (GROW-07, GROW-10, FIN-01, FIN-09, FIN-10) | 0 (FIN-05 and FIN-07 print output only, V-02) |
+| Student Portal (STU) | 10 | 0 | 0 | 0 | 0 |
+| Public Website (PUB; INC-03) | 6 | 0 | 0 | 0 | 0 |
+| **Total** | **217** | **42, plus 1 partial** | **8** | **5** | **0** |
 
 ### Important
 
@@ -2966,6 +3485,7 @@ Single required status `ci-ok` over parallel jobs repo, frontend, backend, secre
 | 2026-10-07 | T01-10 Security Verification Gate | `READY_WITH_D18_DEFERRED`; one defect fixed (gitleaks fixtures, `f55ff50`, `71f3d87`); stale T01-06/07/08 statuses corrected; D18 not run |
 | 2026-10-07 | T01-09C Tenant MFA UX implemented | `READY_FOR_REVIEW` (second local commit on `feat/T01-09B-platform-identity-mfa-ux`); Sign-in security `/app/account/security`, tenant MFA set-up, recovery codes, turning off; completes D9B-9 |
 | 2026-10-07 | T01-09B Platform Identity & MFA UX implemented | `READY_FOR_REVIEW` on `feat/T01-09B-platform-identity-mfa-ux`; platform sign-in, MFA verify and set-up, recovery codes, reset and invitation, platform console, step-up, partial PLAT-52, realm-scoped cookie forwarding |
+| 2026-10-28 | R0 tracker correction; requirements traceability created | Phase 01 `COMPLETED` (per L1) with D18 deferred; T01-09 `COMPLETED` (PR #31); 02-5 merged (PR #34), still `IN_PROGRESS` (CI and D18 not recorded); Phase 03 `IN_PROGRESS`; screen counts corrected (§27); [requirements-traceability.md](docs/architecture/requirements-traceability.md) |
 
 ---
 
@@ -4651,12 +5171,14 @@ UX addendum (B1) -> T01-09B
 The next step is:
 
 ```text
-T01-10 gate: READY_WITH_D18_DEFERRED. Push
-feat/T01-09B-platform-identity-mfa-ux (T01-09B 5190a7b, T01-09C 77773dd,
-remediation f55ff50 and 71f3d87, and the T01-10 status commit), open the PR, let CI run
-(secrets, PostgreSQL integration) and merge with a merge commit; run the D18
-Chromium journeys in a suitable environment; then close T01 and start
-Phase 02. T01-09A was merged by PR #30 (merge commit 2af531b).
+R1 — 02-C close-out (approved 2026-10-28) on feat/platform-tenant-management:
+the user's browser checks of PLAT-04/05/06 and ADMIN-03 … ADMIN-07 (four
+widths; Light, Dark and System); the invite → accept → roles/campuses journey
+on the AMET test tenant, with Mailpit; fixes for verified defects; then an
+approved commit plan and a PR. Browser verification is not recorded as
+complete until the user has run it.
+Earlier next step, now done: T01-09B/C and the T01-10 commits were merged by
+PR #31 (9009db5). The D18 Chromium journeys are still deferred.
 ```
 
 The completed-task description below is retained for reference.

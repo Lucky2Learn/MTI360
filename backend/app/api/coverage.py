@@ -68,6 +68,15 @@ REVIEWED_EXEMPTIONS: Final = MappingProxyType(
         ("POST", f"{API_PREFIX}/auth/invitations/accept"): ReviewedExemption(
             _PUBLIC, "Invitation acceptance with a single-use token (T01-04)."
         ),
+        # Phase 02-4 (ADR-0024): the hosted enquiry page. The institute comes only from
+        # the verified request host; unknown hosts are 404; rate-limited per IP and
+        # per institute.
+        ("GET", f"{API_PREFIX}/public/enquiry-form"): ReviewedExemption(
+            _PUBLIC, "Enquiry page content of the host-resolved institute (Phase 02-4)."
+        ),
+        ("POST", f"{API_PREFIX}/public/enquiries"): ReviewedExemption(
+            _PUBLIC, "Public enquiry: creates a lead in the host-resolved institute (02-4)."
+        ),
         ("GET", f"{API_PREFIX}/session"): ReviewedExemption(
             _OWN_SESSION, "The caller's own session, permissions included (T01-04/05)."
         ),

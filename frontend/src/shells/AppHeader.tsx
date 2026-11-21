@@ -9,7 +9,8 @@ import type { ReactNode } from "react";
 // experience, and slots for the navigation trigger (below desktop) and the
 // shell utilities (search, notifications, account). Stable 64px height. The
 // experience label is hidden on mobile (the navigation drawer title repeats
-// it) so the bar never overflows at 390px.
+// it) so the bar never overflows at 390px. The utilities may shrink (their
+// context labels truncate) so the bar never overflows at tablet widths either.
 
 export type AppHeaderProps = {
   experienceLabel: string;
@@ -55,9 +56,7 @@ export function AppHeader({
         {experienceLabel}
       </p>
       {actions && (
-        <div className="ml-auto flex shrink-0 items-center gap-1">
-          {actions}
-        </div>
+        <div className="ml-auto flex min-w-0 items-center gap-1">{actions}</div>
       )}
     </header>
   );

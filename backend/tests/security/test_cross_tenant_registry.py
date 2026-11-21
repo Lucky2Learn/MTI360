@@ -14,6 +14,8 @@ from cross_tenant_registry import (
     BUSINESS_MODULES,
     BUSINESS_ROUTES,
     CROSS_TENANT_SUITES,
+    PUBLIC_ROUTES,
+    PUBLIC_SUITE,
     T01_SUITES,
 )
 from fastapi import FastAPI
@@ -95,3 +97,17 @@ def test_the_registry_check_is_not_vacuous(app: FastAPI) -> None:
     assert any("test_other_tenant_follow_ups_are_not_found" in p for p in problems)
     without_route = {k: v for k, v in routes.items() if k != ("GET", "/api/v1/courses")}
     assert "GET /api/v1/courses: stale entry" in registry_problems(without_route, _suite_tests())
+
+
+def test_every_public_route_has_a_cross_tenant_test(app: FastAPI) -> None:
+    """Phase 02-4: public routes resolve their institute from the host (tenancy.md §8)."""
+    public = {
+        (method, route.path or "")
+        for route in iter_route_contexts(app.routes)
+        if route_realm(route) == (Realm.PUBLIC, Access.ANONYMOUS)
+        for method in getattr(route, "methods", None) or ()
+    }
+    assert public == set(PUBLIC_ROUTES)
+    tree = ast.parse((BACKEND / PUBLIC_SUITE).read_text(encoding="utf-8"))
+    tests = {node.name for node in tree.body if isinstance(node, ast.AsyncFunctionDef)}
+    assert set(PUBLIC_ROUTES.values()) <= tests

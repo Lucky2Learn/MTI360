@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -49,11 +49,11 @@ describe("FilterBar", () => {
     const onClear = vi.fn();
     const onApply = vi.fn();
     render(<Bar onClear={onClear} onApply={onApply} />);
-    const group = screen.getByRole("group", { name: "Filters" });
-    await user.click(
-      within(group).getByRole("button", { name: "Clear filters" }),
-    );
-    await user.click(within(group).getByRole("button", { name: "Apply" }));
+    // The filters are a labelled group; Clear and Apply sit at the end of the
+    // search row of the same toolbar (the mobile drawer is closed).
+    expect(screen.getByRole("group", { name: "Filters" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+    await user.click(screen.getByRole("button", { name: "Apply" }));
     expect(onClear).toHaveBeenCalledTimes(1);
     expect(onApply).toHaveBeenCalledTimes(1);
   });

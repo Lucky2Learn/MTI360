@@ -1,8 +1,9 @@
 {
-  "_comment": "Development fixtures only (T01-08, decision D16). Load with `python -m app.cli seed` from backend/ with APP_ENV=development. Emails use reserved .example domains; passwords are generated, never shown or stored; to sign in, request a reset link from the sign-in page (Mailpit locally). Courses, leads (Phase 02-1) and applications (Phase 02-2) use fictitious contacts: example.com emails and the +91 90000 10xxx range. Finance (Phase 02-5): amounts are integer paise (INR); due and received dates are days relative to the seed run (IST), and payment references are fictitious.",
+  "_comment": "Development fixtures only (T01-08, decision D16). Load with `python -m app.cli seed` from backend/ with APP_ENV=development. Emails use reserved .example domains; passwords are generated, never shown or stored; to sign in, request a reset link from the sign-in page (Mailpit locally). Courses, leads (Phase 02-1) and applications (Phase 02-2) use fictitious contacts: example.com emails and the +91 90000 10xxx range. Finance (Phase 02-5): amounts are integer paise (INR); due and received dates are days relative to the seed run (IST), and payment references are fictitious. Phase 02-3: `pnpm db:seed` from the repository root; `--tag TAG` loads another, independent copy of the demo (docs/runbooks/demo.md). Batches (Phase 02-6): start dates are days relative to the seed run (IST); allocations replay in file order (a transfer or withdrawal follows its allocation); fees not fully paid need an override reason.",
   "institutes": [
     {
       "name": "Konkan Maritime Training Institute",
+      "site_slug": "konkan",
       "status": "ACTIVE",
       "campuses": [
         { "code": "MUM", "name": "Mumbai Campus" },
@@ -750,10 +751,25 @@
             }
           ]
         }
+      ],
+      "batches": [
+        {"key": "BST-MUM", "code": "STCW-BST-MUM-2612", "course": "STCW-BST", "campus": "MUM", "name": "STCW Basic Safety Training — Mumbai, December", "intake_label": "December 2026", "starts_in_days": 12, "duration_days": 5, "capacity": 20, "status": "OPEN", "created_by": "admissions@konkan-maritime.example"},
+        {"key": "DNS-MUM", "code": "DNS-MUM-2026-A", "course": "DNS", "campus": "MUM", "name": "DNS Batch 2026-A (Mumbai)", "intake_label": "January 2027", "starts_in_days": 45, "duration_days": 364, "capacity": 2, "status": "OPEN", "created_by": "admissions@konkan-maritime.example"},
+        {"key": "GPR-RTN", "code": "GPR-RTN-2026-B", "course": "GPR", "campus": "RTN", "name": "GP Rating Batch 2026-B (Ratnagiri)", "intake_label": "November 2026", "starts_in_days": -10, "duration_days": 180, "capacity": 30, "status": "CLOSED", "status_reason": "Classes have started; late joiners go to the next intake.", "created_by": "deck.coordinator@konkan-maritime.example"},
+        {"key": "GPR-MUM-A", "code": "GPR-MUM-2027-A", "course": "GPR", "campus": "MUM", "name": "GP Rating Batch 2027-A (Mumbai, morning)", "intake_label": "February 2027", "starts_in_days": 75, "duration_days": 180, "capacity": 24, "status": "OPEN", "created_by": "admissions@konkan-maritime.example"},
+        {"key": "GPR-MUM-B", "code": "GPR-MUM-2027-B", "course": "GPR", "campus": "MUM", "name": "GP Rating Batch 2027-B (Mumbai, evening)", "intake_label": "February 2027", "starts_in_days": 75, "duration_days": 180, "capacity": 24, "status": "OPEN", "created_by": "admissions@konkan-maritime.example"}
+      ],
+      "allocations": [
+        {"batch": "BST-MUM", "application": "KA4", "allocated_by": "admissions@konkan-maritime.example"},
+        {"batch": "DNS-MUM", "application": "KA6", "allocated_by": "admissions@konkan-maritime.example", "override_reason": "Balance covered by a shipping-company sponsorship letter dated this month; second instalment cheque awaiting clearance."},
+        {"batch": "DNS-MUM", "application": "KA11", "allocated_by": "admissions@konkan-maritime.example", "override_reason": "Principal approved provisional enrolment; fee invoice to be raised after the scholarship committee meets."},
+        {"batch": "GPR-RTN", "application": "KA8", "allocated_by": "deck.coordinator@konkan-maritime.example", "override_reason": "Parent's fee deposit confirmed by phone; receipt to follow before sea training."},
+        {"batch": "GPR-MUM-A", "application": "KA9", "allocated_by": "admissions@konkan-maritime.example", "override_reason": "Reversed bank transfer re-sent by the candidate; allocation agreed by the accounts office.", "transfer": {"to": "GPR-MUM-B", "reason": "Candidate works mornings; moved to the evening batch at his request.", "by": "admissions@konkan-maritime.example"}}
       ]
     },
     {
       "name": "Coromandel Nautical Academy",
+      "site_slug": "coromandel",
       "status": "TRIAL",
       "campuses": [{ "code": "CHE", "name": "Chennai Campus" }],
       "members": [
@@ -870,6 +886,12 @@
             }
           ]
         }
+      ],
+      "batches": [
+        {"key": "GME-CHE", "code": "GME-CHE-2027-A", "course": "GME", "campus": "CHE", "name": "Graduate Marine Engineering 2027-A (Chennai)", "intake_label": "March 2027", "starts_in_days": 100, "duration_days": 364, "capacity": 40, "status": "OPEN", "created_by": "director@coromandel-nautical.example"}
+      ],
+      "allocations": [
+        {"batch": "GME-CHE", "application": "CA1", "allocated_by": "director@coromandel-nautical.example", "override_reason": "First instalment received; remaining fees by education loan disbursement."}
       ]
     }
   ]

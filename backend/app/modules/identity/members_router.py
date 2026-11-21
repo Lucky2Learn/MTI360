@@ -62,7 +62,11 @@ def member_out(member: Member) -> MemberOut:
         status=member.status,
         campus_scope=member.campus_scope,
         campus_ids=list(member.campus_ids),
-        roles=[MemberRoleOut(id=r.id, name=r.name, is_system=r.is_system) for r in member.roles],
+        roles=[
+            MemberRoleOut(id=r.id, name=r.name, is_system=r.is_system, is_owner=r.is_owner)
+            for r in member.roles
+        ],
+        is_owner=any(r.is_owner for r in member.roles),
         invited_at=member.created_at,
         joined_at=member.joined_at,
         version=member.version,

@@ -40,6 +40,8 @@ PHASE_02_5_CAMPUS = [
     "payment.record",
     "payment.reverse",
 ]
+# Phase 02-6: every batch permission is campus-scoped.
+PHASE_02_6 = ["batch.allocate", "batch.manage", "batch.read"]
 ALL_TENANT = sorted(
     [
         "audit.read",
@@ -66,6 +68,7 @@ ALL_TENANT = sorted(
         *PHASE_02_2,  # Phase 02-2: every one is campus-scoped
         "fee_structure.manage",  # Phase 02-5
         *PHASE_02_5_CAMPUS,
+        *PHASE_02_6,
     ]
 )
 ADMIN = [code for code in ALL_TENANT if code != "role.delete"]
@@ -73,7 +76,8 @@ CAMPUS_ONLY = ["campus.read", "campus.update"]
 # A campus-restricted Administrator keeps every campus-scoped permission (D-B1): since
 # Phase 02-1 also course.read and the lead permissions, never the tenant-wide course.manage;
 # since Phase 02-2 every application, document, admission and student permission; since
-# Phase 02-5 every finance permission except the tenant-wide fee_structure.manage.
+# Phase 02-5 every finance permission except the tenant-wide fee_structure.manage; since
+# Phase 02-6 every batch permission.
 RESTRICTED_ADMIN = sorted(
     [
         *CAMPUS_ONLY,
@@ -84,6 +88,7 @@ RESTRICTED_ADMIN = sorted(
         "lead.update",
         *PHASE_02_2,
         *PHASE_02_5_CAMPUS,
+        *PHASE_02_6,
     ]
 )
 OWNER_ROLE = {"name": "Institute owner", "is_system": True}

@@ -114,7 +114,9 @@ No new permissions and no step-up: tenant MFA is optional (D6).
 1. **Campus scope without DELETE.** The review assumed DELETE on `membership_campuses`. T01-04 decision D16 (ADR-0015, "Grants") forbids DELETE on identity tables. A campus leaving a selection is therefore marked `removed_at`, and every reader of permitted campuses ignores marked rows (`identity.repository`, member reads). Re-adding a campus clears the mark.
 2. **The owner role and the no-escalation rule.** An Administrator (no `role.delete`) cannot remove the owner role at all: the T01-05 no-escalation rule gives `403` before D8-4. The last-owner `409` therefore applies to callers who hold every owner permission (for example through a custom role), and to suspension and revocation by Administrators.
 3. **Reinstatement and re-invitation** restore the member's existing roles. They are not role grants, so the no-escalation rule does not apply.
+   - **Superseded in part by [ADR-0023](0023-membership-owner-scope-and-reinvitation.md) §3 (2026-10-30):** re-invitation now removes every previous role assignment. Reinstatement still keeps the member's roles.
 4. **Owner definition.** The protected set is exactly D8-4: an `ACTIVE` membership holding the `INSTITUTE_OWNER` system role, whatever its campus scope.
+   - **Superseded by [ADR-0023](0023-membership-owner-scope-and-reinvitation.md) §1–§2 (2026-10-30):** every owner must have all-campus access, and only `ACTIVE` owners with `campus_scope = ALL` count for the last-owner rule.
 
 ## Consequences
 

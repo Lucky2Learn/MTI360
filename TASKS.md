@@ -710,8 +710,8 @@ Every slice is delivered as five commits:
 | T01-06 | Platform Identity & MFA | COMPLETED (PR #25, merge `9fdb40a`) |
 | T01-07 | Platform Administration Foundation (API) | COMPLETED (PR #27, merge `fe0b019`) |
 | T01-08 | Tenant Administration Foundation (API) and development seed | COMPLETED (PR #29, merge `fd70d7d`) |
-| T01-09 | Frontend Authentication & Session Integration | IN_PROGRESS (T01-09A tenant: COMPLETED, PR #30, merge `2af531b`; T01-09B platform/MFA UX: READY_FOR_REVIEW, B1 resolved; T01-09C tenant MFA UX: READY_FOR_REVIEW) |
-| T01-10 | Security Verification Gate & Phase Close-out | READY_WITH_D18_DEFERRED (gate run locally 2026-10-07; D18 Chromium journeys not run) |
+| T01-09 | Frontend Authentication & Session Integration | COMPLETED (T01-09A tenant: PR #30, merge `2af531b`; T01-09B platform/MFA UX and T01-09C tenant MFA UX: PR #31, merge `9009db5`; D18 Chromium journeys not run, deferred with T01-10) |
+| T01-10 | Security Verification Gate & Phase Close-out | READY_WITH_D18_DEFERRED (gate run locally 2026-10-07; merged by PR #31, merge `9009db5`; D18 Chromium journeys not run) |
 
 Dependencies:
 
@@ -1103,9 +1103,9 @@ The readiness review (2026-10-03) found no UX contract for the platform and MFA 
 * **T01-09A — Tenant authentication & session.** Built against the frozen UI contracts `docs/ui/T01-04-IDENTITY-AUTHENTICATION-UI.md` and `docs/ui/T01-05-AUTHORIZATION-RBAC-UI.md`: the same-origin proxy (`app/api/[...path]`, browser address as one `X-Forwarded-For` entry for `TRUSTED_PROXY_HOPS=1`), the typed API client and server/client session helpers, AUTH-01 … AUTH-03 and AUTH-05 … AUTH-08 on `AuthenticationTemplate` (T16), tenant MFA verify and recovery (the sign-in step only), the guarded `/app` shell, `TenantContext`, `CampusSwitcher`, the session `UserMenu`, the requirement map, `can()`, `PermissionGate`, AUTHZ-01, RESOURCE-01/02, NAV-01/02, DASH-01 and the T01-05 §11 error matrix.
   **Status:** COMPLETED (implementation `a4a3cfe`; merged to `main` by PR #30, merge commit `2af531b`). The out-of-repository Chromium journeys J1–J10 (D18) were not run.
 * **T01-09B — Platform Identity & MFA UX.** Built against the frozen contract `docs/ui/T01-09B-PLATFORM-IDENTITY-MFA-UI.md` (readiness review 2026-10-07, `READY_FOR_IMPLEMENTATION`; **B1 resolved**; decisions D9B-1 … D9B-12): PLAT-01, PLAT-02, PAUTH-01 … PAUTH-07 (forgot and reset password, invitation acceptance, MFA set-up, recovery codes, session ended, step-up), the guarded platform console with permission-aware navigation, and a partial PLAT-52 "Sign-in security" (**D9B-8 accepted**). MFA-pending states are in-memory steps of `/platform/login` (D9B-2); the proxy forwards only the called realm's session cookie (D9B-10). Tenant MFA enrolment moved to T01-09C (**D9B-9 accepted**).
-  **Status:** READY_FOR_REVIEW (implemented and verified on `feat/T01-09B-platform-identity-mfa-ux`; committed, not pushed, not merged). The out-of-repository Chromium journeys were not run.
+  **Status:** COMPLETED (implementation `5190a7b`; merged to `main` by PR #31, merge commit `9009db5`, 2026-10-07). No CI result for PR #31 is recorded. The out-of-repository Chromium journeys (D18) were not run; they remain deferred (T01-10).
 * **T01-09C — Tenant MFA UX.** Opt-in TOTP set-up, recovery codes shown once and turning it off with a current code for tenant users, on the existing T01-06 tenant endpoints (`/api/v1/session/mfa/enrolment`, `/enrolment/confirm`, `/remove`), reusing the T01-09B components; the tenant sign-in MFA step (T01-09A) is unchanged and now covered by additional tests. Contract `docs/ui/T01-09C-TENANT-MFA-UI.md` (D9C-1 … D9C-6): the personal **Sign-in security** page `/app/account/security`, reached from the account menu (D9C-1). Completes D9B-9. Backend limitations kept: no tenant recovery-code count or regeneration, no tenant step-up, no institute MFA policy.
-  **Status:** READY_FOR_REVIEW (implemented and verified on `feat/T01-09B-platform-identity-mfa-ux` as a second local commit after T01-09B; not pushed, not merged). The out-of-repository Chromium journeys were not run.
+  **Status:** COMPLETED (implementation `77773dd`, the second commit on `feat/T01-09B-platform-identity-mfa-ux`; merged to `main` by PR #31, merge commit `9009db5`, 2026-10-07). No CI result for PR #31 is recorded. The out-of-repository Chromium journeys (D18) were not run; they remain deferred (T01-10).
 
 ---
 
@@ -1121,7 +1121,7 @@ A Tenant Admin cannot perform Platform Admin operations.
 An unauthenticated user cannot access protected APIs.
 ```
 
-**Status:** READY_WITH_D18_DEFERRED (2026-10-07, run locally on `feat/T01-09B-platform-identity-mfa-ux`; not pushed). No BLOCKER, HIGH or MEDIUM finding remains. One genuine defect was fixed in remediation commits `f55ff50` and `71f3d87`: three synthetic leak-check fixtures from T01-09B/C were flagged by the CI gitleaks scan and are now allowlisted by exact path and value. The second commit also covers the self-test lines that name those values. The three proofs above are covered by the backend security and integration suites (route coverage, realm guards, tenancy isolation, platform boundaries). Those suites passed in CI on `main` (`2af531b`), and the backend is unchanged since. The out-of-repository D18 Chromium journeys were not run (environment/runtime limitation). Details: DEVELOPMENT-STATUS.md, T01-10.
+**Status:** READY_WITH_D18_DEFERRED (2026-10-07, run locally on `feat/T01-09B-platform-identity-mfa-ux`; merged to `main` with that branch by PR #31, merge commit `9009db5`; this label is not in the §5 status list; see [requirements-traceability.md](docs/architecture/requirements-traceability.md), open tracker items). No BLOCKER, HIGH or MEDIUM finding remains. One genuine defect was fixed in remediation commits `f55ff50` and `71f3d87`: three synthetic leak-check fixtures from T01-09B/C were flagged by the CI gitleaks scan and are now allowlisted by exact path and value. The second commit also covers the self-test lines that name those values. The three proofs above are covered by the backend security and integration suites (route coverage, realm guards, tenancy isolation, platform boundaries). Those suites passed in CI on `main` (`2af531b`), and the backend is unchanged since. The out-of-repository D18 Chromium journeys were not run (environment/runtime limitation). Details: DEVELOPMENT-STATUS.md, T01-10.
 
 ---
 
@@ -1137,12 +1137,15 @@ Sources: [PHASE-02-MASTER-READINESS.md](docs/architecture/PHASE-02-MASTER-READIN
 |---|---|---|---|
 | 02-1 | Courses + Lead Management | T05-01 (minimal: ACA-01/02/03), T04-01 (GROW-08/09; GROW-07/10 deferred), T04-02 (ADM-02 board, no drag-and-drop) | COMPLETED (merged to `main` by PR #32, merge commit `2ea72f6`; D18 Chromium journeys not run; see DEVELOPMENT-STATUS.md §9A) |
 | 02-2 | Applications → Documents → Admission → Student | T04-04 … T04-08 | COMPLETED (merged to `main` by PR #32, merge commit `2ea72f6`; [ADR-0021](docs/adr/0021-admissions-core.md); D18 Chromium journeys not run; see DEVELOPMENT-STATUS.md §9A) |
-| 02-C | Onboarding enablers (members, roles, minimal provisioning UI) | T03 admin screens, T02-04/T02-12 minimal | NOT_STARTED |
-| 02-4 | Public enquiry (V1) | T14 enquiry capture | NOT_STARTED |
-| 02-5 | Finance-lite (V1) — **delivered next, ahead of 02-3 and 02-4** | T06 subset: T06-02 fee structure, T06-03 fee invoices (non-tax), T06-04 offline payments and receipts, T06-05 outstanding, parts of T06-09/T06-10 | IN_PROGRESS on `feat/phase-02-5-finance-lite` (not merged, not pushed): backend API, frontend screens, the financial-integrity tests and the development seed implemented and tested locally; CI and the D18 Chromium journeys (with a real print preview) are outstanding ([ADR-0022](docs/adr/0022-finance-lite.md); plan [PHASE-02-5-FINANCE-LITE-READINESS.md](docs/architecture/PHASE-02-5-FINANCE-LITE-READINESS.md); DEVELOPMENT-STATUS.md §9A) |
-| 02-6 | Batches (V1) | T05-03 | NOT_STARTED |
+| 02-C | Onboarding enablers (members, roles, minimal provisioning UI) | T03 admin screens, T02-04/T02-12 minimal | IN_PROGRESS — **02-C platform part** (PLAT-04/05/06 minimal, on `feat/platform-tenant-management`): built and tested; review pending browser checks. **02-C tenant part** (UI over the T01-08 API; UI-SCREENS numbering, INC-50): IN_PROGRESS — ADMIN-05/06 Users, ADMIN-07 Roles (read-only) and ADMIN-03/04 Campuses implemented; ADMIN-05/06 membership security (ADR-0023: owners keep all campuses, re-invitation clears roles) implementation-complete (automated verification 2026-10-31: backend 1357 passed, frontend 1591 passed); browser checks pending |
+| 02-3 | Seed + demo hardening | Master readiness §21–§22: repeatable demo, seed extension, seed tests | COMPLETED (seed commands and automated verification, 2026-10-31; uncommitted) — `pnpm db:seed` loads the §21 demo; `--tag` loads another, independent copy without changing existing data; verified on the disposable `mti360_seed_verification` database (repeat and invalid tags refused; 21 API isolation checks passed); walkthrough and coverage in [docs/runbooks/demo.md](docs/runbooks/demo.md). **Browser verification pending separately** (checklist B1–B15; DEVELOPMENT-STATUS.md §9A) |
+| 02-4 | Public enquiry (V1) | T14 enquiry capture | IN_PROGRESS — implemented on `feat/platform-tenant-management` (uncommitted, 2026-11-01; [ADR-0024](docs/adr/0024-public-enquiry.md)): verified institute hosts, `POST /api/v1/public/enquiries`, consented website leads, transactional outbox and worker, hosted page. Migrations `0012` and `0013`. All automated tests pass (backend 1480, frontend 1630, 2026-11-01); browser checks E1–E12 pass and accepted (headless Chromium on a disposable database, 2026-11-01); branded public 404 implemented (frontend 1649 passed); E13 (screen reader) and legal review of the consent wording pending (DEVELOPMENT-STATUS.md §9A) |
+| 02-5 | Finance-lite (V1) — **delivered next, ahead of 02-3 and 02-4** | T06 subset: T06-02 fee structure, T06-03 fee invoices (non-tax), T06-04 offline payments and receipts, T06-05 outstanding, parts of T06-09/T06-10 | IN_PROGRESS — merged to `main` by PR #34 (merge commit `a5bd01a`, 2026-10-11): backend API, frontend screens, the financial-integrity tests and the development seed, tested locally before the merge. The real print output of fee invoices and receipts was checked by the V-02 harness (fix merged by PR #35, `7fb3281`). Outstanding before COMPLETED: a recorded CI and CodeQL result (none is recorded for PR #34) and the D18 Chromium journeys ([ADR-0022](docs/adr/0022-finance-lite.md); plan [PHASE-02-5-FINANCE-LITE-READINESS.md](docs/architecture/PHASE-02-5-FINANCE-LITE-READINESS.md); DEVELOPMENT-STATUS.md §9A) |
+| 02-6 | Batches (V1) | T05-03 | IN_PROGRESS (2026-11-20, uncommitted on `feat/platform-tenant-management`; [ADR-0025](docs/adr/0025-batches.md)): migration 0014, API, ACA-05/06/07, Student 360 and the batch demo seed implemented; all automated tests pass; browser-verified on the disposable database (2026-11-20). **Open:** commit and review, CI, development database migration to 0014 (needs approval) |
 
 One branch and one PR per slice, merged with a merge commit.
+
+**Security maintenance (2026-11-21, separate from the slices; uncommitted):** Next.js and `eslint-config-next` 16.4.2 -> 16.4.6 and the API proxy no longer forwards the upstream `Content-Length` (GHSA-pc58-hwjq-p385). Frontend tests, lint, Prettier, typecheck and build pass; a browser smoke check is pending (DEVELOPMENT-STATUS.md, 02-6). Commit it on its own (dependency change), not inside a feature slice. **UI follow-ups pending browser checks:** DataTable `noWrap` identifiers, the Platform Tenants filter toolbar, the Student 360 fee-badge layout. Phase 02-7 not started.
 
 ### 02-5 — Finance-lite (V1)
 
@@ -1187,7 +1190,7 @@ One branch and one PR per slice, merged with a merge commit.
 | 8. Development seed extension | Done (`a03399e`): Konkan and Coromandel finance data per readiness §8, validated against the API's rules, with seed contract tests |
 | 9. Docs with the verification actually run | Done: ADR-0022 implementation notes, DESIGN-SYSTEM.md §16.1 (print views), this table and DEVELOPMENT-STATUS.md |
 
-**Still open before the slice is complete:** push, CI and CodeQL (not authorized in these sessions), and the D18 Chromium journeys with a real print preview (the separate V-02 task). The status stays IN_PROGRESS until they are recorded.
+**Still open before the slice is complete:** a recorded CI and CodeQL result, and the D18 Chromium journeys. The slice was pushed and merged by PR #34 (merge commit `a5bd01a`), but no CI or CodeQL result for it is recorded. The real print preview was checked by V-02 (DEVELOPMENT-STATUS.md §9A, "V-02 Fix 1"; PR #35). The status stays IN_PROGRESS until the remaining items are recorded.
 
 "Raise fee invoice" on FIN-04 leads to Students: a fee invoice is issued for an admission, so the issue form opens from the Student 360 Fees section (`/app/finance/invoices/new?student=…&admission=…`).
 
@@ -1279,6 +1282,21 @@ Features:
 * usage
 * health
 * support access
+
+**Delivered in 02-C (minimal):**
+
+- PLAT-04 list: search, status, sort and pages; no Plan or Users columns.
+- PLAT-05 summary: status, dates and administrator; suspend and reactivate with step-up; owner invitation resend.
+- PLAT-06 create, with the owner invitation.
+
+**Remaining in T02-04:**
+
+- PLAT-04 Plan and Users columns. They need the T02-06 / T02-07 plan and subscription data and a member count.
+- The full PLAT-05 Tenant 360.
+- PLAT-07 Onboarding.
+- PLAT-08 Status.
+- PLAT-09 Usage & Health.
+- PLAT-10 Support Access.
 
 ---
 
@@ -1594,6 +1612,8 @@ ADMIN-04
 ---
 
 ## T03-04 — Tenant Users
+
+Security rules (ADR-0023, 2026-10-30): an Institute owner always has all-campus access (enforced on campus-access change, owner-role assignment, owner invitation and the development seed); only ACTIVE all-campus owners count for the last-owner rule; re-inviting a removed member removes every previous role; reinstatement keeps roles.
 
 UI:
 

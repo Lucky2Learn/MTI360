@@ -15,6 +15,11 @@ database.
   role may only SELECT and INSERT). No ``updated_at`` and no ``version``.
 
 No hard delete: the runtime role has no DELETE privilege on any of them.
+
+Public enquiries (Phase 02-4, ADR-0024): a lead from the hosted enquiry page
+has no staff creator. ``created_by_membership_id`` may be NULL only for a
+``WEBSITE`` lead that carries consent evidence (``consent_version`` and
+``consented_at``, set together).
 """
 
 import uuid
@@ -78,6 +83,12 @@ class Lead(TenantScopedMixin, TimestampMixin, VersionedMixin, Base):
             "(status = 'DUPLICATE') = (duplicate_of_lead_id IS NOT NULL)", name="duplicate_of"
         ),
         CheckConstraint("duplicate_of_lead_id <> id", name="duplicate_not_self"),
+        CheckConstraint("(consent_version IS NULL) = (consented_at IS NULL)", name="consent"),
+        CheckConstraint(
+            "created_by_membership_id IS NOT NULL "
+            "OR (source = 'WEBSITE' AND consent_version IS NOT NULL)",
+            name="creator",
+        ),
         Index(None, "tenant_id", "status", "created_at"),
         Index(None, "tenant_id", "owner_membership_id", "status"),
         Index(None, "tenant_id", "campus_id", "status"),
@@ -114,7 +125,10 @@ class Lead(TenantScopedMixin, TimestampMixin, VersionedMixin, Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
     duplicate_of_lead_id: Mapped[uuid.UUID | None] = mapped_column()
-    created_by_membership_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
+    created_by_membership_id: Mapped[uuid.UUID | None] = mapped_column()
+    """``None`` only for a public enquiry (see the module documentation)."""
+    consent_version: Mapped[str | None] = mapped_column(String(32))
+    consented_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class LeadFollowUp(TenantScopedMixin, TimestampMixin, VersionedMixin, Base):

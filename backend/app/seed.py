@@ -13,13 +13,22 @@ Loads ``database/seeds/dev.json`` (realistic maritime fixtures) into a
 * (Phase 02-2) applications at every stage with placeholder documents in the
   object storage, and admitted students (``app.seed_applications``);
 * (Phase 02-5) fee structures, fee invoices, offline payments and receipts
-  for the admitted students (``app.seed_finance``).
+  for the admitted students (``app.seed_finance``);
+* (Phase 02-6) batches with allocations, payment overrides, transfers and
+  withdrawals of the admitted students (``app.seed_batches``);
+* (Phase 02-4) with ``site_slug``, the institute's platform-issued address
+  ``<slug>.<PUBLIC_SITE_DOMAIN>`` for the hosted enquiry page.
 
 Rules (D16): every email uses a reserved ``.example`` domain; every password is
 random, generated here, never stored in the file, never printed, logged or
 audited (developers set their own through the password reset flow); the seed
 refuses to run twice (an email already exists) and the command refuses to run
 outside ``APP_ENV=development``.
+
+Repeatable demo (Phase 02-3): :func:`tag_seed` gives the fixtures a tag, so the
+same demo can be loaded again as independent institutes (``seed --tag demo2``)
+next to an earlier copy. Nothing existing is changed, reset or deleted; a tag
+already used is refused like an untagged second run.
 Role names come from the file and are mapped to the code templates; they are
 never authorization logic.
 """
@@ -29,7 +38,7 @@ import re
 import secrets
 import uuid
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Final, cast
@@ -57,7 +66,13 @@ from app.modules.identity.models import MembershipCampus, TenantMembership, User
 from app.modules.identity.passwords import PasswordHasher, common_passwords
 from app.modules.institute.models import CAMPUS_CODE_PATTERN, Campus
 from app.modules.tenants.domain import TenantStatus
+from app.modules.tenants.domains import (
+    DomainLimitError,
+    DomainTakenError,
+    issue_platform_subdomain,
+)
 from app.modules.tenants.models import Tenant
+from app.modules.tenants.sites import InvalidSlugError, clean_slug
 from app.seed_admissions import (
     AdmissionsSeedError,
     SeedCourse,
@@ -67,11 +82,13 @@ from app.seed_admissions import (
     seed_admissions,
 )
 from app.seed_applications import SeedApplication, parse_applications, seed_applications
+from app.seed_batches import BatchSeedError, SeedBatches, parse_batch_section, seed_batches
 from app.seed_finance import Actor, FinanceSeedError, SeedFinance, parse_finance, seed_finance
 
 DEFAULT_SEED_FILE: Final = Path(__file__).resolve().parents[2] / "database" / "seeds" / "dev.json"
 SEEDED: Final = AuditEventType("system.seed.applied", AuditCategory.ADMIN)
 SEED_STATUSES: Final = frozenset({TenantStatus.TRIAL, TenantStatus.ACTIVE})
+SEED_TAG_PATTERN: Final = re.compile(r"[a-z0-9]{1,16}")
 
 USERS = cast(Table, User.__table__)
 CREDENTIALS = cast(Table, UserCredential.__table__)
@@ -105,6 +122,11 @@ class SeedInstitute:
     leads: tuple[SeedLead, ...] = ()
     applications: tuple[SeedApplication, ...] = ()
     finance: SeedFinance = field(default_factory=SeedFinance)
+    batches: SeedBatches = field(default_factory=SeedBatches)
+    tag: str | None = None
+    """Set by :func:`tag_seed`; recorded in the ``system.seed.applied`` audit event."""
+    site_slug: str | None = None
+    """Phase 02-4: the platform-issued address ``<slug>.<site domain>`` (none if unset)."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -146,6 +168,8 @@ def _member(raw: Mapping[str, Any], codes: set[str], where: str) -> SeedMember:
         raise SeedError(f"{where}.campuses: leave empty for all campuses")
     if not set(campuses) <= codes:
         raise SeedError(f"{where}.campuses: unknown campus code")
+    if role is OWNER_TEMPLATE and scope is CampusScope.SELECTED:
+        raise SeedError(f"{where}: an institute owner needs all-campus access (ADR-0023)")
     return SeedMember(
         email, _text(raw.get("display_name"), f"{where}.display_name"), role, scope, campuses
     )
@@ -220,8 +244,27 @@ def parse_seed(data: Mapping[str, Any]) -> tuple[SeedInstitute, ...]:
                 },
                 actors=_actors(members),
             )
-        except (AdmissionsSeedError, FinanceSeedError) as error:
+            batches = parse_batch_section(
+                raw,
+                where,
+                courses={c.code: c.status for c in courses},
+                campuses=codes,
+                admitted={
+                    a.key: (a.course, a.campus)
+                    for a in applications
+                    if a.status is ApplicationStatus.ADMITTED
+                },
+                finance=finance,
+                actors=_actors(members),
+            )
+        except (AdmissionsSeedError, FinanceSeedError, BatchSeedError) as error:
             raise SeedError(str(error)) from None
+        site_slug: str | None = None
+        if raw.get("site_slug") is not None:
+            try:
+                site_slug = clean_slug(str(raw["site_slug"]))
+            except InvalidSlugError as error:
+                raise SeedError(f"{where}.site_slug: {error}") from None
         institutes.append(
             SeedInstitute(
                 _text(raw.get("name"), f"{where}.name"),
@@ -232,6 +275,8 @@ def parse_seed(data: Mapping[str, Any]) -> tuple[SeedInstitute, ...]:
                 leads,
                 applications,
                 finance,
+                batches,
+                site_slug=site_slug,
             )
         )
     return tuple(institutes)
@@ -245,6 +290,91 @@ def load_seed(path: Path = DEFAULT_SEED_FILE) -> tuple[SeedInstitute, ...]:
     if not isinstance(data, dict):
         raise SeedError("the seed file must contain a JSON object")
     return parse_seed(data)
+
+
+def tag_seed(institutes: Sequence[SeedInstitute], tag: str) -> tuple[SeedInstitute, ...]:
+    """The same fixtures as new institutes and accounts, for a repeatable demo (02-3).
+
+    ``tag`` (1-16 lowercase letters or digits) goes into every member email
+    (``principal.demo2@konkan-maritime.example``, still a ``.example`` domain)
+    and every reference to one, and after each institute name. Codes, keys and
+    contacts are per institute, so they stay as they are.
+    """
+    if not SEED_TAG_PATTERN.fullmatch(tag):
+        raise SeedError("tag: 1-16 lowercase letters or digits")
+
+    def email(address: str) -> str:
+        local, domain = address.split("@")
+        return f"{local}.{tag}@{domain}"
+
+    def optional(address: str | None) -> str | None:
+        return email(address) if address else None
+
+    def finance(f: SeedFinance) -> SeedFinance:
+        return SeedFinance(
+            fee_structures=tuple(
+                replace(s, created_by=email(s.created_by)) for s in f.fee_structures
+            ),
+            invoices=tuple(
+                replace(
+                    invoice,
+                    issued_by=email(invoice.issued_by),
+                    cancelled_by=optional(invoice.cancelled_by),
+                    payments=tuple(
+                        replace(
+                            payment,
+                            recorded_by=email(payment.recorded_by),
+                            confirmed_by=optional(payment.confirmed_by),
+                            closed_by=optional(payment.closed_by),
+                        )
+                        for payment in invoice.payments
+                    ),
+                )
+                for invoice in f.invoices
+            ),
+        )
+
+    def batches(b: SeedBatches) -> SeedBatches:
+        def move(m: Any) -> Any:
+            return replace(m, by=email(m.by)) if m is not None else None
+
+        return SeedBatches(
+            batches=tuple(replace(x, created_by=email(x.created_by)) for x in b.batches),
+            allocations=tuple(
+                replace(
+                    a,
+                    allocated_by=email(a.allocated_by),
+                    transfer=move(a.transfer),
+                    withdraw=move(a.withdraw),
+                )
+                for a in b.allocations
+            ),
+        )
+
+    return tuple(
+        replace(
+            institute,
+            name=f"{institute.name} ({tag})",
+            members=tuple(replace(m, email=email(m.email)) for m in institute.members),
+            leads=tuple(
+                replace(lead, owner=optional(lead.owner), created_by=email(lead.created_by))
+                for lead in institute.leads
+            ),
+            applications=tuple(
+                replace(
+                    application,
+                    created_by=email(application.created_by),
+                    reviewed_by=optional(application.reviewed_by),
+                )
+                for application in institute.applications
+            ),
+            finance=finance(institute.finance),
+            batches=batches(institute.batches),
+            tag=tag,
+            site_slug=f"{institute.site_slug}-{tag}" if institute.site_slug else None,
+        )
+        for institute in institutes
+    )
 
 
 async def _identity(
@@ -276,6 +406,7 @@ async def seed(
     *,
     storage: ObjectStorage,
     password_factory: Callable[[], str] = generate_password,
+    site_domain: str | None = None,
 ) -> list[SeededAccount]:
     """Create the fixtures; return each new account's one-time password (refused if seeded).
 
@@ -284,7 +415,10 @@ async def seed(
     async with system_context(factory) as db:
         taken = await db.scalars(select(USERS.c.email).where(USERS.c.email.in_(emails)))
         if list(taken):
-            raise SeedError("the development seed has already been applied (an email exists)")
+            raise SeedError(
+                "the development seed has already been applied (an email exists); "
+                "load another copy with a new --tag"
+            )
     accounts = {email: password_factory() for email in emails}
     hashes = {email: await hasher.hash(password) for email, password in accounts.items()}
     names = {m.email: m.display_name for i in institutes for m in i.members}
@@ -301,6 +435,16 @@ async def seed(
                     id=tenant_id, name=institute.name, status=institute.status.value, version=1
                 )
             )
+            if institute.site_slug and site_domain:
+                try:
+                    await issue_platform_subdomain(
+                        db, tenant_id, institute.site_slug, site_domain=site_domain
+                    )
+                except DomainTakenError, DomainLimitError:
+                    raise SeedError(
+                        f"the site address {institute.site_slug}.{site_domain} is taken; "
+                        "load another copy with a new --tag"
+                    ) from None
         async with system_context(factory, tenant_id=tenant_id) as db:
             campus_ids: dict[str, uuid.UUID] = {}
             for code, name in institute.campuses:
@@ -370,11 +514,22 @@ async def seed(
                 admissions=admissions,
                 memberships=memberships,
             )
+            await seed_batches(
+                db,
+                tenant_id,
+                section=institute.batches,
+                course_ids=course_ids,
+                campus_ids=campus_ids,
+                admissions=admissions,
+                memberships=memberships,
+            )
             await write_audit_event(
                 db,
                 SEEDED,
                 target=AuditTarget("tenant", tenant_id),
                 metadata={
+                    "tag": institute.tag,
+                    "site_issued": bool(institute.site_slug and site_domain),
                     "campus_count": len(institute.campuses),
                     "member_count": len(institute.members),
                     "course_count": len(institute.courses),
@@ -383,6 +538,8 @@ async def seed(
                     "fee_structure_count": len(institute.finance.fee_structures),
                     "invoice_count": len(institute.finance.invoices),
                     "payment_count": sum(len(i.payments) for i in institute.finance.invoices),
+                    "batch_count": len(institute.batches.batches),
+                    "allocation_count": len(institute.batches.allocations),
                 },
             )
     return [SeededAccount(email, accounts[email]) for email in emails]

@@ -69,6 +69,11 @@ DATABASE_TLS_MODES: frozenset[str] = frozenset({"require", "verify-ca", "verify-
 RESERVED_DATABASE_USERS: frozenset[str] = frozenset({"postgres", "mti360_superuser"})
 
 _AI_PROVIDER_PATTERN = r"^[a-z][a-z0-9_-]*$"
+# A lowercase DNS name (``localhost`` allowed for development): the platform domain
+# under which institutes get ``<slug>.<domain>`` (Phase 02-4, ADR-0024).
+_SITE_DOMAIN_PATTERN = (
+    r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$"
+)
 _EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 # Settings that staging and production must set explicitly. Their defaults point
@@ -260,6 +265,25 @@ class Settings(BaseSettings):
     email_from_address: str = "no-reply@mti360.local"
     # Upper bound for one SMTP delivery (connect + send), in seconds (T01-04, D11).
     smtp_timeout_seconds: int = Field(default=10, ge=1, le=60)
+
+    # --- Public enquiry and transactional outbox (Phase 02-4, ADR-0024) ------------------
+    # Institutes' hosted pages live at `<slug>.<public_site_domain>`.
+    public_site_domain: str = Field(
+        default="mti360.in", max_length=200, pattern=_SITE_DOMAIN_PATTERN
+    )
+    # Enquiries per client IP, and per institute, in a fixed window.
+    enquiry_ip_limit: int = Field(default=5, ge=1, le=10_000)
+    enquiry_ip_window_seconds: int = Field(default=600, ge=1, le=86_400)
+    enquiry_tenant_limit: int = Field(default=200, ge=1, le=1_000_000)
+    enquiry_tenant_window_seconds: int = Field(default=3600, ge=1, le=86_400)
+    # The same contact and course again within this window is acknowledged, not stored.
+    enquiry_duplicate_window_seconds: int = Field(default=600, ge=1, le=86_400)
+    # How long enquiry personal data is kept (stated in the consent text; no deletion job yet).
+    enquiry_retention_months: int = Field(default=12, ge=1, le=120)
+    # Outbox worker: delivery attempts, reclaim after a crash, idle wait between polls.
+    outbox_max_attempts: int = Field(default=6, ge=1, le=20)
+    outbox_stale_seconds: int = Field(default=300, ge=30, le=86_400)
+    outbox_poll_seconds: int = Field(default=5, ge=1, le=300)
 
     # --- AI provider (CLAUDE.md §46) ----------------------------------------------------
     # `fake` is the deterministic provider for development and tests.

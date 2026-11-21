@@ -220,7 +220,8 @@
 
 ## INC-27 — Tenant Public Website route prefix
 
-- **Status:** `OPEN` (T00-08)
+- **Status:** `RESOLVED` (Phase 02-4, [ADR-0024](../adr/0024-public-enquiry.md), 2026-11-01): the hosted enquiry page uses the approved `/sites/[site]/*` internal route, reached by a host-based rewrite in `src/proxy.ts`; direct `/sites/*` requests are 404. The T00-08 `/site/*` placeholder is unchanged and moves when the Phase 14 website is built.
+- **Original status:** `OPEN` (T00-08)
 - **Where:** T00-08 implementation prompt and decision (`/site/*`) vs repository-structure.md §2 and ADR-0003 (`/sites/[site]/*`, an internal rewrite target reached through host-based routing, direct access blocked by the proxy)
 - **Issue:** T00-08 created the Tenant Public Website structure at `/site/*` as directed. The approved architecture places it at `/sites/[site]/*` with the tenant resolved server-side from a verified domain.
 - **Current handling:** `/site/*` is a neutral structural preview (5 placeholder pages, no tenant identity, branding or data, `noindex`). No proxy or rewrite exists.
@@ -405,3 +406,36 @@
 - **Issue:** One table, `tenant_sequences`, now holds two kinds of period. Admissions numbering uses the UTC calendar year. Finance numbering uses the Indian financial year (1 April – 31 March), computed in India Standard Time, because a UTC boundary would put the first 5½ hours of 1 April IST in the previous year. Separately, a receipt's financial year follows its **confirmation** instant, not the `received_on` date entered by staff. A cheque received on 30 March and cleared on 2 April is therefore receipted in the new financial year.
 - **Current handling:** For `INVOICE` and `RECEIPT`, `period` is the financial year's starting calendar year (`FY2026-27` → 2026), formatted `INV-FY2026-27-nnnnn` / `RCT-FY2026-27-nnnnn`. For `APPLICATION`, `ADMISSION` and `STUDENT`, ADR-0021 §7 is unchanged. Allocation stays transactional and gap-free.
 - **Proposed resolution:** Confirm the receipt date basis with the institutes' accounts practice before production use (with INC-48). Decide whether admissions numbering should also move to the financial year or to IST when campus time zones are modelled (INC-40).
+
+## INC-50 — Tenant administration screens: API delivered, UI not built
+
+- **Status:** `OPEN` (recorded 2026-10-25, T02-04 / 02-C scope reconciliation)
+- **Where:** PHASE-02-MASTER-READINESS.md §10 row "P0 (onboarding) ADMIN-05 / 06 / 07" (marked **exists (T01-08)**) and §22 slice 02-C; TASKS.md 02-C row; DEVELOPMENT-STATUS.md T01-08 ("Tenant Administration Foundation (API)")
+- **Issue:** The readiness plan lists the tenant Users, User Detail and Roles & Permissions screens (ADMIN-05/06/07) as existing from T01-08. T01-08 delivered the **API** only (members, roles, campuses, tenant audit read). In the Tenant Application, Administration › Users, Roles and Campuses are permission-gated navigation items rendered by the catch-all `ExperiencePlaceholder`. The 02-C completion criterion ("the owner invites counsellors and assigns roles and campuses") therefore cannot be met in the UI.
+- **Current handling:** 02-C is tracked in two parts. The **platform part** (PLAT-04/05/06 minimal) is built on `feat/platform-tenant-management`. The **tenant part** (ADMIN-05/06/07 UI over the existing T01-08 API) is `NOT_STARTED`. No screen was built and no API was changed.
+- **Proposed resolution:** The 02-C tenant part builds ADMIN-05/06/07 on the T01-08 API. PHASE-02-MASTER-READINESS.md §10 is then corrected from "exists (T01-08)" to the delivering task, and this entry is closed.
+- **Screen numbering (approved by the user, 2026-10-26):** the 02-C tenant-part brief named the screens "ADMIN-05 Members, ADMIN-06 Roles, ADMIN-07 Campuses". UI-SCREENS.md and TASKS.md (T03-03 … T03-05) number them differently, and the implementation follows UI-SCREENS.md:
+  - ADMIN-03 Campuses and ADMIN-04 Campus Detail (T03-03);
+  - ADMIN-05 Users and ADMIN-06 User Detail (T03-04);
+  - ADMIN-07 Roles & Permissions (T03-05), **read-only** in 02-C; custom-role creation, editing and deletion stay future work (the API exists).
+
+  The 02-C completion criterion is unchanged: the owner invites counsellors and assigns roles and campuses.
+- **Progress (2026-10-26, Slice 1, `feat/platform-tenant-management`, uncommitted):** ADMIN-05 Users and ADMIN-06 User Detail are implemented over the existing T01-08 API (no API change) and pass the automated checks. They are **not browser-verified**. ADMIN-07 and ADMIN-03/04 were not started then.
+- **Progress (2026-10-27, Slice 2, same branch, uncommitted):** ADMIN-07 Roles & Permissions (read-only list and role detail) is implemented over the existing T01-08 API (no API change) and passes the automated checks. It is **not browser-verified**. UI-SCREENS.md names template T15 for ADMIN-07; no T15 template exists yet, so the list uses T02 and the detail T03.
+- **Progress (2026-10-27, Slice 3, same branch, uncommitted):** ADMIN-03 Campuses (list, Add campus) and ADMIN-04 Campus Detail (rename with version; the code is immutable, INC-41) are implemented over the existing T01-08 API (no API change) and pass the automated checks. They are **not browser-verified**. Archiving stays undefined (INC-40). This entry stays `OPEN`, and PHASE-02-MASTER-READINESS.md §10 is unchanged, until all the screens are implemented and verified.
+
+## INC-51 — Last-owner rule versus campus scope and re-invitation
+
+- **Status:** `RESOLVED` (recorded and resolved 2026-10-30 by [ADR-0023](../adr/0023-membership-owner-scope-and-reinvitation.md); implementation not browser-verified)
+- **Where:** [tenant-administration.md](tenant-administration.md) D8-4 (rationale and "Implementation consequence"); [ADR-0019](../adr/0019-tenant-administration.md) §10.3 and §10.4; `identity/members.py` (`set_campus_scope`, `reinvite`); `access/repository.py` (`_active_owner_memberships`)
+- **Issue:** D8-4 says the last-owner rule "applies to suspend, revoke, campus-scope change and role removal", and justifies protecting only the owner because "`INSTITUTE_OWNER` holds every tenant permission". Under D-B1, an owner limited to selected campuses loses every tenant-wide permission, yet ADR-0019 §10.4 still counted such an owner, and campus-scope changes ran only self-protection. Separately, ADR-0019 §10.3 let re-invitation restore a removed member's roles outside the no-escalation rule, so an Administrator could bring back an owner they could not appoint.
+- **Resolution:** ADR-0023. Every owner keeps all-campus access (enforced on campus-scope change, owner-role assignment, owner invitation and the development seed, under the owner advisory lock); only `ACTIVE` all-campus owners count for the last-owner rule; re-invitation removes all previous roles in the same transaction; reinstatement keeps roles.
+- **Rationale:** the invariant makes D8-4's rationale true again and closes every API route to a campus-limited owner, not only the dedicated campus-scope endpoint. Clearing roles on re-invitation keeps role grants under the no-escalation rule.
+
+## INC-52 — Hosted enquiry page has no UI-SCREENS entry
+
+- **Status:** `OPEN` (Phase 02-4, 2026-11-01)
+- **Where:** UI-SCREENS.md §28 (PUB-01 … PUB-06 are T18 screens of a marketing-style website) vs PHASE-02-MASTER-READINESS.md §15 and §22 (02-4: a hosted enquiry page on a platform-issued institute subdomain).
+- **Issue:** no screen ID, fields or states are specified for the institute's hosted enquiry page.
+- **Current handling:** built on template T18 from master readiness §15 and the approved 02-4 decisions (name, email, phone, course, message, mandatory versioned consent, hidden spam trap, confirmation); see [ADR-0024](../adr/0024-public-enquiry.md). Referred to as "hosted enquiry page".
+- **Proposed resolution:** add a screen entry (for example under the Tenant Public Website) when UI-SCREENS.md is next revised.

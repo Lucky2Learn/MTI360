@@ -1,6 +1,6 @@
 # ADR-0022 — Finance-lite: Fee Structures, Fee Invoices, Offline Payments and Receipts (Phase 02-5)
 
-- **Status:** Accepted (decisions approved 2026-10-10). Implemented on `feat/phase-02-5-finance-lite`, not merged; see "Implementation notes — 2026-10-11"
+- **Status:** Accepted (decisions approved 2026-10-10). Implemented on `feat/phase-02-5-finance-lite` and merged to `main` by PR #34 (merge commit `a5bd01a`, 2026-10-11); no CI result for the PR is recorded; see "Implementation notes — 2026-10-11"
 - **Date:** 2026-10-10
 - **Task:** Phase 02-5 Finance-lite (V1)
 - **Related:** [PHASE-02-5-FINANCE-LITE-READINESS.md](../architecture/PHASE-02-5-FINANCE-LITE-READINESS.md) (the implementation plan), [PHASE-02-MASTER-READINESS.md](../architecture/PHASE-02-MASTER-READINESS.md) (§17 Finance dependency, §22 slice table, L1, L3; dated addendum), [ADR-0021](0021-admissions-core.md) (admissions, students, `tenant_sequences`), [ADR-0020](0020-courses-and-leads.md), [ADR-0004](0004-tenant-isolation.md), [ADR-0013](0013-audit-events.md), [ADR-0016](0016-authorization-rbac.md), INC-15, INC-48, INC-49
@@ -185,7 +185,7 @@ The implementation-start review compared the plan with the code at `53df30b` and
 
 ## Implementation notes — 2026-10-11
 
-Branch `feat/phase-02-5-finance-lite`, not merged or pushed. Commits: `200cd61` (sequences), `46c2481` (migration 0011, permissions, templates, domain), `0c32d35` (fee structure API), `8026e43` (fee invoices, payments, receipts, summary), `0802228` and `6dd5569` (frontend), `1cfc137` (integrity tests), `a03399e` (development seed). Verification results are recorded in DEVELOPMENT-STATUS.md (02-5), not here.
+Branch `feat/phase-02-5-finance-lite`, not merged or pushed at the time of these notes (since merged by PR #34, `a5bd01a`). Commits: `200cd61` (sequences), `46c2481` (migration 0011, permissions, templates, domain), `0c32d35` (fee structure API), `8026e43` (fee invoices, payments, receipts, summary), `0802228` and `6dd5569` (frontend), `1cfc137` (integrity tests), `a03399e` (development seed). Verification results are recorded in DEVELOPMENT-STATUS.md (02-5), not here.
 
 **As decided:**
 

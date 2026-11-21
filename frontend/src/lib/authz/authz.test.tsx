@@ -118,12 +118,15 @@ describe("requirement map (T01-05 §6)", () => {
     expect(byHref.get("/app/admissions/students")).toEqual(
       permission("student.read"),
     );
+    // Phase 02-6: batches (ACA-05/06/07).
+    expect(byHref.get("/app/academics/batches")).toEqual(
+      permission("batch.read"),
+    );
     for (const href of [
       "/app/administration/integrations",
       "/app/administration/billing",
       "/app/grow/leads",
       "/app/admissions/counselling",
-      "/app/academics/batches",
       "/app/ai/sql-data-agent",
     ]) {
       expect(byHref.get(href)).toBe(UNRELEASED);

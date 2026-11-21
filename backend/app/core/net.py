@@ -6,6 +6,14 @@ the client address is the n-th entry from the right of
 ``X-Forwarded-For + [socket peer]``. With the default ``0`` the header is
 ignored entirely, so a forged header cannot change the address used for rate
 limits and session records.
+
+The **public host** (Phase 02-4, ADR-0024) follows the same trust rule. The
+Next.js server forwards the browser's host in ``X-Forwarded-Host``, rebuilt
+with exactly one entry (a client-supplied value never passes it). The API
+reads that header only when it trusts at least one proxy, and then only its
+right-most entry (written by the nearest proxy); otherwise it uses ``Host``.
+The result is still only a claim to look up: an institute is served only for
+a verified hostname (``app.modules.tenants.domains``).
 """
 
 import ipaddress
@@ -14,6 +22,7 @@ from starlette.requests import HTTPConnection
 
 UNKNOWN_CLIENT = "unknown"
 FORWARDED_FOR = "x-forwarded-for"
+FORWARDED_HOST = "x-forwarded-host"
 
 
 def _valid_ip(value: str) -> str | None:
@@ -38,3 +47,16 @@ def client_ip(connection: HTTPConnection, trusted_proxy_hops: int) -> str:
     chain = [*forwarded, peer]
     index = max(0, len(chain) - 1 - trusted_proxy_hops)
     return _valid_ip(chain[index]) or UNKNOWN_CLIENT
+
+
+def request_host(connection: HTTPConnection, trusted_proxy_hops: int) -> str | None:
+    """The host the browser asked for (unvalidated; see the module documentation)."""
+    if trusted_proxy_hops > 0:
+        forwarded = [
+            entry.strip()
+            for header in connection.headers.getlist(FORWARDED_HOST)
+            for entry in header.split(",")
+            if entry.strip()
+        ]
+        return forwarded[-1] if forwarded else None
+    return connection.headers.get("host")

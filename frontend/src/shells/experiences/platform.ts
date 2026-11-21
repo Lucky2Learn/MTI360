@@ -12,9 +12,10 @@ import { ALWAYS, permission, UNRELEASED } from "@/lib/authz/requirements";
 import { EXPERIENCE, type ApplicationExperience } from "./types";
 
 // Platform Administration (/platform): the MTI 360 SaaS control plane,
-// used by platform administrators. Navigation placeholders only; the modules
-// are built in Phase 02. Platform users are a separate security domain from
-// tenant administrators (CLAUDE.md §7).
+// used by platform administrators. Tenants has explicit pages
+// (app/platform/(console)/tenants); the other modules are still placeholders
+// rendered by the catch-all page. Platform users are a separate security
+// domain from tenant administrators (CLAUDE.md §7).
 //
 // Requirement map (T01-09B UI contract §8): every item declares one
 // requirement — the single source for navigation filtering and page access.

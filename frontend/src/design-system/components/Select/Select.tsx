@@ -93,7 +93,14 @@ export function Select({
           focusRing,
         )}
       >
-        <SelectValue className="truncate data-placeholder:text-text-muted" />
+        {/* Only the selected text, on one centred line: the option's own
+            content (check-mark box, description) would wrap inside the
+            trigger and push the value below the centre. */}
+        <SelectValue className="min-w-0 flex-1 truncate data-placeholder:text-text-muted">
+          {({ isPlaceholder, selectedText, defaultChildren }) =>
+            isPlaceholder ? defaultChildren : selectedText
+          }
+        </SelectValue>
         <ChevronDownIcon
           aria-hidden="true"
           className="size-4 shrink-0 text-text-secondary transition-transform group-data-open:rotate-180 motion-reduce:transition-none"

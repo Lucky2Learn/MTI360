@@ -475,4 +475,7 @@ async def auth_harness(database: DatabaseUnderTest, redis_url: str) -> AsyncIter
     finally:
         await service.rate_limiter.close()
         await app.state.upload_limiter.close()  # Phase 02-2 document uploads
+        await app.state.enquiries.limiter.close()  # Phase 02-4 public enquiry
+        if app.state.enquiries.signal is not None:
+            await app.state.enquiries.signal.close()
         await app.state.engine.dispose()

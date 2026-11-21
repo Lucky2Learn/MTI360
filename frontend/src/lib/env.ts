@@ -14,6 +14,10 @@ import "server-only";
 //   TRUSTED_PROXY_HOPS   proxies in front of this server whose
 //                        X-Forwarded-For entries are trusted (T01-09A;
 //                        integer 0-10, default 0; lib/api/forwarding.ts).
+//   PUBLIC_SITE_DOMAIN   platform domain of the institutes' hosted pages,
+//                        https://<slug>.<domain>/enquiry (Phase 02-4,
+//                        ADR-0024; lowercase DNS name, default "mti360.in";
+//                        "localhost" locally).
 //   NEXT_PUBLIC_APP_NAME display name (default: "MTI 360").
 
 export const APP_ENVS = [
@@ -29,6 +33,7 @@ export interface ServerEnv {
   readonly appEnv: AppEnv;
   readonly apiBaseUrl: string;
   readonly trustedProxyHops: number;
+  readonly publicSiteDomain: string;
 }
 
 /** Values that are safe to ship to the browser. */
@@ -40,6 +45,9 @@ type EnvSource = Readonly<Record<string, string | undefined>>;
 
 const LOCAL_API_BASE_URL = "http://127.0.0.1:8100";
 const DEFAULT_APP_NAME = "MTI 360";
+const DEFAULT_PUBLIC_SITE_DOMAIN = "mti360.in";
+const DNS_NAME =
+  /^(?=.{1,200}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/;
 
 /** Invalid environment. The message names variables and rules, never values. */
 export class EnvironmentError extends Error {
@@ -109,10 +117,20 @@ export function parseServerEnv(source: EnvSource): ServerEnv {
     }
   }
 
+  const rawSiteDomain = source.PUBLIC_SITE_DOMAIN?.trim();
+  let publicSiteDomain = DEFAULT_PUBLIC_SITE_DOMAIN;
+  if (rawSiteDomain) {
+    if (DNS_NAME.test(rawSiteDomain)) {
+      publicSiteDomain = rawSiteDomain;
+    } else {
+      problems.push("PUBLIC_SITE_DOMAIN: must be a lowercase DNS name");
+    }
+  }
+
   if (problems.length > 0) {
     throw new EnvironmentError(problems);
   }
-  return { appEnv, apiBaseUrl, trustedProxyHops };
+  return { appEnv, apiBaseUrl, trustedProxyHops, publicSiteDomain };
 }
 
 export function parsePublicEnv(source: EnvSource): PublicEnv {
