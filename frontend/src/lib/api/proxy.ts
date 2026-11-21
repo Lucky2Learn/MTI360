@@ -19,7 +19,10 @@ import { apiCookieHeader, clientAddress, publicHost } from "./forwarding";
 // Returned response headers (allow-list): Set-Cookie (every one), X-Request-ID,
 // Retry-After, Content-Type, Cache-Control (no-store when the API sets none),
 // and for document downloads (Phase 02-2, ADR-0021 §8) Content-Disposition,
-// Content-Length, Content-Security-Policy and X-Content-Type-Options.
+// Content-Security-Policy and X-Content-Type-Options.
+// Content-Length is never forwarded (GHSA-pc58-hwjq-p385): the body is
+// streamed, and fetch() may already have decoded it, so an upstream length
+// can disagree with the bytes sent; the server frames the response itself.
 //
 // Request bodies are capped at MAX_REQUEST_BYTES (11 MiB: a 10 MiB document
 // plus form overhead) while they are read: a larger declared or actual body is
@@ -46,7 +49,6 @@ const RETURNED_RESPONSE_HEADERS = [
   "x-request-id",
   "retry-after",
   "content-disposition",
-  "content-length",
   "content-security-policy",
   "x-content-type-options",
 ] as const;

@@ -486,7 +486,28 @@ describe("document uploads and downloads (Phase 02-2, ADR-0021 §8)", () => {
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(response.headers.get("x-amz-request-id")).toBeNull();
     expect(response.headers.get("server")).toBeNull();
+    // Never the upstream framing (GHSA-pc58-hwjq-p385).
+    expect(response.headers.get("content-length")).toBeNull();
     expect(await response.text()).toBe("%PDF-1.7");
+  });
+
+  it("never forwards an upstream Content-Length that disagrees with the body", async () => {
+    // fetch() decodes compressed bodies, so the declared length can be stale.
+    const { fetchImpl } = upstream(
+      new Response('{"data":{"ok":true}}', {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+          "content-length": "999",
+        },
+      }),
+    );
+    const response = await proxyToApi(browserRequest("/api/v1/session"), {
+      apiBaseUrl: API,
+      fetchImpl,
+    });
+    expect(response.headers.get("content-length")).toBeNull();
+    expect(await response.text()).toBe('{"data":{"ok":true}}');
   });
 });
 
